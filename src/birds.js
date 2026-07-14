@@ -242,17 +242,23 @@ function buildPerched(world, leith, group) {
   const near = world.nearestStreetPoint;
   const spots = [];
 
-  for (const b of buildings) {
+  // Only buildings actually on the street — a gull on a roofline half a mile away
+  // is pure cost. Collect them ALL first, then spread the budget over the whole
+  // set: walking the array and breaking at the budget spends every gull on
+  // whichever buildings come first in leith.json (an arbitrary order, not a
+  // spatial one) and leaves the rest of the Walk gull-free.
+  const eligible = buildings.filter((b) => {
     const fp = b.footprint;
-    if (!fp || fp.length < 3) continue;
-    const height = Math.max(1, b.levels || 1) * 3.2;
-    // Only buildings actually on the street — a gull on a roofline half a mile
-    // away is pure cost.
+    if (!fp || fp.length < 3) return false;
     const np = near ? near(fp[0][0], fp[0][1]) : null;
-    if (np && np.distance > 30) continue;
-    if (rand() > 0.34) continue;
+    return !np || np.distance <= 30;
+  });
 
-    const n = 1 + Math.floor(rand() * 3);
+  const perBuilding = eligible.length ? PERCHED_COUNT / eligible.length : 0;
+  for (const b of eligible) {
+    const fp = b.footprint;
+    const height = Math.max(1, b.levels || 1) * 3.2;
+    const n = Math.floor(perBuilding) + (rand() < perBuilding % 1 ? 1 : 0);
     for (let k = 0; k < n; k++) {
       const i = Math.floor(rand() * fp.length);
       const j = (i + 1) % fp.length;
@@ -263,9 +269,7 @@ function buildPerched(world, leith, group) {
         y: height + 0.12,
         yaw: rand() * Math.PI * 2,
       });
-      if (spots.length >= PERCHED_COUNT) break;
     }
-    if (spots.length >= PERCHED_COUNT) break;
   }
 
   if (!spots.length) return;

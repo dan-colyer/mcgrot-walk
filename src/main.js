@@ -11,6 +11,8 @@ import { createSky } from './sky.js';
 import { buildRoadDressing } from './road.js';
 import { buildRoadworks } from './roadworks.js';
 import { buildBirds } from './birds.js';
+import { buildVermin } from './vermin.js';
+import { buildFlora } from './flora.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -59,6 +61,8 @@ async function main() {
   buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
   buildRoadworks(world, scene);          // ...and the trench, cones and hoarding waiting at the end of them
   const birds = buildBirds(world, assets.leith, scene); // gulls wheeling, gulls perched, pigeons
+  const vermin = buildVermin(world, scene);             // rats darting in the gutters
+  buildFlora(world, assets.leith, scene);               // buddleia, Buckfast, bins, a trolley
   const scenery = buildScenery(world, scene);
 
   const ambience = createAmbience();
@@ -111,6 +115,7 @@ async function main() {
       npcs.update(dt, t);
       sky.update(t);
       birds.update(dt, t);
+      vermin.update(dt, t);
       scenery.update(dt, t);
       interact.update(dt);
       proximityAudio.update();
@@ -132,6 +137,7 @@ async function main() {
     npcs.update(dt, time);
     sky.update(time);
     birds.update(dt, time);
+    vermin.update(dt, time);
     scenery.update(dt, time);
     interact.update(dt);
     proximityAudio.update();
