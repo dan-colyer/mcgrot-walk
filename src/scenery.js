@@ -62,33 +62,9 @@ export function buildScenery(world, scene) {
   return api;
 }
 
-// Subtle rust-brown horizon tint on top of the murky grey-green fog colour.
-// Rendered as a small vertical-gradient canvas used directly as
-// `scene.background` (a flat screen-space backdrop, not a sky dome) — cheap,
-// no geometry, no extra draw calls, generated once at load.
-export function buildSkyTexture(fogColorHex) {
-  const width = 4;
-  const height = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-
-  const fog = new THREE.Color(fogColorHex);
-  const rust = fog.clone().lerp(new THREE.Color(0x4a2f1f), 0.35);
-
-  const grad = ctx.createLinearGradient(0, 0, 0, height);
-  grad.addColorStop(0, `#${fog.getHexString()}`);
-  grad.addColorStop(0.55, `#${fog.getHexString()}`);
-  grad.addColorStop(0.78, `#${rust.getHexString()}`);
-  grad.addColorStop(1, `#${fog.getHexString()}`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, width, height);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
+// The flat `scene.background` gradient that used to live here is gone: a plain
+// Texture background is drawn in SCREEN space, so it never moved with the
+// camera. Replaced by the direction-painted dome in sky.js.
 
 // ---------------------------------------------------------------------------
 // Street sampling helpers (local copies of npcs.js's pattern — this module

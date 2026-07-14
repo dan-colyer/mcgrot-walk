@@ -6,6 +6,7 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { makeTarmacTexture, makePavementTexture, TARMAC_METRES, PAVEMENT_METRES } from './road.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
@@ -14,8 +15,6 @@ const STREET_Y = 0.03; // just above ground plane to avoid z-fighting
 const LEVEL_HEIGHT = 3.2;
 const CHAIN_JOIN_TOLERANCE = 2; // metres, for clustering streetPath endpoints
 
-const ASPHALT_COLOR = new THREE.Color(0x40423a);
-const PAVEMENT_COLOR = new THREE.Color(0x5a574a);
 // Muddy rust-brown, deliberately distinct in hue from the asphalt ribbon so
 // the two don't read as one undifferentiated dark mass in the near field.
 const GROUND_COLOR = 0x453a28;
@@ -57,73 +56,94 @@ export function buildWorld(leith) {
 // Street ribbons (all streetPaths rendered; not just the centreline)
 // ---------------------------------------------------------------------------
 
+// Carriageway and pavement are split into two meshes because they need two
+// different tiling textures, and a mesh has one material. Two draw calls; the
+// vertex-colour ribbon this replaces was one flat grey slab and read as lino.
 function buildStreetMeshes(streetPaths) {
-  const geometries = [];
+  const road = [];
+  const paving = [];
 
   for (const path of streetPaths) {
     if (path.length < 2) continue;
-    const geo = buildRibbonGeometry(path);
-    if (geo) geometries.push(geo);
+    const built = buildRibbonGeometry(path);
+    if (!built) continue;
+    road.push(built.road);
+    paving.push(built.paving);
   }
 
-  if (geometries.length === 0) return null;
+  if (road.length === 0) return null;
 
-  const merged = mergeGeometries(geometries, false);
-  const material = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  const mesh = new THREE.Mesh(merged, material);
-  mesh.position.y = STREET_Y;
-  return mesh;
+  const group = new THREE.Group();
+  group.position.y = STREET_Y;
+
+  group.add(new THREE.Mesh(
+    mergeGeometries(road, false),
+    new THREE.MeshLambertMaterial({ map: makeTarmacTexture() })
+  ));
+  group.add(new THREE.Mesh(
+    mergeGeometries(paving, false),
+    new THREE.MeshLambertMaterial({ map: makePavementTexture() })
+  ));
+
+  return group;
 }
 
+// One strip of quads per surface. The V coordinate is driven by CUMULATIVE
+// DISTANCE IN METRES along the path, not by vertex index — index-based UVs
+// would stretch the tarmac across long straights and crush it round the bends,
+// smearing one texture over the full 1,617m of the Walk.
 function buildRibbonGeometry(path) {
   const n = path.length;
   const normals = [];
+  const dists = [];
 
+  let acc = 0;
   for (let i = 0; i < n; i++) {
     const prev = path[Math.max(0, i - 1)];
     const next = path[Math.min(n - 1, i + 1)];
     const dx = next[0] - prev[0];
     const dz = next[1] - prev[1];
     const len = Math.hypot(dx, dz) || 1;
-    // perpendicular in XZ plane
-    normals.push([-dz / len, dx / len]);
+    normals.push([-dz / len, dx / len]); // perpendicular in XZ
+    if (i > 0) acc += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    dists.push(acc);
   }
 
-  const verts = [];
-  const cols = [];
-  const OFFSETS = [-RIBBON_HALF_WIDTH, -CARRIAGEWAY_HALF_WIDTH, CARRIAGEWAY_HALF_WIDTH, RIBBON_HALF_WIDTH];
-  const CROSS_COLORS = [PAVEMENT_COLOR, ASPHALT_COLOR, ASPHALT_COLOR, PAVEMENT_COLOR];
+  // A strip spanning two cross-section offsets, with UVs in texture repeats.
+  const strip = (offA, offB, metres) => {
+    const verts = [];
+    const uvs = [];
+    const indices = [];
+    const width = Math.abs(offB - offA);
 
-  // 4 cross-section verts per sample: pavement-left, carriageway-left, carriageway-right, pavement-right
-  for (let i = 0; i < n; i++) {
-    const [x, z] = path[i];
-    const [nx, nz] = normals[i];
-    for (let k = 0; k < 4; k++) {
-      verts.push(x + nx * OFFSETS[k], 0, z + nz * OFFSETS[k]);
-      cols.push(CROSS_COLORS[k].r, CROSS_COLORS[k].g, CROSS_COLORS[k].b);
+    for (let i = 0; i < n; i++) {
+      const [x, z] = path[i];
+      const [nx, nz] = normals[i];
+      const v = dists[i] / metres;
+      verts.push(x + nx * offA, 0, z + nz * offA);
+      verts.push(x + nx * offB, 0, z + nz * offB);
+      uvs.push(0, v, width / metres, v);
     }
-  }
-
-  const indices = [];
-  for (let i = 0; i < n - 1; i++) {
-    const b0 = i * 4;
-    const b1 = (i + 1) * 4;
-    // 3 quads: pavement-left, carriageway, pavement-right
-    for (let q = 0; q < 3; q++) {
-      const a = b0 + q;
-      const b = b0 + q + 1;
-      const c = b1 + q + 1;
-      const d = b1 + q;
-      indices.push(a, b, c, a, c, d);
+    for (let i = 0; i < n - 1; i++) {
+      const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+      indices.push(a, b, d, a, d, c);
     }
-  }
 
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  return {
+    road: strip(-CARRIAGEWAY_HALF_WIDTH, CARRIAGEWAY_HALF_WIDTH, TARMAC_METRES),
+    paving: mergeGeometries([
+      strip(-RIBBON_HALF_WIDTH, -CARRIAGEWAY_HALF_WIDTH, PAVEMENT_METRES),
+      strip(CARRIAGEWAY_HALF_WIDTH, RIBBON_HALF_WIDTH, PAVEMENT_METRES),
+    ], false),
+  };
 }
 
 // ---------------------------------------------------------------------------

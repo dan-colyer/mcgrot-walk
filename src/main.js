@@ -6,7 +6,9 @@ import { buildNpcs } from './npcs.js';
 import { buildShopfronts } from './shopfronts.js';
 import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
-import { buildScenery, buildSkyTexture } from './scenery.js';
+import { buildScenery } from './scenery.js';
+import { createSky } from './sky.js';
+import { buildRoadDressing } from './road.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -30,7 +32,10 @@ async function main() {
   const world = buildWorld(assets.leith);
   scene.add(world.group);
   scene.fog = world.fog;
-  scene.background = buildSkyTexture(world.fog.color.getHex());
+  // The sky dome is parented to the camera and takes the fog's own Color object,
+  // so its horizon can never drift out of step with the fog it meets. See sky.js.
+  const sky = createSky(world.fog.color, world.streetLine);
+  camera.add(sky.mesh);
 
   const torch = createPlayerTorch(camera);
 
@@ -49,6 +54,7 @@ async function main() {
 
   const npcs = buildNpcs(assets, world, scene, camera);
   buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
+  buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
   const scenery = buildScenery(world, scene);
 
   const ambience = createAmbience();
@@ -99,6 +105,7 @@ async function main() {
     stepFrame: (dt, t) => {
       controls.update(dt);
       npcs.update(dt, t);
+      sky.update(t);
       scenery.update(dt, t);
       interact.update(dt);
       proximityAudio.update();
@@ -118,6 +125,7 @@ async function main() {
     const time = now / 1000;
     controls.update(dt);
     npcs.update(dt, time);
+    sky.update(time);
     scenery.update(dt, time);
     interact.update(dt);
     proximityAudio.update();
