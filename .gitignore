@@ -1,0 +1,12 @@
+.env.local
+node_modules/
+dist/
+src/dev-bundle.js
+.DS_Store
+
+# Cached full-size Commons downloads — intermediate only; the runtime uses
+# assets/shopfronts/atlas.jpg. Kept locally so re-cropping never re-hits Wikimedia.
+assets/shopfronts/raw/
+
+# Site build output (published to the gh-pages branch)
+dist-site/

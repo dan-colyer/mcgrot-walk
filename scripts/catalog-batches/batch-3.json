@@ -1,0 +1,265 @@
+{
+  "batchId": "batch-3",
+  "entries": [
+    {
+      "id": "231b4a7b",
+      "title": "McGrot — The Endless Pull-Up",
+      "promptFile": "231b4a7b.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Gurney Girnigoe",
+        "blurb": "Self-Appointed Inspector o' Vertical Effort",
+        "voiceName": "Schedar",
+        "accent": "broad Aberdonian Doric",
+        "build": { "height": 2.1, "girth": 1.5, "headScale": 1.7 }
+      }
+    },
+    {
+      "id": "2366d360",
+      "title": "McGrot — The Council Accounting",
+      "promptFile": "2366d360.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Morag Gowdie",
+        "blurb": "Adjudicator o' Bureaucratic Grievance",
+        "voiceName": "Gacrux",
+        "accent": "absurd mismatch, Morningside-prim over Leith grit",
+        "build": { "height": 1.6, "girth": 0.7, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "23c90e9b",
+      "title": "McGrot — Nae Story the Day",
+      "promptFile": "23c90e9b.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Betty Grimble",
+        "blurb": "Custodian o' the Undeciphered Page",
+        "voiceName": "Pulcherrima",
+        "accent": "thick Leith dockside",
+        "build": { "height": 1.5, "girth": 1.2, "headScale": 1.4 }
+      }
+    },
+    {
+      "id": "23e8272e",
+      "title": "McGrot — The Buy-Oot o' Leith Books",
+      "promptFile": "23e8272e.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Cammy Gollach",
+        "blurb": "Notary o' the Shuttered Shopfronts",
+        "voiceName": "Achird",
+        "accent": "fast, clattering Dundonian",
+        "build": { "height": 1.85, "girth": 0.85, "headScale": 1.25 }
+      }
+    },
+    {
+      "id": "24946925",
+      "title": "McGrot — The August Invasion",
+      "promptFile": "24946925.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Senga Growther",
+        "blurb": "Custodian o' the Trampled Pavement",
+        "voiceName": "Zubenelgenubi",
+        "accent": "sing-song Fife",
+        "build": { "height": 1.65, "girth": 1.0, "headScale": 1.35 }
+      }
+    },
+    {
+      "id": "25ce7fb3",
+      "title": "McGrot — MGrot's Flavour Warehouse",
+      "promptFile": "25ce7fb3.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Dod Gutcher",
+        "blurb": "Nightwatchman o' the Offal Line",
+        "voiceName": "Vindemiatrix",
+        "accent": "thick Glaswegian",
+        "build": { "height": 1.95, "girth": 1.4, "headScale": 1.5 }
+      }
+    },
+    {
+      "id": "26105508",
+      "title": "McGrot — The Doorstep Testimony",
+      "promptFile": "26105508.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Effie Glaikit",
+        "blurb": "Verger o' the Doorstep Faith",
+        "voiceName": "Sadachbia",
+        "accent": "soft Highland lilt",
+        "build": { "height": 1.5, "girth": 0.6, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "26210448",
+      "title": "McGrot — The Organoid Engine",
+      "promptFile": "26210448.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Baldy Grool",
+        "blurb": "Chief Engineer o' the Bio-Broth Works",
+        "voiceName": "Sadaltager",
+        "accent": "soft Borders burr",
+        "build": { "height": 1.75, "girth": 1.1, "headScale": 1.4 }
+      }
+    },
+    {
+      "id": "2647648d",
+      "title": "McGrot — Night of the Leith Deadt: Part 2: Part 2",
+      "promptFile": "2647648d.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Wullie Groat",
+        "blurb": "Undertaker o' the Chip Shop Congregation",
+        "voiceName": "Sulafat",
+        "accent": "thick Leith dockside",
+        "build": { "height": 1.8, "girth": 0.95, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "26abbf13",
+      "title": "McGrot — The Renewable Docks",
+      "promptFile": "26abbf13.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Ishbel Gantock",
+        "blurb": "Keeper o' the Weathered Ledger",
+        "voiceName": "Zephyr",
+        "accent": "fast, clattering Dundonian, softened by tiredness",
+        "build": { "height": 1.6, "girth": 0.8, "headScale": 1.2 }
+      }
+    },
+    {
+      "id": "27ba44cf",
+      "title": "McGrot — The Bayeux Retrievial",
+      "promptFile": "27ba44cf.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Rennie Girvan",
+        "blurb": "Self-Styled Custodian o' Contested Textiles",
+        "voiceName": "Puck",
+        "accent": "absurd mismatch, cut-glass RP straining for hard-man Weegie",
+        "build": { "height": 1.7, "girth": 0.65, "headScale": 1.2 }
+      }
+    },
+    {
+      "id": "298379fb",
+      "title": "McGrot — Honour at the Links",
+      "promptFile": "298379fb.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Tam Gowfer",
+        "blurb": "Marshal o' the Unclaimed Fairway",
+        "voiceName": "Charon",
+        "accent": "broad Aberdonian Doric",
+        "build": { "height": 1.9, "girth": 1.05, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "2a0e56d4",
+      "title": "McGrot — The Wrapspanner",
+      "promptFile": "2a0e56d4.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Chrissie Grubb",
+        "blurb": "Chief Mechanic o' the Festive Assembly Line",
+        "voiceName": "Kore",
+        "accent": "thick Glaswegian",
+        "build": { "height": 1.55, "girth": 1.15, "headScale": 1.4 }
+      }
+    },
+    {
+      "id": "2a5609ea",
+      "title": "McGrot — At the Leith Poetry Slam",
+      "promptFile": "2a5609ea.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Ozzie Gantry",
+        "blurb": "Adjudicator o' the Doggerel Circuit",
+        "voiceName": "Fenrir",
+        "accent": "Morningside-prim, over-enunciated",
+        "build": { "height": 1.65, "girth": 0.7, "headScale": 1.25 }
+      }
+    },
+    {
+      "id": "2ad5f32c",
+      "title": "McGrot — Fleet Academy",
+      "promptFile": "2ad5f32c.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Peem Grissle",
+        "blurb": "Self-Appointed Cadet o' the Broth Fleet",
+        "voiceName": "Leda",
+        "accent": "sing-song Fife",
+        "build": { "height": 1.45, "girth": 0.55, "headScale": 1.6 }
+      }
+    },
+    {
+      "id": "2add0549",
+      "title": "McGrot — Tunnels to Fife...",
+      "promptFile": "2add0549.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Nettie Gowk",
+        "blurb": "Prospector o' the Underforth Deep",
+        "voiceName": "Orus",
+        "accent": "soft Highland lilt",
+        "build": { "height": 1.5, "girth": 0.6, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "2aef315d",
+      "title": "McGrot — Uniform o' the Republic",
+      "promptFile": "2aef315d.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Dunky Grimond",
+        "blurb": "Self-Promoted Sergeant o' the Republic",
+        "voiceName": "Aoede",
+        "accent": "thick Leith dockside",
+        "build": { "height": 2.0, "girth": 1.5, "headScale": 1.55 }
+      }
+    },
+    {
+      "id": "2b05b3fb",
+      "title": "McGrot — Ladle to the Core",
+      "promptFile": "2b05b3fb.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Fenella Girzie",
+        "blurb": "Box-Office o' the Fifteen-Minute Parable",
+        "voiceName": "Callirrhoe",
+        "accent": "soft Borders burr",
+        "build": { "height": 1.6, "girth": 0.75, "headScale": 1.3 }
+      }
+    },
+    {
+      "id": "2b2110bb",
+      "title": "McGrot — 28 Grots Later",
+      "promptFile": "2b2110bb.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Shug Gantsie",
+        "blurb": "Survivor o' the Second Sitting",
+        "voiceName": "Autonoe",
+        "accent": "thick Leith dockside",
+        "build": { "height": 1.75, "girth": 0.9, "headScale": 1.35 }
+      }
+    },
+    {
+      "id": "2d5c1cef",
+      "title": "McGrot — The True Cake of Dundee",
+      "promptFile": "2d5c1cef.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Nessie Grimmet",
+        "blurb": "Adjudicator o' the Unyielding Almond",
+        "voiceName": "Enceladus",
+        "accent": "fast, clattering Dundonian",
+        "build": { "height": 1.7, "girth": 1.0, "headScale": 1.3 }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2228 @@
+{
+  "batchSize": 20,
+  "count": 21,
+  "batches": [
+    {
+      "batchId": "batch-0",
+      "surnameInitials": "Mc/Mac",
+      "voiceStart": 0,
+      "items": [
+        {
+          "id": "0021ea9d",
+          "src": "1d312b62-ef5a-42fa-adf5-4bbe10252dec.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "00f88d65",
+          "src": "2e5fe6bc-03f8-4877-af4a-4ba0e14193b9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0121c47c",
+          "src": "4524925d-5988-4ec1-a1fd-7784d09a520f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "01b27ac5",
+          "src": "03ad8a7d-8a6d-441d-bd49-23054c20f7f8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "021b6bd3",
+          "src": "8057bd36-02cf-4c9d-8722-d163b965b599.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "022bcde2",
+          "src": "3c290d69-dd91-4672-814f-47f712ab5e75 (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "03347596",
+          "src": "08e907b8-8efb-417b-95c3-0a764b7ab027.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "03985281",
+          "src": "33f3fc2b-0ee5-457c-945d-4aadce959289.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0403c106",
+          "src": "0627fee0-260e-482e-a933-5b80f78e1588.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "05f9656f",
+          "src": "e358e701-c2f7-4939-a292-13671680a868.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "06122553",
+          "src": "fe6a7c1b-22fa-48f3-8107-c8fc4c83f3c6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "06e581d2",
+          "src": "b856e785-beb4-4982-9676-e663b3e0587b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0738152e",
+          "src": "d3424cb7-36f8-4044-a78d-b4314c821ddf.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "081eb3ed",
+          "src": "be701896-a847-4df1-826d-980d84206437.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "08469d72",
+          "src": "84988c12-8242-46a2-b8a9-dad3c3a40e39.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "088546cf",
+          "src": "e5461b3a-64d8-4b23-8c87-dfb4e662e3b6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "08d846d0",
+          "src": "439a1b21-96f4-4c57-920d-d2739152b265.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "090b09a1",
+          "src": "09f3e1b3-e224-4a65-86bb-97b680abb738.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "092d29b1",
+          "src": "946e3a66-db54-44a8-8287-d4c7ef604d02.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "09e40236",
+          "src": "d8763dc6-0ad1-4d90-991e-6a904ad97014.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-1",
+      "surnameInitials": "B/Br",
+      "voiceStart": 7,
+      "items": [
+        {
+          "id": "0a4659f8",
+          "src": "23f0ed6f-9c5f-4f9f-b0fd-7f2d618fa168.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0b977fb5",
+          "src": "a35200d6-4fae-45f7-923c-4e62a5658bf2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0be124f7",
+          "src": "10a32fb1-d7f3-4fb5-9576-18b0c7b6580b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0c60b3de",
+          "src": "3ae90443-db1b-45a4-93a6-2f4057bfce0e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0c83063f",
+          "src": "f8d92496-89b3-4cb6-9918-b9fc7fcdb980.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0d19a6e5",
+          "src": "ad1f0a8e-2635-42fb-a8c9-7db330461855.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0d4feb3c",
+          "src": "05091605-655f-4392-abed-019a1d7f51e5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "0da7cd5d",
+          "src": "510e9630-9a6d-491e-ba5d-bead37e44ab6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0ddabb98",
+          "src": "7ae6ffe3-3141-4ca3-ad0d-2a4e13ced230.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "0e21d212",
+          "src": "623466f3-27e5-43b2-9e38-c8c7bcaaf97c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "10bd3bab",
+          "src": "7de9d0fa-65ef-4c46-a7c9-c2d4d87c6b05.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "11529e6b",
+          "src": "8e51affb-2227-478a-beb7-cc29aa0af183.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "117ba457",
+          "src": "48ca2d93-0aa3-4688-ae8d-0a219a6e71a6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "11822fc8",
+          "src": "2aaf2b6d-00df-4b12-931d-7d96e5215561.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "11d1a01e",
+          "src": "12250978-02da-41bd-aec8-807d942e3eb1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "124327ee",
+          "src": "d01b9c8a-b2cc-4d56-ba19-56ab8c5ea4b9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "12efa91a",
+          "src": "812e9e7d-24b3-493d-b470-03508428cab0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "12f55a90",
+          "src": "62def941-7973-418b-9646-18e3088be309.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "13dc6c45",
+          "src": "bd3b509e-6ef3-44e0-acd0-3453ce5968de.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "13f572c6",
+          "src": "e4fdcec6-7f1c-4ba6-8765-f8c6d747f560.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-2",
+      "surnameInitials": "D/Dr",
+      "voiceStart": 14,
+      "items": [
+        {
+          "id": "14b3e69a",
+          "src": "295e8a5f-7d70-426f-bfc1-c3208ef60fc4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "14ef4956",
+          "src": "7c6dd285-e3ad-4c24-a7e7-6d12b9a85e76.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "156f9d41",
+          "src": "6239F573-C62D-4643-A2C0-D2E41F7DB5BC.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "15ff40d0",
+          "src": "688EB62C-44B4-4B17-B47F-393D7AC01C9F.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1644c350",
+          "src": "2b6823c6-036a-4795-ae03-afd9e67f1a7a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "166a4573",
+          "src": "db505d93-047f-447c-877b-550420c57ba8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "19f35bc7",
+          "src": "1635A92F-CCB1-4738-BAD2-07B71CD0EAE2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1a29e4f5",
+          "src": "1e26f0fe-fdbc-41f3-beb5-f115989255e5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1abdb3c4",
+          "src": "657748ba-0ea2-40ef-90a3-4e1fa8ff5940.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1af1be83",
+          "src": "918ca1b1-d363-4d48-8f1b-043d13e49982.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1c835438",
+          "src": "72387ea0-7467-47a8-9a57-889b2f9d048a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1c9b7f2a",
+          "src": "61f7ba66-2783-4971-9f92-5280ca77c1b4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1d192b46",
+          "src": "3b8bffb0-326c-46cc-a8d4-db8e953b92bf (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1d47233d",
+          "src": "658cc008-06c6-440c-b54a-dd1dbea68bbe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1e5ae33b",
+          "src": "3766c991-6d45-4495-b01e-d62386e9103a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1f0b7125",
+          "src": "c8673e25-f8c5-46c6-8f7a-624dbda7e5d1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "1f6380d3",
+          "src": "a6c0b3c1-3f1a-45b6-89c1-3dde40c4a6af.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "21d24e35",
+          "src": "IMG_8612.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "22251ca2",
+          "src": "83c5de2d-a37f-44aa-8c18-0630f0136860.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "22871dff",
+          "src": "4ae1d6c0-7d7c-44a3-9a25-c797de5d15fe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-3",
+      "surnameInitials": "G/Gr",
+      "voiceStart": 21,
+      "items": [
+        {
+          "id": "231b4a7b",
+          "src": "03c975fb-4bd0-4149-99b8-87cd4ac44853.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2366d360",
+          "src": "791268e5-1ec5-4ea1-a1e3-8b8c94b8e581.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "23c90e9b",
+          "src": "6fb9b3eb-e8c8-48bb-947d-0590c04e4477.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "23e8272e",
+          "src": "c3d96d11-2c2e-48b7-9995-a118e1c9e6f2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "24946925",
+          "src": "022ce4be-ac03-4d15-b5ee-f0db4d97c295.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "25ce7fb3",
+          "src": "10759359-a4f1-4df0-b44d-da64babc9a03.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "26105508",
+          "src": "cf7e60f2-3eb4-4107-8c16-da0671eec2a6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "26210448",
+          "src": "5a7a4694-d28e-4103-ad8e-e86a64859644.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2647648d",
+          "src": "b929fe2b-24b8-4b5d-9aeb-6a5656f8d5a4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "26abbf13",
+          "src": "54bc4096-3ff1-48f4-bcba-4c7a7e0377ff.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "27ba44cf",
+          "src": "8a92d3ae-dd98-4fba-b30c-6bfb4c40fd08.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "298379fb",
+          "src": "dc468846-c6a7-453f-8a17-e1936dac1525.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2a0e56d4",
+          "src": "744bbf9f-a454-4363-82db-e3532a4cdb17.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2a5609ea",
+          "src": "da2534ec-ca88-45d1-9bd2-2e8192266445.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2ad5f32c",
+          "src": "2ec56013-a832-4cfd-b9bc-69291a7fdb74.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2add0549",
+          "src": "db68358e-44ab-40ad-b871-a22f34f5f7b3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2aef315d",
+          "src": "4b66ad71-3aa3-486c-84f9-b3004f9e93f2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2b05b3fb",
+          "src": "ea894e21-0c78-4ec4-865d-ff79845c821c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2b2110bb",
+          "src": "8e735439-7d63-4d94-aaf1-f97fd20300da.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2d5c1cef",
+          "src": "c008bc40-b384-4ccd-bc12-98cdeb4aaf59.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-4",
+      "surnameInitials": "F/Fl",
+      "voiceStart": 28,
+      "items": [
+        {
+          "id": "2d9e0cd9",
+          "src": "4add967b-6b0b-4a45-82e6-de2298fd0f0e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2db7525f",
+          "src": "f639c70f-487c-4373-9e87-57cc86c887f5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2dd9394b",
+          "src": "ecfc13cd-2b7b-45b5-aaa3-bcdc86e9e7e2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2e032b21",
+          "src": "5a27e08f-213f-41f5-b280-2a607490d362.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2e075331",
+          "src": "381ad676-2711-4b66-9a1d-90a04a5cdaac.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "2e3ff22b",
+          "src": "889337cb-e430-4a28-bb34-eaa96119cd96.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "2e880915",
+          "src": "f82a0a41-33c2-4c07-8b6c-fe459137794b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "2f06a91a",
+          "src": "7dd390ee-d94d-491d-b795-325fab5404e5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "303358c8",
+          "src": "49a1b050-bd89-483c-9e90-5d2170ae7f2e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "315d8c0e",
+          "src": "b715a18d-75d3-48e6-a9b4-df4297d6a75c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3215a69a",
+          "src": "a99b7063-b20c-4884-b81a-c738517fceeb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "321e6808",
+          "src": "431e0938-c8f9-4ed9-8b58-2c8ffe95d78f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "32686cc7",
+          "src": "ecf2c8de-d9e6-4990-be49-1f8b9ebe2947.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "330dfaa0",
+          "src": "a7a80ce2-a753-4c41-b5df-da64ae63d52b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "33f5fff0",
+          "src": "dd90a2c2-0b3c-482a-8ac3-630aa1ee03fe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "349c1790",
+          "src": "d8f7d4b0-b658-4e64-acaf-15a920eff09b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "358ab38c",
+          "src": "be2206a3-c869-49f1-912a-b15e9a266a73.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "36d0f759",
+          "src": "92dee2a7-6e2b-497b-8e58-d64098f94f34.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3706c73f",
+          "src": "9b538eb2-d585-4882-b22c-45a4f4ef6500.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "378a560c",
+          "src": "7118b141-ae4c-44a1-b2e2-367ab65b30c0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-5",
+      "surnameInitials": "S/St",
+      "voiceStart": 5,
+      "items": [
+        {
+          "id": "37a51ef9",
+          "src": "ef98842e-a40f-48e0-bb4a-3e97a45f6316.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "37d5a9ae",
+          "src": "825b20fb-e039-45b5-b76b-4545646212f6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "38edcb41",
+          "src": "8930b348-bca5-4176-917d-3559de6a5615.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "39199870",
+          "src": "b09fe33d-949b-4b3f-8ac4-2807a63c69b9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "39dd1c74",
+          "src": "b5162005-74c0-43bf-9f6d-f6ee911777e8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3ad6421b",
+          "src": "bbbb5b50-6fcd-4c7e-8eeb-296cb5d35227.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3c52a22c",
+          "src": "8b04f27d-6ce8-4051-a6e1-8db61d604e70.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "3c6b637b",
+          "src": "d341b976-6f82-48cd-b5ee-2640b7b83942.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3d68e45a",
+          "src": "40cadacb-3bab-4175-913b-c90042fd054a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3de3b7ca",
+          "src": "71847ece-540d-4654-8fed-fc93cdc74a31.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3e0d6700",
+          "src": "12883529-000d-488c-8b73-e861d7d33d36.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3e2426b7",
+          "src": "453078de-bc1e-46f8-9570-ccc04e1715fe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3e3a7fd4",
+          "src": "ab8cadca-2b5b-479b-915f-60862610812c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3e6e85cd",
+          "src": "3989ec1e-98c4-4196-a49b-9690bd502c8f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3eb4be43",
+          "src": "d2017aa2-3681-4691-b283-2b0f49756384.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "3f24447e",
+          "src": "ab7dd221-ff48-4194-b68c-9306546c161a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "3f75d6be",
+          "src": "ade16a74-019e-4a1e-be17-4f4629e9b517.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "409d76ea",
+          "src": "5ffda385-7a1b-472a-b4e0-bfba4c0fc64f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "40b63ffc",
+          "src": "6b45cbaf-8bda-48af-86b6-0769e1a4553f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "417cec3d",
+          "src": "b98effa9-2180-4160-919a-1a480c5be72b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-6",
+      "surnameInitials": "K/Cr",
+      "voiceStart": 12,
+      "items": [
+        {
+          "id": "41af7cde",
+          "src": "02aba572-439a-4c3e-a962-e14ef4111dd3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "428b339b",
+          "src": "39de74cf-bb71-470c-998f-7caeddd438cd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "433fbacd",
+          "src": "361fcf55-9dc4-4d37-bf12-1fa2d93d204b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "444d7406",
+          "src": "f5ad50e1-ab9a-4785-9535-b5fce5175ef6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "449e2657",
+          "src": "176B1D46-495F-4524-9DA6-F2641D28D08E.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "45b932d2",
+          "src": "ada13211-6b1c-462f-8d07-5f8046c6423b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "460685cb",
+          "src": "c4faf16b-f036-46e0-8a8e-7b409f2d7868.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "467b2f3d",
+          "src": "283bac8f-7c6d-4e6e-b741-3ec0dc6ce39d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "468341b0",
+          "src": "1cb23890-13b0-465d-9d1c-43ea23e4de2e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "475f6b56",
+          "src": "e3d196be-8731-4858-be62-0a15d5c1fbdb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "4941fbc2",
+          "src": "4ec7b93c-76b5-4c61-9fcb-85a927bb385c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4a4d00c4",
+          "src": "8b0ad62c-2b72-4602-a124-f22de8aea880.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4b6ada3c",
+          "src": "6e672a2f-1b21-4465-a9b0-c62793a96094.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4b871e68",
+          "src": "d571fbea-9106-499e-a976-173ecdbb8257 (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4c182e26",
+          "src": "b97f03d5-71c4-4c68-aa5b-54c279c4ff48.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4cddacfe",
+          "src": "228f251f-07e5-474f-a215-7d06a81c8ed4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4d04ef95",
+          "src": "9fc903f6-013c-4e4f-a62a-c598bcc9d16f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4d350f39",
+          "src": "9552f934-d2bd-4752-898c-a3095845b8de.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "4e6d5107",
+          "src": "8b3e7a26-97cf-40a7-8048-45158d5a05ff.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "4ea25edd",
+          "src": "67e23583-52ff-4b72-b491-01a7632f21ab.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-7",
+      "surnameInitials": "T/Th",
+      "voiceStart": 19,
+      "items": [
+        {
+          "id": "4f601044",
+          "src": "c571b265-e0f6-4e96-a244-1e16389ff590.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "4fe127d1",
+          "src": "56fadb1b-5338-4912-9ce8-8444152c435a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "50f0b324",
+          "src": "c9041d33-7b4f-4f99-b603-824c93431e54.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "51256a62",
+          "src": "8d9bd50c-56d0-4096-82a6-5b953a893d56.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "51834c74",
+          "src": "b1a08db8-843c-466d-ad8b-682766a3dfb7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "52ce12ef",
+          "src": "66597a11-70b8-42d1-b7e2-780e0cfbfcc0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "53088e97",
+          "src": "b775666c-21e8-48fc-9e95-f7ebf042a3d1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5494ce23",
+          "src": "62dd9ae5-3285-48a3-b850-d2983c4ab146.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5576df0c",
+          "src": "8852c02f-c406-4a33-8b2c-fa1d2315a68a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "558182ae",
+          "src": "7A83659C-6980-4F8A-98C0-7B835AAB0CDC.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "56c5b40c",
+          "src": "a5098995-abe1-4356-bf07-99164cf01438.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "57d79392",
+          "src": "f650fd91-9c67-448a-81da-f4a4e94dfff8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "58e960b3",
+          "src": "95d9341e-f3d5-487a-8ba8-803af289e2a8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "59063b8b",
+          "src": "13d61c27-94bc-4d1e-886a-f5f204d852b5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5944d960",
+          "src": "2ec0a464-1119-42d0-a12c-58a1c2be1319.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5950b4db",
+          "src": "31e7c9dc-3b92-400a-bf39-110333c8b742.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "59f78001",
+          "src": "cfb04d1f-4841-4a6a-a66e-7e0f82b2b70a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5a3017e2",
+          "src": "faf93f91-1ab1-416e-917d-06ed6cdcef51.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5acf1728",
+          "src": "df5dfea3-ae57-4aea-a944-0e4d17adcf53.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5b20ab78",
+          "src": "e03bbda5-1041-43c6-8765-3ae7e2c02b2e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-8",
+      "surnameInitials": "W/Wh",
+      "voiceStart": 26,
+      "items": [
+        {
+          "id": "5c5f0c9c",
+          "src": "fe00a98b-f56f-43b7-bf98-aeb674d44210.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5d49e093",
+          "src": "c464d418-c089-42da-89fc-16912de92ab4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5d715a3c",
+          "src": "ec8ebdaf-f844-4347-b768-98aa745271cf.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5eeec173",
+          "src": "a048600b-a76b-4ade-9ff4-4841447a5040.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "5f1b8828",
+          "src": "4075fcec-b323-4a67-befb-3a61d7419159.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6075cdd0",
+          "src": "c842efe8-0d27-4f35-8860-9ef38eff5eb8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "60ee906a",
+          "src": "C1765FD9-3F3F-46BA-B9EB-56449C9FF781.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "61a16f6a",
+          "src": "837b5a2f-8e11-41c4-a855-d63903fc5c4e (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6261442b",
+          "src": "048fe84f-73ac-4a56-a778-37b74b928cdd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "62e342f1",
+          "src": "5fef3d05-e6de-4ae6-911a-43b0f427159d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "633a3e7d",
+          "src": "adcb9bc5-0ee9-4fe5-9e85-85cbf1048505.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "636d4903",
+          "src": "c9a7e209-9686-4656-887d-44d32f429a9f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "641002fc",
+          "src": "2408b060-0c42-4723-a7ac-febf415164b3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6427f771",
+          "src": "2ebb73f2-7653-4c0b-80f0-73bbb486bb78.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "657ebc34",
+          "src": "5d266904-dcd2-454a-aaae-1005037a86e6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "66f4b1a4",
+          "src": "50E90FA6-3CB0-4A61-B451-5971F35B1114.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "69b064db",
+          "src": "10060ca0-e069-490d-9633-3f693cae371b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "69ef9026",
+          "src": "4d9164e8-837e-4cc9-aa0d-514cd5cc3a88.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6aa1c186",
+          "src": "01e41c1b-7d54-4d44-8c26-306941105a96.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6aa89e0e",
+          "src": "c5e79310-1166-46f4-a332-e700bab5003b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-9",
+      "surnameInitials": "R/Ra",
+      "voiceStart": 3,
+      "items": [
+        {
+          "id": "6ab7f301",
+          "src": "22391d43-dacd-4c11-be40-63ba114e7709.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6ae86a2c",
+          "src": "3b12520a-6c9e-4366-aff0-08e706adeea5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6c27546a",
+          "src": "7065fccb-99a8-4bf9-b9b9-539de76eb01d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6c43992e",
+          "src": "9d4cc9f2-2d3b-4dfd-b05e-8a809fa92ca5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "6c8f0ce2",
+          "src": "991a0f62-8ba4-4cbc-8f8c-9b9e08d7a06a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6ce94e65",
+          "src": "49e6c04e-ac86-4f20-8e75-4e3464f06d69.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6d5fb4c4",
+          "src": "593b923f-3c71-4898-bec4-4daad879c6b3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6d636c02",
+          "src": "5c98f234-65df-4298-9c06-e689f6b58c01.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6e00d123",
+          "src": "6f3ed7b6-52e3-4305-83c2-e714c85c5408.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6e233d20",
+          "src": "4f8b5fb4-550a-47d6-b9eb-29aebbd8d9e3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "6f7e5c8e",
+          "src": "271a8a21-ebd1-4aff-bfed-7fea9aaa6ec2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "70178a63",
+          "src": "4ead5495-d1dc-4876-9ccc-14f907ff3158.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7064b2e4",
+          "src": "f02b26b1-1f4d-453b-a8df-7c1c717fe4a8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "710de9df",
+          "src": "faf48bfa-6d6d-431f-b1df-aa105e321343.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "714fce17",
+          "src": "c6ef6525-ee58-4532-83a2-0fb316b4c38f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "715c16ee",
+          "src": "32f9e035-e476-489b-a261-9bb92fac91e2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "71ac7411",
+          "src": "6D8F2DA2-4DEF-45DB-A5EC-B0D673D229DD.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "71e2b2db",
+          "src": "ff6cc172-1d2b-4b1c-872f-bcb1017e0a2d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "723d25f7",
+          "src": "49f291cb-9ed5-4eef-a544-c0929cb6c2b9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "72aac7ec",
+          "src": "288FC56B-CF6D-45AB-9FFB-0C413015A18F.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-10",
+      "surnameInitials": "H/Ha",
+      "voiceStart": 10,
+      "items": [
+        {
+          "id": "735d42e2",
+          "src": "9039905f-eb54-4946-81d6-1aea923ac870.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "74f41fc5",
+          "src": "d672c59d-ddad-43a6-8071-74718eb29a2c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "75e56679",
+          "src": "92a57b5a-f6ea-4e71-8520-9af41bb38198.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "767f0ab5",
+          "src": "5dc4ef04-d9a7-46c6-aad3-1b3cee65aaac.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "770c77eb",
+          "src": "c814f1a9-262a-4478-a99b-9ebb7ad44606.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7732fa3c",
+          "src": "ad511548-8ada-42f6-a704-56a616b83379.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "77b32ac1",
+          "src": "a268b8d0-06da-4a38-a2be-8f7dff3d7f2b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "79c80685",
+          "src": "ba32c392-3d92-46e5-9f31-84ec7c38f6c6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "79f3cce3",
+          "src": "c5920e4e-2e62-4e20-a614-bd7f95db1271.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7a6bb112",
+          "src": "bf28d780-8e01-4245-a864-17d6ffefd15d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7a6be10d",
+          "src": "f5b443a9-6d90-49fc-a596-774439d939c7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7a7d4a72",
+          "src": "2a3e000e-2c0d-4f9b-87ea-c43444f229ad.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7b1bd7f3",
+          "src": "da5ccaeb-e028-476c-a639-c1dbf12d78a4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7b544e5b",
+          "src": "2fc7caac-181a-41e3-9474-1dfbf8f212cb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7bb26a0c",
+          "src": "9146c508-2a14-4597-9b9e-77b82e4194fb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7bb7cdef",
+          "src": "87633c47-f49b-4b54-8a37-219de799d13e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7c6a8cf9",
+          "src": "9d2f8d9c-e25f-4060-b6b4-e920fa1fea6f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7ccc061c",
+          "src": "859024e3-5ebd-40e6-9e6a-41fa2bf30c23.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7d958e21",
+          "src": "7d5f9c1c-7f03-4b58-8727-4ba8f4524846.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7da92d4e",
+          "src": "a36f32ef-f6fb-4c90-80f7-fab48d0bfdbe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-11",
+      "surnameInitials": "L/Lo",
+      "voiceStart": 17,
+      "items": [
+        {
+          "id": "7f78d93d",
+          "src": "6FF170B0-7E2B-41F9-AA83-6D1AABE0A84C.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "7f9db223",
+          "src": "8a25b611-e891-479e-9bff-3a1b1ad31511.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "80d866d8",
+          "src": "c1114b29-be6a-4f95-b2b1-9e227d6d1df8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "80daf951",
+          "src": "25939abe-8977-4bf6-90a0-c4dd3e3a1ecf.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "81093814",
+          "src": "02f548b4-388c-4dc2-a3d7-a8dd1d5888b4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "816d7c5e",
+          "src": "da7294e0-ad32-4698-86a4-6e3a800b5d10.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "817c19b6",
+          "src": "90b5d46b-c14a-4c75-b6fd-d623c5e44c05.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "81c793a6",
+          "src": "01b2c23f-6cf5-4525-a8aa-5c8aaca9a64f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "81e16a20",
+          "src": "6a203729-dfc7-4569-a1bb-b8f9e223ff5c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "829e5d2e",
+          "src": "6e7ad6f3-f856-4bf2-851b-f4811be0073e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "82ada5bb",
+          "src": "1e06c83a-9565-4dae-ab69-9aaf4d1450c0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "832c4f8a",
+          "src": "86564772-cc88-4b58-9c35-79f041668722.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "836eb4ad",
+          "src": "d1c9b256-3e15-408b-8e5d-5fecc11c94d4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "83799dcf",
+          "src": "e3a0ad0a-863e-4c1d-9221-b222e0287585.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "861f7180",
+          "src": "9697792d-f49f-4b85-84dd-cf13d42f5a61.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8784ef7a",
+          "src": "372b34c4-6140-4fb4-9bb8-aa9f879d6df7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "898644cf",
+          "src": "2314f292-2f92-43a4-8254-fd87da611ff4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "89ebd025",
+          "src": "7fc89811-8eef-4061-a405-e36bf3312bfb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "89efdf0f",
+          "src": "c5d1126c-2872-4342-aa44-837b4191141b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8ae83ec7",
+          "src": "1e37ee87-aef4-4708-b0de-c2023bd8a81a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-12",
+      "surnameInitials": "P/Pe",
+      "voiceStart": 24,
+      "items": [
+        {
+          "id": "8b7ce19b",
+          "src": "5092a016-beb8-41fe-bbe6-8c7aff16e9d1 (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8d6fc81b",
+          "src": "4eff2182-b6e1-41e8-8408-28adeb4cc7c7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8e1a1051",
+          "src": "1c5c379f-82b8-47ce-a034-f59785b6eed1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8e7a89a8",
+          "src": "ac38c4e4-fedc-4e38-8a5a-016e3e871cae.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8ec075bb",
+          "src": "d4786b4e-7096-45be-973a-3126cdf53113.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "8fd983a7",
+          "src": "c590405d-afea-4c47-90a3-f58ddd5fa839.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "90d83f82",
+          "src": "901e0267-8d3f-4555-a2a8-dfb91a70cb38.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "90dfb960",
+          "src": "ee698c39-b883-47cf-a892-1b524893ca9d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "913174b3",
+          "src": "77885582-1a42-43d3-9771-cb5d0c460d3b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "91c8e8a7",
+          "src": "5898cbfa-6dd3-4a21-9573-8b1f08d9dc91.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "924bfd5f",
+          "src": "c29e3866-8662-408b-a410-46ca698f6927.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "925608f0",
+          "src": "463dbfd3-3722-42e9-a9c4-30881b5c1740.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "93a324dc",
+          "src": "48835188-b19c-4396-a48d-4c546b85d1fe.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "964f8668",
+          "src": "65c9f313-1d6b-456d-860b-184dfcc3e839.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "965cd141",
+          "src": "bf148402-169b-4f09-9e63-564f3ec8776a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "96a35b96",
+          "src": "9552e40b-b2d3-4751-bf6f-f33c1efe8a4e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9750a8d3",
+          "src": "929a96f2-64aa-40c5-8688-ae61859c9e0a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "977b45d4",
+          "src": "fbdbfbc1-cbd5-4f99-9eeb-01170b0d6fe3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "979946a1",
+          "src": "d852c682-2705-4372-b811-dc40d16ff7e1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9835a549",
+          "src": "3aa93244-9e32-46d9-8938-667824d9db69.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-13",
+      "surnameInitials": "M/Mu",
+      "voiceStart": 1,
+      "items": [
+        {
+          "id": "98590420",
+          "src": "13582de1-20a9-4b85-9533-b3ab6fa0a154.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9951fbca",
+          "src": "0024305a-3aad-4c31-81ef-fe73d3246610.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "99be9f36",
+          "src": "105a4673-6eff-459a-ad85-c7f16772588c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "9a5f9032",
+          "src": "fafe7fc6-464a-4748-ae0e-a31b02305195.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9a6d3aa0",
+          "src": "93633c9b-bc84-4426-b910-a1d4904c2ef8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9ab5db0d",
+          "src": "4dbf7c87-ff8f-484b-bf3c-4bb95cd33467.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9bc5c5e1",
+          "src": "cb9e7e4b-141e-4930-a1e1-34ae27d457ab.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9d039d03",
+          "src": "fe4e3eb1-bf4a-4a81-b5d7-92ff0113a84b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "9f0bb496",
+          "src": "d16d43c3-2ce5-49d5-bc99-509ca8ed6fc0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a0a0135d",
+          "src": "d71d2adc-fb9f-4e53-8c35-86601fd8a7d9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a0ce0cbd",
+          "src": "279757b9-f66a-4d04-b179-e321031701ef.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a0f933e6",
+          "src": "2f6a2b91-2a69-4e2f-81f2-17061392efa4.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a137bf08",
+          "src": "c4bc9894-aea1-4b10-b86c-24ac78b6e3bd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a1815a3e",
+          "src": "c728d182-4104-41b4-b39f-d37c8cb026ed.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a25397ab",
+          "src": "e71896ac-d9f7-43d6-8a9b-3f567cf55190.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a31d8fdc",
+          "src": "3b8de8fb-df0e-452d-8ee7-d0a8f14115f2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a35661af",
+          "src": "dc350e07-2b1d-4a6a-ba4a-d05e24fd3adf.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a38c55ec",
+          "src": "a5540ec6-dc99-4550-b2ca-f355ba6c2ef6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a3dcad2c",
+          "src": "36808b25-0dbe-4b0d-8aa2-334fc9266523.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a47497d3",
+          "src": "13431577-e611-4e26-a916-29ce79ee3d6b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-14",
+      "surnameInitials": "N/No",
+      "voiceStart": 8,
+      "items": [
+        {
+          "id": "a6344f80",
+          "src": "78496bbe-388b-4d08-bf73-d2f97f22617e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a65b6b95",
+          "src": "38d482f4-c966-4eb1-92db-69ea4ffae6b2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a6bb0306",
+          "src": "a9e558a2-cc0a-4ad8-ae18-6c2f49ca1c2c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a7065bc1",
+          "src": "ae076e7a-5b85-4411-84ff-71a8ceb4acf5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a86f20fb",
+          "src": "d3e7e6fb-5a7d-4799-87bb-b9c25bb9ead5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a8b4c965",
+          "src": "6de825f5-5a2d-4c50-964a-57d75e80ec53.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a8ca59ba",
+          "src": "0b315c22-5118-433a-b686-19a7a9b500da (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "a9909413",
+          "src": "ff6459a1-5b99-4391-9f6d-1797714f5d18.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "aa4a14dc",
+          "src": "1d2f66be-cfd1-41d1-8bd5-7ef4fa8c4532.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "aa90462d",
+          "src": "cbdbac8f-dd8c-4358-b401-e2d0047dc888.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "aaedb4d7",
+          "src": "0c2884ee-aee0-43b7-86c0-016633a89f5c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ab4e9f47",
+          "src": "9f4dfe90-8597-4ca3-b366-556bdbb4129b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "acaf6c18",
+          "src": "1c098ae6-24ab-4570-abea-d9851eb8e3f0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "adcdddbf",
+          "src": "4da70eb5-2a56-4861-ae42-d1a9a34d351e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ae066ce0",
+          "src": "b7f121e2-8742-48e6-a869-74b76597f7e2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "af8713e7",
+          "src": "4694bd19-c2b9-4bd1-a2d1-f27a67c71412.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b01ab356",
+          "src": "e141c33e-0a38-49bf-9ddb-08a8a974b508.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b04b0ed4",
+          "src": "6fdf1211-6c83-431d-9890-42649a7deb31.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b0a932f7",
+          "src": "1db7e531-3934-45f7-8887-0150ad78b771.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b130872a",
+          "src": "817cfef1-05c5-484f-aa39-3ba2be71bf69.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-15",
+      "surnameInitials": "A/Au",
+      "voiceStart": 15,
+      "items": [
+        {
+          "id": "b1374184",
+          "src": "0536149f-5e63-44f3-94e0-48dcbbf41694.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b27e822a",
+          "src": "d046d827-616a-49fc-a290-b7e4fc61e254.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b284644c",
+          "src": "089506cc-77f0-4dd5-b03e-8412a09bc6ec.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b2b9e981",
+          "src": "8261ffe3-f3e8-43c1-b7d9-75bf50a41c1a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "b2e726ab",
+          "src": "c8468ae0-1867-49b1-b730-278402975900.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b416a1a7",
+          "src": "a8a7a83a-79c6-4150-a594-55cda8f3e678.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b49eca55",
+          "src": "a26117a0-9f57-475d-8c9f-08c61f832da0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b4c9352c",
+          "src": "b4f70c70-1be7-4ce2-a304-193656115342.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "b523d0e2",
+          "src": "6c3d6464-458a-44c0-b7db-5fbbe973b84d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b5dc0fcb",
+          "src": "d1587bd4-788f-41fe-8acc-28a7a65208ce.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b6011adc",
+          "src": "ee74c200-ed5c-47ac-990e-8d407a9fda88.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "b734df16",
+          "src": "da41bdb3-3156-4813-849a-dd1435ce37d0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b78d5023",
+          "src": "1bda6965-f7a7-47c2-b8e9-4e022ba5a123.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "b7fa5d7a",
+          "src": "03325b6b-641b-41bc-a02c-dac3023bdd59.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b90a5393",
+          "src": "62d0355b-1d02-41e7-baaf-94da157bfb98.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "b9aef88c",
+          "src": "30bc237e-ed3d-4bc3-ba6f-b572d730a4a5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "bb395cfb",
+          "src": "a2bd100c-3413-44a5-943b-7858924e9e9e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "bb4dea97",
+          "src": "281f2888-708c-47bf-83cc-5040be4a5999.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "bb6b693b",
+          "src": "a95762a6-13cf-41be-ad0b-26e0dbc453f3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "be0f8124",
+          "src": "b3114c0c-1b65-4f08-ab83-008720bd6ac6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-16",
+      "surnameInitials": "E/El",
+      "voiceStart": 22,
+      "items": [
+        {
+          "id": "be17b563",
+          "src": "fbe7c023-46b2-4d92-9ab8-6c9864f7d057.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "bee26089",
+          "src": "add2644c-3220-41f1-ab5c-2d1dfaad87f7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "bfc636ca",
+          "src": "47ea4bb7-d721-4bec-a2ab-8678ed6a74a6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c00ec39c",
+          "src": "838baceb-6e38-4b04-b985-9ac9f6d63e22.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c1ea7e84",
+          "src": "8cfb4e63-bcc7-42f8-ac00-4e61a85a982d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c367b910",
+          "src": "49c7c8f3-36c6-4791-a1e8-8448d6cb6300.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c44cc3e3",
+          "src": "347abe07-d765-4cd4-8dd9-f0a327fcb7bf.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c456c071",
+          "src": "39321428-a2b4-4f2b-a9b0-56236e2c39be.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c4e8e29c",
+          "src": "458ae6d1-b333-4c49-baf8-cdac1d3c58a1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c4ffa0ba",
+          "src": "f1621687-eaa1-4f9a-b6a2-95309ecfc619.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "c51ae320",
+          "src": "93c4a212-ddb5-4f75-a26a-ad8448574345.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c5f4f6e5",
+          "src": "bc97f4e5-a6d5-474e-8e14-8d3f638c38f1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c632b465",
+          "src": "5470be86-15ab-4317-a033-726736b10dc5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c6a8f0b1",
+          "src": "73d49366-1c1a-4d1a-b6e0-86298ebb47ce.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c6ed333e",
+          "src": "58a4b79c-64d4-4f68-9aac-dacb700694e0 (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c7ec2ee8",
+          "src": "b7eded42-3254-4f62-b19b-aa4ad0049bc2.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c7f5c8db",
+          "src": "c7d8887e-0574-4975-88b3-7cad056f3739 (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c86a11c1",
+          "src": "ca2a22f3-90ec-433a-b47f-bdd396a7b373.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c9e71ede",
+          "src": "dc925cf2-91b5-4be0-b27d-1fc2afa5122c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "c9fb07b7",
+          "src": "50a8aa72-10f3-4617-983f-a6f9dd37637b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-17",
+      "surnameInitials": "O/ Og",
+      "voiceStart": 29,
+      "items": [
+        {
+          "id": "cabeff28",
+          "src": "ac91655b-7a6b-4a71-b5ec-963f217d4f79.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "caeee2c8",
+          "src": "7465c83f-494e-44af-b948-ac0acb909c68.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cb674f4e",
+          "src": "b8fdd5dc-1acb-45ce-a946-750d08fd5f21.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cbc579b9",
+          "src": "a3c5928c-67da-4bf4-b98b-73a258d2f652.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cc4bef03",
+          "src": "b22e3784-6070-4371-b8a9-7e303746c17c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cd719012",
+          "src": "aa946f72-ad69-4b43-a4ad-92b7e16df921.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cdaa5dd3",
+          "src": "f78e2bb1-b21f-4f37-8d4c-09895ac94f39.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ce56b611",
+          "src": "b6b88086-2dce-43dd-b34d-13808a615f98.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "cf2c01b5",
+          "src": "38883058-2436-4762-b4c0-5b6c74c069fd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d2c20025",
+          "src": "a9f8e5b3-0220-4e90-89b4-eb2e60270a1a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d571e90f",
+          "src": "8693F0AA-EA94-4158-8DC1-85563D02CE84.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d5a4f0e1",
+          "src": "f67b8802-3599-4711-8941-695e97c3ad1b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d5dca9e2",
+          "src": "52c8f16b-12f3-41cd-953b-367200a16751.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d5f734f1",
+          "src": "480c775f-cb96-4170-959b-f02f3d6788ae.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d7bf5af6",
+          "src": "486576ad-b147-4048-8668-ef6f32a828de.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d7d06676",
+          "src": "4cc031f8-f691-4938-a967-1aa0a20cade1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "d8b3559c",
+          "src": "5cde7284-5430-4013-848f-afed05eec4c9.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "da477d50",
+          "src": "1e993585-53a3-4806-a1b5-d0114082af2c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "da5e694a",
+          "src": "5d3d704c-523a-4581-9c27-6aeec71da404.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "daf22b61",
+          "src": "6dd2d89b-d53c-414d-b9f7-57490d3da842.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-18",
+      "surnameInitials": "C/Ca",
+      "voiceStart": 6,
+      "items": [
+        {
+          "id": "db886456",
+          "src": "B232F6E6-CC04-4BEB-AE7F-6DD48E144002.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "dbafd673",
+          "src": "dd6401a9-f8c1-4b93-9380-118c589b3e13.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "dc958e6a",
+          "src": "829DC357-BCAD-4178-A94A-C9906C547DCA.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ddbfd00a",
+          "src": "4ee6f118-a342-43fb-93c3-da8df5a1cbe1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "df1812f7",
+          "src": "cb6f65fd-2290-4f3a-bba3-7a7b646a72ed.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "df31235d",
+          "src": "804babab-b9a5-43e4-9d54-b0d9879106c0.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e2bb125c",
+          "src": "ec3a936e-9595-439e-8ce7-bd97100ca15a (1).png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e3885a28",
+          "src": "B427E3C5-C078-4850-A2CC-CBB67F4B58CC.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e457e2ff",
+          "src": "7a148840-611e-49ec-b380-6d7e808ed3aa.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e59be7d4",
+          "src": "b52b2d7e-145d-4507-a603-f5a71592d829.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e63c697a",
+          "src": "3e67ef9a-1766-4278-aabf-9f257fbac581.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e6ee7de1",
+          "src": "b4846105-2300-41f9-8479-7e4e58d8c5bd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e7176370",
+          "src": "72fdaa9b-4a66-4a70-a4c2-9b92d1f7e855.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e7cfa14b",
+          "src": "9e40d068-6f5e-4f83-bd85-4bfe8d3b6b14.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e7d7de79",
+          "src": "22c8cf7e-e77b-4d9c-8d4c-76b70e3f3822.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e820c787",
+          "src": "982d5348-9d89-4d62-9ff1-27593b95fbcb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e83275ea",
+          "src": "b9e96de4-08db-4e83-8fa6-20a65b23bf33.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e8737b5c",
+          "src": "2364ff58-732e-4526-ac27-8b3ed790b214.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e8c870a3",
+          "src": "a3d1b1e1-a83d-46ef-8e2a-d22b7ef400c5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "e8ea0342",
+          "src": "8a4afb32-bb68-49ac-acbd-16e5c5d92d51.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-19",
+      "surnameInitials": "V/Vi",
+      "voiceStart": 13,
+      "items": [
+        {
+          "id": "e94de335",
+          "src": "bc586335-66e4-4748-bedc-d31e1f7b5b2c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "eaf8e4f5",
+          "src": "792140c8-0531-4fce-a0bc-3d39d8ea37bd.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "eb0c6de2",
+          "src": "f44c4af0-0d55-4999-abf8-4e41debef0c1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "eb52ab19",
+          "src": "a6ccd5d7-39f1-4539-b3d4-7650727fae4e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ec3a7887",
+          "src": "e76adf38-6f38-4429-98f5-33cba936a80e.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "edb6fd50",
+          "src": "bbc56b01-2ed3-490a-9a94-6f3fc20ac954.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "edc391a6",
+          "src": "e886a709-c857-4ef5-8fd4-ade2d1395145.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ee33a0dc",
+          "src": "83c72d72-8538-4665-b505-1b79528b9c9d.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ee33ea60",
+          "src": "92e4c86d-c01d-4c67-99de-6867c147d49a.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ee819a2a",
+          "src": "d15aab91-9b8e-4f3a-8b31-d32f4e609696.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "eec0ae88",
+          "src": "d741d52c-7fa9-44a9-a279-be4c833aca33.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ef08357e",
+          "src": "53533fa4-cb52-4b67-80f8-7b4d4d7df445.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ef0dc28e",
+          "src": "ee46c73a-9e54-406a-bb26-54f72dc8a35f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ef6c956e",
+          "src": "9706ccf5-7248-4cde-9a3d-79e854fa0410.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f0b11536",
+          "src": "86c824f1-5d6f-4583-864e-4b1718b7b2da.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f2279d9c",
+          "src": "aa578793-822a-46a2-959f-4cb872523bf8.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f45dfd6b",
+          "src": "5f8c7f30-552c-4245-9486-457259f1225f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f595ab9c",
+          "src": "01896b9a-53db-46aa-9c87-57e49cad36d1.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other"
+        },
+        {
+          "id": "f5cac9cd",
+          "src": "0f149daf-59e5-43e6-8f43-58eed7f544b6.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f66b6767",
+          "src": "8620d129-3967-4ff8-9adb-201cd5b44e81.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    },
+    {
+      "batchId": "batch-20",
+      "surnameInitials": "J/Ja",
+      "voiceStart": 20,
+      "items": [
+        {
+          "id": "f6c8bc88",
+          "src": "1f9705ba-58ed-4c14-85b9-02898ff95ca5.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f96c2244",
+          "src": "73fb78b1-0d7c-45a1-b133-c707a50f448c.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f9cb5316",
+          "src": "c6725c86-85f5-4afe-801a-e8b31c5f467b.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "f9dc8073",
+          "src": "97974bb1-1290-4fe2-be38-854166d506af.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "faf2f175",
+          "src": "09cee4dd-6769-46ea-b593-4aecdbbbb282.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fc2807b2",
+          "src": "89cd8078-16b8-4aa4-a937-5856204c7a79.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fc696f9f",
+          "src": "6f0731f8-715e-49e7-871c-4d1108422f22.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fd2ddf21",
+          "src": "b3d03656-adbb-472f-a36d-f0c9644f6e55.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fd6641f8",
+          "src": "0a02e05e-3afc-4695-8f41-40b74c7ce1a7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fd97eb8f",
+          "src": "41ce931c-1482-4956-a548-ffb4540c64bb.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "fe5ab6af",
+          "src": "78ce17b7-179d-4ac9-bd14-920d4e0c97d7.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ff52e057",
+          "src": "94a3119f-b8c7-43ab-8c35-e8231b76501f.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ff55228e",
+          "src": "44d10003-bd07-4abf-9a8e-b1bc53cc33d3.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ff5a4c8e",
+          "src": "f33eda99-22b0-4a5f-8500-cb33fc1586db.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        },
+        {
+          "id": "ff78dfb6",
+          "src": "d9a7f2e5-413d-4cb6-b14d-474dbfd9b952.png",
+          "srcDir": "/Users/dan/Desktop/screenshots/mcgrot"
+        }
+      ]
+    }
+  ]
+}
