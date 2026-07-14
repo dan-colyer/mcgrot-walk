@@ -9,6 +9,7 @@ import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
 import { createSky } from './sky.js';
 import { buildRoadDressing } from './road.js';
+import { buildRoadworks } from './roadworks.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -55,6 +56,7 @@ async function main() {
   const npcs = buildNpcs(assets, world, scene, camera);
   buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
   buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
+  buildRoadworks(world, scene);          // ...and the trench, cones and hoarding waiting at the end of them
   const scenery = buildScenery(world, scene);
 
   const ambience = createAmbience();
