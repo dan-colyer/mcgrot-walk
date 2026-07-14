@@ -132,20 +132,29 @@ function makeRatGeometry() {
     return g;
   };
 
+  // Threading a needle. At 0x2f2b25 the rat is almost exactly the tarmac's own
+  // tone and vanishes — perfectly camouflaged, which is not the same as subtle.
+  // At 0x5a5147 it blows out to bright orange the moment the player's torch (a
+  // warm point light) sweeps the gutter, and reads as a plastic toy. This sits
+  // between: brown enough to separate from the road in ambient light, dark
+  // enough to survive the torch at point-blank range.
   const body = box(0.11, 0.10, 0.23);
   body.translate(0, 0.05, 0);
-  colorGeo(body, 0x2f2b25);
+  colorGeo(body, 0x453e35);
   parts.push(body);
 
   const head = box(0.075, 0.07, 0.10);
   head.translate(0, 0.045, 0.15);
-  colorGeo(head, 0x3a352d);
+  colorGeo(head, 0x4e463b);
   parts.push(head);
 
-  // The tail: long, thin, and the single most rat-like thing about it.
-  const tail = box(0.018, 0.018, 0.21);
+  // The tail: long, thin, and the single most rat-like thing about it. Kept dark
+  // and close to the body's tone — the player's torch is a warm orange point
+  // light, and a paler tail lights up under it as a bright rust-coloured bar
+  // that reads as a dropped tool rather than as vermin.
+  const tail = box(0.016, 0.016, 0.21);
   tail.translate(0, 0.035, -0.21);
-  colorGeo(tail, 0x4a4038);
+  colorGeo(tail, 0x4a4239);
   parts.push(tail);
 
   return mergeGeometries(parts, false);
