@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>McGrot Walk</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0b08;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+  }
+  #hud {
+    position: fixed;
+    left: 12px;
+    bottom: 10px;
+    color: rgba(220, 224, 200, 0.65);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* --- Grubby post-apocalyptic interaction UI ------------------------- */
+  #npc-prompt {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    background: rgba(16, 18, 12, 0.82);
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    border-radius: 3px;
+    color: #d8d4c0;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #npc-prompt:active { background: rgba(40, 44, 30, 0.9); }
+
+  #comic-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(6, 7, 4, 0.94);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    font-family: "Courier New", ui-monospace, monospace;
+    color: #d8d4c0;
+  }
+  #comic-title {
+    margin: 0 0 10px;
+    max-width: 900px;
+    font-size: 18px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #e6e1c8;
+    text-align: center;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  }
+  #comic-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    border: 1px solid rgba(120, 114, 86, 0.35);
+    background: rgba(0, 0, 0, 0.35);
+  }
+  #comic-image {
+    display: block;
+    max-width: min(92vw, 640px);
+    height: auto;
+    image-rendering: auto;
+  }
+  #comic-meta {
+    margin: 12px 0 4px;
+    font-size: 14px;
+    color: #b7b295;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  #comic-controls {
+    margin-top: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  #comic-playpause {
+    width: 46px;
+    height: 40px;
+    font-size: 18px;
+    line-height: 1;
+    background: rgba(20, 22, 14, 0.9);
+    color: #d8d4c0;
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #comic-playpause:active { background: rgba(44, 48, 32, 0.95); }
+  #comic-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    line-height: 1;
+    background: rgba(20, 22, 14, 0.85);
+    color: #d8d4c0;
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #comic-close:active { background: rgba(60, 30, 24, 0.95); }
+
+  /* --- Title card ------------------------------------------------------ */
+  #title-card {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(60, 54, 38, 0.85), rgba(6, 7, 4, 0.97) 70%),
+      #060704;
+    transition: opacity 0.9s ease;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #title-card.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #title-inner {
+    text-align: center;
+    padding: 0 24px;
+    max-width: 640px;
+  }
+  #title-heading {
+    margin: 0;
+    font-family: "Arial Black", "Helvetica Neue", -apple-system, sans-serif;
+    font-weight: 900;
+    font-size: clamp(48px, 12vw, 96px);
+    letter-spacing: 0.02em;
+    line-height: 0.95;
+    color: #e7c68a;
+    -webkit-text-stroke: 2px #1b1206;
+    text-shadow:
+      3px 3px 0 #7a2f18,
+      6px 6px 0 rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(255, 140, 60, 0.25);
+    transform: skewY(-2deg) rotate(-1deg);
+  }
+  #title-subtitle {
+    margin: 18px 0 6px;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: #b7b295;
+    text-transform: uppercase;
+  }
+  #title-hint {
+    margin: 0 0 30px;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 13px;
+    color: #8b8770;
+    letter-spacing: 0.03em;
+  }
+  #title-enter {
+    display: inline-block;
+    padding: 12px 28px;
+    border: 1px solid rgba(230, 198, 138, 0.55);
+    border-radius: 3px;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: #e7c68a;
+    background: rgba(122, 47, 24, 0.18);
+    animation: title-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes title-pulse {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+  }
+
+  /* --- Mobile hold-to-walk button, shown only on coarse-pointer devices - */
+  #touch-forward {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: rgba(20, 22, 14, 0.55);
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    color: #d8d4c0;
+    font-size: 26px;
+    line-height: 74px;
+    text-align: center;
+    z-index: 15;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  #touch-forward.active { background: rgba(60, 54, 34, 0.75); }
+  @media (pointer: coarse) {
+    #touch-forward { display: block; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="hud">WASD — move, drag — look</div>
+
+<div id="npc-prompt"><span id="npc-prompt-label">[E] Hear read</span></div>
+
+<div id="comic-overlay">
+  <button id="comic-close" type="button" aria-label="Close">✕</button>
+  <h2 id="comic-title"></h2>
+  <div id="comic-scroll"><img id="comic-image" alt="" /></div>
+  <div id="comic-meta"></div>
+  <div id="comic-controls">
+    <button id="comic-playpause" type="button" aria-label="Play or pause">▶</button>
+  </div>
+</div>
+
+<div id="touch-forward" aria-hidden="true">▲</div>
+
+<div id="title-card">
+  <div id="title-inner">
+    <h1 id="title-heading">McGROT WALK</h1>
+    <p id="title-subtitle">a post-apocalyptic comic gallery — Leith Walk, Edinburgh</p>
+    <p id="title-hint">WASD / drag to look — walk up to a resident, press E</p>
+    <div id="title-enter">CLICK TO ENTER</div>
+    <p id="title-credits"><a href="credits.html" onclick="event.stopPropagation()" style="color:#9aa08a;font-size:13px;text-decoration:underline">Credits &amp; image licences</a></p>
+  </div>
+</div>
+
+<script src="bundle.js"></script>
+</body>
+</html>

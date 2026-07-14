@@ -1,0 +1,46 @@
+{
+  "comics": [
+    {
+      "id": "comic1",
+      "title": "McGrot — The Seafield Stink-Off",
+      "image": "comic1-stink-off.jpg",
+      "audio": "audio/comic1.mp3",
+      "npc": {
+        "name": "Big Rab McGuirk",
+        "blurb": "Purveyor o' Bottled Weather",
+        "face": "faces/rab.jpg",
+        "voiceName": "Algenib",
+        "accent": "thick Glaswegian",
+        "build": { "height": 2.1, "girth": 1.4, "headScale": 1.5 }
+      }
+    },
+    {
+      "id": "comic2",
+      "title": "McGrot: Into the Realm of Flesh",
+      "image": "comic2-realm-of-flesh.jpg",
+      "audio": "audio/comic2.mp3",
+      "npc": {
+        "name": "Morag Gulliet",
+        "blurb": "Last Matron o' the Gulliet",
+        "face": "faces/morag.jpg",
+        "voiceName": "Achernar",
+        "accent": "prim Edinburgh Morningside",
+        "build": { "height": 1.55, "girth": 0.7, "headScale": 1.7 }
+      }
+    },
+    {
+      "id": "comic3",
+      "title": "McGrot: Micromanage Me Not",
+      "image": "comic3-micromanage.jpg",
+      "audio": "audio/comic3.mp3",
+      "npc": {
+        "name": "Kenneth Grieve",
+        "blurb": "Regional Efficiency Officer (Self-Appointed)",
+        "face": "faces/kenneth.jpg",
+        "voiceName": "Rasalgethi",
+        "accent": "clipped Aberdonian",
+        "build": { "height": 1.95, "girth": 0.55, "headScale": 1.35 }
+      }
+    }
+  ]
+}
