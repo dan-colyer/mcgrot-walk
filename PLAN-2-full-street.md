@@ -16,10 +16,22 @@ Plan for an **Opus orchestrator** spawning **sonnet subagents**. Written 2026-07
 - **TTS** — `generate-tts.mjs` rewritten: catalog-driven, resumable (`--missing`), per-entry `ttsModel` (50/50 mix of `gemini-2.5-flash-preview-tts` and `gemini-3.1-flash-tts-preview`), progress log. **20/418 clips done** then hit the free-tier daily cap (~20/day). Free tier DOES work in the UK — £0 spent.
 - **Engine D1–D3 (all verified in-browser)**: `npcs.js` catalog-driven spawner (103 NPCs = 100 + 3 v1, alternating sides along the full street, merged body geometry, shared face textures, no per-NPC spotlights); lazy comic textures within 34m; **`proximity-audio.js`** — pooled `PositionalAudio` (≤6), auto-play looping within 18m, inverse-distance falloff, E restarts from 0 + opens overlay. 665 draw calls, 44k tris. `assets.js` loads catalog (manifest fallback for the artifact). `renderer` has `preserveDrawingBuffer` on localhost (so stepFrame screenshots survive the hidden-pane rAF pause).
 
-### Next, in order (Dan's steer)
-1. **D4 shopfronts** — real Leith Walk shop windows (photo-sourced, janky OK). See Workstream B/D4 below; geograph API still UNVERIFIED — the curating agent must check it (fallback Wikimedia Commons "Leith Walk").
-2. **E deploy** — `build.mjs --site` → `dist-site/`, then new PUBLIC repo under `dan-colyer` + Pages. Needs `gh` auth for that account; **`.env.local` must never be committed**. Visible Credits link (face + shopfront attribution).
-3. **Daily trickle** (ongoing): rerun `set -a; source .env.local; set +a; node scripts/generate-tts.mjs` each day for +~20 audio; and transcribe the next batches — **`assignments.json` already holds all 21 batches; batches 5–20 (315 comics) are ready to run** as-is (spawn sonnet agents with the same per-batch prompt, then `merge-batches.mjs` + re-run the face-assignment cycle patch). Do them in cost-conscious waves, not all 16 at once.
+### D4 shopfronts + E deploy — DONE (2026-07-14)
+
+**LIVE: https://dan-colyer.github.io/mcgrot-walk/** (public repo `dan-colyer/mcgrot-walk`, Pages from the `gh-pages` branch).
+
+- **D4** — 49 CC-licensed Leith Walk shopfronts from **Wikimedia Commons** (NOT geograph: its API needs a key, i.e. an account. Most Commons Leith Walk photos are geograph mirrors anyway, so we get CC BY-SA without a key). `fetch-shopfronts.mjs` → `build-shopfront-atlas.mjs` → `src/shopfronts.js`: 562 quads on street-facing façades, one draw call, graded into the murk.
+- **E** — `node build.mjs --site` → `dist-site/` (52MB; ships the atlas only, never `shopfronts/raw|tiles`). Generates `credits.html` from the two `credits.json` files + links it off the title card. `.nojekyll` included.
+
+Scar tissue from D4/E — do not re-learn:
+- ffmpeg's **`tile` filter silently truncates** an image-sequence input (26 of 35 tiles came out black). Use explicit `-i` per cell + `xstack` with pixel offsets.
+- Commons `iiurlwidth` must be **below the source width** (use 800). Ask for more and the API hands back the *full-size original* URL, which `upload.wikimedia.org` refuses with 429 — looks exactly like rate-limiting but isn't.
+- Bursting Commons **does** 429 for real. Throttle (~1.2s) + descriptive UA. Raw downloads are cached in `assets/shopfronts/raw/` (gitignored) so re-cropping never re-hits the network.
+- Flipping a quad's outward normal without **reversing its vertex winding** renders every shopfront on one side of the street mirror-reversed (text backwards). Walk the edge in the direction whose winding normal already points outward.
+
+### Next, in order
+1. **Daily trickle** (ongoing): rerun `set -a; source .env.local; set +a; node scripts/generate-tts.mjs` each day for +~20 audio (20/418 done; the other 398 vendors are silent buskers until their clip exists). Transcribe the next batches — **`assignments.json` holds all 21; batches 5–20 (315 comics) are ready to run** as-is (sonnet agents → `merge-batches.mjs` → re-run the face-assignment cycle patch). Cost-conscious waves, not all 16 at once.
+2. **Redeploy after each wave**: `npm run bundle && node build.mjs --site`, then push `dist-site/` to `gh-pages` (it has its own nested git repo; force-push).
 
 ### Future: ingestion system (once 418 is complete)
 A one-command (or watched) pipeline: diff `~/Desktop/screenshots/mcgrot` vs `catalog.json` → `prep-comics.mjs` (adds new hash ids) → spawn a transcription agent for the new ids → assign face + ttsModel → `generate-tts.mjs` (trickle) → `build.mjs --site` → push. Design it so the friend just drops files in.

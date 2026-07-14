@@ -1,0 +1,1877 @@
+[
+  {
+    "slug": "165a-leith-walk-edinburgh",
+    "identity": null,
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.33,
+            0.06
+          ],
+          "tr": [
+            0.89,
+            0.24
+          ],
+          "br": [
+            0.89,
+            0.85
+          ],
+          "bl": [
+            0.33,
+            0.89
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.3,
+        "storeys": 2,
+        "confidence": 0.55
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Corner building; shadowed sandstone corner pier (far left, steeply oblique) is the curved joint to the side street and is discarded. Ground floor shuttered/graffitied, no legible shop identity beyond the '165A' address plate."
+  },
+  {
+    "slug": "albert-place-leith-walk-geograph-org-uk-8262911",
+    "identity": null,
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.66,
+            0.19
+          ],
+          "tr": [
+            0.79,
+            0.28
+          ],
+          "br": [
+            0.79,
+            0.62
+          ],
+          "bl": [
+            0.66,
+            0.68
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.3,
+        "storeys": 3,
+        "confidence": 0.45
+      },
+      {
+        "corners": {
+          "tl": [
+            0.79,
+            0.32
+          ],
+          "tr": [
+            1,
+            0.36
+          ],
+          "br": [
+            1,
+            0.7
+          ],
+          "bl": [
+            0.79,
+            0.73
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.48,
+        "storeys": 2,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Wide oblique street shot dominated by a long multi-building terrace too distant, vehicle-obstructed and multi-depth to rectify reliably (skipped). Extracted two faces at the Albert Place corner: the tenement's 'Otherworld' shop face and the adjacent 'Pascal & Co' building, both receding down Albert Place at a raking angle."
+  },
+  {
+    "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.15,
+            0.17
+          ],
+          "tr": [
+            0.79,
+            0.18
+          ],
+          "br": [
+            0.79,
+            0.78
+          ],
+          "bl": [
+            0.15,
+            0.78
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.3,
+        "storeys": 4,
+        "confidence": 0.8
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Near-frontal shot, minimal skew. Ground floor shuttered and heavily graffitied, no legible shop identity. Right edge stops at the party wall with the taller pilastered neoclassical building next door (see next photo, excluded here)."
+  },
+  {
+    "slug": "city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.14,
+            0.185
+          ],
+          "tr": [
+            0.89,
+            0.18
+          ],
+          "br": [
+            0.89,
+            0.79
+          ],
+          "bl": [
+            0.14,
+            0.79
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.35,
+        "storeys": 3,
+        "confidence": 0.85
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Very frontal, symmetrical pilastered Georgian building (institutional/office in character); central triangular pediment excluded from the top edge in favour of the flanking cornice line. No shop signage, just a small door plaque."
+  },
+  {
+    "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.12,
+            0.21
+          ],
+          "tr": [
+            1,
+            0.22
+          ],
+          "br": [
+            1,
+            0.67
+          ],
+          "bl": [
+            0.12,
+            0.67
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.39,
+        "storeys": 3,
+        "confidence": 0.7
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Long, unusually flat/frontal Georgian terrace block spanning nearly the whole frame; roofline is near-constant across the width. Traffic lights, wires and a lamp post cross the facade but don't obscure the wall. No shopfronts, purely residential/office fenestration. Right edge cut by frame, wall continues off-photo."
+  },
+  {
+    "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
+    "identity": "The Street",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.13,
+            0.15
+          ],
+          "tr": [
+            1,
+            0.24
+          ],
+          "br": [
+            1,
+            0.84
+          ],
+          "bl": [
+            0.13,
+            0.83
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.31,
+        "storeys": 4,
+        "confidence": 0.6
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Corner building; the glazed rounded shopfront corner at far left (x<0.12) is the curved joint and is discarded. Remaining flat elevation carries both 'THE STREET' bar and 'Neilsons' solicitors ground-floor units under one continuous roofline/window rhythm, receding to the right toward the frame edge."
+  },
+  {
+    "slug": "city-of-edinburgh-4-picardy-place-edinburgh-2025-09-19-11-26",
+    "identity": "The Wine House 1821",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.14,
+            0.15
+          ],
+          "tr": [
+            0.85,
+            0.14
+          ],
+          "br": [
+            0.85,
+            0.73
+          ],
+          "bl": [
+            0.14,
+            0.73
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.32,
+        "storeys": 4,
+        "confidence": 0.7
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Frontal shot, clean edges either side (Neilsons to the left, Taco Bell's building to the right, both excluded). Legible 'THE WINE HOUSE 1821' fascia."
+  },
+  {
+    "slug": "city-of-edinburgh-6-picardy-place-edinburgh-2025-09-19-11-23",
+    "identity": "Taco Bell",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.2,
+            0.21
+          ],
+          "tr": [
+            0.86,
+            0.2
+          ],
+          "br": [
+            0.86,
+            0.76
+          ],
+          "bl": [
+            0.2,
+            0.77
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.38,
+        "storeys": 4,
+        "confidence": 0.55
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "The Wine House (left) and a pale rendered building (right) bound this unit; seam positions carry moderate uncertainty from stonework colour change alone. Legible 'TACO BELL' fascia and bell logo."
+  },
+  {
+    "slug": "city-of-edinburgh-8-picardy-place-edinburgh-2025-09-19-11-23",
+    "identity": "Tesco Express",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.11,
+            0.19
+          ],
+          "tr": [
+            0.86,
+            0.24
+          ],
+          "br": [
+            0.86,
+            0.84
+          ],
+          "bl": [
+            0.11,
+            0.84
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.34,
+        "storeys": 4,
+        "confidence": 0.65
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Fairly frontal; roofline has a mild rightward downward slope (building recedes slightly to the right). Legible 'TESCO express' fascia."
+  },
+  {
+    "slug": "clock-spey-lounge-geograph-org-uk-7579658",
+    "identity": "The Spey Lounge",
+    "isCornerBuilding": false,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": false,
+    "notes": "Close-up of a hanging pub sign/clock shot at a steep upward angle; the only walls in frame (dark blue building at right, pale building behind) are edge-on or too small/obscured for rectification. No usable plane."
+  },
+  {
+    "slug": "croall-place-geograph-org-uk-6310908",
+    "identity": "Iceland / RCP shops; Jet2holidays billboard on gable",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.17,
+            0.19
+          ],
+          "tr": [
+            0.51,
+            0.18
+          ],
+          "br": [
+            0.52,
+            0.85
+          ],
+          "bl": [
+            0.17,
+            0.82
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.28,
+        "storeys": 4,
+        "confidence": 0.55
+      },
+      {
+        "corners": {
+          "tl": [
+            0.53,
+            0.16
+          ],
+          "tr": [
+            0.8,
+            0.16
+          ],
+          "br": [
+            0.8,
+            0.85
+          ],
+          "bl": [
+            0.53,
+            0.86
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.15,
+        "storeys": 4,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Corner building at Croall Place junction; left plane is the shop frontage (Iceland/RCP), right plane is the gable-end wall dominated by the Jet2holidays digital billboard."
+  },
+  {
+    "slug": "derelict-business-premises-picardy-place-geograph-org-uk-791",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.39,
+            0.05
+          ],
+          "tr": [
+            0.99,
+            0.02
+          ],
+          "br": [
+            0.99,
+            0.93
+          ],
+          "bl": [
+            0.39,
+            0.9
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.6,
+        "storeys": 2,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Derelict shuttered/boarded shopfront under a Georgian tenement wall; top of building is likely cropped so only ~2 storeys are confidently visible. Recessed alcove to the left (ladder/graffiti) excluded as too oblique."
+  },
+  {
+    "slug": "desi-pakwan-geograph-org-uk-7579664",
+    "identity": "Desi Pakwan",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.16,
+            0.05
+          ],
+          "tr": [
+            0.36,
+            0.2
+          ],
+          "br": [
+            0.38,
+            0.58
+          ],
+          "bl": [
+            0.16,
+            0.73
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.66,
+        "storeys": 2,
+        "confidence": 0.5
+      },
+      {
+        "corners": {
+          "tl": [
+            0.63,
+            0.1
+          ],
+          "tr": [
+            0.97,
+            0.02
+          ],
+          "br": [
+            0.97,
+            0.7
+          ],
+          "bl": [
+            0.63,
+            0.58
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 1,
+        "storeys": 1,
+        "confidence": 0.55
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Chamfered corner entrance (blue door under oriel bay, 'Crown Street' sign) discarded between the two planes. Right plane is dominated by one large arched sash window with no visible storey above."
+  },
+  {
+    "slug": "edinburgh-1-elm-row",
+    "identity": null,
+    "isCornerBuilding": true,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": false,
+    "notes": "Fully bow-fronted (convex curved) corner building — pilasters/columns follow the curve continuously with no genuinely flat rectangular section, so no safe homography region exists."
+  },
+  {
+    "slug": "edinburgh-14-elm-row",
+    "identity": "Rimmers Music",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.19,
+            0.04
+          ],
+          "tr": [
+            0.9,
+            0
+          ],
+          "br": [
+            0.9,
+            0.93
+          ],
+          "bl": [
+            0.16,
+            0.6
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.46,
+        "storeys": 4,
+        "confidence": 0.65
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Fairly frontal terrace shot; top storey is close to/possibly cropped by the frame top. Thin receding sliver of neighbouring cafe at far left excluded as too oblique."
+  },
+  {
+    "slug": "edinburgh-15-16-17-elm-row",
+    "identity": "Olimpos Kebab & Pizza, Filos Cafe, William Hill",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.01,
+            0.33
+          ],
+          "tr": [
+            0.87,
+            0
+          ],
+          "br": [
+            0.87,
+            0.88
+          ],
+          "bl": [
+            0.01,
+            0.97
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.36,
+        "storeys": 4,
+        "confidence": 0.7
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Long straight terrace row shot with camera near the right (Rimmers Music) end, receding left; roofline and left edge both cropped by the frame."
+  },
+  {
+    "slug": "edinburgh-18-19-elm-row",
+    "identity": "Valvona & Crolla",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.09,
+            0.14
+          ],
+          "tr": [
+            0.9,
+            0
+          ],
+          "br": [
+            0.9,
+            0.78
+          ],
+          "bl": [
+            0.09,
+            1
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.35,
+        "storeys": 4,
+        "confidence": 0.72
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Iconic Valvona & Crolla deli frontage (est. 1934), clean terrace shot, William Hill next door on same flat wall."
+  },
+  {
+    "slug": "edinburgh-2-3-elm-row",
+    "identity": "Elm Row Cafe & Diner",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.11,
+            0.29
+          ],
+          "tr": [
+            0.86,
+            0.02
+          ],
+          "br": [
+            0.86,
+            0.79
+          ],
+          "bl": [
+            0.11,
+            0.92
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.32,
+        "storeys": 4,
+        "confidence": 0.7
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Clean terrace shot with arched shopfront doorways. Far right edge (~0.9-1.0) shows the start of the curved 1-Elm-Row corner building — deliberately excluded, see that photo's entry."
+  },
+  {
+    "slug": "edinburgh-20-21-22-elm-row-post-office",
+    "identity": "Greggs / Elm Row Post Office",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.09,
+            0.02
+          ],
+          "tr": [
+            0.87,
+            0.03
+          ],
+          "br": [
+            0.87,
+            0.88
+          ],
+          "bl": [
+            0.09,
+            0.87
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.37,
+        "storeys": 4,
+        "confidence": 0.78
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Near-frontal shot with minimal perspective skew, best-quality plane of the batch. Neighbouring buildings visible at both cropped edges (cream arch-doored building left, Valvona & Crolla right) excluded."
+  },
+  {
+    "slug": "edinburgh-23-elm-row",
+    "identity": "Joseph Pearce",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.12,
+            0.14
+          ],
+          "tr": [
+            0.66,
+            0.11
+          ],
+          "br": [
+            0.67,
+            0.79
+          ],
+          "bl": [
+            0.12,
+            0.86
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.48,
+        "storeys": 3,
+        "confidence": 0.55
+      },
+      {
+        "corners": {
+          "tl": [
+            0.74,
+            0.2
+          ],
+          "tr": [
+            0.93,
+            0.14
+          ],
+          "br": [
+            0.93,
+            0.72
+          ],
+          "bl": [
+            0.74,
+            0.78
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.25,
+        "storeys": 4,
+        "confidence": 0.35
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Grand pedimented/columned pub frontage (plane 1) plus a plainer flank wall around the corner (plane 2); streetlamp pole partially obscures the left edge, curved/angled joint between the two discarded."
+  },
+  {
+    "slug": "edinburgh-4-elm-row",
+    "identity": "Ladbrokes",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.15,
+            0.04
+          ],
+          "tr": [
+            0.95,
+            0.06
+          ],
+          "br": [
+            0.97,
+            0.97
+          ],
+          "bl": [
+            0.13,
+            0.94
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.4,
+        "storeys": 3,
+        "confidence": 0.6
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Fairly clean straight-on 3-storey Georgian frontage; left edge is party wall with neighbouring shop (partly cropped/dark), right edge estimated near scaffolding pole, some uncertainty there."
+  },
+  {
+    "slug": "edinburgh-5-6-elm-row",
+    "identity": "Vinyl Villains",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.24,
+            0.1
+          ],
+          "tr": [
+            0.7,
+            0.06
+          ],
+          "br": [
+            0.72,
+            0.95
+          ],
+          "bl": [
+            0.2,
+            0.98
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.46,
+        "storeys": 3,
+        "confidence": 0.4
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Strong raking angle down the terrace; only the Vinyl Villains building's own bay is included, boundaries with the pub (left) and Ladbrokes building (right, see image 20) are estimated from stonework colour change, not certain."
+  },
+  {
+    "slug": "edinburgh-9-10-11-elm-row",
+    "identity": "Jolly Licensed Restaurant",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.06
+          ],
+          "tr": [
+            0.83,
+            0.02
+          ],
+          "br": [
+            0.84,
+            0.97
+          ],
+          "bl": [
+            0.01,
+            1
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.38,
+        "storeys": 4,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Raking shot down a long 4-storey terrace covering Pharmacy Lindsay & Gilmour and Jolly restaurant; excludes the visually distinct darker '7-8 Elm Row' building sliver at the far right edge, which is a separate structure and too narrow/oblique here to plane reliably."
+  },
+  {
+    "slug": "edinburgh-edinburgh-24a-25-26-27-greenside-place-20140421100",
+    "identity": "Theatre Royal",
+    "isCornerBuilding": false,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": false,
+    "notes": "Extreme raking upward angle capturing only the diagonal cornice/parapet band with jester statues and greenery; no ground floor, no pavement, no rectifiable vertical wall visible at all."
+  },
+  {
+    "slug": "edinburgh-leith-walk-1-baxter-s-place",
+    "identity": "Courtyard by Marriott, 1 Baxter's Place",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.09,
+            0.22
+          ],
+          "tr": [
+            0.82,
+            0.09
+          ],
+          "br": [
+            0.83,
+            0.79
+          ],
+          "bl": [
+            0.03,
+            0.85
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.4,
+        "storeys": 5,
+        "confidence": 0.4
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Grand Georgian mansion block; roofline geometry and the 'Baxter's Place' street sign near x=0.83 suggest the building turns a corner there, so that narrow return is excluded. Ground-floor base is estimated behind railings/hedges/umbrella occlusion, so bottom corners are approximate. Includes attic dormer level as a 5th storey band."
+  },
+  {
+    "slug": "edinburgh-leith-walk-4-5-baxter-s-place",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.03,
+            0.17
+          ],
+          "tr": [
+            0.97,
+            0.09
+          ],
+          "br": [
+            0.95,
+            0.9
+          ],
+          "bl": [
+            0.05,
+            0.92
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.55,
+        "storeys": 4,
+        "confidence": 0.65
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Near-fronto-parallel Georgian townhouse, no shop (residential door + sunken basement behind railings). Bottom edge estimated at the top of the entrance steps/basement area, ahead of an unrelated public stair in the extreme foreground."
+  },
+  {
+    "slug": "edinburgh-townscape-leith-walk-at-hing-sing-chinese-supermar",
+    "identity": "Hing Sing Chinese Supermarket",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.1
+          ],
+          "tr": [
+            0.33,
+            0.2
+          ],
+          "br": [
+            0.33,
+            0.62
+          ],
+          "bl": [
+            0,
+            0.78
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.55,
+        "storeys": 2,
+        "confidence": 0.25
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Street townscape shot looking almost along the row rather than facing it; the shop is legible but severely foreshortened into a thin wedge on the left, so the far (right) end of the quadrilateral would rectify with heavy stretching/low resolution. Low confidence reflects warp quality, not identity legibility."
+  },
+  {
+    "slug": "first-shop-in-leith-geograph-org-uk-4719930",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.01
+          ],
+          "tr": [
+            0.97,
+            0.02
+          ],
+          "br": [
+            0.97,
+            0.6
+          ],
+          "bl": [
+            0.02,
+            0.65
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.75,
+        "storeys": 2,
+        "confidence": 0.6
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Fairly clean fronto-parallel shot across the street of a terrace row (dry-cleaner, vacant unit with ironic upside-down 'good sign shop' banner, and a restaurant with outdoor seating). Top of building is cropped by the frame at roughly one storey up, so only a partial upper floor is included; storeys count reflects the visible crop only."
+  },
+  {
+    "slug": "former-leith-central-station-and-the-central-bar",
+    "identity": "The Central Bar",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.3,
+            0.21
+          ],
+          "tr": [
+            0.83,
+            0.08
+          ],
+          "br": [
+            0.84,
+            0.73
+          ],
+          "bl": [
+            0.3,
+            0.83
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.6,
+        "storeys": 2,
+        "confidence": 0.55
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Classic corner building: former Leith Central Station with clock tower on a curved corner. Only the flatter right-hand elevation (The Central Bar, arched windows above) is planed; the curved/canted corner and the narrow receding elevation to its left (boarded 'TO LET' unit, steeply raking, under 10% of frame width) are excluded as unreliable."
+  },
+  {
+    "slug": "iona-street-leith-walk-corner-geograph-org-uk-7165257",
+    "identity": null,
+    "isCornerBuilding": true,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": true,
+    "notes": "Corner tenement with canted bay windows is visible in the background but the entire ground floor and pavement junction is blocked by a construction excavator, site fencing, market clothes rails and pedestrians, so no reliable bottom corners can be placed. A tiny sliver of a different shopfront (white awning, phone number) is cut off at the right frame edge and is unusable."
+  },
+  {
+    "slug": "joseph-pearce-s-elm-row-geograph-org-uk-2590160",
+    "identity": "Joseph Pearce (Wine & Spirit Merchant)",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.05,
+            0.15
+          ],
+          "tr": [
+            0.76,
+            0.2
+          ],
+          "br": [
+            0.78,
+            0.85
+          ],
+          "bl": [
+            0.04,
+            0.93
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.45,
+        "storeys": 3,
+        "confidence": 0.4
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Grand pedimented Georgian front near a street corner (Montgomery St sign visible); roofline rises to a central pediment which may indicate a gentle bow rather than a truly flat wall - treated as one oblique flat plane but geometry is uncertain, discard the golden-stone building to the right which is a different structure."
+  },
+  {
+    "slug": "macnaughtan-s-bookshop-leith-walk-geograph-org-uk-1837405",
+    "identity": "McNaughtan's Bookshop",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.6,
+            0.03
+          ],
+          "tr": [
+            0.97,
+            0.05
+          ],
+          "br": [
+            0.97,
+            0.75
+          ],
+          "bl": [
+            0.58,
+            0.7
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 1,
+        "storeys": 1,
+        "confidence": 0.3
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": false,
+    "notes": "Basement-level bow-fronted shopfront almost entirely behind ornate area railings; only the right-hand 'BOOKSHOP' bay is close to flat, left side ('...TAN'S') curves round the bow and is discarded. Top of building not visible above the railings."
+  },
+  {
+    "slug": "mcnaughtan-s-book-shop-and-gallery-geograph-org-uk-7461681",
+    "identity": "McNaughtan's Bookshop",
+    "isCornerBuilding": true,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": true,
+    "notes": "Extreme wide-angle view of the same curved bow-front basement shop; dominated by railings, stairs, sandwich boards and a stallholder awning - no clean flat rectangle available."
+  },
+  {
+    "slug": "mcnaughtan-s-book-shop-and-gallery-geograph-org-uk-7461682",
+    "identity": "McNaughtan's Bookshop",
+    "isCornerBuilding": true,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": true,
+    "notes": "Same bow-fronted basement shop from a very oblique, wide-angle viewpoint; stairs, railings and a red umbrella/stall clutter the frame - no usable flat plane."
+  },
+  {
+    "slug": "outside-the-boundary-bar-geograph-org-uk-4719964",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [],
+    "treatment": 3,
+    "hasUpper": true,
+    "notes": "Frame is dominated by a foreground A-board sign and pavement; only a thin, obscured strip of the pub's windows is visible at the very top, no usable shopfront or wall rectangle. Building identity assumed from filename only, not legible in-shot."
+  },
+  {
+    "slug": "robbies-bar-leith-walk-01",
+    "identity": "Robbie's Bar",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.02
+          ],
+          "tr": [
+            0.32,
+            0.07
+          ],
+          "br": [
+            0.32,
+            0.9
+          ],
+          "bl": [
+            0.01,
+            0.87
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.28,
+        "storeys": 4,
+        "confidence": 0.5
+      },
+      {
+        "corners": {
+          "tl": [
+            0.52,
+            0.06
+          ],
+          "tr": [
+            0.99,
+            0.09
+          ],
+          "br": [
+            0.99,
+            0.92
+          ],
+          "bl": [
+            0.51,
+            0.89
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.35,
+        "storeys": 4,
+        "confidence": 0.55
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Corner pub at Leith Walk / Iona Street, full height visible. Left plane is the Iona Street elevation (two windows per floor), right plane is the Leith Walk elevation with 'ROBBIE'S' fascia; curved corner bay around x=0.32-0.52 discarded."
+  },
+  {
+    "slug": "robbies-bar-leith-walk-02",
+    "identity": "Robbie's Bar",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.01,
+            0
+          ],
+          "tr": [
+            0.3,
+            0.07
+          ],
+          "br": [
+            0.3,
+            0.88
+          ],
+          "bl": [
+            0,
+            0.82
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.78,
+        "storeys": 2,
+        "confidence": 0.55
+      },
+      {
+        "corners": {
+          "tl": [
+            0.55,
+            0.02
+          ],
+          "tr": [
+            0.99,
+            0.05
+          ],
+          "br": [
+            0.99,
+            0.95
+          ],
+          "bl": [
+            0.55,
+            0.9
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.82,
+        "storeys": 2,
+        "confidence": 0.6
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Closer ground-level view of the same corner pub; top of building is cropped, only one upper storey partly visible. 'IONA STREET' sign confirms the corner location around x=0.32-0.52, which is discarded."
+  },
+  {
+    "slug": "robbies-bar-leith-walk-03",
+    "identity": "Robbie's Bar",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0,
+            0.03
+          ],
+          "tr": [
+            0.28,
+            0.1
+          ],
+          "br": [
+            0.28,
+            0.85
+          ],
+          "bl": [
+            0,
+            0.8
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.75,
+        "storeys": 2,
+        "confidence": 0.55
+      },
+      {
+        "corners": {
+          "tl": [
+            0.55,
+            0.05
+          ],
+          "tr": [
+            0.98,
+            0.08
+          ],
+          "br": [
+            0.98,
+            0.9
+          ],
+          "bl": [
+            0.55,
+            0.86
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.8,
+        "storeys": 2,
+        "confidence": 0.6
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Wider version of the same corner pub shot with more pavement visible; the curb line confirms the building corner at roughly x=0.40-0.50, discarded as the curved joint."
+  },
+  {
+    "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0,
+            0.19
+          ],
+          "tr": [
+            1,
+            0.09
+          ],
+          "br": [
+            1,
+            0.79
+          ],
+          "bl": [
+            0,
+            0.8
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.31,
+        "storeys": 4,
+        "confidence": 0.75
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Near front-on shot of a straight tenement terrace with several shops (Sunset Nails, Gents Hair Stylist/Peluquero de Hombres, Salerooms, Inner(city)); minimal skew, full height visible, good candidate for a clean warp."
+  },
+  {
+    "slug": "shops-leith-walk-geograph-org-uk-7098450",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.08
+          ],
+          "tr": [
+            0.98,
+            0.19
+          ],
+          "br": [
+            0.98,
+            0.66
+          ],
+          "bl": [
+            0.02,
+            0.8
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.25,
+        "storeys": 4,
+        "confidence": 0.35
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Long oblique street run of roughly ten shopfronts (Dee's, Harburn Hobbies, Vem Barbers...) with a JCB digger and construction fencing obscuring most of the ground floor; strong perspective recession to the right reduces confidence in the corner picks."
+  },
+  {
+    "slug": "shops-leith-walk-geograph-org-uk-7895672",
+    "identity": "Turkish Supermarket / Little Havana / The Pipe Shop",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.04
+          ],
+          "tr": [
+            0.39,
+            0.02
+          ],
+          "br": [
+            0.39,
+            0.79
+          ],
+          "bl": [
+            0.02,
+            0.84
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.32,
+        "storeys": 4,
+        "confidence": 0.6
+      },
+      {
+        "corners": {
+          "tl": [
+            0.39,
+            0.02
+          ],
+          "tr": [
+            0.69,
+            0.03
+          ],
+          "br": [
+            0.69,
+            0.8
+          ],
+          "bl": [
+            0.39,
+            0.79
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.35,
+        "storeys": 4,
+        "confidence": 0.7
+      },
+      {
+        "corners": {
+          "tl": [
+            0.69,
+            0.03
+          ],
+          "tr": [
+            1,
+            0.04
+          ],
+          "br": [
+            1,
+            0.79
+          ],
+          "bl": [
+            0.69,
+            0.8
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.28,
+        "storeys": 4,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Straight terrace row of three adjacent buildings (sandstone tenement, glass-fronted supermarket block, partially cropped tenement at right edge); no corner wrap present."
+  },
+  {
+    "slug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
+    "identity": "Spey Lounge",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0,
+            0
+          ],
+          "tr": [
+            0.46,
+            0
+          ],
+          "br": [
+            0.47,
+            0.75
+          ],
+          "bl": [
+            0.02,
+            0.72
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.63,
+        "storeys": 2,
+        "confidence": 0.5
+      },
+      {
+        "corners": {
+          "tl": [
+            0.6,
+            0.155
+          ],
+          "tr": [
+            1,
+            0.1
+          ],
+          "br": [
+            1,
+            0.5
+          ],
+          "bl": [
+            0.6,
+            0.545
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.2,
+        "storeys": 5,
+        "confidence": 0.4
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Corner pub; roofline is cropped by the frame top, so only the ground floor plus a thin sliver of first floor is usable. Second plane is a distant tenement across the street, partly obscured by a parked car, hedge and street signage — low confidence, small in frame."
+  },
+  {
+    "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
+    "identity": "Frangos / Barnardo's Furniture",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.18,
+            0.12
+          ],
+          "tr": [
+            0.97,
+            0.09
+          ],
+          "br": [
+            0.97,
+            0.83
+          ],
+          "bl": [
+            0.18,
+            0.85
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.51,
+        "storeys": 2,
+        "confidence": 0.7
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Fairly frontal straight terrace; roofline steps between a gable and a lower parapet but the wall itself stays flat and continuous. Thin, heavily oblique building fragments at both frame edges were excluded as unusable."
+  },
+  {
+    "slug": "stead-s-place-leith-walk-geograph-org-uk-7092338",
+    "identity": null,
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0,
+            0
+          ],
+          "tr": [
+            0.65,
+            0.3
+          ],
+          "br": [
+            0.65,
+            0.36
+          ],
+          "bl": [
+            0,
+            0.62
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.55,
+        "storeys": 2,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 2,
+    "hasUpper": true,
+    "notes": "Long, low former commercial/industrial building shot in extreme raking perspective down the street; shopfront is shuttered and covered in graffiti, roofline cropped at the near (left) end. Far end of the plane is small and imprecise; distant buildings across the construction site were excluded as unusable."
+  },
+  {
+    "slug": "tesco-express-5464116255",
+    "identity": "Tesco Express",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.06,
+            0.02
+          ],
+          "tr": [
+            0.97,
+            0.03
+          ],
+          "br": [
+            0.97,
+            0.88
+          ],
+          "bl": [
+            0.06,
+            0.87
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 1,
+        "storeys": 1,
+        "confidence": 0.85
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": false,
+    "notes": "Very frontal close-up of the Tesco Express fascia; no upper-storey windows visible above the parapet-level blank wall, so treated as shopfront-only."
+  },
+  {
+    "slug": "tesco-express-5464119321",
+    "identity": "Tesco Express",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.08,
+            0.14
+          ],
+          "tr": [
+            0.74,
+            0.115
+          ],
+          "br": [
+            0.74,
+            0.855
+          ],
+          "bl": [
+            0.08,
+            0.875
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.92,
+        "storeys": 1,
+        "confidence": 0.7
+      },
+      {
+        "corners": {
+          "tl": [
+            0.755,
+            0.12
+          ],
+          "tr": [
+            0.97,
+            0.05
+          ],
+          "br": [
+            0.97,
+            0.72
+          ],
+          "bl": [
+            0.755,
+            0.83
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.85,
+        "storeys": 1,
+        "confidence": 0.4
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Same Tesco Express as the previous image, wider angle showing the unit continues around a corner to a recessed side entrance, with a taller grey-stone tenement (balcony visible top-right) rising above — mostly cropped out of frame."
+  },
+  {
+    "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
+    "identity": "The Dog House",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.02,
+            0.02
+          ],
+          "tr": [
+            0.28,
+            0.1
+          ],
+          "br": [
+            0.29,
+            0.62
+          ],
+          "bl": [
+            0.02,
+            0.58
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.5,
+        "storeys": 2,
+        "confidence": 0.45
+      },
+      {
+        "corners": {
+          "tl": [
+            0.3,
+            0
+          ],
+          "tr": [
+            0.97,
+            0
+          ],
+          "br": [
+            0.97,
+            0.8
+          ],
+          "bl": [
+            0.3,
+            0.65
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.6,
+        "storeys": 2,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Corner pub with canted frontage; roofline cropped by the frame top over the main BAR face. Left side-street wall is more oblique/foreshortened — lower confidence."
+  },
+  {
+    "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+    "identity": "The Harp & Castle",
+    "isCornerBuilding": true,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0,
+            0.055
+          ],
+          "tr": [
+            0.295,
+            0.06
+          ],
+          "br": [
+            0.295,
+            0.63
+          ],
+          "bl": [
+            0,
+            0.6
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.28,
+        "storeys": 5,
+        "confidence": 0.5
+      },
+      {
+        "corners": {
+          "tl": [
+            0.295,
+            0.06
+          ],
+          "tr": [
+            0.455,
+            0.055
+          ],
+          "br": [
+            0.455,
+            0.65
+          ],
+          "bl": [
+            0.295,
+            0.65
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.32,
+        "storeys": 4,
+        "confidence": 0.55
+      },
+      {
+        "corners": {
+          "tl": [
+            0.48,
+            0.05
+          ],
+          "tr": [
+            0.63,
+            0.045
+          ],
+          "br": [
+            0.63,
+            0.62
+          ],
+          "bl": [
+            0.48,
+            0.65
+          ]
+        },
+        "kind": "corner",
+        "groundFrac": 0.3,
+        "storeys": 4,
+        "confidence": 0.5
+      },
+      {
+        "corners": {
+          "tl": [
+            0.655,
+            0.1
+          ],
+          "tr": [
+            0.97,
+            0.035
+          ],
+          "br": [
+            0.97,
+            0.62
+          ],
+          "bl": [
+            0.655,
+            0.5
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.42,
+        "storeys": 3,
+        "confidence": 0.5
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "The Harp & Castle has a canted corner entrance (two fascia faces with directional arrow signage converging on a central door) — treated as two corner planes with the joint discarded. Flanking grey tenement (left) and red-brick Bowl & Noodle building (right) are separate adjacent buildings on the same block, added as terrace planes; the left tenement's ground floor is largely obscured by a hedge and a foreground sign."
+  },
+  {
+    "slug": "valvona-and-crolla-on-elm-row-edinburgh-geograph-org-uk-3907",
+    "identity": "Valvona & Crolla",
+    "isCornerBuilding": false,
+    "planes": [
+      {
+        "corners": {
+          "tl": [
+            0.4,
+            0.2
+          ],
+          "tr": [
+            0.98,
+            0.02
+          ],
+          "br": [
+            0.98,
+            0.92
+          ],
+          "bl": [
+            0.4,
+            0.55
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.62,
+        "storeys": 2,
+        "confidence": 0.45
+      },
+      {
+        "corners": {
+          "tl": [
+            0.155,
+            0.32
+          ],
+          "tr": [
+            0.335,
+            0.29
+          ],
+          "br": [
+            0.335,
+            0.52
+          ],
+          "bl": [
+            0.155,
+            0.55
+          ]
+        },
+        "kind": "terrace",
+        "groundFrac": 0.3,
+        "storeys": 4,
+        "confidence": 0.35
+      }
+    ],
+    "treatment": 1,
+    "hasUpper": true,
+    "notes": "Shot in extreme raking perspective down Elm Row; near end (right) is the legible Valvona & Crolla shopfront, far end merges into the same terrace continuing toward the Post Office further down. Second plane is a small, distant ornate building in the background — low resolution/confidence, partly obscured by the postbox and pedestrians."
+  }
+]

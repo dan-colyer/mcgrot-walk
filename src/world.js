@@ -209,6 +209,7 @@ function makeNearestStreetPoint(streetLine) {
   return function nearestStreetPoint(x, z) {
     let best = null;
     let bestDist = Infinity;
+    let bestTangent = null;
     for (let i = 0; i < streetLine.length - 1; i++) {
       const [ax, az] = streetLine[i];
       const [bx, bz] = streetLine[i + 1];
@@ -223,9 +224,15 @@ function makeNearestStreetPoint(streetLine) {
       if (dist < bestDist) {
         bestDist = dist;
         best = [px, pz];
+        // The closest segment's direction. Callers need it to tell a frontage
+        // that runs ALONG the street from a chamfered corner that cuts across
+        // it at ~45° — the real Leith Walk junctions (Robbie's, the Harp &
+        // Castle) put the pub door on that chamfer.
+        const len = Math.sqrt(lenSq);
+        bestTangent = len > 0 ? [dx / len, dz / len] : [0, 1];
       }
     }
-    return { point: best, distance: bestDist };
+    return { point: best, distance: bestDist, tangent: bestTangent };
   };
 }
 

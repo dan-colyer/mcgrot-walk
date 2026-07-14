@@ -114,9 +114,21 @@ async function buildSite() {
 
 function renderCredits() {
   const read = (p) => (existsSync(join(root, p)) ? JSON.parse(readFileSync(join(root, p), 'utf8')) : {});
-  const shopfronts = read('assets/shopfronts/credits.json');
+  const credits = read('assets/shopfronts/credits.json');
+  const atlas = read('assets/shopfronts/atlas.json');
   const faces = read('assets/faces/credits.json');
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+
+  // Credit the photographs that ACTUALLY SHIP, not everything ever fetched.
+  // The rectify → cull pipeline drops whole photos (unusable planes, sky, duds),
+  // so credits.json over-lists. Derive the roll from the atlas's own tiles, and
+  // note that AI-derived tiles carry no photo attribution.
+  const usedSlugs = atlas.tiles
+    ? [...new Set(atlas.tiles.filter((t) => !t.generated).map((t) => t.slug))].sort()
+    : Object.keys(credits);
+  const shopfronts = Object.fromEntries(
+    usedSlugs.filter((s) => credits[s]).map((s) => [s, credits[s]])
+  );
 
   const shopRows = Object.entries(shopfronts).map(([slug, c]) =>
     `<li><a href="${esc(c.pageUrl)}">${esc(c.title)}</a> — ${esc(c.author)} — <em>${esc(c.license)}</em></li>`
@@ -146,10 +158,15 @@ function renderCredits() {
   <p>McGrot Walk is a non-commercial art project. The comics are by their original author;
      the street geometry is derived from OpenStreetMap.</p>
 
-  <h2>Shopfront photographs (${Object.keys(shopfronts).length})</h2>
-  <p>Real Leith Walk shopfronts, via Wikimedia Commons — many originally from
+  <h2>Façade photographs (${Object.keys(shopfronts).length})</h2>
+  <p>Real Leith Walk buildings, via Wikimedia Commons — many originally from
      <a href="https://www.geograph.org.uk/">geograph.org.uk</a>. Reused under their
      Creative Commons licences; each is credited to its photographer below.</p>
+  <p>The wall textures in the walk are <strong>derivative works</strong> of these
+     photographs: each was perspective-corrected to a flat elevation, cut into
+     ground-floor and upper-storey bands, and colour-graded. Where the source is
+     licensed <em>CC BY-SA</em>, that share-alike obligation carries over to the
+     derived texture, and attribution is retained here.</p>
   <ul>
 ${shopRows}
   </ul>

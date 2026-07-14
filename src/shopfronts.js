@@ -1,26 +1,51 @@
-// Shopfront façade quads for McGrot Walk.
+// Façade textures for McGrot Walk.
 //
-// buildShopfronts(assets, world, scene) drops a texture-atlas quad on the
-// street-facing ground floor of every building near the centreline. Real Leith
-// Walk shopfront photos (CC-licensed, from Wikimedia Commons) are tiled into one
-// atlas (assets/shopfronts/atlas.jpg + atlas.json); each quad samples one tile.
+// buildShopfronts(assets, world, scene) clads every street-facing wall near the
+// centreline with real Leith Walk photography — the shopfront at pavement level
+// and the tenement storeys stacked above it, up to the building's real height.
+// Both come from the SAME rectified photograph of the SAME building, so the
+// street reads as continuous instead of a photo pasted onto flat khaki.
+//
+// The atlas (assets/shopfronts/atlas.{jpg,json}) comes out of the pipeline:
+//   fetch-shopfronts → facade-plan (vision) → rectify-facades → cull-bands
+//   → build-facade-atlas
+// Its tiles are split into pools: `ground` (shopfronts), `upper` (storeys above)
+// and `corner` (elevations of buildings that wrap a junction).
 //
 // Everything merges into a SINGLE geometry / draw call. The atlas is absent in
 // the 3-comic single-file artifact (assets.shopfronts === null) — this no-ops.
 //
-// Tile choice is a deterministic hash of (buildingIdx, segmentIdx) so the street
-// layout stays stable across reloads (the seeded-scenery rule).
+// Tile choice is a deterministic hash of (building, edge, segment, band) so the
+// street looks identical on every reload (the seeded-scenery rule).
 
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
 
 const STREET_RANGE = 25;   // metres — only façades within this of the centreline
 const MIN_EDGE = 2.0;      // skip footprint edges shorter than this
-const FACING_MIN = 0.35;   // wall normal · direction-to-street; below this it's a side/back wall
-const HEIGHT = 3.2;        // one storey (matches world.js LEVEL_HEIGHT)
+const FACING_MIN = 0.35;   // wall normal · direction-to-street; at or above this it's a shop frontage
+// Below this the wall has turned far enough away to be a back wall, hidden by its
+// own building. It must be NEGATIVE: a gable end facing up the street has a normal
+// perpendicular to the direction-to-street, so it scores ~0 — and it is the most
+// visible wall on the block as you walk toward it. A cutoff at 0 leaves exactly
+// those walls bare.
+const SIDE_MIN = -0.3;
+const BAND_HEIGHT = 3.2;   // one storey — must match world.js LEVEL_HEIGHT
+const MAX_BANDS = 6;       // ~19m; above that the fog has swallowed it anyway
 const BASE_Y = 0.05;       // sit just above the street ribbon (STREET_Y = 0.03)
 const OUTWARD_EPS = 0.12;  // nudge proud of the wall (toward street) to avoid z-fight
-const MAX_QUADS = 900;     // safety cap; merged geometry stays 1 draw call regardless
+// Runaway guard only — it must NOT bind in normal operation. Buildings are walked
+// in index order, so a cap that actually bites leaves the far end of the street
+// silently bare while the near end looks finished. 4000 (sized back when each wall
+// got a single ground-floor quad) did exactly that once bands and gables landed.
+// Two triangles per quad in one merged draw call: the real budget is enormous.
+const MAX_QUADS = 20000;
+
+// A chamfer is the short diagonal wall that cuts off the corner at a junction.
+// It is street-facing but runs ACROSS the street rather than along it, and on
+// the real Leith Walk it is exactly where a corner pub puts its door.
+const CHAMFER_MAX_LEN = 9;      // metres — chamfers are short
+const CHAMFER_MAX_ALIGN = 0.88; // |edgeDir · streetDir| under this => not parallel to the street
 
 export function buildShopfronts(assets, world, scene) {
   const layout = assets && assets.shopfronts;
@@ -31,14 +56,37 @@ export function buildShopfronts(assets, world, scene) {
   }
 
   const { cols, rows, tileW = 512, tileH = 256, count } = layout;
+
+  // Tile pools. An older atlas.json has no kinds — fall back to "everything is
+  // ground" so a stale atlas degrades to the previous behaviour instead of
+  // throwing on undefined.
+  const all = Array.from({ length: count }, (_, i) => i);
+  const groundPool = layout.ground && layout.ground.length ? layout.ground : all;
+  const upperPool = layout.upper && layout.upper.length ? layout.upper : groundPool;
+  const cornerPool = layout.corner && layout.corner.length ? layout.corner : groundPool;
+
+  // Upper tiles grouped by the photo they were cut from. A real tenement is
+  // uniform across its width — one stone, one window rhythm — while the SHOPS
+  // beneath it differ from unit to unit. Hashing the upper bands per segment
+  // (as the ground band is) turns each building into a patchwork of red brick
+  // beside sandstone, which no street has ever looked like. So each building
+  // draws its upper storeys from a single source building's photo.
+  const upperBySlug = new Map();
+  for (const idx of upperPool) {
+    const slug = (layout.tiles && layout.tiles[idx] && layout.tiles[idx].slug) || String(idx);
+    if (!upperBySlug.has(slug)) upperBySlug.set(slug, []);
+    upperBySlug.get(slug).push(idx);
+  }
+  const upperSlugs = [...upperBySlug.keys()];
+
   const atlasW = cols * tileW;
   const atlasH = rows * tileH;
   const uInset = 0.5 / atlasW; // half-texel inset kills neighbour-tile bleed
   const vInset = 0.5 / atlasH;
 
-  // Quad width follows the tile aspect, so a shopfront photo is never stretched:
-  // 2:1 tiles × 3.2m storey height = ~6.4m, about one real shop unit.
-  const segTarget = HEIGHT * (tileW / tileH);
+  // Quad width follows the tile aspect so a façade photo is never stretched:
+  // 2:1 tiles × a 3.2m storey ≈ 6.4m, about one real shop unit.
+  const segTarget = BAND_HEIGHT * (tileW / tileH);
 
   const positions = [];
   const uvs = [];
@@ -46,8 +94,18 @@ export function buildShopfronts(assets, world, scene) {
   let quadCount = 0;
 
   for (let bi = 0; bi < buildings.length && quadCount < MAX_QUADS; bi++) {
-    const fp = buildings[bi] && buildings[bi].footprint;
+    const building = buildings[bi];
+    const fp = building && building.footprint;
     if (!fp || fp.length < 3) continue;
+
+    const levels = Math.max(1, building.levels || 1);
+    const bands = Math.min(MAX_BANDS, levels);
+
+    // One source building's upper storeys clad this whole building — see the
+    // upperBySlug note above.
+    const wallTiles = upperSlugs.length
+      ? upperBySlug.get(upperSlugs[hashTile(bi, 0, 7, upperSlugs.length)])
+      : upperPool;
 
     // Centroid gives the TRUE outward normal of each wall (the perpendicular
     // pointing away from the building's interior). Deriving "outward" from the
@@ -69,13 +127,23 @@ export function buildShopfronts(assets, world, scene) {
       const mx = (a[0] + b[0]) / 2;
       const mz = (a[1] + b[1]) / 2;
       const np = nearest(mx, mz);
-      if (!np || !np.point || np.distance > STREET_RANGE) continue;
+      if (!np || !np.point) continue;
+
+      // Range must be judged on the CLOSEST point of the wall, not its midpoint.
+      // A gable end runs away from the street at right angles, so its midpoint
+      // sits deep behind the frontage and a midpoint test rejects it — which is
+      // precisely why every gable was still bare khaki after they were enabled,
+      // even though their near corner is right on the pavement.
+      const nearA = nearest(a[0], a[1]);
+      const nearB = nearest(b[0], b[1]);
+      const edgeDist = Math.min(np.distance, nearA ? nearA.distance : Infinity, nearB ? nearB.distance : Infinity);
+      if (edgeDist > STREET_RANGE) continue;
 
       // A quad wound from (start → start+edge) has face normal ∝ (-dz, 0, dx).
       // So to keep the TEXTURE readable from the street we must walk the edge in
       // the direction whose winding normal already points outward — flipping the
       // normal alone would leave the camera looking at the quad's back face, i.e.
-      // every shopfront on one side of the street rendered mirror-reversed.
+      // every façade on one side of the street rendered mirror-reversed.
       const inv = 1 / len;
       let nx = -ez * inv;
       let nz = ex * inv;
@@ -89,13 +157,30 @@ export function buildShopfronts(assets, world, scene) {
         dx = -ex; dz = -ez;
       }
 
-      // Keep only walls that actually look at the street — no shopfronts on backs.
+      // How squarely does this wall look at the street?
       const dsx = np.point[0] - mx;
       const dsz = np.point[1] - mz;
       const dl = Math.hypot(dsx, dsz) || 1;
-      if ((nx * dsx + nz * dsz) / dl < FACING_MIN) continue;
+      const facing = (nx * dsx + nz * dsz) / dl;
+      if (facing < SIDE_MIN) continue; // faces away entirely: it's a back wall, and hidden
 
-      // Tile the frontage into ~segTarget-wide quads, each a hashed atlas tile.
+      // A wall square-on to the street is a FRONTAGE and gets a shopfront at
+      // pavement level. A wall that merely grazes it — a gable end, a flank
+      // running away down a side street — is not a shopfront, but it is still
+      // very visible from the street, and leaving it as flat khaki next to
+      // photographic neighbours is what makes the block read as unfinished.
+      // Clad it in tenement stone instead (upper tiles, all the way down).
+      const isFrontage = facing >= FACING_MIN;
+
+      // Chamfered corner of a junction building? Street-facing, short, and NOT
+      // running parallel to the street.
+      let isChamfer = false;
+      if (np.tangent && len <= CHAMFER_MAX_LEN) {
+        const align = Math.abs(dx * inv * np.tangent[0] + dz * inv * np.tangent[1]);
+        isChamfer = align < CHAMFER_MAX_ALIGN;
+      }
+
+      // Tile the frontage into ~segTarget-wide columns...
       const nSeg = Math.max(1, Math.round(len / segTarget));
       for (let s = 0; s < nSeg && quadCount < MAX_QUADS; s++) {
         const t0 = s / nSeg;
@@ -105,20 +190,37 @@ export function buildShopfronts(assets, world, scene) {
         const p1x = sx + dx * t1 + nx * OUTWARD_EPS;
         const p1z = sz + dz * t1 + nz * OUTWARD_EPS;
 
-        const tile = hashTile(bi, i * 31 + s, count);
-        const col = tile % cols;
-        const row = Math.floor(tile / cols);
-        const u0 = col / cols + uInset;
-        const u1 = (col + 1) / cols - uInset;
-        const vBot = 1 - (row + 1) / rows + vInset; // atlas is row-major from the top;
-        const vTop = 1 - row / rows - vInset;        // flipY (default) puts row 0 at V=1
+        // ...and stack one band per storey up the wall. Band 0 is the shopfront,
+        // every band above it is tenement. Sampling the ground pool for a third
+        // floor would hang a Greggs in the sky — hence the separate pools.
+        for (let band = 0; band < bands && quadCount < MAX_QUADS; band++) {
+          // Ground: vary per segment — adjacent shop units are different shops.
+          // Upper: vary per band only, from this building's single source photo,
+          // so the storey rhythm stays uniform across the whole frontage.
+          // A non-frontage wall gets stone at every band, shopfront at none.
+          const shopBand = band === 0 && isFrontage;
+          const gPool = isChamfer ? cornerPool : groundPool;
+          const tile = shopBand
+            ? gPool[hashTile(bi, i * 31 + s, 0, gPool.length)]
+            : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
 
-        const base = quadCount * 4;
-        // bottom-left, bottom-right, top-right, top-left
-        positions.push(p0x, BASE_Y, p0z,  p1x, BASE_Y, p1z,  p1x, HEIGHT, p1z,  p0x, HEIGHT, p0z);
-        uvs.push(u0, vBot,  u1, vBot,  u1, vTop,  u0, vTop);
-        indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
-        quadCount++;
+          const col = tile % cols;
+          const row = Math.floor(tile / cols);
+          const u0 = col / cols + uInset;
+          const u1 = (col + 1) / cols - uInset;
+          const vBot = 1 - (row + 1) / rows + vInset; // atlas is row-major from the top;
+          const vTop = 1 - row / rows - vInset;        // flipY (default) puts row 0 at V=1
+
+          const y0 = band === 0 ? BASE_Y : band * BAND_HEIGHT;
+          const y1 = (band + 1) * BAND_HEIGHT;
+
+          const base = quadCount * 4;
+          // bottom-left, bottom-right, top-right, top-left
+          positions.push(p0x, y0, p0z,  p1x, y0, p1z,  p1x, y1, p1z,  p0x, y1, p0z);
+          uvs.push(u0, vBot,  u1, vBot,  u1, vTop,  u0, vTop);
+          indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+          quadCount++;
+        }
       }
     }
   }
@@ -135,10 +237,10 @@ export function buildShopfronts(assets, world, scene) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
 
-  // Unlit so the shopfronts read through the murk (like the comic/face planes).
+  // Unlit so the façades read through the murk (like the comic/face planes).
   // The desaturate/darken/rust grade is baked into the atlas by
-  // build-shopfront-atlas.mjs, so the material doesn't tint again on top.
-  // DoubleSide sidesteps per-edge winding — cheap for a few hundred quads.
+  // build-facade-atlas.mjs, so the material doesn't tint again on top.
+  // DoubleSide sidesteps per-edge winding — cheap even at a few thousand quads.
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     side: THREE.DoubleSide,
@@ -151,10 +253,11 @@ export function buildShopfronts(assets, world, scene) {
   return { group: mesh, count: quadCount };
 }
 
-// Deterministic tile pick so the street layout is identical every reload.
-function hashTile(bi, seg, count) {
-  let h = (bi * 73856093) ^ (seg * 19349663);
+// Deterministic tile pick so the street layout is identical on every reload.
+// `band` is mixed in so one wall does not repeat the same photo all the way up.
+function hashTile(bi, seg, band, n) {
+  let h = (bi * 73856093) ^ (seg * 19349663) ^ ((band + 1) * 83492791);
   h = Math.imul(h ^ (h >>> 13), 0x85ebca6b);
   h ^= h >>> 16;
-  return (h >>> 0) % count;
+  return (h >>> 0) % n;
 }

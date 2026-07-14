@@ -8,5 +8,11 @@ src/dev-bundle.js
 # assets/shopfronts/atlas.jpg. Kept locally so re-cropping never re-hits Wikimedia.
 assets/shopfronts/raw/
 
+# Façade pipeline intermediates: rectified planes, sliced band tiles, and the
+# QA contact sheets. Only the finished atlas ships.
+assets/shopfronts/rect/
+assets/shopfronts/bands/
+assets/shopfronts/qa/
+
 # Site build output (published to the gh-pages branch)
 dist-site/
