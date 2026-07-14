@@ -10,6 +10,7 @@ import { buildScenery } from './scenery.js';
 import { createSky } from './sky.js';
 import { buildRoadDressing } from './road.js';
 import { buildRoadworks } from './roadworks.js';
+import { buildBirds } from './birds.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -57,6 +58,7 @@ async function main() {
   buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
   buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
   buildRoadworks(world, scene);          // ...and the trench, cones and hoarding waiting at the end of them
+  const birds = buildBirds(world, assets.leith, scene); // gulls wheeling, gulls perched, pigeons
   const scenery = buildScenery(world, scene);
 
   const ambience = createAmbience();
@@ -108,6 +110,7 @@ async function main() {
       controls.update(dt);
       npcs.update(dt, t);
       sky.update(t);
+      birds.update(dt, t);
       scenery.update(dt, t);
       interact.update(dt);
       proximityAudio.update();
@@ -128,6 +131,7 @@ async function main() {
     controls.update(dt);
     npcs.update(dt, time);
     sky.update(time);
+    birds.update(dt, time);
     scenery.update(dt, time);
     interact.update(dt);
     proximityAudio.update();
