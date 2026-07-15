@@ -1,0 +1,5922 @@
+[
+  {
+    "name": "Mac's Audio",
+    "kind": "mobile_phone",
+    "housenumber": "10",
+    "street": "Great Junction Street",
+    "lat": 55.9709241,
+    "lon": -3.1722542,
+    "x": -20.56,
+    "z": -38.71,
+    "distToStreet": 43.8,
+    "building": {
+      "index": 669,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kirkgate Barbers",
+    "kind": "hairdresser",
+    "housenumber": "2",
+    "street": "Newkirkgate",
+    "lat": 55.9709224,
+    "lon": -3.1716615,
+    "x": 16.37,
+    "z": -38.52,
+    "distToStreet": 41.9,
+    "building": {
+      "index": 678,
+      "dist": 9.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bayne's",
+    "kind": "bakery",
+    "housenumber": "8",
+    "street": "Great Junction Street",
+    "lat": 55.9709067,
+    "lon": -3.1722192,
+    "x": -18.38,
+    "z": -36.79,
+    "distToStreet": 41.1,
+    "building": {
+      "index": 669,
+      "dist": 1.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Boots",
+    "kind": "pharmacy",
+    "housenumber": "42",
+    "street": "Newkirkgate",
+    "lat": 55.9709053,
+    "lon": -3.1720004,
+    "x": -4.75,
+    "z": -36.63,
+    "distToStreet": 36.9,
+    "building": {
+      "index": 674,
+      "dist": 1.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ramsdens",
+    "kind": "bureau_de_change",
+    "housenumber": "1",
+    "street": "Duke Street",
+    "lat": 55.9708769,
+    "lon": -3.1716878,
+    "x": 14.73,
+    "z": -33.49,
+    "distToStreet": 36.6,
+    "building": {
+      "index": 678,
+      "dist": 8.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Pharmacy",
+    "kind": "pharmacy",
+    "housenumber": "3-5",
+    "street": "Duke Street",
+    "lat": 55.9708436,
+    "lon": -3.1716098,
+    "x": 19.59,
+    "z": -29.81,
+    "distToStreet": 34.5,
+    "building": {
+      "index": 678,
+      "dist": 4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "British Heart Foundation Home Store",
+    "kind": "furniture",
+    "housenumber": "5A",
+    "street": "Duke Street",
+    "lat": 55.9707944,
+    "lon": -3.1714944,
+    "x": 26.78,
+    "z": -24.37,
+    "distToStreet": 32.4,
+    "building": {
+      "index": 678,
+      "dist": 8.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Newkirkgate Dental Care",
+    "kind": "dentist",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9707764,
+    "lon": -3.1720434,
+    "x": -7.43,
+    "z": -22.38,
+    "distToStreet": 23.6,
+    "building": {
+      "index": 680,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Vape Drop",
+    "kind": "e-cigarette",
+    "housenumber": "15",
+    "street": "Great Junction Street",
+    "lat": 55.9707315,
+    "lon": -3.1725322,
+    "x": -37.88,
+    "z": -17.42,
+    "distToStreet": 41.7,
+    "building": {
+      "index": 775,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Great Junction Street Post Office",
+    "kind": "post_office",
+    "housenumber": "13",
+    "street": "Great Junction Street",
+    "lat": 55.9707026,
+    "lon": -3.1724988,
+    "x": -35.8,
+    "z": -14.23,
+    "distToStreet": 38.5,
+    "building": {
+      "index": 775,
+      "dist": 1.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Antichi Sapori",
+    "kind": "fast_food",
+    "housenumber": "11",
+    "street": "Great Junction Street",
+    "lat": 55.9706806,
+    "lon": -3.1724736,
+    "x": -34.23,
+    "z": -11.79,
+    "distToStreet": 36.2,
+    "building": {
+      "index": 775,
+      "dist": 3.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sweet.",
+    "kind": "hairdresser",
+    "housenumber": "179",
+    "street": "Constitution Street",
+    "lat": 55.9706598,
+    "lon": -3.171113,
+    "x": 50.54,
+    "z": -9.5,
+    "distToStreet": 42.6,
+    "building": {
+      "index": 18,
+      "dist": 8.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pinnacle",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9706499,
+    "lon": -3.1716251,
+    "x": 18.63,
+    "z": -8.4,
+    "distToStreet": 14.6,
+    "building": {
+      "index": 678,
+      "dist": 23.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Afreen",
+    "kind": "beauty",
+    "housenumber": "181",
+    "street": "Constitution Street",
+    "lat": 55.9706273,
+    "lon": -3.1711684,
+    "x": 47.08,
+    "z": -5.9,
+    "distToStreet": 38.3,
+    "building": {
+      "index": 18,
+      "dist": 11.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Pharmacy",
+    "kind": "pharmacy",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9706206,
+    "lon": -3.1723659,
+    "x": -27.52,
+    "z": -5.16,
+    "distToStreet": 28,
+    "building": {
+      "index": 764,
+      "dist": 0.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "William Hill",
+    "kind": "bookmaker",
+    "housenumber": "5",
+    "street": "Great Junction Street",
+    "lat": 55.9705809,
+    "lon": -3.1722999,
+    "x": -23.4,
+    "z": -0.77,
+    "distToStreet": 22.6,
+    "building": {
+      "index": 763,
+      "dist": 0.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Fones 2 You",
+    "kind": "mobile_phone",
+    "housenumber": "7B",
+    "street": "Duke Street",
+    "lat": 55.9705528,
+    "lon": -3.1711673,
+    "x": 47.15,
+    "z": 2.33,
+    "distToStreet": 37.2,
+    "building": {
+      "index": 18,
+      "dist": 13.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Gadget Technician",
+    "kind": "computer",
+    "housenumber": "3",
+    "street": "Great Junction Street",
+    "lat": 55.9705469,
+    "lon": -3.1722422,
+    "x": -19.81,
+    "z": 2.98,
+    "distToStreet": 17.4,
+    "building": {
+      "index": 759,
+      "dist": 3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Rick Young Black Belt Academy",
+    "kind": "dojo",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9705372,
+    "lon": -3.171148,
+    "x": 48.35,
+    "z": 4.06,
+    "distToStreet": 38.4,
+    "building": {
+      "index": 18,
+      "dist": 13.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Barbers",
+    "kind": "hairdresser",
+    "housenumber": "1",
+    "street": "Great Junction Street",
+    "lat": 55.9705321,
+    "lon": -3.1721733,
+    "x": -15.52,
+    "z": 4.62,
+    "distToStreet": 13.2,
+    "building": {
+      "index": 759,
+      "dist": 1.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "EasySend",
+    "kind": "money_transfer",
+    "housenumber": "9A",
+    "street": "Duke Street",
+    "lat": 55.9705234,
+    "lon": -3.1711214,
+    "x": 50.01,
+    "z": 5.58,
+    "distToStreet": 40.1,
+    "building": {
+      "index": 18,
+      "dist": 13.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bloks",
+    "kind": "hairdresser",
+    "housenumber": "2",
+    "street": "Leith Walk",
+    "lat": 55.970516,
+    "lon": -3.1721829,
+    "x": -16.12,
+    "z": 6.4,
+    "distToStreet": 12.4,
+    "building": {
+      "index": 759,
+      "dist": 2.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Duke Barbers",
+    "kind": "hairdresser",
+    "housenumber": "11",
+    "street": "Duke Street",
+    "lat": 55.9705146,
+    "lon": -3.1710873,
+    "x": 52.14,
+    "z": 6.56,
+    "distToStreet": 42.3,
+    "building": {
+      "index": 18,
+      "dist": 13.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Subway",
+    "kind": "fast_food",
+    "housenumber": "4",
+    "street": "Leith Walk",
+    "lat": 55.970476,
+    "lon": -3.1722604,
+    "x": -20.94,
+    "z": 10.82,
+    "distToStreet": 14.5,
+    "building": {
+      "index": 771,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Surgery",
+    "kind": "doctors",
+    "housenumber": "2",
+    "street": "Duke Street",
+    "lat": 55.9703798,
+    "lon": -3.1715579,
+    "x": 22.82,
+    "z": 21.46,
+    "distToStreet": 19.1,
+    "building": {
+      "index": 54,
+      "dist": 14.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Central Bar",
+    "kind": "pub",
+    "housenumber": "7-9",
+    "street": "Leith Walk",
+    "lat": 55.970267,
+    "lon": -3.1717235,
+    "x": 12.5,
+    "z": 33.92,
+    "distToStreet": 14.7,
+    "building": {
+      "index": 54,
+      "dist": 16.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Adams Whyte Criminal Lawyer",
+    "kind": "lawyer",
+    "housenumber": "20",
+    "street": "Leith Walk",
+    "lat": 55.9702436,
+    "lon": -3.1726073,
+    "x": -42.55,
+    "z": 36.51,
+    "distToStreet": 33.7,
+    "building": {
+      "index": 651,
+      "dist": 1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "PekoeTea",
+    "kind": "tea",
+    "housenumber": "11",
+    "street": "Leith Walk",
+    "lat": 55.9702026,
+    "lon": -3.1717846,
+    "x": 8.7,
+    "z": 41.04,
+    "distToStreet": 16.5,
+    "building": {
+      "index": 54,
+      "dist": 21.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Gondolin Land and Water",
+    "kind": "engineer",
+    "housenumber": "26",
+    "street": "Leith Walk",
+    "lat": 55.9701696,
+    "lon": -3.1726958,
+    "x": -48.07,
+    "z": 44.69,
+    "distToStreet": 35.6,
+    "building": {
+      "index": 654,
+      "dist": 3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Logan Malloch",
+    "kind": "gift",
+    "housenumber": "13",
+    "street": "Leith Walk",
+    "lat": 55.9701504,
+    "lon": -3.1718335,
+    "x": 5.65,
+    "z": 46.81,
+    "distToStreet": 20.4,
+    "building": {
+      "index": 54,
+      "dist": 26.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Foot of Leith Walk",
+    "kind": "taxi",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9701331,
+    "lon": -3.1723584,
+    "x": -27.05,
+    "z": 48.73,
+    "distToStreet": 16.9,
+    "building": {
+      "index": 654,
+      "dist": 18.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Argonaut Books",
+    "kind": "books",
+    "housenumber": "15-17",
+    "street": "Leith Walk",
+    "lat": 55.970096,
+    "lon": -3.1718798,
+    "x": 2.77,
+    "z": 52.83,
+    "distToStreet": 21.3,
+    "building": {
+      "index": 54,
+      "dist": 31.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Krema Bakehouse",
+    "kind": "pastry",
+    "housenumber": "21",
+    "street": "Leith Walk",
+    "lat": 55.9700503,
+    "lon": -3.171922,
+    "x": 0.14,
+    "z": 57.88,
+    "distToStreet": 17.2,
+    "building": {
+      "index": 173,
+      "dist": 32.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ancient Robot Games",
+    "kind": "games",
+    "housenumber": "23",
+    "street": "Leith Walk",
+    "lat": 55.97001,
+    "lon": -3.1719649,
+    "x": -2.54,
+    "z": 62.33,
+    "distToStreet": 14,
+    "building": {
+      "index": 173,
+      "dist": 27.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Spey Lounge",
+    "kind": "pub",
+    "housenumber": "39",
+    "street": "Leith Walk",
+    "lat": 55.9698189,
+    "lon": -3.1721096,
+    "x": -11.55,
+    "z": 83.46,
+    "distToStreet": 14,
+    "building": {
+      "index": 173,
+      "dist": 4.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Side Street",
+    "kind": "fast_food",
+    "housenumber": "43-45",
+    "street": "Leith Walk",
+    "lat": 55.9697713,
+    "lon": -3.1721538,
+    "x": -14.3,
+    "z": 88.72,
+    "distToStreet": 13.4,
+    "building": {
+      "index": 173,
+      "dist": 1.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Best-one",
+    "kind": "convenience",
+    "housenumber": "47-49",
+    "street": "Leith Walk",
+    "lat": 55.9696933,
+    "lon": -3.1722263,
+    "x": -18.82,
+    "z": 97.34,
+    "distToStreet": 17.4,
+    "building": {
+      "index": 171,
+      "dist": 1.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Carers' Hub",
+    "kind": "charity",
+    "housenumber": "60",
+    "street": "Leith Walk",
+    "lat": 55.9696751,
+    "lon": -3.1730434,
+    "x": -69.72,
+    "z": 99.35,
+    "distToStreet": 30.3,
+    "building": {
+      "index": 729,
+      "dist": 6.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Beveridge & Kellas",
+    "kind": "estate_agent",
+    "housenumber": "68",
+    "street": "Leith Walk",
+    "lat": 55.9694763,
+    "lon": -3.1729998,
+    "x": -67.01,
+    "z": 121.33,
+    "distToStreet": 22,
+    "building": {
+      "index": 90,
+      "dist": 7.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Desi Pakwan",
+    "kind": "restaurant",
+    "housenumber": "61",
+    "street": "Leith Walk",
+    "lat": 55.9694744,
+    "lon": -3.1724296,
+    "x": -31.48,
+    "z": 121.54,
+    "distToStreet": 13.7,
+    "building": {
+      "index": 83,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Artisan Roast/Circular Coffee",
+    "kind": "cafe",
+    "housenumber": "72-74",
+    "street": "Leith Walk",
+    "lat": 55.9694125,
+    "lon": -3.1730481,
+    "x": -70.02,
+    "z": 128.38,
+    "distToStreet": 20.5,
+    "building": {
+      "index": 755,
+      "dist": 6.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Papa John's",
+    "kind": "fast_food",
+    "housenumber": "77A;77;79",
+    "street": "Leith Walk",
+    "lat": 55.9693165,
+    "lon": -3.1725832,
+    "x": -41.05,
+    "z": 138.99,
+    "distToStreet": 11.2,
+    "building": {
+      "index": 174,
+      "dist": 6.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Tattie Creel",
+    "kind": "fast_food",
+    "housenumber": "80",
+    "street": "Leith Walk",
+    "lat": 55.969309,
+    "lon": -3.1731366,
+    "x": -75.53,
+    "z": 139.82,
+    "distToStreet": 14,
+    "building": {
+      "index": 757,
+      "dist": 7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Bike Fitting",
+    "kind": "company",
+    "housenumber": "81",
+    "street": "Leith Walk",
+    "lat": 55.9692629,
+    "lon": -3.1726311,
+    "x": -44.04,
+    "z": 144.92,
+    "distToStreet": 10.4,
+    "building": {
+      "index": 86,
+      "dist": 7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Walk Dental Practice",
+    "kind": "dentist",
+    "housenumber": "83",
+    "street": "Leith Walk",
+    "lat": 55.9692362,
+    "lon": -3.172655,
+    "x": -45.53,
+    "z": 147.87,
+    "distToStreet": 11.5,
+    "building": {
+      "index": 86,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Turkish Supermarket",
+    "kind": "convenience",
+    "housenumber": "82-90",
+    "street": "Leith Walk",
+    "lat": 55.969219,
+    "lon": -3.1732419,
+    "x": -82.09,
+    "z": 149.77,
+    "distToStreet": 12.2,
+    "building": {
+      "index": 730,
+      "dist": 6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "All Together",
+    "kind": "charity",
+    "housenumber": "87",
+    "street": "Leith Walk",
+    "lat": 55.9691969,
+    "lon": -3.1726913,
+    "x": -47.79,
+    "z": 152.21,
+    "distToStreet": 12.2,
+    "building": {
+      "index": 86,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Oyo St Andrews",
+    "kind": "hotel",
+    "housenumber": null,
+    "street": "Jane Street",
+    "lat": 55.969181,
+    "lon": -3.1737744,
+    "x": -115.26,
+    "z": 153.97,
+    "distToStreet": 39.9,
+    "building": {
+      "index": 99,
+      "dist": 7.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Pipe Shop",
+    "kind": "tobacco",
+    "housenumber": "92",
+    "street": "Leith Walk",
+    "lat": 55.9691754,
+    "lon": -3.1732546,
+    "x": -82.88,
+    "z": 154.59,
+    "distToStreet": 10.6,
+    "building": {
+      "index": 731,
+      "dist": 8.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Little Havana Cigar Store",
+    "kind": "tobacco",
+    "housenumber": "94",
+    "street": "Leith Walk",
+    "lat": 55.9691559,
+    "lon": -3.1732787,
+    "x": -84.38,
+    "z": 156.75,
+    "distToStreet": 11,
+    "building": {
+      "index": 731,
+      "dist": 5.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cafe Praline",
+    "kind": "cafe",
+    "housenumber": "91",
+    "street": "Leith Walk",
+    "lat": 55.9691161,
+    "lon": -3.1727622,
+    "x": -52.2,
+    "z": 161.15,
+    "distToStreet": 9.4,
+    "building": {
+      "index": 172,
+      "dist": 1.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Little Havana",
+    "kind": "coffee",
+    "housenumber": "94",
+    "street": "Leith Walk",
+    "lat": 55.9690912,
+    "lon": -3.1733129,
+    "x": -86.51,
+    "z": 163.9,
+    "distToStreet": 9.7,
+    "building": {
+      "index": 731,
+      "dist": 4.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Steam Bunny",
+    "kind": "fast_food",
+    "housenumber": "4",
+    "street": "Jane Street",
+    "lat": 55.9690853,
+    "lon": -3.1734692,
+    "x": -96.25,
+    "z": 164.55,
+    "distToStreet": 18.2,
+    "building": {
+      "index": 731,
+      "dist": 8.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Mother Superior",
+    "kind": "pub",
+    "housenumber": "96-98",
+    "street": "Leith Walk",
+    "lat": 55.9690697,
+    "lon": -3.1733366,
+    "x": -87.99,
+    "z": 166.27,
+    "distToStreet": 10,
+    "building": {
+      "index": 731,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bobs Garage",
+    "kind": "car_repair",
+    "housenumber": "5",
+    "street": "Jane Street",
+    "lat": 55.9690373,
+    "lon": -3.1738527,
+    "x": -120.14,
+    "z": 169.86,
+    "distToStreet": 38.2,
+    "building": {
+      "index": 786,
+      "dist": 4.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kwick Auto Works",
+    "kind": "car_repair",
+    "housenumber": "3",
+    "street": "Jane Street",
+    "lat": 55.9690119,
+    "lon": -3.1737491,
+    "x": -113.69,
+    "z": 172.66,
+    "distToStreet": 31.3,
+    "building": {
+      "index": 786,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "VAS Motors",
+    "kind": "car_repair",
+    "housenumber": "3",
+    "street": "Jane Street",
+    "lat": 55.9689911,
+    "lon": -3.1736525,
+    "x": -107.67,
+    "z": 174.96,
+    "distToStreet": 25,
+    "building": {
+      "index": 786,
+      "dist": 9.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Rikki's Music Shop",
+    "kind": "musical_instrument",
+    "housenumber": "100",
+    "street": "Leith Walk",
+    "lat": 55.9689605,
+    "lon": -3.1734879,
+    "x": -97.41,
+    "z": 178.35,
+    "distToStreet": 14.5,
+    "building": {
+      "index": 894,
+      "dist": 18.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Arches",
+    "kind": "bar",
+    "housenumber": "99",
+    "street": "Leith Walk",
+    "lat": 55.9689354,
+    "lon": -3.172907,
+    "x": -61.23,
+    "z": 181.12,
+    "distToStreet": 10.7,
+    "building": {
+      "index": 536,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Canderson's Sweet Shop",
+    "kind": "confectionery",
+    "housenumber": "102",
+    "street": "Leith Walk",
+    "lat": 55.9689277,
+    "lon": -3.1735266,
+    "x": -99.82,
+    "z": 181.97,
+    "distToStreet": 17.2,
+    "building": {
+      "index": 894,
+      "dist": 14.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Domestic Appliances",
+    "kind": "electronics",
+    "housenumber": "4",
+    "street": "Manderston Street",
+    "lat": 55.9689113,
+    "lon": -3.1728306,
+    "x": -56.47,
+    "z": 183.78,
+    "distToStreet": 16,
+    "building": {
+      "index": 536,
+      "dist": 4.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kvasa",
+    "kind": "bakery",
+    "housenumber": "101",
+    "street": "Leith Walk",
+    "lat": 55.9688952,
+    "lon": -3.1729424,
+    "x": -63.43,
+    "z": 185.56,
+    "distToStreet": 10.3,
+    "building": {
+      "index": 536,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Carpet Bargain Store",
+    "kind": "carpet",
+    "housenumber": "104",
+    "street": "Leith Walk",
+    "lat": 55.968894,
+    "lon": -3.173551,
+    "x": -101.34,
+    "z": 185.7,
+    "distToStreet": 16.3,
+    "building": {
+      "index": 894,
+      "dist": 10.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bandits",
+    "kind": "fast_food",
+    "housenumber": "6",
+    "street": "Manderston Street",
+    "lat": 55.9688828,
+    "lon": -3.1727395,
+    "x": -50.79,
+    "z": 186.93,
+    "distToStreet": 22.3,
+    "building": {
+      "index": 536,
+      "dist": 10.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tip Top Tresses",
+    "kind": "hairdresser",
+    "housenumber": "103",
+    "street": "Leith Walk",
+    "lat": 55.9688473,
+    "lon": -3.1729782,
+    "x": -65.66,
+    "z": 190.86,
+    "distToStreet": 10.9,
+    "building": {
+      "index": 722,
+      "dist": 2.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sloe Lane Bakery",
+    "kind": "bakery",
+    "housenumber": "106",
+    "street": "Leith Walk",
+    "lat": 55.9688097,
+    "lon": -3.1736199,
+    "x": -105.64,
+    "z": 195.01,
+    "distToStreet": 13.1,
+    "building": {
+      "index": 894,
+      "dist": 0.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Arches",
+    "kind": "pub",
+    "housenumber": "6",
+    "street": "Manderston Street",
+    "lat": 55.9687992,
+    "lon": -3.1727609,
+    "x": -52.12,
+    "z": 196.18,
+    "distToStreet": 24.9,
+    "building": {
+      "index": 144,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Makers",
+    "kind": "studio",
+    "housenumber": "105",
+    "street": "Leith Walk",
+    "lat": 55.9687872,
+    "lon": -3.1730375,
+    "x": -69.35,
+    "z": 197.5,
+    "distToStreet": 14.8,
+    "building": {
+      "index": 722,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "R. Thomson & Co. Blacksmith and Welding",
+    "kind": "blacksmith",
+    "housenumber": "12",
+    "street": "Manderston Street",
+    "lat": 55.968762,
+    "lon": -3.1726216,
+    "x": -43.45,
+    "z": 200.29,
+    "distToStreet": 34.5,
+    "building": {
+      "index": 721,
+      "dist": 1.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "G.C.R. Motors",
+    "kind": "car_repair",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9687181,
+    "lon": -3.1726526,
+    "x": -45.38,
+    "z": 205.14,
+    "distToStreet": 35.6,
+    "building": {
+      "index": 721,
+      "dist": 5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Salvation Army",
+    "kind": "charity",
+    "housenumber": "109",
+    "street": "Leith Walk",
+    "lat": 55.9687161,
+    "lon": -3.173105,
+    "x": -73.56,
+    "z": 205.36,
+    "distToStreet": 10.5,
+    "building": {
+      "index": 417,
+      "dist": 11.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Purusha",
+    "kind": "hairdresser",
+    "housenumber": "111",
+    "street": "Leith Walk",
+    "lat": 55.9686551,
+    "lon": -3.1731539,
+    "x": -76.61,
+    "z": 212.1,
+    "distToStreet": 10.8,
+    "building": {
+      "index": 417,
+      "dist": 4.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tesco Express",
+    "kind": "convenience",
+    "housenumber": "110-120",
+    "street": "Leith Walk",
+    "lat": 55.9686507,
+    "lon": -3.1737927,
+    "x": -116.4,
+    "z": 212.59,
+    "distToStreet": 25.8,
+    "building": {
+      "index": 888,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tidal Yoga",
+    "kind": "fitness_centre",
+    "housenumber": "115",
+    "street": "Leith Walk",
+    "lat": 55.9685893,
+    "lon": -3.1732119,
+    "x": -80.22,
+    "z": 219.38,
+    "distToStreet": 11.8,
+    "building": {
+      "index": 417,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Elph Mural",
+    "kind": "artwork",
+    "housenumber": "115",
+    "street": "Leith Walk",
+    "lat": 55.9685713,
+    "lon": -3.1732851,
+    "x": -84.78,
+    "z": 221.37,
+    "distToStreet": 7.2,
+    "building": {
+      "index": 417,
+      "dist": 8.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Domino's",
+    "kind": "fast_food",
+    "housenumber": "119-121",
+    "street": "Leith Walk",
+    "lat": 55.9685007,
+    "lon": -3.1733101,
+    "x": -86.34,
+    "z": 229.17,
+    "distToStreet": 10.1,
+    "building": {
+      "index": 419,
+      "dist": 8.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Rhinestone Cowboys",
+    "kind": "clothes",
+    "housenumber": "124",
+    "street": "Leith Walk",
+    "lat": 55.9684835,
+    "lon": -3.1739145,
+    "x": -123.99,
+    "z": 231.07,
+    "distToStreet": 33.7,
+    "building": {
+      "index": 865,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Chorrito Hot Sauce Cantina",
+    "kind": "restaurant",
+    "housenumber": "126",
+    "street": "Leith Walk",
+    "lat": 55.9684351,
+    "lon": -3.1739415,
+    "x": -125.67,
+    "z": 236.42,
+    "distToStreet": 31,
+    "building": {
+      "index": 878,
+      "dist": 1.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "MagiKats",
+    "kind": "tuition",
+    "housenumber": "123",
+    "street": "Leith Walk",
+    "lat": 55.9684323,
+    "lon": -3.1733537,
+    "x": -89.05,
+    "z": 236.73,
+    "distToStreet": 16.2,
+    "building": {
+      "index": 418,
+      "dist": 1.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cornelius",
+    "kind": "wine",
+    "housenumber": "128",
+    "street": "Leith Walk",
+    "lat": 55.9684029,
+    "lon": -3.1739745,
+    "x": -127.73,
+    "z": 239.98,
+    "distToStreet": 27.5,
+    "building": {
+      "index": 887,
+      "dist": 1.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kiki's Cafe",
+    "kind": "cafe",
+    "housenumber": "132",
+    "street": "Leith Walk",
+    "lat": 55.9683447,
+    "lon": -3.1740101,
+    "x": -129.94,
+    "z": 246.42,
+    "distToStreet": 21.2,
+    "building": {
+      "index": 881,
+      "dist": 0.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sett Studios",
+    "kind": "studio",
+    "housenumber": "127",
+    "street": "Leith Walk",
+    "lat": 55.9683403,
+    "lon": -3.1734292,
+    "x": -93.76,
+    "z": 246.9,
+    "distToStreet": 26.2,
+    "building": {
+      "index": 414,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ella Taste of Greece",
+    "kind": "restaurant",
+    "housenumber": "134-136",
+    "street": "Leith Walk",
+    "lat": 55.9682681,
+    "lon": -3.1740745,
+    "x": -133.96,
+    "z": 254.88,
+    "distToStreet": 14.4,
+    "building": {
+      "index": 871,
+      "dist": 0.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Depot",
+    "kind": "pub",
+    "housenumber": "138-140",
+    "street": "Leith Walk",
+    "lat": 55.9682176,
+    "lon": -3.1741393,
+    "x": -137.99,
+    "z": 260.47,
+    "distToStreet": 13.2,
+    "building": {
+      "index": 879,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Depot Venue",
+    "kind": "music_venue",
+    "housenumber": "142",
+    "street": "Leith Walk",
+    "lat": 55.9681473,
+    "lon": -3.1741771,
+    "x": -140.35,
+    "z": 268.24,
+    "distToStreet": 13.5,
+    "building": {
+      "index": 868,
+      "dist": 0.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Inchkeith House - Podiatry Dept.",
+    "kind": "clinic",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9681453,
+    "lon": -3.1735793,
+    "x": -103.11,
+    "z": 268.46,
+    "distToStreet": 13.9,
+    "building": {
+      "index": 412,
+      "dist": 5.9,
+      "buildingName": "Inchkeith House"
+    }
+  },
+  {
+    "name": "Zoomo",
+    "kind": "bicycle",
+    "housenumber": "144-150",
+    "street": "Leith Walk",
+    "lat": 55.9680765,
+    "lon": -3.1742698,
+    "x": -146.12,
+    "z": 276.06,
+    "distToStreet": 19,
+    "building": {
+      "index": 880,
+      "dist": 2.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "San Ciro's",
+    "kind": "restaurant",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9679981,
+    "lon": -3.1743232,
+    "x": -149.45,
+    "z": 284.73,
+    "distToStreet": 13.3,
+    "building": {
+      "index": 889,
+      "dist": 0.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Shawarma",
+    "kind": "fast_food",
+    "housenumber": "154",
+    "street": "Leith Walk",
+    "lat": 55.9679454,
+    "lon": -3.1743775,
+    "x": -152.83,
+    "z": 290.55,
+    "distToStreet": 13.3,
+    "building": {
+      "index": 895,
+      "dist": 1.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Capital City Partnership",
+    "kind": "ngo",
+    "housenumber": "165A",
+    "street": "Leith Walk",
+    "lat": 55.9677912,
+    "lon": -3.173862,
+    "x": -120.72,
+    "z": 307.6,
+    "distToStreet": 12,
+    "building": {
+      "index": 11,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bandits",
+    "kind": "fast_food",
+    "housenumber": "166",
+    "street": "Leith Walk",
+    "lat": 55.9677469,
+    "lon": -3.1745593,
+    "x": -164.16,
+    "z": 312.5,
+    "distToStreet": 16.5,
+    "building": {
+      "index": 101,
+      "dist": 4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pizza Hut Delivery",
+    "kind": "fast_food",
+    "housenumber": "170",
+    "street": "Leith Walk",
+    "lat": 55.9676833,
+    "lon": -3.1746066,
+    "x": -167.1,
+    "z": 319.53,
+    "distToStreet": 20,
+    "building": {
+      "index": 101,
+      "dist": 3.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Not Just Coffee",
+    "kind": "cafe",
+    "housenumber": "167",
+    "street": "Leith Walk",
+    "lat": 55.9676497,
+    "lon": -3.1740097,
+    "x": -129.92,
+    "z": 323.24,
+    "distToStreet": 13,
+    "building": {
+      "index": 794,
+      "dist": 0.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Superior Cuts",
+    "kind": "hairdresser",
+    "housenumber": "169",
+    "street": "Leith Walk",
+    "lat": 55.9676089,
+    "lon": -3.1740454,
+    "x": -132.14,
+    "z": 327.75,
+    "distToStreet": 16.8,
+    "building": {
+      "index": 100,
+      "dist": 1.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Easy Tan",
+    "kind": "beauty",
+    "housenumber": "172",
+    "street": "Leith Walk",
+    "lat": 55.9675758,
+    "lon": -3.1747511,
+    "x": -176.11,
+    "z": 331.41,
+    "distToStreet": 16.7,
+    "building": {
+      "index": 102,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Qupi",
+    "kind": "cafe",
+    "housenumber": "171",
+    "street": "Leith Walk",
+    "lat": 55.9675478,
+    "lon": -3.1740989,
+    "x": -135.48,
+    "z": 334.51,
+    "distToStreet": 17.2,
+    "building": {
+      "index": 186,
+      "dist": 5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Millers Flooring",
+    "kind": "flooring",
+    "housenumber": "177",
+    "street": "Leith Walk",
+    "lat": 55.9675155,
+    "lon": -3.1741271,
+    "x": -137.23,
+    "z": 338.08,
+    "distToStreet": 14.1,
+    "building": {
+      "index": 186,
+      "dist": 1.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Smith Place Hotel",
+    "kind": "hotel",
+    "housenumber": "3",
+    "street": "Smith's Place",
+    "lat": 55.9674523,
+    "lon": -3.1738894,
+    "x": -122.43,
+    "z": 345.06,
+    "distToStreet": 27.9,
+    "building": {
+      "index": 195,
+      "dist": 5.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Volley",
+    "kind": "bar",
+    "housenumber": "180",
+    "street": "Leith Walk",
+    "lat": 55.9674342,
+    "lon": -3.1748681,
+    "x": -183.4,
+    "z": 347.06,
+    "distToStreet": 17.6,
+    "building": {
+      "index": 706,
+      "dist": 9.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Majestic",
+    "kind": "alcohol",
+    "housenumber": "200",
+    "street": "Leith Walk",
+    "lat": 55.9672873,
+    "lon": -3.1750627,
+    "x": -195.52,
+    "z": 363.3,
+    "distToStreet": 23,
+    "building": {
+      "index": 124,
+      "dist": 6.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Toast",
+    "kind": "cafe",
+    "housenumber": "185",
+    "street": "Leith Walk",
+    "lat": 55.9672817,
+    "lon": -3.1743191,
+    "x": -149.19,
+    "z": 363.92,
+    "distToStreet": 12.6,
+    "building": {
+      "index": 532,
+      "dist": 1.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Urban Jungle Brunch Room",
+    "kind": "plants",
+    "housenumber": "189",
+    "street": "Leith Walk",
+    "lat": 55.967228,
+    "lon": -3.1743609,
+    "x": -151.8,
+    "z": 369.86,
+    "distToStreet": 10.7,
+    "building": {
+      "index": 193,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ladbrokes",
+    "kind": "bookmaker",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9671805,
+    "lon": -3.1751267,
+    "x": -199.51,
+    "z": 375.11,
+    "distToStreet": 30.4,
+    "building": {
+      "index": 158,
+      "dist": 9.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cashino Gaming",
+    "kind": "adult_gaming_centre",
+    "housenumber": "193",
+    "street": "Leith Walk",
+    "lat": 55.9671483,
+    "lon": -3.174423,
+    "x": -155.67,
+    "z": 378.67,
+    "distToStreet": 14.4,
+    "building": {
+      "index": 193,
+      "dist": 6.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Folly Antiques",
+    "kind": "antiques",
+    "housenumber": "208-210",
+    "street": "Leith Walk",
+    "lat": 55.9671016,
+    "lon": -3.1751836,
+    "x": -203.05,
+    "z": 383.83,
+    "distToStreet": 38.1,
+    "building": {
+      "index": 158,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "PCY Oriental 百佳行",
+    "kind": "deli",
+    "housenumber": "199",
+    "street": "Leith Walk",
+    "lat": 55.9670586,
+    "lon": -3.1744914,
+    "x": -159.93,
+    "z": 388.58,
+    "distToStreet": 23.1,
+    "building": {
+      "index": 191,
+      "dist": 1.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Volunteer Edinburgh",
+    "kind": "ngo",
+    "housenumber": "222",
+    "street": "Leith Walk",
+    "lat": 55.9669483,
+    "lon": -3.1752902,
+    "x": -209.69,
+    "z": 400.77,
+    "distToStreet": 22.5,
+    "building": {
+      "index": 984,
+      "dist": 7.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Scotmid",
+    "kind": "convenience",
+    "housenumber": "207",
+    "street": "Leith Walk",
+    "lat": 55.9669346,
+    "lon": -3.1745997,
+    "x": -166.67,
+    "z": 402.29,
+    "distToStreet": 35.4,
+    "building": {
+      "index": 109,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Walk Post Office",
+    "kind": "post_office",
+    "housenumber": "207A",
+    "street": "Leith Walk",
+    "lat": 55.9669099,
+    "lon": -3.1745389,
+    "x": -162.89,
+    "z": 405.02,
+    "distToStreet": 36.5,
+    "building": {
+      "index": 109,
+      "dist": 5.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Frites",
+    "kind": "fast_food",
+    "housenumber": "224",
+    "street": "Leith Walk",
+    "lat": 55.966886,
+    "lon": -3.1753264,
+    "x": -211.95,
+    "z": 407.66,
+    "distToStreet": 17.1,
+    "building": {
+      "index": 128,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "William Hill",
+    "kind": "bookmaker",
+    "housenumber": "217",
+    "street": "Leith Walk",
+    "lat": 55.9668433,
+    "lon": -3.1746606,
+    "x": -170.47,
+    "z": 412.38,
+    "distToStreet": 26,
+    "building": {
+      "index": 109,
+      "dist": 5.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Arkay Imaging",
+    "kind": "copyshop",
+    "housenumber": "228",
+    "street": "Leith Walk",
+    "lat": 55.966841,
+    "lon": -3.1753573,
+    "x": -213.87,
+    "z": 412.63,
+    "distToStreet": 14.5,
+    "building": {
+      "index": 128,
+      "dist": 1.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Subway",
+    "kind": "fast_food",
+    "housenumber": "219",
+    "street": "Leith Walk",
+    "lat": 55.9667735,
+    "lon": -3.174715,
+    "x": -173.86,
+    "z": 420.1,
+    "distToStreet": 19.4,
+    "building": {
+      "index": 57,
+      "dist": 9.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Phone Stop",
+    "kind": "mobile_phone",
+    "housenumber": "221",
+    "street": "Leith Walk",
+    "lat": 55.9667415,
+    "lon": -3.1747399,
+    "x": -175.41,
+    "z": 423.63,
+    "distToStreet": 16.9,
+    "building": {
+      "index": 57,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "La Belle Adventure",
+    "kind": "books",
+    "housenumber": "225",
+    "street": "Leith Walk",
+    "lat": 55.9667052,
+    "lon": -3.1747682,
+    "x": -177.17,
+    "z": 427.65,
+    "distToStreet": 14.8,
+    "building": {
+      "index": 57,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Alhambra Bar",
+    "kind": "pub",
+    "housenumber": "227",
+    "street": "Leith Walk",
+    "lat": 55.9666806,
+    "lon": -3.1748044,
+    "x": -179.43,
+    "z": 430.37,
+    "distToStreet": 13,
+    "building": {
+      "index": 57,
+      "dist": 2.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Origano",
+    "kind": "restaurant",
+    "housenumber": "236",
+    "street": "Leith Walk",
+    "lat": 55.9666474,
+    "lon": -3.175503,
+    "x": -222.95,
+    "z": 434.04,
+    "distToStreet": 15,
+    "building": {
+      "index": 122,
+      "dist": 9.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mighty Barbers and Beauty",
+    "kind": "hairdresser",
+    "housenumber": "4",
+    "street": "Lorne Street",
+    "lat": 55.966633,
+    "lon": -3.1745857,
+    "x": -165.8,
+    "z": 435.63,
+    "distToStreet": 27.5,
+    "building": {
+      "index": 183,
+      "dist": 6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mobile Tech and Vape",
+    "kind": "mobile_phone;vape",
+    "housenumber": "238",
+    "street": "Leith Walk",
+    "lat": 55.9665409,
+    "lon": -3.1755913,
+    "x": -228.45,
+    "z": 445.81,
+    "distToStreet": 13.2,
+    "building": {
+      "index": 122,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "abode",
+    "kind": "pub",
+    "housenumber": "229",
+    "street": "Leith Walk",
+    "lat": 55.9665025,
+    "lon": -3.1749285,
+    "x": -187.16,
+    "z": 450.05,
+    "distToStreet": 14.7,
+    "building": {
+      "index": 209,
+      "dist": 3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Inner (City) Sanctum",
+    "kind": "beauty",
+    "housenumber": "240",
+    "street": "Leith Walk",
+    "lat": 55.9665015,
+    "lon": -3.1756248,
+    "x": -230.54,
+    "z": 450.16,
+    "distToStreet": 15.5,
+    "building": {
+      "index": 122,
+      "dist": 8.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Polak w Szkocji",
+    "kind": "yes",
+    "housenumber": "231",
+    "street": "Leith Walk",
+    "lat": 55.9664659,
+    "lon": -3.1749615,
+    "x": -189.21,
+    "z": 454.1,
+    "distToStreet": 16,
+    "building": {
+      "index": 209,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Peluquero de Hombres",
+    "kind": "hairdresser",
+    "housenumber": "244",
+    "street": "Leith Walk",
+    "lat": 55.9664178,
+    "lon": -3.1756946,
+    "x": -234.88,
+    "z": 459.42,
+    "distToStreet": 22.3,
+    "building": {
+      "index": 126,
+      "dist": 7.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Remedy",
+    "kind": "cafe",
+    "housenumber": "235-237",
+    "street": "Leith Walk",
+    "lat": 55.9664048,
+    "lon": -3.1750167,
+    "x": -192.65,
+    "z": 460.85,
+    "distToStreet": 14.8,
+    "building": {
+      "index": 200,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sunset Nails",
+    "kind": "beauty",
+    "housenumber": "246",
+    "street": "Leith Walk",
+    "lat": 55.9663928,
+    "lon": -3.1757154,
+    "x": -236.18,
+    "z": 462.18,
+    "distToStreet": 19.8,
+    "building": {
+      "index": 126,
+      "dist": 4.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sweetland Cafe",
+    "kind": "cafe",
+    "housenumber": "241",
+    "street": "Leith Walk",
+    "lat": 55.9663553,
+    "lon": -3.1750591,
+    "x": -195.29,
+    "z": 466.32,
+    "distToStreet": 14.6,
+    "building": {
+      "index": 210,
+      "dist": 2.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Uwagboe's Kitchen & Grill",
+    "kind": "restaurant",
+    "housenumber": "250-252",
+    "street": "Leith Walk",
+    "lat": 55.966327,
+    "lon": -3.1757702,
+    "x": -239.59,
+    "z": 469.45,
+    "distToStreet": 14.4,
+    "building": {
+      "index": 126,
+      "dist": 3.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Arif Jewelers",
+    "kind": "jewelry",
+    "housenumber": "245",
+    "street": "Leith Walk",
+    "lat": 55.9662776,
+    "lon": -3.1751356,
+    "x": -200.06,
+    "z": 474.91,
+    "distToStreet": 18.5,
+    "building": {
+      "index": 198,
+      "dist": 2.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pedal Forth",
+    "kind": "bicycle",
+    "housenumber": "247",
+    "street": "Leith Walk",
+    "lat": 55.966257,
+    "lon": -3.1751525,
+    "x": -201.11,
+    "z": 477.19,
+    "distToStreet": 20.3,
+    "building": {
+      "index": 198,
+      "dist": 2.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Best Kebab House",
+    "kind": "fast_food",
+    "housenumber": "256",
+    "street": "Leith Walk",
+    "lat": 55.9662189,
+    "lon": -3.1758455,
+    "x": -244.28,
+    "z": 481.4,
+    "distToStreet": 12.6,
+    "building": {
+      "index": 123,
+      "dist": 10.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Zabka",
+    "kind": "convenience",
+    "housenumber": "249-251",
+    "street": "Leith Walk",
+    "lat": 55.9662062,
+    "lon": -3.1751959,
+    "x": -203.82,
+    "z": 482.81,
+    "distToStreet": 16.7,
+    "building": {
+      "index": 203,
+      "dist": 2.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Fairy Boy of Leith",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9661632,
+    "lon": -3.1758187,
+    "x": -242.61,
+    "z": 487.56,
+    "distToStreet": 12.5,
+    "building": {
+      "index": 123,
+      "dist": 7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Dixy Chicken",
+    "kind": "fast_food",
+    "housenumber": "255-257",
+    "street": "Leith Walk",
+    "lat": 55.9661107,
+    "lon": -3.1752697,
+    "x": -208.41,
+    "z": 493.36,
+    "distToStreet": 13.6,
+    "building": {
+      "index": 199,
+      "dist": 1.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Satyr",
+    "kind": "pub",
+    "housenumber": "260-262",
+    "street": "Leith Walk",
+    "lat": 55.9661052,
+    "lon": -3.1759399,
+    "x": -250.17,
+    "z": 493.97,
+    "distToStreet": 22.3,
+    "building": {
+      "index": 123,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Lindsay & Gilmour",
+    "kind": "chemist",
+    "housenumber": "257A",
+    "street": "Leith Walk",
+    "lat": 55.9660506,
+    "lon": -3.1753198,
+    "x": -211.53,
+    "z": 500.01,
+    "distToStreet": 16,
+    "building": {
+      "index": 204,
+      "dist": 3.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "In Style Alterations",
+    "kind": "tailor",
+    "housenumber": "268",
+    "street": "Leith Walk",
+    "lat": 55.9660004,
+    "lon": -3.1760309,
+    "x": -255.83,
+    "z": 505.55,
+    "distToStreet": 17.6,
+    "building": {
+      "index": 686,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sea Breeze Cafe",
+    "kind": "cafe",
+    "housenumber": "261",
+    "street": "Leith Walk",
+    "lat": 55.9659918,
+    "lon": -3.1753687,
+    "x": -214.58,
+    "z": 506.51,
+    "distToStreet": 13.6,
+    "building": {
+      "index": 204,
+      "dist": 4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Romeo",
+    "kind": "hairdresser",
+    "housenumber": "272",
+    "street": "Leith Walk",
+    "lat": 55.9659446,
+    "lon": -3.1760794,
+    "x": -258.86,
+    "z": 511.72,
+    "distToStreet": 13.7,
+    "building": {
+      "index": 686,
+      "dist": 3.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ahmad and Nabi Mcmullan Accountants and Tax Consultants",
+    "kind": "accountant",
+    "housenumber": "263A",
+    "street": "Leith Walk",
+    "lat": 55.9659111,
+    "lon": -3.1754478,
+    "x": -219.51,
+    "z": 515.43,
+    "distToStreet": 14.6,
+    "building": {
+      "index": 15,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Artisan Coffee Leith",
+    "kind": "cafe",
+    "housenumber": "274",
+    "street": "Leith Walk",
+    "lat": 55.9659069,
+    "lon": -3.1761024,
+    "x": -260.29,
+    "z": 515.89,
+    "distToStreet": 12.1,
+    "building": {
+      "index": 686,
+      "dist": 8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Twelve O'Clock Coachman",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.965761,
+    "lon": -3.1762638,
+    "x": -270.34,
+    "z": 532.02,
+    "distToStreet": 14.8,
+    "building": {
+      "index": 118,
+      "dist": 14.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Victoria",
+    "kind": "pub",
+    "housenumber": "265",
+    "street": "Leith Walk",
+    "lat": 55.9657458,
+    "lon": -3.1755792,
+    "x": -227.69,
+    "z": 533.7,
+    "distToStreet": 12.8,
+    "building": {
+      "index": 217,
+      "dist": 4.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Griffen Fitness",
+    "kind": "sports",
+    "housenumber": "3",
+    "street": "Balfour Street",
+    "lat": 55.9656998,
+    "lon": -3.176408,
+    "x": -279.33,
+    "z": 538.78,
+    "distToStreet": 20,
+    "building": {
+      "index": 125,
+      "dist": 6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Fountain Desserts",
+    "kind": "ice_cream",
+    "housenumber": "267a",
+    "street": "Leith Walk",
+    "lat": 55.9656681,
+    "lon": -3.1756475,
+    "x": -231.95,
+    "z": 542.29,
+    "distToStreet": 13,
+    "building": {
+      "index": 231,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Cycle Co",
+    "kind": "bicycle",
+    "housenumber": "276",
+    "street": "Leith Walk",
+    "lat": 55.965655,
+    "lon": -3.1763495,
+    "x": -275.68,
+    "z": 543.74,
+    "distToStreet": 14.5,
+    "building": {
+      "index": 125,
+      "dist": 2.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Estate Salon",
+    "kind": "hairdresser",
+    "housenumber": "267B",
+    "street": "Leith Walk",
+    "lat": 55.965642,
+    "lon": -3.1756705,
+    "x": -233.38,
+    "z": 545.17,
+    "distToStreet": 12.4,
+    "building": {
+      "index": 231,
+      "dist": 1.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Home Essentials",
+    "kind": "hardware",
+    "housenumber": "269",
+    "street": "Leith Walk",
+    "lat": 55.9655928,
+    "lon": -3.1757108,
+    "x": -235.89,
+    "z": 550.61,
+    "distToStreet": 13.5,
+    "building": {
+      "index": 231,
+      "dist": 5.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mo's Sharp Style Barber",
+    "kind": "hairdresser",
+    "housenumber": "280",
+    "street": "Leith Walk",
+    "lat": 55.9655529,
+    "lon": -3.1764142,
+    "x": -279.71,
+    "z": 555.02,
+    "distToStreet": 18.2,
+    "building": {
+      "index": 119,
+      "dist": 5.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Walk Fruits",
+    "kind": "greengrocer",
+    "housenumber": "271-273",
+    "street": "Leith Walk",
+    "lat": 55.9655474,
+    "lon": -3.1757537,
+    "x": -238.57,
+    "z": 555.63,
+    "distToStreet": 12.7,
+    "building": {
+      "index": 229,
+      "dist": 4.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "OriganoGo",
+    "kind": "fast_food",
+    "housenumber": "277",
+    "street": "Leith Walk",
+    "lat": 55.9654977,
+    "lon": -3.1757974,
+    "x": -241.29,
+    "z": 561.12,
+    "distToStreet": 12.1,
+    "building": {
+      "index": 229,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Goldie Loxx",
+    "kind": "hairdresser",
+    "housenumber": "284",
+    "street": "Leith Walk",
+    "lat": 55.9654918,
+    "lon": -3.176467,
+    "x": -283,
+    "z": 561.78,
+    "distToStreet": 15.7,
+    "building": {
+      "index": 119,
+      "dist": 2.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Storries Home Bakery",
+    "kind": "bakery",
+    "housenumber": "279",
+    "street": "Leith Walk",
+    "lat": 55.965417,
+    "lon": -3.1758684,
+    "x": -245.71,
+    "z": 570.04,
+    "distToStreet": 16.7,
+    "building": {
+      "index": 230,
+      "dist": 6.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Bami",
+    "kind": "fast_food",
+    "housenumber": "281",
+    "street": "Leith Walk",
+    "lat": 55.9653967,
+    "lon": -3.1758863,
+    "x": -246.83,
+    "z": 572.29,
+    "distToStreet": 18.2,
+    "building": {
+      "index": 230,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Balfour Street",
+    "kind": "shelter",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9653909,
+    "lon": -3.1762308,
+    "x": -268.29,
+    "z": 572.93,
+    "distToStreet": 5.8,
+    "building": {
+      "index": 230,
+      "dist": 19.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "+48 Tattoo Saloon",
+    "kind": "tattoo",
+    "housenumber": "283",
+    "street": "Leith Walk",
+    "lat": 55.9653733,
+    "lon": -3.1759068,
+    "x": -248.1,
+    "z": 574.87,
+    "distToStreet": 16.1,
+    "building": {
+      "index": 230,
+      "dist": 1.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Neighbourwood",
+    "kind": "fast_food",
+    "housenumber": "294",
+    "street": "Leith Walk",
+    "lat": 55.9653589,
+    "lon": -3.1765663,
+    "x": -289.19,
+    "z": 576.47,
+    "distToStreet": 15.4,
+    "building": {
+      "index": 593,
+      "dist": 4.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Indo Soul",
+    "kind": "hairdresser",
+    "housenumber": "289",
+    "street": "Leith Walk",
+    "lat": 55.9653284,
+    "lon": -3.1759463,
+    "x": -250.56,
+    "z": 579.84,
+    "distToStreet": 13,
+    "building": {
+      "index": 230,
+      "dist": 4.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Arthur's",
+    "kind": "hairdresser",
+    "housenumber": "291",
+    "street": "Leith Walk",
+    "lat": 55.9652837,
+    "lon": -3.1759857,
+    "x": -253.02,
+    "z": 584.78,
+    "distToStreet": 11.8,
+    "building": {
+      "index": 218,
+      "dist": 6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Harp & Castle",
+    "kind": "pub",
+    "housenumber": "298",
+    "street": "Leith Walk",
+    "lat": 55.9652504,
+    "lon": -3.1766683,
+    "x": -295.54,
+    "z": 588.46,
+    "distToStreet": 21,
+    "building": {
+      "index": 604,
+      "dist": 7.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Your Move",
+    "kind": "estate_agent",
+    "housenumber": "295",
+    "street": "Leith Walk",
+    "lat": 55.965234,
+    "lon": -3.1760098,
+    "x": -254.52,
+    "z": 590.27,
+    "distToStreet": 12.8,
+    "building": {
+      "index": 218,
+      "dist": 0.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Druid",
+    "kind": "candles",
+    "housenumber": "5",
+    "street": "Dalmeny Street",
+    "lat": 55.9652118,
+    "lon": -3.1759334,
+    "x": -249.76,
+    "z": 592.73,
+    "distToStreet": 18.1,
+    "building": {
+      "index": 218,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "兴成行 Hing Sing Chinese Supermarket",
+    "kind": "convenience",
+    "housenumber": "310",
+    "street": "Leith Walk",
+    "lat": 55.9650501,
+    "lon": -3.1768533,
+    "x": -307.07,
+    "z": 610.6,
+    "distToStreet": 16.5,
+    "building": {
+      "index": 607,
+      "dist": 0.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "La Casa",
+    "kind": "restaurant",
+    "housenumber": "297",
+    "street": "Leith Walk",
+    "lat": 55.9649881,
+    "lon": -3.1762413,
+    "x": -268.94,
+    "z": 617.45,
+    "distToStreet": 11.7,
+    "building": {
+      "index": 270,
+      "dist": 4.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Best-one",
+    "kind": "convenience",
+    "housenumber": "301",
+    "street": "Leith Walk",
+    "lat": 55.9648804,
+    "lon": -3.1762953,
+    "x": -272.31,
+    "z": 629.36,
+    "distToStreet": 20,
+    "building": {
+      "index": 256,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ernest & Bob",
+    "kind": "cafe",
+    "housenumber": "305",
+    "street": "Leith Walk",
+    "lat": 55.9648244,
+    "lon": -3.1763435,
+    "x": -275.31,
+    "z": 635.55,
+    "distToStreet": 25.5,
+    "building": {
+      "index": 256,
+      "dist": 3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Aslam Jewellers",
+    "kind": "jewelry",
+    "housenumber": "307",
+    "street": "Leith Walk",
+    "lat": 55.9647922,
+    "lon": -3.1763712,
+    "x": -277.03,
+    "z": 639.11,
+    "distToStreet": 28.9,
+    "building": {
+      "index": 256,
+      "dist": 6.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cherry Bay Cafe",
+    "kind": "cafe",
+    "housenumber": "309",
+    "street": "Leith Walk",
+    "lat": 55.9647524,
+    "lon": -3.1764056,
+    "x": -279.18,
+    "z": 643.51,
+    "distToStreet": 27,
+    "building": {
+      "index": 268,
+      "dist": 7.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bardot Aesthics Ltd",
+    "kind": "beauty",
+    "housenumber": "309B",
+    "street": "Leith Walk",
+    "lat": 55.9647346,
+    "lon": -3.1764236,
+    "x": -280.3,
+    "z": 645.48,
+    "distToStreet": 25,
+    "building": {
+      "index": 268,
+      "dist": 4.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cake Box",
+    "kind": "pastry",
+    "housenumber": "328",
+    "street": "Leith Walk",
+    "lat": 55.9646841,
+    "lon": -3.1772181,
+    "x": -329.79,
+    "z": 651.06,
+    "distToStreet": 23.1,
+    "building": {
+      "index": 841,
+      "dist": 1.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Vacuum Exchange",
+    "kind": "vacuum_cleaner",
+    "housenumber": "315-317",
+    "street": "Leith Walk",
+    "lat": 55.9646633,
+    "lon": -3.1764823,
+    "x": -283.95,
+    "z": 653.36,
+    "distToStreet": 18.2,
+    "building": {
+      "index": 268,
+      "dist": 3.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Indigo",
+    "kind": "hairdresser",
+    "housenumber": "332",
+    "street": "Leith Walk",
+    "lat": 55.9646335,
+    "lon": -3.1772489,
+    "x": -331.71,
+    "z": 656.65,
+    "distToStreet": 27.1,
+    "building": {
+      "index": 137,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Braid Vets",
+    "kind": "veterinary",
+    "housenumber": "319",
+    "street": "Leith Walk",
+    "lat": 55.9646046,
+    "lon": -3.1765461,
+    "x": -287.93,
+    "z": 659.85,
+    "distToStreet": 13.4,
+    "building": {
+      "index": 409,
+      "dist": 6.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cupp",
+    "kind": "cafe",
+    "housenumber": "321",
+    "street": "Leith Walk",
+    "lat": 55.9645724,
+    "lon": -3.1765781,
+    "x": -289.92,
+    "z": 663.41,
+    "distToStreet": 12.2,
+    "building": {
+      "index": 409,
+      "dist": 2.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Handsel",
+    "kind": "gift",
+    "housenumber": "336",
+    "street": "Leith Walk",
+    "lat": 55.964544,
+    "lon": -3.1773056,
+    "x": -335.24,
+    "z": 666.55,
+    "distToStreet": 28.5,
+    "building": {
+      "index": 840,
+      "dist": 0.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Framing Studio",
+    "kind": "frame",
+    "housenumber": null,
+    "street": "Leith Walk",
+    "lat": 55.9645033,
+    "lon": -3.1773325,
+    "x": -336.92,
+    "z": 671.04,
+    "distToStreet": 24.1,
+    "building": {
+      "index": 842,
+      "dist": 2.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Laundrette",
+    "kind": "laundry",
+    "housenumber": "344-346",
+    "street": "Leith Walk",
+    "lat": 55.9643993,
+    "lon": -3.1774562,
+    "x": -344.63,
+    "z": 682.54,
+    "distToStreet": 15.7,
+    "building": {
+      "index": 846,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ivor and Ineta's Hair n' Beauty",
+    "kind": "beauty",
+    "housenumber": "335",
+    "street": "Leith Walk",
+    "lat": 55.9643993,
+    "lon": -3.1767505,
+    "x": -300.66,
+    "z": 682.54,
+    "distToStreet": 23.5,
+    "building": {
+      "index": 266,
+      "dist": 0.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Dofos",
+    "kind": "pet",
+    "housenumber": "337",
+    "street": "Leith Walk",
+    "lat": 55.964364,
+    "lon": -3.1767858,
+    "x": -302.86,
+    "z": 686.44,
+    "distToStreet": 27.5,
+    "building": {
+      "index": 266,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Lila Thai Massage",
+    "kind": "massage",
+    "housenumber": "339",
+    "street": "Leith Walk",
+    "lat": 55.9643155,
+    "lon": -3.176835,
+    "x": -305.93,
+    "z": 691.8,
+    "distToStreet": 29.5,
+    "building": {
+      "index": 258,
+      "dist": 6.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "First Mortgage",
+    "kind": "financial",
+    "housenumber": "348",
+    "street": "Leith Walk",
+    "lat": 55.9643115,
+    "lon": -3.1775302,
+    "x": -349.24,
+    "z": 692.25,
+    "distToStreet": 14.3,
+    "building": {
+      "index": 609,
+      "dist": 4.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Babyfaced Baker",
+    "kind": "pastry",
+    "housenumber": "341",
+    "street": "Leith Walk",
+    "lat": 55.9642864,
+    "lon": -3.1768658,
+    "x": -307.85,
+    "z": 695.02,
+    "distToStreet": 27.4,
+    "building": {
+      "index": 258,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "St Columba's Hospice Care",
+    "kind": "charity",
+    "housenumber": "352",
+    "street": "Leith Walk",
+    "lat": 55.9642591,
+    "lon": -3.177585,
+    "x": -352.65,
+    "z": 698.04,
+    "distToStreet": 17.6,
+    "building": {
+      "index": 609,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Elvis Shakespeare",
+    "kind": "books",
+    "housenumber": "347",
+    "street": "Leith Walk",
+    "lat": 55.9642377,
+    "lon": -3.1769173,
+    "x": -311.05,
+    "z": 700.4,
+    "distToStreet": 24.8,
+    "building": {
+      "index": 258,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "SB Barber",
+    "kind": "hairdresser",
+    "housenumber": "349",
+    "street": "Leith Walk",
+    "lat": 55.9642141,
+    "lon": -3.1769422,
+    "x": -312.61,
+    "z": 703.01,
+    "distToStreet": 24,
+    "building": {
+      "index": 258,
+      "dist": 7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "AR Alterations & Dry Cleaning",
+    "kind": "dry_cleaning",
+    "housenumber": "354",
+    "street": "Leith Walk",
+    "lat": 55.9641915,
+    "lon": -3.1776465,
+    "x": -356.48,
+    "z": 705.51,
+    "distToStreet": 23.6,
+    "building": {
+      "index": 611,
+      "dist": 7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Terrafirma",
+    "kind": "cannabis",
+    "housenumber": "351",
+    "street": "Leith Walk",
+    "lat": 55.9641726,
+    "lon": -3.176986,
+    "x": -315.33,
+    "z": 707.6,
+    "distToStreet": 23.5,
+    "building": {
+      "index": 267,
+      "dist": 5.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kukina",
+    "kind": "cafe",
+    "housenumber": "356",
+    "street": "Leith Walk",
+    "lat": 55.9641593,
+    "lon": -3.1776893,
+    "x": -359.15,
+    "z": 709.07,
+    "distToStreet": 27.7,
+    "building": {
+      "index": 611,
+      "dist": 2.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Yellow Express",
+    "kind": "e-cigarette",
+    "housenumber": "353",
+    "street": "Leith Walk",
+    "lat": 55.9641392,
+    "lon": -3.1770214,
+    "x": -317.54,
+    "z": 711.29,
+    "distToStreet": 24,
+    "building": {
+      "index": 267,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Taste of Poland",
+    "kind": "convenience",
+    "housenumber": "360",
+    "street": "Leith Walk",
+    "lat": 55.9641064,
+    "lon": -3.1777446,
+    "x": -362.59,
+    "z": 714.92,
+    "distToStreet": 26,
+    "building": {
+      "index": 611,
+      "dist": 4.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pilrig Church Hall",
+    "kind": "community_centre",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9640728,
+    "lon": -3.1783567,
+    "x": -400.72,
+    "z": 718.63,
+    "distToStreet": 44.3,
+    "building": {
+      "index": 139,
+      "dist": 3.8,
+      "buildingName": "Pilrig Church Hall"
+    }
+  },
+  {
+    "name": "Brass Monkey",
+    "kind": "pub",
+    "housenumber": "362",
+    "street": "Leith Walk",
+    "lat": 55.9640338,
+    "lon": -3.1778257,
+    "x": -367.64,
+    "z": 722.94,
+    "distToStreet": 23.9,
+    "building": {
+      "index": 612,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Regions Beyond",
+    "kind": "tattoo",
+    "housenumber": "361",
+    "street": "Leith Walk",
+    "lat": 55.9640335,
+    "lon": -3.177133,
+    "x": -324.49,
+    "z": 722.98,
+    "distToStreet": 26.8,
+    "building": {
+      "index": 255,
+      "dist": 7.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bee Tech",
+    "kind": "repair",
+    "housenumber": "363",
+    "street": "Leith Walk",
+    "lat": 55.9640031,
+    "lon": -3.1771651,
+    "x": -326.49,
+    "z": 726.34,
+    "distToStreet": 23.5,
+    "building": {
+      "index": 255,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Amor",
+    "kind": "hairdresser",
+    "housenumber": "366",
+    "street": "Leith Walk",
+    "lat": 55.9639907,
+    "lon": -3.1778754,
+    "x": -370.74,
+    "z": 727.71,
+    "distToStreet": 21.1,
+    "building": {
+      "index": 612,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Epoca",
+    "kind": "clothes",
+    "housenumber": "365",
+    "street": "Leith Walk",
+    "lat": 55.963969,
+    "lon": -3.1772085,
+    "x": -329.19,
+    "z": 730.11,
+    "distToStreet": 19.6,
+    "building": {
+      "index": 255,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pilrig St Paul's",
+    "kind": "place_of_worship",
+    "housenumber": "1A",
+    "street": "Pilrig Street",
+    "lat": 55.9639388,
+    "lon": -3.1780836,
+    "x": -383.71,
+    "z": 733.44,
+    "distToStreet": 21.8,
+    "building": {
+      "index": 608,
+      "dist": 3.3,
+      "buildingName": "Pilrig St Paul's"
+    }
+  },
+  {
+    "name": "The 'Pilrig Muddle'",
+    "kind": "information",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.96384,
+    "lon": -3.1774231,
+    "x": -342.56,
+    "z": 744.37,
+    "distToStreet": 9.6,
+    "building": {
+      "index": 272,
+      "dist": 15,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pilrig wheels",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9638359,
+    "lon": -3.1774792,
+    "x": -346.06,
+    "z": 744.82,
+    "distToStreet": 8.7,
+    "building": {
+      "index": 272,
+      "dist": 14,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pilrig Dental Practice",
+    "kind": "dentist",
+    "housenumber": "8",
+    "street": "Pilrig Street",
+    "lat": 55.9638207,
+    "lon": -3.1785761,
+    "x": -414.39,
+    "z": 746.5,
+    "distToStreet": 40.8,
+    "building": {
+      "index": 136,
+      "dist": 2.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Robbie's",
+    "kind": "pub",
+    "housenumber": "367",
+    "street": "Leith Walk",
+    "lat": 55.963729,
+    "lon": -3.1774461,
+    "x": -344,
+    "z": 756.64,
+    "distToStreet": 14.1,
+    "building": {
+      "index": 272,
+      "dist": 3.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Maria's Tailoring, Alterations & Repairs",
+    "kind": "tailor",
+    "housenumber": "371",
+    "street": "Leith Walk",
+    "lat": 55.9636774,
+    "lon": -3.1775215,
+    "x": -348.69,
+    "z": 762.34,
+    "distToStreet": 13.1,
+    "building": {
+      "index": 272,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Lounge 33",
+    "kind": "cafe",
+    "housenumber": "373-375",
+    "street": "Leith Walk",
+    "lat": 55.9636245,
+    "lon": -3.1775994,
+    "x": -353.55,
+    "z": 768.19,
+    "distToStreet": 14.2,
+    "building": {
+      "index": 280,
+      "dist": 0.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Boundary Bar",
+    "kind": "pub",
+    "housenumber": "379",
+    "street": "Leith Walk",
+    "lat": 55.9635684,
+    "lon": -3.1776579,
+    "x": -357.19,
+    "z": 774.39,
+    "distToStreet": 11.8,
+    "building": {
+      "index": 281,
+      "dist": 2.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Starlight",
+    "kind": "convenience",
+    "housenumber": "368",
+    "street": "Leith Walk",
+    "lat": 55.9635327,
+    "lon": -3.1783997,
+    "x": -403.4,
+    "z": 778.33,
+    "distToStreet": 16.4,
+    "building": {
+      "index": 141,
+      "dist": 6.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "GAIA Italian Delicatessen",
+    "kind": "cafe",
+    "housenumber": "32",
+    "street": "Crighton Place",
+    "lat": 55.9635024,
+    "lon": -3.1777276,
+    "x": -361.53,
+    "z": 781.68,
+    "distToStreet": 12.4,
+    "building": {
+      "index": 281,
+      "dist": 6.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Raku",
+    "kind": "restaurant",
+    "housenumber": "31",
+    "street": "Crighton Place",
+    "lat": 55.9634744,
+    "lon": -3.1777492,
+    "x": -362.88,
+    "z": 784.78,
+    "distToStreet": 12.5,
+    "building": {
+      "index": 291,
+      "dist": 4.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Scotmid",
+    "kind": "supermarket",
+    "housenumber": "370",
+    "street": "Leith Walk",
+    "lat": 55.9634486,
+    "lon": -3.1784917,
+    "x": -409.13,
+    "z": 787.63,
+    "distToStreet": 23.2,
+    "building": {
+      "index": 141,
+      "dist": 5.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "La Querencia",
+    "kind": "restaurant",
+    "housenumber": "29",
+    "street": "Crighton Place",
+    "lat": 55.9634367,
+    "lon": -3.1777973,
+    "x": -365.88,
+    "z": 788.95,
+    "distToStreet": 11.6,
+    "building": {
+      "index": 291,
+      "dist": 2.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "PC Repair Man",
+    "kind": "computer",
+    "housenumber": "28",
+    "street": "Crighton Place",
+    "lat": 55.963406,
+    "lon": -3.17783,
+    "x": -367.91,
+    "z": 792.34,
+    "distToStreet": 11.4,
+    "building": {
+      "index": 291,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "WeighToGo",
+    "kind": "grocery",
+    "housenumber": "27",
+    "street": "Crighton Place",
+    "lat": 55.9633609,
+    "lon": -3.1778779,
+    "x": -370.9,
+    "z": 797.33,
+    "distToStreet": 11.9,
+    "building": {
+      "index": 283,
+      "dist": 7.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Barnardo's",
+    "kind": "charity",
+    "housenumber": "28",
+    "street": "Crighton Place",
+    "lat": 55.9633319,
+    "lon": -3.1779087,
+    "x": -372.81,
+    "z": 800.53,
+    "distToStreet": 11.7,
+    "building": {
+      "index": 283,
+      "dist": 4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Mortgage Centre",
+    "kind": "financial_advisor",
+    "housenumber": "23-24",
+    "street": "Crighton Place",
+    "lat": 55.9632696,
+    "lon": -3.1779749,
+    "x": -376.94,
+    "z": 807.42,
+    "distToStreet": 12.3,
+    "building": {
+      "index": 283,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "William Hill",
+    "kind": "bookmaker",
+    "housenumber": "22",
+    "street": "Crighton Place",
+    "lat": 55.963207,
+    "lon": -3.1780414,
+    "x": -381.08,
+    "z": 814.34,
+    "distToStreet": 16.9,
+    "building": {
+      "index": 523,
+      "dist": 5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Freak Body Supplements",
+    "kind": "nutrition_supplements",
+    "housenumber": "20-21",
+    "street": "Crighton Place",
+    "lat": 55.963163,
+    "lon": -3.1780881,
+    "x": -383.99,
+    "z": 819.2,
+    "distToStreet": 13.5,
+    "building": {
+      "index": 523,
+      "dist": 1.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Marpole",
+    "kind": "fitness_centre",
+    "housenumber": "378",
+    "street": "Leith Walk",
+    "lat": 55.9631515,
+    "lon": -3.1788004,
+    "x": -428.36,
+    "z": 820.47,
+    "distToStreet": 16.2,
+    "building": {
+      "index": 554,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "VPZ",
+    "kind": "e-cigarette",
+    "housenumber": "6A",
+    "street": "Middlefield",
+    "lat": 55.9630848,
+    "lon": -3.1788818,
+    "x": -433.44,
+    "z": 827.85,
+    "distToStreet": 16.1,
+    "building": {
+      "index": 554,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Collectables",
+    "kind": "collector",
+    "housenumber": "16-18",
+    "street": "Crighton Place",
+    "lat": 55.9630841,
+    "lon": -3.178172,
+    "x": -389.22,
+    "z": 827.92,
+    "distToStreet": 12.5,
+    "building": {
+      "index": 282,
+      "dist": 8.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Aros Barbers",
+    "kind": "hairdresser",
+    "housenumber": "14",
+    "street": "Crighton Place",
+    "lat": 55.963012,
+    "lon": -3.1782485,
+    "x": -393.98,
+    "z": 835.89,
+    "distToStreet": 11.9,
+    "building": {
+      "index": 282,
+      "dist": 1.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Nótt",
+    "kind": "cafe",
+    "housenumber": "13",
+    "street": "Crighton Place",
+    "lat": 55.9629837,
+    "lon": -3.1782786,
+    "x": -395.86,
+    "z": 839.02,
+    "distToStreet": 11.6,
+    "building": {
+      "index": 282,
+      "dist": 4.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Greet the Greek",
+    "kind": "fast_food",
+    "housenumber": "12",
+    "street": null,
+    "lat": 55.9629419,
+    "lon": -3.178323,
+    "x": -398.62,
+    "z": 843.64,
+    "distToStreet": 13,
+    "building": {
+      "index": 271,
+      "dist": 9.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Starbucks",
+    "kind": "cafe",
+    "housenumber": "3",
+    "street": "Leith Walk",
+    "lat": 55.962891,
+    "lon": -3.1791063,
+    "x": -447.42,
+    "z": 849.27,
+    "distToStreet": 13.6,
+    "building": {
+      "index": 940,
+      "dist": 24.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Leith Walk Gallery",
+    "kind": "gift",
+    "housenumber": "10-11",
+    "street": "Crighton Place",
+    "lat": 55.9628681,
+    "lon": -3.1784047,
+    "x": -403.71,
+    "z": 851.8,
+    "distToStreet": 12.4,
+    "building": {
+      "index": 271,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Crighton Pharmacy",
+    "kind": "pharmacy",
+    "housenumber": "7",
+    "street": "Crighton Place",
+    "lat": 55.9627972,
+    "lon": -3.1784779,
+    "x": -408.27,
+    "z": 859.64,
+    "distToStreet": 14.2,
+    "building": {
+      "index": 275,
+      "dist": 7.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Mortgage Center",
+    "kind": "financial_advisor",
+    "housenumber": "4-5",
+    "street": "Crighton Place",
+    "lat": 55.9627343,
+    "lon": -3.178543,
+    "x": -412.33,
+    "z": 866.59,
+    "distToStreet": 13.6,
+    "building": {
+      "index": 275,
+      "dist": 3.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sainsbury's Local",
+    "kind": "convenience",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9627247,
+    "lon": -3.1793598,
+    "x": -463.21,
+    "z": 867.65,
+    "distToStreet": 15.7,
+    "building": {
+      "index": 940,
+      "dist": 6.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tepuy",
+    "kind": "coffee",
+    "housenumber": "2",
+    "street": "Crighton Place",
+    "lat": 55.9627142,
+    "lon": -3.1784045,
+    "x": -403.7,
+    "z": 868.81,
+    "distToStreet": 22.5,
+    "building": {
+      "index": 275,
+      "dist": 5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Sicilian Pastry Shop",
+    "kind": "pastry",
+    "housenumber": "10-14-16",
+    "street": "Albert Street",
+    "lat": 55.9627123,
+    "lon": -3.1781131,
+    "x": -385.55,
+    "z": 869.02,
+    "distToStreet": 36.8,
+    "building": {
+      "index": 287,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ben Store",
+    "kind": "newsagent",
+    "housenumber": "18-20",
+    "street": "Albert Street",
+    "lat": 55.9627101,
+    "lon": -3.1779712,
+    "x": -376.71,
+    "z": 869.26,
+    "distToStreet": 44.4,
+    "building": {
+      "index": 277,
+      "dist": 6.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pret A Manger",
+    "kind": "fast_food",
+    "housenumber": "1",
+    "street": null,
+    "lat": 55.9625229,
+    "lon": -3.1795836,
+    "x": -477.16,
+    "z": 889.96,
+    "distToStreet": 14.3,
+    "building": {
+      "index": 940,
+      "dist": 28.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Word of Mouth Bistro Cafe",
+    "kind": "cafe",
+    "housenumber": "3A",
+    "street": "Albert Street",
+    "lat": 55.9624801,
+    "lon": -3.1786765,
+    "x": -420.65,
+    "z": 894.69,
+    "distToStreet": 22.4,
+    "building": {
+      "index": 76,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Golden Ambal",
+    "kind": "restaurant",
+    "housenumber": "1",
+    "street": null,
+    "lat": 55.9624799,
+    "lon": -3.1788559,
+    "x": -431.82,
+    "z": 894.71,
+    "distToStreet": 13.4,
+    "building": {
+      "index": 75,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Grace Church Leith",
+    "kind": "place_of_worship",
+    "housenumber": "3",
+    "street": "Shrubhill Walk",
+    "lat": 55.9624676,
+    "lon": -3.18001,
+    "x": -503.72,
+    "z": 896.07,
+    "distToStreet": 32.6,
+    "building": {
+      "index": 962,
+      "dist": 12.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "PrintSponge",
+    "kind": "copyshop",
+    "housenumber": "3",
+    "street": null,
+    "lat": 55.9624403,
+    "lon": -3.1789331,
+    "x": -436.63,
+    "z": 899.09,
+    "distToStreet": 11.5,
+    "building": {
+      "index": 75,
+      "dist": 3.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Cilantro",
+    "kind": "fast_food",
+    "housenumber": "4",
+    "street": null,
+    "lat": 55.9624093,
+    "lon": -3.1789715,
+    "x": -439.02,
+    "z": 902.51,
+    "distToStreet": 11.9,
+    "building": {
+      "index": 75,
+      "dist": 7.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Places Leisure",
+    "kind": "fitness_centre",
+    "housenumber": null,
+    "street": "Leith Walk",
+    "lat": 55.9623575,
+    "lon": -3.1798553,
+    "x": -494.08,
+    "z": 908.24,
+    "distToStreet": 20.3,
+    "building": {
+      "index": 962,
+      "dist": 11.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Bargain Store",
+    "kind": "variety_store",
+    "housenumber": "5",
+    "street": null,
+    "lat": 55.9623527,
+    "lon": -3.179039,
+    "x": -443.23,
+    "z": 908.77,
+    "distToStreet": 11.8,
+    "building": {
+      "index": 375,
+      "dist": 4.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Poly Pak Continental Foods",
+    "kind": "convenience",
+    "housenumber": "7/8",
+    "street": null,
+    "lat": 55.9622946,
+    "lon": -3.1791132,
+    "x": -447.85,
+    "z": 915.19,
+    "distToStreet": 14,
+    "building": {
+      "index": 375,
+      "dist": 3.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mirin",
+    "kind": "restaurant",
+    "housenumber": "9",
+    "street": null,
+    "lat": 55.9622389,
+    "lon": -3.179182,
+    "x": -452.14,
+    "z": 921.35,
+    "distToStreet": 12.1,
+    "building": {
+      "index": 72,
+      "dist": 4.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Fastleith Ltd",
+    "kind": "money_transfer",
+    "housenumber": "10",
+    "street": null,
+    "lat": 55.9622189,
+    "lon": -3.1792068,
+    "x": -453.68,
+    "z": 923.56,
+    "distToStreet": 12.3,
+    "building": {
+      "index": 72,
+      "dist": 1.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bangkok on the Walk",
+    "kind": "fast_food",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9621755,
+    "lon": -3.1792604,
+    "x": -457.02,
+    "z": 928.36,
+    "distToStreet": 14.6,
+    "building": {
+      "index": 72,
+      "dist": 4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Airlink Travel",
+    "kind": "travel_agency",
+    "housenumber": "13",
+    "street": null,
+    "lat": 55.9621451,
+    "lon": -3.179298,
+    "x": -459.36,
+    "z": 931.72,
+    "distToStreet": 17.3,
+    "building": {
+      "index": 72,
+      "dist": 8.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bodega Leith",
+    "kind": "restaurant",
+    "housenumber": "14-15",
+    "street": null,
+    "lat": 55.9621003,
+    "lon": -3.1793718,
+    "x": -463.96,
+    "z": 936.67,
+    "distToStreet": 22.1,
+    "building": {
+      "index": 71,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Otherworld",
+    "kind": "pub",
+    "housenumber": "17",
+    "street": "Albert Place",
+    "lat": 55.9620252,
+    "lon": -3.1794463,
+    "x": -468.6,
+    "z": 944.97,
+    "distToStreet": 16.6,
+    "building": {
+      "index": 71,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pascal & Co",
+    "kind": "clothes",
+    "housenumber": "20",
+    "street": null,
+    "lat": 55.9619206,
+    "lon": -3.1796083,
+    "x": -478.69,
+    "z": 956.54,
+    "distToStreet": 11.9,
+    "building": {
+      "index": 373,
+      "dist": 10.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "On the Walk",
+    "kind": "apartment",
+    "housenumber": "18",
+    "street": null,
+    "lat": 55.9619123,
+    "lon": -3.1793296,
+    "x": -461.33,
+    "z": 957.45,
+    "distToStreet": 26.2,
+    "building": {
+      "index": 521,
+      "dist": 3.9,
+      "buildingName": "On the Walk"
+    }
+  },
+  {
+    "name": "Carnivale",
+    "kind": "clothes",
+    "housenumber": "21-22",
+    "street": null,
+    "lat": 55.961891,
+    "lon": -3.1796482,
+    "x": -481.18,
+    "z": 959.81,
+    "distToStreet": 11.2,
+    "building": {
+      "index": 373,
+      "dist": 6.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Little Free Library",
+    "kind": "public_bookcase",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9618838,
+    "lon": -3.1803234,
+    "x": -523.24,
+    "z": 960.6,
+    "distToStreet": 22.9,
+    "building": {
+      "index": 959,
+      "dist": 9.3,
+      "buildingName": "Leith Walk Polis Box"
+    }
+  },
+  {
+    "name": "Tailor",
+    "kind": "tailor",
+    "housenumber": "25",
+    "street": null,
+    "lat": 55.961858,
+    "lon": -3.1796927,
+    "x": -483.95,
+    "z": 963.46,
+    "distToStreet": 12,
+    "building": {
+      "index": 373,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Whispering Kettle",
+    "kind": "cafe",
+    "housenumber": "26",
+    "street": null,
+    "lat": 55.9618192,
+    "lon": -3.1797449,
+    "x": -487.2,
+    "z": 967.74,
+    "distToStreet": 14.8,
+    "building": {
+      "index": 373,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Curioso",
+    "kind": "popup",
+    "housenumber": "27",
+    "street": null,
+    "lat": 55.9617936,
+    "lon": -3.1797794,
+    "x": -489.35,
+    "z": 970.57,
+    "distToStreet": 17.3,
+    "building": {
+      "index": 373,
+      "dist": 7.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Salon 5",
+    "kind": "beauty",
+    "housenumber": "10",
+    "street": "Croall Place",
+    "lat": 55.9617907,
+    "lon": -3.18055,
+    "x": -537.36,
+    "z": 970.89,
+    "distToStreet": 30.5,
+    "building": {
+      "index": 723,
+      "dist": 6.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Walnut",
+    "kind": "restaurant",
+    "housenumber": "9",
+    "street": "Croall Place",
+    "lat": 55.9617664,
+    "lon": -3.1805826,
+    "x": -539.39,
+    "z": 973.58,
+    "distToStreet": 29.3,
+    "building": {
+      "index": 723,
+      "dist": 2.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Cutting Room",
+    "kind": "hairdresser",
+    "housenumber": "28",
+    "street": null,
+    "lat": 55.9617659,
+    "lon": -3.1798168,
+    "x": -491.68,
+    "z": 973.64,
+    "distToStreet": 15.4,
+    "building": {
+      "index": 373,
+      "dist": 10.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Borlands",
+    "kind": "sports",
+    "housenumber": "7",
+    "street": "Croall Place",
+    "lat": 55.9617235,
+    "lon": -3.18064,
+    "x": -542.97,
+    "z": 978.32,
+    "distToStreet": 28.2,
+    "building": {
+      "index": 723,
+      "dist": 3.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "eleanore",
+    "kind": "restaurant",
+    "housenumber": "30-31",
+    "street": null,
+    "lat": 55.9617202,
+    "lon": -3.1798783,
+    "x": -495.51,
+    "z": 978.69,
+    "distToStreet": 11.5,
+    "building": {
+      "index": 373,
+      "dist": 17.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Nails & Spa",
+    "kind": "beauty",
+    "housenumber": "6",
+    "street": "Croall Place",
+    "lat": 55.9616912,
+    "lon": -3.1806833,
+    "x": -545.66,
+    "z": 981.89,
+    "distToStreet": 25.7,
+    "building": {
+      "index": 723,
+      "dist": 7.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Tour Guest House",
+    "kind": "guest_house",
+    "housenumber": "5",
+    "street": "McDonald Road",
+    "lat": 55.9616812,
+    "lon": -3.1810071,
+    "x": -565.84,
+    "z": 983,
+    "distToStreet": 31.3,
+    "building": {
+      "index": 8,
+      "dist": 3.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "MaDeb",
+    "kind": "convenience",
+    "housenumber": "5",
+    "street": "Croall Place",
+    "lat": 55.9616354,
+    "lon": -3.180758,
+    "x": -550.32,
+    "z": 988.06,
+    "distToStreet": 19.9,
+    "building": {
+      "index": 724,
+      "dist": 3.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "British Red Cross",
+    "kind": "charity",
+    "housenumber": "1",
+    "street": "Croall Place",
+    "lat": 55.9615944,
+    "lon": -3.180839,
+    "x": -555.36,
+    "z": 992.59,
+    "distToStreet": 17.4,
+    "building": {
+      "index": 724,
+      "dist": 3.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Magnet",
+    "kind": "kitchen",
+    "housenumber": "10B",
+    "street": "Brunswick Place",
+    "lat": 55.961563,
+    "lon": -3.1799851,
+    "x": -502.17,
+    "z": 996.06,
+    "distToStreet": 19.9,
+    "building": {
+      "index": 74,
+      "dist": 2.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Army Stores Outdoors",
+    "kind": "military_surplus",
+    "housenumber": "7-10",
+    "street": "Brunswick Place",
+    "lat": 55.9614608,
+    "lon": -3.180176,
+    "x": -514.06,
+    "z": 1007.36,
+    "distToStreet": 12.9,
+    "building": {
+      "index": 74,
+      "dist": 14.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Not Just Coffee",
+    "kind": "cafe",
+    "housenumber": "7",
+    "street": "Brunswick Place",
+    "lat": 55.9613992,
+    "lon": -3.1802618,
+    "x": -519.41,
+    "z": 1014.17,
+    "distToStreet": 14.1,
+    "building": {
+      "index": 73,
+      "dist": 9.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "McDonald Road Library",
+    "kind": "library",
+    "housenumber": "2-4",
+    "street": "McDonald Road",
+    "lat": 55.9613459,
+    "lon": -3.1813974,
+    "x": -590.15,
+    "z": 1020.06,
+    "distToStreet": 28.8,
+    "building": {
+      "index": 2,
+      "dist": 12.9,
+      "buildingName": "McDonald Road Library"
+    }
+  },
+  {
+    "name": "Tesco Express",
+    "kind": "convenience",
+    "housenumber": "4-6",
+    "street": "Brunswick Place",
+    "lat": 55.9613043,
+    "lon": -3.1803525,
+    "x": -525.06,
+    "z": 1024.66,
+    "distToStreet": 13.7,
+    "building": {
+      "index": 73,
+      "dist": 10.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Vittoria",
+    "kind": "restaurant",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9611482,
+    "lon": -3.1805954,
+    "x": -540.19,
+    "z": 1041.92,
+    "distToStreet": 11.5,
+    "building": {
+      "index": 357,
+      "dist": 5.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Wex Photo Video",
+    "kind": "photo",
+    "housenumber": "39",
+    "street": "Haddington Place",
+    "lat": 55.9611,
+    "lon": -3.1814389,
+    "x": -592.73,
+    "z": 1047.24,
+    "distToStreet": 16.6,
+    "building": {
+      "index": 150,
+      "dist": 17.9,
+      "buildingName": "Haddington Place"
+    }
+  },
+  {
+    "name": "Eatalia's",
+    "kind": "fast_food",
+    "housenumber": "1",
+    "street": "Brunswick Place",
+    "lat": 55.961089,
+    "lon": -3.1806731,
+    "x": -545.03,
+    "z": 1048.46,
+    "distToStreet": 13.1,
+    "building": {
+      "index": 357,
+      "dist": 4.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Brunswick Book Club",
+    "kind": "restaurant",
+    "housenumber": "113",
+    "street": "Brunswick Street",
+    "lat": 55.96104,
+    "lon": -3.1806861,
+    "x": -545.84,
+    "z": 1053.88,
+    "distToStreet": 17.9,
+    "building": {
+      "index": 357,
+      "dist": 8.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Haddington Place",
+    "kind": "student_accommodation",
+    "housenumber": "35",
+    "street": "Haddington Place",
+    "lat": 55.9610184,
+    "lon": -3.1814913,
+    "x": -596,
+    "z": 1056.26,
+    "distToStreet": 11.5,
+    "building": {
+      "index": 150,
+      "dist": 16.8,
+      "buildingName": "Haddington Place"
+    }
+  },
+  {
+    "name": "Indigo Sun",
+    "kind": "beauty",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9609709,
+    "lon": -3.1815884,
+    "x": -602.05,
+    "z": 1061.52,
+    "distToStreet": 15.7,
+    "building": {
+      "index": 150,
+      "dist": 16,
+      "buildingName": "Haddington Place"
+    }
+  },
+  {
+    "name": "Wizardrops",
+    "kind": "herbalist",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9608799,
+    "lon": -3.1806278,
+    "x": -542.21,
+    "z": 1071.57,
+    "distToStreet": 27.6,
+    "building": {
+      "index": 341,
+      "dist": 6.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ariana's Kebab",
+    "kind": "fast_food",
+    "housenumber": "103",
+    "street": "Brunswick Street",
+    "lat": 55.9608546,
+    "lon": -3.1806135,
+    "x": -541.32,
+    "z": 1074.37,
+    "distToStreet": 29.4,
+    "building": {
+      "index": 341,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tribe Yoga",
+    "kind": "fitness_centre",
+    "housenumber": "35-36",
+    "street": "Haddington Place",
+    "lat": 55.9608324,
+    "lon": -3.1817654,
+    "x": -613.07,
+    "z": 1076.83,
+    "distToStreet": 30.3,
+    "building": {
+      "index": 138,
+      "dist": 13.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Dine Thyme",
+    "kind": "fast_food",
+    "housenumber": "99",
+    "street": "Brunswick Street",
+    "lat": 55.9607953,
+    "lon": -3.180587,
+    "x": -539.66,
+    "z": 1080.93,
+    "distToStreet": 34.1,
+    "building": {
+      "index": 341,
+      "dist": 3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Settlement Projects",
+    "kind": "charity",
+    "housenumber": "34A",
+    "street": "Haddington Place",
+    "lat": 55.9607866,
+    "lon": -3.1818905,
+    "x": -620.87,
+    "z": 1081.89,
+    "distToStreet": 31.8,
+    "building": {
+      "index": 138,
+      "dist": 4.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Magic Hair",
+    "kind": "hairdresser",
+    "housenumber": "97",
+    "street": "Brunswick Street",
+    "lat": 55.9607665,
+    "lon": -3.1805742,
+    "x": -538.87,
+    "z": 1084.11,
+    "distToStreet": 36.6,
+    "building": {
+      "index": 341,
+      "dist": 6.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Umega",
+    "kind": "estate_agent",
+    "housenumber": "94-96",
+    "street": "Brunswick Street",
+    "lat": 55.9607601,
+    "lon": -3.1810686,
+    "x": -569.67,
+    "z": 1084.82,
+    "distToStreet": 12.5,
+    "building": {
+      "index": 34,
+      "dist": 7.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leomax",
+    "kind": "computer",
+    "housenumber": "75",
+    "street": "Elm Row",
+    "lat": 55.9607466,
+    "lon": -3.1811018,
+    "x": -571.73,
+    "z": 1086.31,
+    "distToStreet": 12.8,
+    "building": {
+      "index": 34,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "McDonald Road",
+    "kind": "shelter",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9607073,
+    "lon": -3.1815297,
+    "x": -598.39,
+    "z": 1090.65,
+    "distToStreet": 26.7,
+    "building": {
+      "index": 345,
+      "dist": 20.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Oh Deer",
+    "kind": "cafe",
+    "housenumber": "73",
+    "street": "Elm Row",
+    "lat": 55.960689,
+    "lon": -3.1811757,
+    "x": -576.34,
+    "z": 1092.68,
+    "distToStreet": 18,
+    "building": {
+      "index": 34,
+      "dist": 4.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Twelve Triangles",
+    "kind": "cafe",
+    "housenumber": "90",
+    "street": "Brunswick Street",
+    "lat": 55.960688,
+    "lon": -3.1810699,
+    "x": -569.75,
+    "z": 1092.79,
+    "distToStreet": 19.5,
+    "building": {
+      "index": 34,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Bethany Bookshop",
+    "kind": "books",
+    "housenumber": "33A",
+    "street": "Haddington Place",
+    "lat": 55.9606774,
+    "lon": -3.1820407,
+    "x": -630.23,
+    "z": 1093.96,
+    "distToStreet": 20.8,
+    "building": {
+      "index": 325,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Adeel",
+    "kind": "mobile_phone",
+    "housenumber": "72",
+    "street": "Elm Row",
+    "lat": 55.9606614,
+    "lon": -3.1812111,
+    "x": -578.54,
+    "z": 1095.73,
+    "distToStreet": 21.1,
+    "building": {
+      "index": 34,
+      "dist": 7.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Brazen",
+    "kind": "hairdresser",
+    "housenumber": "88",
+    "street": "Brunswick Street",
+    "lat": 55.9606346,
+    "lon": -3.1810456,
+    "x": -568.23,
+    "z": 1098.69,
+    "distToStreet": 25.6,
+    "building": {
+      "index": 34,
+      "dist": 7.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Bethany Shop",
+    "kind": "charity",
+    "housenumber": "32B",
+    "street": "Haddington Place",
+    "lat": 55.9606164,
+    "lon": -3.1821202,
+    "x": -635.18,
+    "z": 1100.7,
+    "distToStreet": 17.4,
+    "building": {
+      "index": 325,
+      "dist": 5.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Joker & The Thief",
+    "kind": "pub",
+    "housenumber": "71",
+    "street": "Elm Row",
+    "lat": 55.9606075,
+    "lon": -3.1812802,
+    "x": -582.85,
+    "z": 1101.69,
+    "distToStreet": 27.7,
+    "building": {
+      "index": 345,
+      "dist": 5.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "LW Dental",
+    "kind": "dentist",
+    "housenumber": "32",
+    "street": "Haddington Place",
+    "lat": 55.9605594,
+    "lon": -3.1822284,
+    "x": -641.92,
+    "z": 1107,
+    "distToStreet": 19.6,
+    "building": {
+      "index": 135,
+      "dist": 7.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Emma Hall Hair",
+    "kind": "hairdresser",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9605359,
+    "lon": -3.1822565,
+    "x": -643.67,
+    "z": 1109.6,
+    "distToStreet": 20.6,
+    "building": {
+      "index": 135,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Replayit Entertainment Xchange",
+    "kind": "pawnbroker",
+    "housenumber": "68",
+    "street": "Elm Row",
+    "lat": 55.960505,
+    "lon": -3.1814109,
+    "x": -590.99,
+    "z": 1113.02,
+    "distToStreet": 17,
+    "building": {
+      "index": 36,
+      "dist": 7.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Harburn Hobbies",
+    "kind": "model",
+    "housenumber": "67",
+    "street": "Elm Row",
+    "lat": 55.9604923,
+    "lon": -3.1814279,
+    "x": -592.05,
+    "z": 1114.42,
+    "distToStreet": 15.8,
+    "building": {
+      "index": 36,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Embo",
+    "kind": "cafe",
+    "housenumber": "29",
+    "street": "Haddington Place",
+    "lat": 55.9604776,
+    "lon": -3.1823505,
+    "x": -649.52,
+    "z": 1116.05,
+    "distToStreet": 26.2,
+    "building": {
+      "index": 135,
+      "dist": 6.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Outliers Barber Co",
+    "kind": "hairdresser",
+    "housenumber": "28A",
+    "street": "Haddington Place",
+    "lat": 55.9604636,
+    "lon": -3.1823711,
+    "x": -650.81,
+    "z": 1117.59,
+    "distToStreet": 27.7,
+    "building": {
+      "index": 135,
+      "dist": 7.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bon Bon",
+    "kind": "ice_cream",
+    "housenumber": "65",
+    "street": "Elm Row",
+    "lat": 55.9604477,
+    "lon": -3.1814851,
+    "x": -595.61,
+    "z": 1119.35,
+    "distToStreet": 12.7,
+    "building": {
+      "index": 36,
+      "dist": 0.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "5th Season Vintage",
+    "kind": "clothes",
+    "housenumber": "28",
+    "street": "Haddington Place",
+    "lat": 55.9604464,
+    "lon": -3.1823964,
+    "x": -652.38,
+    "z": 1119.49,
+    "distToStreet": 29.5,
+    "building": {
+      "index": 135,
+      "dist": 10.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Veen Barbers",
+    "kind": "hairdresser",
+    "housenumber": "64",
+    "street": "Elm Row",
+    "lat": 55.9604234,
+    "lon": -3.1815162,
+    "x": -597.55,
+    "z": 1122.04,
+    "distToStreet": 12,
+    "building": {
+      "index": 36,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Tale of You",
+    "kind": "tattoo",
+    "housenumber": "27A",
+    "street": "Haddington Place",
+    "lat": 55.9604025,
+    "lon": -3.1824445,
+    "x": -655.38,
+    "z": 1124.35,
+    "distToStreet": 33.7,
+    "building": {
+      "index": 314,
+      "dist": 10,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Instacash",
+    "kind": "pawnbroker",
+    "housenumber": "63",
+    "street": "Elm Row",
+    "lat": 55.9603802,
+    "lon": -3.1815716,
+    "x": -601,
+    "z": 1126.81,
+    "distToStreet": 13,
+    "building": {
+      "index": 342,
+      "dist": 6.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kawaneko Cafe",
+    "kind": "cafe",
+    "housenumber": "62",
+    "street": "Elm Row",
+    "lat": 55.9603612,
+    "lon": -3.181596,
+    "x": -602.52,
+    "z": 1128.91,
+    "distToStreet": 14.2,
+    "building": {
+      "index": 342,
+      "dist": 3.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mera Lãhorë",
+    "kind": "cafe",
+    "housenumber": "26-27",
+    "street": "Haddington Place",
+    "lat": 55.9603525,
+    "lon": -3.1825331,
+    "x": -660.9,
+    "z": 1129.87,
+    "distToStreet": 34.7,
+    "building": {
+      "index": 314,
+      "dist": 4.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Walk Dental Studio",
+    "kind": "dentist",
+    "housenumber": "26A",
+    "street": "Haddington Place",
+    "lat": 55.960331,
+    "lon": -3.182558,
+    "x": -662.45,
+    "z": 1132.25,
+    "distToStreet": 33.8,
+    "building": {
+      "index": 314,
+      "dist": 4.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ivy",
+    "kind": "beauty",
+    "housenumber": "24A",
+    "street": "Haddington Place",
+    "lat": 55.9603104,
+    "lon": -3.182581,
+    "x": -663.88,
+    "z": 1134.53,
+    "distToStreet": 33.1,
+    "building": {
+      "index": 314,
+      "dist": 5.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Elm Row Barber Shop",
+    "kind": "hairdresser",
+    "housenumber": "59",
+    "street": "Elm Row",
+    "lat": 55.9603021,
+    "lon": -3.1816717,
+    "x": -607.24,
+    "z": 1135.44,
+    "distToStreet": 19.8,
+    "building": {
+      "index": 342,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Little Plaza",
+    "kind": "events_venue",
+    "housenumber": "24",
+    "street": null,
+    "lat": 55.9602943,
+    "lon": -3.1826093,
+    "x": -665.65,
+    "z": 1136.31,
+    "distToStreet": 33.2,
+    "building": {
+      "index": 314,
+      "dist": 7.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Nem",
+    "kind": "restaurant",
+    "housenumber": "58",
+    "street": "Elm Row",
+    "lat": 55.9602611,
+    "lon": -3.1817243,
+    "x": -610.51,
+    "z": 1139.98,
+    "distToStreet": 24.4,
+    "building": {
+      "index": 350,
+      "dist": 6.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Wheel of Fate",
+    "kind": "handicraft",
+    "housenumber": "24",
+    "street": "Haddington Place",
+    "lat": 55.9602501,
+    "lon": -3.1826224,
+    "x": -666.46,
+    "z": 1141.19,
+    "distToStreet": 31,
+    "building": {
+      "index": 335,
+      "dist": 9.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pera",
+    "kind": "restaurant",
+    "housenumber": "57",
+    "street": "Elm Row",
+    "lat": 55.9602419,
+    "lon": -3.1817489,
+    "x": -612.05,
+    "z": 1142.1,
+    "distToStreet": 26.8,
+    "building": {
+      "index": 350,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "McCalls",
+    "kind": "clothes",
+    "housenumber": "21-22A",
+    "street": "Haddington Place",
+    "lat": 55.9602335,
+    "lon": -3.182699,
+    "x": -671.23,
+    "z": 1143.03,
+    "distToStreet": 34.3,
+    "building": {
+      "index": 335,
+      "dist": 6.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Green Leith",
+    "kind": "garden_centre",
+    "housenumber": "55",
+    "street": "Elm Row",
+    "lat": 55.9602037,
+    "lon": -3.1817979,
+    "x": -615.1,
+    "z": 1146.32,
+    "distToStreet": 27.6,
+    "building": {
+      "index": 350,
+      "dist": 1.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Repair Centre",
+    "kind": "mobile_phone",
+    "housenumber": "54",
+    "street": "Elm Row",
+    "lat": 55.9601844,
+    "lon": -3.1818226,
+    "x": -616.64,
+    "z": 1148.46,
+    "distToStreet": 25.4,
+    "building": {
+      "index": 350,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Nook",
+    "kind": "cafe",
+    "housenumber": "19",
+    "street": "Haddington Place",
+    "lat": 55.9601528,
+    "lon": -3.1828188,
+    "x": -678.7,
+    "z": 1151.95,
+    "distToStreet": 34.7,
+    "building": {
+      "index": 335,
+      "dist": 7.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pack & Send",
+    "kind": "post_office",
+    "housenumber": "53",
+    "street": "Elm Row",
+    "lat": 55.9601398,
+    "lon": -3.1818798,
+    "x": -620.2,
+    "z": 1153.39,
+    "distToStreet": 20.5,
+    "building": {
+      "index": 340,
+      "dist": 5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "iTravel4u",
+    "kind": "travel_agency",
+    "housenumber": "18",
+    "street": "Haddington Place",
+    "lat": 55.960124,
+    "lon": -3.1828603,
+    "x": -681.28,
+    "z": 1155.13,
+    "distToStreet": 34.7,
+    "building": {
+      "index": 335,
+      "dist": 11,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "MM Global Ltd",
+    "kind": "travel_agency",
+    "housenumber": "51",
+    "street": "Elm Row",
+    "lat": 55.9601101,
+    "lon": -3.1819178,
+    "x": -622.57,
+    "z": 1156.67,
+    "distToStreet": 17.7,
+    "building": {
+      "index": 340,
+      "dist": 1.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "SmarTravels",
+    "kind": "travel_agency",
+    "housenumber": "50",
+    "street": "Elm Row",
+    "lat": 55.9600885,
+    "lon": -3.1819455,
+    "x": -624.29,
+    "z": 1159.06,
+    "distToStreet": 16,
+    "building": {
+      "index": 340,
+      "dist": 2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bike Central",
+    "kind": "bicycle",
+    "housenumber": "48",
+    "street": "Elm Row",
+    "lat": 55.9600087,
+    "lon": -3.1820478,
+    "x": -630.67,
+    "z": 1167.88,
+    "distToStreet": 13.9,
+    "building": {
+      "index": 351,
+      "dist": 6.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bowls & Rolls",
+    "kind": "fast_food",
+    "housenumber": "47",
+    "street": "Elm Row",
+    "lat": 55.9599756,
+    "lon": -3.1820816,
+    "x": -632.77,
+    "z": 1171.54,
+    "distToStreet": 15.7,
+    "building": {
+      "index": 351,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Leith Soothes",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9599489,
+    "lon": -3.1823076,
+    "x": -646.85,
+    "z": 1174.49,
+    "distToStreet": 6.1,
+    "building": {
+      "index": 809,
+      "dist": 7.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Windsor",
+    "kind": "bar",
+    "housenumber": "45",
+    "street": "Elm Row",
+    "lat": 55.9599037,
+    "lon": -3.182188,
+    "x": -639.4,
+    "z": 1179.48,
+    "distToStreet": 14,
+    "building": {
+      "index": 809,
+      "dist": 5.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Central Youth Hostel",
+    "kind": "hostel",
+    "housenumber": "9",
+    "street": "Haddington Place",
+    "lat": 55.9598589,
+    "lon": -3.1832586,
+    "x": -706.1,
+    "z": 1184.44,
+    "distToStreet": 23.8,
+    "building": {
+      "index": 305,
+      "dist": 13,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Aberdein Considine",
+    "kind": "estate_agent",
+    "housenumber": "42",
+    "street": "Elm Row",
+    "lat": 55.9598091,
+    "lon": -3.1823143,
+    "x": -647.27,
+    "z": 1189.94,
+    "distToStreet": 15.5,
+    "building": {
+      "index": 348,
+      "dist": 0.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Pepe's",
+    "kind": "fast_food",
+    "housenumber": "38-39",
+    "street": "Elm Row",
+    "lat": 55.959718,
+    "lon": -3.1824359,
+    "x": -654.84,
+    "z": 1200.01,
+    "distToStreet": 23.5,
+    "building": {
+      "index": 33,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "The Cat's Miaou",
+    "kind": "jewelry",
+    "housenumber": "36",
+    "street": "Elm Row",
+    "lat": 55.9596688,
+    "lon": -3.1825001,
+    "x": -658.84,
+    "z": 1205.45,
+    "distToStreet": 18.4,
+    "building": {
+      "index": 33,
+      "dist": 3.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Shine My Nails",
+    "kind": "beauty",
+    "housenumber": "35",
+    "street": "Elm Row",
+    "lat": 55.9596475,
+    "lon": -3.1825279,
+    "x": -660.58,
+    "z": 1207.8,
+    "distToStreet": 16.6,
+    "building": {
+      "index": 33,
+      "dist": 6.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Workwear Direct",
+    "kind": "clothes",
+    "housenumber": "34",
+    "street": "Elm Row",
+    "lat": 55.9596018,
+    "lon": -3.1825875,
+    "x": -664.29,
+    "z": 1212.86,
+    "distToStreet": 14.1,
+    "building": {
+      "index": 352,
+      "dist": 6.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Guajira",
+    "kind": "cafe",
+    "housenumber": "33",
+    "street": "Elm Row",
+    "lat": 55.9595803,
+    "lon": -3.1826155,
+    "x": -666.03,
+    "z": 1215.23,
+    "distToStreet": 13.7,
+    "building": {
+      "index": 352,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Phone Spot",
+    "kind": "mobile_phone",
+    "housenumber": "31",
+    "street": "Elm Row",
+    "lat": 55.9595331,
+    "lon": -3.182677,
+    "x": -669.86,
+    "z": 1220.45,
+    "distToStreet": 13.8,
+    "building": {
+      "index": 352,
+      "dist": 3.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Zest Skin Spa",
+    "kind": "beauty",
+    "housenumber": "8",
+    "street": "Haddington Place",
+    "lat": 55.9594997,
+    "lon": -3.1836449,
+    "x": -730.16,
+    "z": 1224.14,
+    "distToStreet": 20.9,
+    "building": {
+      "index": 61,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Garlands",
+    "kind": "florist",
+    "housenumber": "29",
+    "street": "Elm Row",
+    "lat": 55.9594654,
+    "lon": -3.1827653,
+    "x": -675.37,
+    "z": 1227.93,
+    "distToStreet": 15.6,
+    "building": {
+      "index": 35,
+      "dist": 12.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Medusa Hair",
+    "kind": "hairdresser",
+    "housenumber": "28",
+    "street": "Elm Row",
+    "lat": 55.9594434,
+    "lon": -3.182794,
+    "x": -677.15,
+    "z": 1230.37,
+    "distToStreet": 15.4,
+    "building": {
+      "index": 35,
+      "dist": 9.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Digital Images Centre",
+    "kind": "photo",
+    "housenumber": "27",
+    "street": "Elm Row",
+    "lat": 55.9594224,
+    "lon": -3.1828215,
+    "x": -678.87,
+    "z": 1232.69,
+    "distToStreet": 14.5,
+    "building": {
+      "index": 35,
+      "dist": 7.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Typewronger Books",
+    "kind": "books",
+    "housenumber": "4A",
+    "street": "Haddington Place",
+    "lat": 55.9593771,
+    "lon": -3.1838496,
+    "x": -742.91,
+    "z": 1237.69,
+    "distToStreet": 24.7,
+    "building": {
+      "index": 455,
+      "dist": 7.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "McNaughtan's Bookshop",
+    "kind": "books",
+    "housenumber": "3A-4A",
+    "street": "Haddington Place",
+    "lat": 55.959345,
+    "lon": -3.183892,
+    "x": -745.55,
+    "z": 1241.24,
+    "distToStreet": 24.1,
+    "building": {
+      "index": 134,
+      "dist": 7.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Premier",
+    "kind": "convenience",
+    "housenumber": "25-26",
+    "street": "Elm Row",
+    "lat": 55.9593328,
+    "lon": -3.1828828,
+    "x": -682.69,
+    "z": 1242.59,
+    "distToStreet": 17,
+    "building": {
+      "index": 35,
+      "dist": 5.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Toranj",
+    "kind": "restaurant",
+    "housenumber": "5-7",
+    "street": "Montgomery Street",
+    "lat": 55.9593294,
+    "lon": -3.1826849,
+    "x": -670.36,
+    "z": 1242.97,
+    "distToStreet": 27,
+    "building": {
+      "index": 35,
+      "dist": 8.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "M1 Barbers",
+    "kind": "hairdresser",
+    "housenumber": "3",
+    "street": "Haddington Place",
+    "lat": 55.9593056,
+    "lon": -3.1838609,
+    "x": -743.62,
+    "z": 1245.6,
+    "distToStreet": 20,
+    "building": {
+      "index": 134,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "ante",
+    "kind": "cafe",
+    "housenumber": "1A",
+    "street": "Haddington Place",
+    "lat": 55.9592526,
+    "lon": -3.1840142,
+    "x": -753.17,
+    "z": 1251.46,
+    "distToStreet": 25.1,
+    "building": {
+      "index": 444,
+      "dist": 10.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Spry",
+    "kind": "alcohol",
+    "housenumber": "1",
+    "street": "Haddington Place",
+    "lat": 55.9592518,
+    "lon": -3.1839141,
+    "x": -746.93,
+    "z": 1251.54,
+    "distToStreet": 20.7,
+    "building": {
+      "index": 134,
+      "dist": 5.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Edinburgh Christadelphian Church",
+    "kind": "place_of_worship",
+    "housenumber": "4",
+    "street": "Gayfield Place",
+    "lat": 55.9591382,
+    "lon": -3.1841136,
+    "x": -759.36,
+    "z": 1264.1,
+    "distToStreet": 24.8,
+    "building": {
+      "index": 133,
+      "dist": 3.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Bliss Studio",
+    "kind": "clothes",
+    "housenumber": "12",
+    "street": "Montgomery Street",
+    "lat": 55.9590244,
+    "lon": -3.1827666,
+    "x": -675.45,
+    "z": 1276.68,
+    "distToStreet": 42.9,
+    "building": {
+      "index": 436,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Joseph Pearce",
+    "kind": "pub",
+    "housenumber": "23",
+    "street": "Elm Row",
+    "lat": 55.9589898,
+    "lon": -3.1830162,
+    "x": -691,
+    "z": 1280.51,
+    "distToStreet": 31.9,
+    "building": {
+      "index": 805,
+      "dist": 1.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Greggs",
+    "kind": "bakery",
+    "housenumber": "21",
+    "street": "Elm Row",
+    "lat": 55.9589264,
+    "lon": -3.1830818,
+    "x": -695.08,
+    "z": 1287.51,
+    "distToStreet": 32.1,
+    "building": {
+      "index": 422,
+      "dist": 2.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Elm Row Post Office",
+    "kind": "post_office",
+    "housenumber": "20",
+    "street": "Elm Row",
+    "lat": 55.9588905,
+    "lon": -3.1831161,
+    "x": -697.22,
+    "z": 1291.48,
+    "distToStreet": 32.8,
+    "building": {
+      "index": 422,
+      "dist": 4.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Valvona & Crolla",
+    "kind": "deli",
+    "housenumber": "19",
+    "street": "Elm Row",
+    "lat": 55.9588413,
+    "lon": -3.1831632,
+    "x": -700.15,
+    "z": 1296.92,
+    "distToStreet": 33.4,
+    "building": {
+      "index": 424,
+      "dist": 4.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "William Hill",
+    "kind": "bookmaker",
+    "housenumber": "18",
+    "street": "Elm Row",
+    "lat": 55.9587851,
+    "lon": -3.1832169,
+    "x": -703.5,
+    "z": 1303.13,
+    "distToStreet": 32.4,
+    "building": {
+      "index": 424,
+      "dist": 3.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Star Kebab and Pizza House",
+    "kind": "fast_food",
+    "housenumber": "16",
+    "street": "Elm Row",
+    "lat": 55.958728,
+    "lon": -3.1832716,
+    "x": -706.91,
+    "z": 1309.45,
+    "distToStreet": 32.9,
+    "building": {
+      "index": 430,
+      "dist": 1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "kul",
+    "kind": "cafe",
+    "housenumber": "15",
+    "street": "Elm Row",
+    "lat": 55.9586895,
+    "lon": -3.1833084,
+    "x": -709.2,
+    "z": 1313.7,
+    "distToStreet": 34.1,
+    "building": {
+      "index": 430,
+      "dist": 4.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Rimmers Music",
+    "kind": "musical_instrument",
+    "housenumber": "14",
+    "street": "Elm Row",
+    "lat": 55.9586256,
+    "lon": -3.1833696,
+    "x": -713.01,
+    "z": 1320.77,
+    "distToStreet": 37.5,
+    "building": {
+      "index": 32,
+      "dist": 2.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Max Spielmann",
+    "kind": "photo",
+    "housenumber": "12",
+    "street": "Elm Row",
+    "lat": 55.9585661,
+    "lon": -3.1834255,
+    "x": -716.49,
+    "z": 1327.34,
+    "distToStreet": 37.2,
+    "building": {
+      "index": 427,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Johnsons",
+    "kind": "dry_cleaning",
+    "housenumber": "12",
+    "street": "Elm Row",
+    "lat": 55.9585518,
+    "lon": -3.1834402,
+    "x": -717.41,
+    "z": 1328.92,
+    "distToStreet": 36.3,
+    "building": {
+      "index": 427,
+      "dist": 2.2,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Lindsay & Gilmour",
+    "kind": "pharmacy",
+    "housenumber": "11",
+    "street": "Elm Row",
+    "lat": 55.9585109,
+    "lon": -3.1834793,
+    "x": -719.85,
+    "z": 1333.44,
+    "distToStreet": 34.3,
+    "building": {
+      "index": 433,
+      "dist": 6.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Jolly",
+    "kind": "restaurant",
+    "housenumber": "9",
+    "street": "Elm Row",
+    "lat": 55.9584216,
+    "lon": -3.1835648,
+    "x": -725.17,
+    "z": 1343.32,
+    "distToStreet": 32.4,
+    "building": {
+      "index": 433,
+      "dist": 5.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Jeremiah's Taproom",
+    "kind": "pub",
+    "housenumber": "7-8",
+    "street": "Elm Row",
+    "lat": 55.9583594,
+    "lon": -3.1836243,
+    "x": -728.88,
+    "z": 1350.19,
+    "distToStreet": 32.9,
+    "building": {
+      "index": 799,
+      "dist": 2.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Vinyl Villains",
+    "kind": "music",
+    "housenumber": "5",
+    "street": "Elm Row",
+    "lat": 55.9582805,
+    "lon": -3.1836997,
+    "x": -733.58,
+    "z": 1358.91,
+    "distToStreet": 32.9,
+    "building": {
+      "index": 30,
+      "dist": 3.5,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Fitshop",
+    "kind": "sports",
+    "housenumber": "14",
+    "street": null,
+    "lat": 55.9582605,
+    "lon": -3.1848804,
+    "x": -807.13,
+    "z": 1361.12,
+    "distToStreet": 16.7,
+    "building": {
+      "index": 835,
+      "dist": 1.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ladbrokes",
+    "kind": "bookmaker",
+    "housenumber": "4",
+    "street": "Elm Row",
+    "lat": 55.958233,
+    "lon": -3.1837452,
+    "x": -736.41,
+    "z": 1364.16,
+    "distToStreet": 32.6,
+    "building": {
+      "index": 808,
+      "dist": 3.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "A Leith Walk",
+    "kind": "artwork",
+    "housenumber": null,
+    "street": null,
+    "lat": 55.9582327,
+    "lon": -3.1839756,
+    "x": -750.76,
+    "z": 1364.2,
+    "distToStreet": 19.5,
+    "building": {
+      "index": 801,
+      "dist": 12.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Down The Hatch",
+    "kind": "fast_food",
+    "housenumber": "13",
+    "street": null,
+    "lat": 55.9582059,
+    "lon": -3.1849306,
+    "x": -810.26,
+    "z": 1367.16,
+    "distToStreet": 17,
+    "building": {
+      "index": 475,
+      "dist": 0.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Dean Jones Hair",
+    "kind": "hairdresser",
+    "housenumber": "3A",
+    "street": "Elm Row",
+    "lat": 55.9581776,
+    "lon": -3.1837982,
+    "x": -739.71,
+    "z": 1370.29,
+    "distToStreet": 32.1,
+    "building": {
+      "index": 801,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Elm Row Cafe Bistro",
+    "kind": "cafe",
+    "housenumber": "3",
+    "street": "Elm Row",
+    "lat": 55.9581523,
+    "lon": -3.1838224,
+    "x": -741.22,
+    "z": 1373.08,
+    "distToStreet": 32.2,
+    "building": {
+      "index": 801,
+      "dist": 0.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kahani",
+    "kind": "restaurant",
+    "housenumber": "10",
+    "street": null,
+    "lat": 55.9580954,
+    "lon": -3.1850322,
+    "x": -816.59,
+    "z": 1379.37,
+    "distToStreet": 20.6,
+    "building": {
+      "index": 812,
+      "dist": 4.1,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Kuna Café and Bakery",
+    "kind": "cafe",
+    "housenumber": "1",
+    "street": "Elm Row",
+    "lat": 55.9580738,
+    "lon": -3.1838975,
+    "x": -745.9,
+    "z": 1381.76,
+    "distToStreet": 31.3,
+    "building": {
+      "index": 26,
+      "dist": 0.9,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Ada",
+    "kind": "restaurant",
+    "housenumber": "9A",
+    "street": null,
+    "lat": 55.9579923,
+    "lon": -3.1851333,
+    "x": -822.88,
+    "z": 1390.77,
+    "distToStreet": 19.3,
+    "building": {
+      "index": 479,
+      "dist": 1.3,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Picture Framer",
+    "kind": "frame",
+    "housenumber": "8",
+    "street": null,
+    "lat": 55.9579508,
+    "lon": -3.1851702,
+    "x": -825.18,
+    "z": 1395.36,
+    "distToStreet": 20.8,
+    "building": {
+      "index": 479,
+      "dist": 4.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mamma Roma",
+    "kind": "restaurant",
+    "housenumber": "4-7",
+    "street": null,
+    "lat": 55.9578501,
+    "lon": -3.1852598,
+    "x": -830.76,
+    "z": 1406.49,
+    "distToStreet": 28.4,
+    "building": {
+      "index": 811,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Mamma Roma Whisky & Wine Room",
+    "kind": "bar",
+    "housenumber": "4",
+    "street": null,
+    "lat": 55.9577856,
+    "lon": -3.1853052,
+    "x": -833.59,
+    "z": 1413.62,
+    "distToStreet": 34.1,
+    "building": {
+      "index": 811,
+      "dist": 5.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Deep Sea",
+    "kind": "fast_food",
+    "housenumber": "2",
+    "street": null,
+    "lat": 55.9577447,
+    "lon": -3.1853536,
+    "x": -836.61,
+    "z": 1418.14,
+    "distToStreet": 39.1,
+    "building": {
+      "index": 478,
+      "dist": 3.4,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Topping & Company Booksellers",
+    "kind": "books",
+    "housenumber": "2",
+    "street": "Blenheim Place",
+    "lat": 55.9576475,
+    "lon": -3.1842848,
+    "x": -770.03,
+    "z": 1428.88,
+    "distToStreet": 32.3,
+    "building": {
+      "index": 296,
+      "dist": 3.8,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Taste of Italy",
+    "kind": "restaurant",
+    "housenumber": "9",
+    "street": "Baxter's Place",
+    "lat": 55.9576375,
+    "lon": -3.1845201,
+    "x": -784.68,
+    "z": 1429.99,
+    "distToStreet": 27.7,
+    "building": {
+      "index": 295,
+      "dist": 1.6,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "ISA",
+    "kind": "architect",
+    "housenumber": "4-5",
+    "street": "Blenheim Place",
+    "lat": 55.9576358,
+    "lon": -3.1841204,
+    "x": -759.78,
+    "z": 1430.18,
+    "distToStreet": 40,
+    "building": {
+      "index": 51,
+      "dist": 2.7,
+      "buildingName": null
+    }
+  },
+  {
+    "name": "Planet",
+    "kind": "bar",
+    "housenumber": "6",
+    "street": "Baxter's Place",
+    "lat": 55.9575674,
+    "lon": -3.1846074,
+    "x": -790.12,
+    "z": 1437.74,
+    "distToStreet": 35.2,
+    "building": {
+      "index": 298,
+      "dist": 1.4,
+      "buildingName": null
+    }
+  }
+]
