@@ -19,7 +19,7 @@ export async function loadAssets() {
     return window.MCGROT_ASSETS;
   }
 
-  const [manifest, leith, catalog, shopfronts] = await Promise.all([
+  const [manifest, leith, catalog, shopfronts, placement] = await Promise.all([
     fetch('assets/manifest.json').then((res) => res.json()),
     fetch('assets/leith.json').then((res) => res.json()),
     // The full-street catalog (100+ vendors). Absent in the single-file artifact,
@@ -28,7 +28,14 @@ export async function loadAssets() {
     // Shopfront texture atlas layout (real Leith Walk photos, tiled). Absent in
     // the single-file artifact — buildShopfronts() no-ops when this is null.
     fetch('assets/shopfronts/atlas.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
+    // Which real photo clads which real building (address-verified), plus the
+    // businesses on each building for name placeholders. Absent → the engine
+    // falls back to its generic hash placement.
+    fetch('assets/shopfronts/placement.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
   ]);
+
+  // The placement map rides on the atlas layout so the engine reads one object.
+  if (shopfronts && placement) shopfronts.placement = placement;
 
   return { manifest, leith, catalog, shopfronts, images: null, audio: null };
 }

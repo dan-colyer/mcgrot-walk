@@ -21,7 +21,12 @@
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
 
-const STREET_RANGE = 25;   // metres — only façades within this of the centreline
+// Metres from the Leith Walk centreline within which a wall counts as a frontage.
+// Must clear ~26m: the Elm Row terrace (Valvona & Crolla, Greggs, Ladbrokes…) is a
+// service street set back behind a garden island, so its real shopfronts sit just
+// past the old 25m cutoff and were left bare. The FACING/SIDE tests still reject
+// back and side walls, so widening this only reaches genuine frontages.
+const STREET_RANGE = 30;
 const MIN_EDGE = 2.0;      // skip footprint edges shorter than this
 const FACING_MIN = 0.35;   // wall normal · direction-to-street; at or above this it's a shop frontage
 // Below this the wall has turned far enough away to be a back wall, hidden by its
@@ -65,6 +70,13 @@ export function buildShopfronts(assets, world, scene) {
   const upperPool = layout.upper && layout.upper.length ? layout.upper : groundPool;
   const cornerPool = layout.corner && layout.corner.length ? layout.corner : groundPool;
 
+  // Which real photo clads which real building, address-verified (see
+  // scripts/build-facade-placement.mjs). A building listed here draws its
+  // frontage from its OWN photo's tiles instead of a hash pick — this is what
+  // puts Robbie's on the real Robbie's, not wherever hashTile dropped it.
+  // Buildings not listed keep the generic hash placement below.
+  const photoByBuilding = (layout.placement && layout.placement.photos) || {};
+
   // Upper tiles grouped by the photo they were cut from. A real tenement is
   // uniform across its width — one stone, one window rhythm — while the SHOPS
   // beneath it differ from unit to unit. Hashing the upper bands per segment
@@ -100,6 +112,13 @@ export function buildShopfronts(assets, world, scene) {
 
     const levels = Math.max(1, building.levels || 1);
     const bands = Math.min(MAX_BANDS, levels);
+
+    // Does this building have a real, address-matched photo? If so its own tiles
+    // clad it; otherwise it falls back to the generic pools.
+    const placed = photoByBuilding[bi] || null;
+    // Counts frontage (shopfront) quads emitted for a placed building, so its
+    // real ground tiles spread left-to-right across the frontage deterministically.
+    let frontageCursor = 0;
 
     // One source building's upper storeys clad this whole building — see the
     // upperBySlug note above.
@@ -199,10 +218,27 @@ export function buildShopfronts(assets, world, scene) {
           // so the storey rhythm stays uniform across the whole frontage.
           // A non-frontage wall gets stone at every band, shopfront at none.
           const shopBand = band === 0 && isFrontage;
-          const gPool = isChamfer ? cornerPool : groundPool;
-          const tile = shopBand
-            ? gPool[hashTile(bi, i * 31 + s, 0, gPool.length)]
-            : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
+          let tile;
+          if (placed) {
+            // A real building: draw from its OWN photo. Ground band spreads the
+            // building's real shop tiles across the frontage; upper bands stack
+            // its real storeys in order, falling back to generic stone when the
+            // photo held no upper (e.g. a single-storey pub crop).
+            if (shopBand) {
+              const pool = isChamfer && placed.corner.length ? placed.corner : placed.ground;
+              tile = pool[frontageCursor % pool.length];
+              frontageCursor++;
+            } else if (placed.upper.length) {
+              tile = placed.upper[(band - 1) % placed.upper.length];
+            } else {
+              tile = wallTiles[hashTile(bi, 0, band, wallTiles.length)];
+            }
+          } else {
+            const gPool = isChamfer ? cornerPool : groundPool;
+            tile = shopBand
+              ? gPool[hashTile(bi, i * 31 + s, 0, gPool.length)]
+              : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
+          }
 
           const col = tile % cols;
           const row = Math.floor(tile / cols);

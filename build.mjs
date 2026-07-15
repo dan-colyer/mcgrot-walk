@@ -92,7 +92,7 @@ async function buildSite() {
   };
   ['manifest.json', 'leith.json', 'catalog.json', 'comics', 'audio', 'faces'].forEach(copy);
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
-  ['shopfronts/atlas.jpg', 'shopfronts/atlas.json', 'shopfronts/credits.json'].forEach(copy);
+  ['shopfronts/atlas.jpg', 'shopfronts/atlas.json', 'shopfronts/credits.json', 'shopfronts/placement.json'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
   for (const c of manifest.comics) copy(c.image);
 
