@@ -122,7 +122,8 @@ const tiles = ordered.map((b, index) => {
     treatment: b.treatment,             // 1 keep real | 2 decayed | 3 generated
     planeKind: b.planeKind,             // "terrace" | "corner"
     cornerBuilding: !!b.cornerBuilding,
-    generated: b.generated === true,    // true => AI, no photo attribution
+    generated: b.generated === true,    // true => AI from scratch, no photo attribution
+    decayed: b.decayed === true,        // true => AI-aged derivative; KEEPS attribution (share-alike)
     title: c.title || b.slug,
     author: c.author || 'Unknown',
     license: c.license || 'unknown',

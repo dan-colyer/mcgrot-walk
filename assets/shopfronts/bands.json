@@ -1,6 +1,6 @@
 [
   {
-    "file": "bands/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-ground-0.jpg",
+    "file": "decay/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-ground-0-decay.jpg",
     "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
     "plane": 0,
     "kind": "ground",
@@ -8,7 +8,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.5003662109375
+    "skyFrac": 0.5003662109375,
+    "decayed": true
   },
   {
     "file": "bands/city-of-edinburgh-8-picardy-place-edinburgh-2025-09-19-11-23-p0-ground-0.jpg",
@@ -22,7 +23,7 @@
     "skyFrac": 0.496826171875
   },
   {
-    "file": "bands/165a-leith-walk-edinburgh-p0-ground-1.jpg",
+    "file": "decay/165a-leith-walk-edinburgh-p0-ground-1-decay.jpg",
     "slug": "165a-leith-walk-edinburgh",
     "plane": 0,
     "kind": "ground",
@@ -30,7 +31,8 @@
     "planeKind": "corner",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.4429931640625
+    "skyFrac": 0.4429931640625,
+    "decayed": true
   },
   {
     "file": "bands/city-of-edinburgh-4-picardy-place-edinburgh-2025-09-19-11-26-p0-ground-0.jpg",
@@ -220,7 +222,7 @@
     "skyFrac": 0.143310546875
   },
   {
-    "file": "bands/first-shop-in-leith-geograph-org-uk-4719930-p0-ground-0.jpg",
+    "file": "decay/first-shop-in-leith-geograph-org-uk-4719930-p0-ground-0-decay.jpg",
     "slug": "first-shop-in-leith-geograph-org-uk-4719930",
     "plane": 0,
     "kind": "ground",
@@ -228,7 +230,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.137939453125
+    "skyFrac": 0.137939453125,
+    "decayed": true
   },
   {
     "file": "bands/desi-pakwan-geograph-org-uk-7579664-p0-upper-00.jpg",
@@ -242,7 +245,7 @@
     "skyFrac": 0.1358642578125
   },
   {
-    "file": "bands/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-upper-11.jpg",
+    "file": "decay/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-upper-11-decay.jpg",
     "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
     "plane": 0,
     "kind": "upper",
@@ -250,10 +253,11 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.1322021484375
+    "skyFrac": 0.1322021484375,
+    "decayed": true
   },
   {
-    "file": "bands/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-ground-1.jpg",
+    "file": "decay/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-ground-1-decay.jpg",
     "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
     "plane": 0,
     "kind": "ground",
@@ -261,7 +265,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.12353515625
+    "skyFrac": 0.12353515625,
+    "decayed": true
   },
   {
     "file": "bands/shops-leith-walk-geograph-org-uk-7895672-p0-upper-11.jpg",
@@ -330,7 +335,7 @@
     "skyFrac": 0.0914306640625
   },
   {
-    "file": "bands/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-upper-00.jpg",
+    "file": "decay/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-upper-00-decay.jpg",
     "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
     "plane": 0,
     "kind": "upper",
@@ -338,7 +343,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0867919921875
+    "skyFrac": 0.0867919921875,
+    "decayed": true
   },
   {
     "file": "bands/stead-s-place-leith-walk-geograph-org-uk-5277103-p0-upper-00.jpg",
@@ -374,7 +380,7 @@
     "skyFrac": 0.080322265625
   },
   {
-    "file": "bands/derelict-business-premises-picardy-place-geograph-org-uk-791-p0-ground-0.jpg",
+    "file": "decay/derelict-business-premises-picardy-place-geograph-org-uk-791-p0-ground-0-decay.jpg",
     "slug": "derelict-business-premises-picardy-place-geograph-org-uk-791",
     "plane": 0,
     "kind": "ground",
@@ -382,10 +388,11 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0751953125
+    "skyFrac": 0.0751953125,
+    "decayed": true
   },
   {
-    "file": "bands/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-upper-00.jpg",
+    "file": "decay/city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2-p0-upper-00-decay.jpg",
     "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
     "plane": 0,
     "kind": "upper",
@@ -393,10 +400,11 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0711669921875
+    "skyFrac": 0.0711669921875,
+    "decayed": true
   },
   {
-    "file": "bands/edinburgh-leith-walk-4-5-baxter-s-place-p0-ground-0.jpg",
+    "file": "decay/edinburgh-leith-walk-4-5-baxter-s-place-p0-ground-0-decay.jpg",
     "slug": "edinburgh-leith-walk-4-5-baxter-s-place",
     "plane": 0,
     "kind": "ground",
@@ -404,7 +412,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0693359375
+    "skyFrac": 0.0693359375,
+    "decayed": true
   },
   {
     "file": "bands/croall-place-geograph-org-uk-6310908-p0-ground-0.jpg",
@@ -440,7 +449,7 @@
     "skyFrac": 0.064697265625
   },
   {
-    "file": "bands/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-ground-0.jpg",
+    "file": "decay/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-ground-0-decay.jpg",
     "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
     "plane": 0,
     "kind": "ground",
@@ -448,7 +457,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.062744140625
+    "skyFrac": 0.062744140625,
+    "decayed": true
   },
   {
     "file": "bands/edinburgh-15-16-17-elm-row-p0-ground-0.jpg",
@@ -517,7 +527,7 @@
     "skyFrac": 0.05517578125
   },
   {
-    "file": "bands/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-upper-00.jpg",
+    "file": "decay/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-upper-00-decay.jpg",
     "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
     "plane": 0,
     "kind": "upper",
@@ -525,7 +535,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0546875
+    "skyFrac": 0.0546875,
+    "decayed": true
   },
   {
     "file": "bands/edinburgh-20-21-22-elm-row-post-office-p0-upper-00.jpg",
@@ -539,7 +550,7 @@
     "skyFrac": 0.0528564453125
   },
   {
-    "file": "bands/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-upper-11.jpg",
+    "file": "decay/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-upper-11-decay.jpg",
     "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
     "plane": 0,
     "kind": "upper",
@@ -547,7 +558,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0528564453125
+    "skyFrac": 0.0528564453125,
+    "decayed": true
   },
   {
     "file": "bands/croall-place-geograph-org-uk-6310908-p0-upper-11.jpg",
@@ -572,7 +584,7 @@
     "skyFrac": 0.0487060546875
   },
   {
-    "file": "bands/edinburgh-leith-walk-4-5-baxter-s-place-p0-upper-00.jpg",
+    "file": "decay/edinburgh-leith-walk-4-5-baxter-s-place-p0-upper-00-decay.jpg",
     "slug": "edinburgh-leith-walk-4-5-baxter-s-place",
     "plane": 0,
     "kind": "upper",
@@ -580,7 +592,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.045654296875
+    "skyFrac": 0.045654296875,
+    "decayed": true
   },
   {
     "file": "bands/albert-place-leith-walk-geograph-org-uk-8262911-p0-ground-0.jpg",
@@ -616,7 +629,7 @@
     "skyFrac": 0.0408935546875
   },
   {
-    "file": "bands/city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2-p0-ground-0.jpg",
+    "file": "decay/city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2-p0-ground-0-decay.jpg",
     "slug": "city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2",
     "plane": 0,
     "kind": "ground",
@@ -624,7 +637,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.04052734375
+    "skyFrac": 0.04052734375,
+    "decayed": true
   },
   {
     "file": "bands/edinburgh-23-elm-row-p0-ground-0.jpg",
@@ -682,7 +696,7 @@
     "skyFrac": 0.0350341796875
   },
   {
-    "file": "bands/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-ground-0.jpg",
+    "file": "decay/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0-ground-0-decay.jpg",
     "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
     "plane": 0,
     "kind": "ground",
@@ -690,10 +704,11 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.034423828125
+    "skyFrac": 0.034423828125,
+    "decayed": true
   },
   {
-    "file": "bands/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-ground-1.jpg",
+    "file": "decay/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-ground-1-decay.jpg",
     "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
     "plane": 0,
     "kind": "ground",
@@ -701,7 +716,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.03125
+    "skyFrac": 0.03125,
+    "decayed": true
   },
   {
     "file": "bands/the-dog-house-leith-walk-geograph-org-uk-7579613-p1-upper-00.jpg",
@@ -715,7 +731,7 @@
     "skyFrac": 0.0306396484375
   },
   {
-    "file": "bands/first-shop-in-leith-geograph-org-uk-4719930-p0-upper-00.jpg",
+    "file": "decay/first-shop-in-leith-geograph-org-uk-4719930-p0-upper-00-decay.jpg",
     "slug": "first-shop-in-leith-geograph-org-uk-4719930",
     "plane": 0,
     "kind": "upper",
@@ -723,7 +739,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0302734375
+    "skyFrac": 0.0302734375,
+    "decayed": true
   },
   {
     "file": "bands/robbies-bar-leith-walk-03-p0-upper-01.jpg",
@@ -803,7 +820,7 @@
     "skyFrac": 0.02294921875
   },
   {
-    "file": "bands/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-upper-11.jpg",
+    "file": "decay/city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1-p0-upper-11-decay.jpg",
     "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
     "plane": 0,
     "kind": "upper",
@@ -811,7 +828,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0201416015625
+    "skyFrac": 0.0201416015625,
+    "decayed": true
   },
   {
     "file": "bands/the-harp-castle-leith-walk-geograph-org-uk-3723957-p2-ground-0.jpg",
@@ -924,7 +942,7 @@
     "skyFrac": 0.004638671875
   },
   {
-    "file": "bands/165a-leith-walk-edinburgh-p0-ground-0.jpg",
+    "file": "decay/165a-leith-walk-edinburgh-p0-ground-0-decay.jpg",
     "slug": "165a-leith-walk-edinburgh",
     "plane": 0,
     "kind": "ground",
@@ -932,7 +950,8 @@
     "planeKind": "corner",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.00439453125
+    "skyFrac": 0.00439453125,
+    "decayed": true
   },
   {
     "file": "bands/robbies-bar-leith-walk-03-p0-ground-0.jpg",
@@ -968,7 +987,7 @@
     "skyFrac": 0.00146484375
   },
   {
-    "file": "bands/first-shop-in-leith-geograph-org-uk-4719930-p0-upper-01.jpg",
+    "file": "decay/first-shop-in-leith-geograph-org-uk-4719930-p0-upper-01-decay.jpg",
     "slug": "first-shop-in-leith-geograph-org-uk-4719930",
     "plane": 0,
     "kind": "upper",
@@ -976,7 +995,8 @@
     "planeKind": "terrace",
     "treatment": 2,
     "identity": null,
-    "skyFrac": 0.0003662109375
+    "skyFrac": 0.0003662109375,
+    "decayed": true
   },
   {
     "file": "bands/robbies-bar-leith-walk-01-p0-ground-0.jpg",

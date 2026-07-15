@@ -129,6 +129,10 @@ function renderCredits() {
   const shopfronts = Object.fromEntries(
     usedSlugs.filter((s) => credits[s]).map((s) => [s, credits[s]])
   );
+  // Tiles additionally aged with FLUX.1-kontext (rust, boarding, graffiti) are
+  // still derivative works of the photo, so they keep attribution — this only
+  // counts them for the disclosure paragraph below.
+  const decayedCount = atlas.tiles ? atlas.tiles.filter((t) => t.decayed).length : 0;
 
   const shopRows = Object.entries(shopfronts).map(([slug, c]) =>
     `<li><a href="${esc(c.pageUrl)}">${esc(c.title)}</a> — ${esc(c.author)} — <em>${esc(c.license)}</em></li>`
@@ -167,6 +171,11 @@ function renderCredits() {
      ground-floor and upper-storey bands, and colour-graded. Where the source is
      licensed <em>CC BY-SA</em>, that share-alike obligation carries over to the
      derived texture, and attribution is retained here.</p>
+  ${decayedCount ? `<p>${decayedCount} of these tiles — the blander, already-shuttered or
+     derelict units — were further aged with an AI image-editing model
+     (<em>FLUX.1&nbsp;Kontext</em>): rust, boarding, graffiti and grime added over the
+     real geometry, which is preserved. These remain derivative works of the source
+     photographs and keep their original attribution and licence.</p>` : ''}
   <ul>
 ${shopRows}
   </ul>
