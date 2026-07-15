@@ -20,6 +20,7 @@
 
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
+import { buildNameAtlas } from './placeholders.js';
 
 // Metres from the Leith Walk centreline within which a wall counts as a frontage.
 // Must clear ~26m: the Elm Row terrace (Valvona & Crolla, Greggs, Ladbrokes…) is a
@@ -77,6 +78,17 @@ export function buildShopfronts(assets, world, scene) {
   // Buildings not listed keep the generic hash placement below.
   const photoByBuilding = (layout.placement && layout.placement.photos) || {};
 
+  // Businesses on each building that has NO real photo → name-on-stone
+  // placeholders (Dan's call: accurate name where we lack accurate photo).
+  // Buildings we DO have a photo for are covered by it, so they're skipped.
+  const bizByBuilding = (layout.placement && layout.placement.businesses) || {};
+  const placeholderNames = [];
+  for (const [bi, list] of Object.entries(bizByBuilding)) {
+    if (photoByBuilding[bi]) continue;
+    for (const b of list) placeholderNames.push(b.name);
+  }
+  const nameAtlas = placeholderNames.length ? buildNameAtlas(placeholderNames) : null;
+
   // Upper tiles grouped by the photo they were cut from. A real tenement is
   // uniform across its width — one stone, one window rhythm — while the SHOPS
   // beneath it differ from unit to unit. Hashing the upper bands per segment
@@ -105,6 +117,12 @@ export function buildShopfronts(assets, world, scene) {
   const indices = [];
   let quadCount = 0;
 
+  // Second geometry: name-placeholder shopfronts, sampling the name atlas.
+  const pPos = [];
+  const pUv = [];
+  const pIdx = [];
+  let pQuadCount = 0;
+
   for (let bi = 0; bi < buildings.length && quadCount < MAX_QUADS; bi++) {
     const building = buildings[bi];
     const fp = building && building.footprint;
@@ -119,6 +137,12 @@ export function buildShopfronts(assets, world, scene) {
     // Counts frontage (shopfront) quads emitted for a placed building, so its
     // real ground tiles spread left-to-right across the frontage deterministically.
     let frontageCursor = 0;
+
+    // No photo but real businesses here → name placeholders, one business per
+    // frontage segment (bizCursor spreads them left-to-right).
+    const bizNames = !placed && nameAtlas ? (bizByBuilding[bi] || []).map((b) => b.name) : null;
+    const isPlaceholder = !!(bizNames && bizNames.length);
+    let bizCursor = 0;
 
     // One source building's upper storeys clad this whole building — see the
     // upperBySlug note above.
@@ -218,6 +242,27 @@ export function buildShopfronts(assets, world, scene) {
           // so the storey rhythm stays uniform across the whole frontage.
           // A non-frontage wall gets stone at every band, shopfront at none.
           const shopBand = band === 0 && isFrontage;
+
+          // No-photo building with real businesses: stamp the business name on
+          // stone, one business per frontage segment, into the SECOND mesh. Then
+          // skip the photo mesh for this quad. (Upper bands fall through to the
+          // generic stone path below, so the tenement above still reads right.)
+          if (isPlaceholder && shopBand) {
+            const name = bizNames[bizCursor % bizNames.length];
+            bizCursor++;
+            const uv = nameAtlas.uvFor.get(name);
+            if (uv) {
+              const py0 = BASE_Y;
+              const py1 = BAND_HEIGHT;
+              const pb = pQuadCount * 4;
+              pPos.push(p0x, py0, p0z,  p1x, py0, p1z,  p1x, py1, p1z,  p0x, py1, p0z);
+              pUv.push(uv.u0, uv.vBot,  uv.u1, uv.vBot,  uv.u1, uv.vTop,  uv.u0, uv.vTop);
+              pIdx.push(pb, pb + 1, pb + 2, pb, pb + 2, pb + 3);
+              pQuadCount++;
+              continue;
+            }
+          }
+
           let tile;
           if (placed) {
             // A real building: draw from its OWN photo. Ground band spreads the
@@ -286,7 +331,25 @@ export function buildShopfronts(assets, world, scene) {
   const mesh = new THREE.Mesh(geo, material);
   mesh.name = 'shopfronts';
   scene.add(mesh);
-  return { group: mesh, count: quadCount };
+
+  // Second draw call: the name-placeholder shopfronts, on their own canvas atlas.
+  let placeholderMesh = null;
+  if (pQuadCount && nameAtlas) {
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pPos, 3));
+    pGeo.setAttribute('uv', new THREE.Float32BufferAttribute(pUv, 2));
+    pGeo.setIndex(pIdx);
+    pGeo.computeBoundingSphere();
+    placeholderMesh = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({
+      map: nameAtlas.texture,
+      side: THREE.DoubleSide,
+      fog: true,
+    }));
+    placeholderMesh.name = 'shopfront-placeholders';
+    scene.add(placeholderMesh);
+  }
+
+  return { group: mesh, placeholders: placeholderMesh, count: quadCount, placeholderCount: pQuadCount };
 }
 
 // Deterministic tile pick so the street layout is identical on every reload.
