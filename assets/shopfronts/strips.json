@@ -1,0 +1,194 @@
+{
+  "width": 4014,
+  "height": 3343,
+  "etag": "89f2e4475a",
+  "strips": [
+    {
+      "slug": "edinburgh-14-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 0,
+      "y": 0,
+      "w": 1178,
+      "h": 768,
+      "widthM": 14.7,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-15-16-17-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 1178,
+      "y": 0,
+      "w": 1092,
+      "h": 768,
+      "widthM": 13.7,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-18-19-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 2270,
+      "y": 0,
+      "w": 907,
+      "h": 768,
+      "widthM": 11.3,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-2-3-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 0,
+      "y": 768,
+      "w": 1027,
+      "h": 768,
+      "widthM": 12.8,
+      "storeys": 3
+    },
+    {
+      "slug": "robbies-bar-leith-walk-01",
+      "plane": 0,
+      "planeKind": "corner",
+      "x": 1027,
+      "y": 768,
+      "w": 621,
+      "h": 768,
+      "widthM": 7.8,
+      "storeys": 3
+    },
+    {
+      "slug": "robbies-bar-leith-walk-01",
+      "plane": 1,
+      "planeKind": "corner",
+      "x": 1648,
+      "y": 768,
+      "w": 697,
+      "h": 768,
+      "widthM": 8.7,
+      "storeys": 3
+    },
+    {
+      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 2345,
+      "y": 768,
+      "w": 1560,
+      "h": 768,
+      "widthM": 19.5,
+      "storeys": 3
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 0,
+      "y": 1536,
+      "w": 834,
+      "h": 768,
+      "widthM": 10.4,
+      "storeys": 3
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 2,
+      "planeKind": "terrace",
+      "x": 834,
+      "y": 1536,
+      "w": 676,
+      "h": 768,
+      "widthM": 8.4,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-20-21-22-elm-row-post-office",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 1510,
+      "y": 1536,
+      "w": 822,
+      "h": 730,
+      "widthM": 10.3,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-9-10-11-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 2332,
+      "y": 1536,
+      "w": 859,
+      "h": 688,
+      "widthM": 10.7,
+      "storeys": 3
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 0,
+      "y": 2304,
+      "w": 1314,
+      "h": 606,
+      "widthM": 16.4,
+      "storeys": 4
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 1,
+      "planeKind": "terrace",
+      "x": 1314,
+      "y": 2304,
+      "w": 724,
+      "h": 584,
+      "widthM": 9.1,
+      "storeys": 3
+    },
+    {
+      "slug": "edinburgh-23-elm-row",
+      "plane": 0,
+      "planeKind": "corner",
+      "x": 2038,
+      "y": 2304,
+      "w": 718,
+      "h": 512,
+      "widthM": 9,
+      "storeys": 2
+    },
+    {
+      "slug": "edinburgh-4-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "x": 2756,
+      "y": 2304,
+      "w": 619,
+      "h": 512,
+      "widthM": 7.7,
+      "storeys": 2
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 2,
+      "planeKind": "corner",
+      "x": 3375,
+      "y": 2304,
+      "w": 639,
+      "h": 453,
+      "widthM": 8,
+      "storeys": 3
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 1,
+      "planeKind": "corner",
+      "x": 0,
+      "y": 2910,
+      "w": 662,
+      "h": 433,
+      "widthM": 8.3,
+      "storeys": 3
+    }
+  ]
+}
