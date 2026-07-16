@@ -19,7 +19,7 @@ export async function loadAssets() {
     return window.MCGROT_ASSETS;
   }
 
-  const [manifest, leith, catalog, shopfronts, placement] = await Promise.all([
+  const [manifest, leith, catalog, shopfronts, placement, strips] = await Promise.all([
     fetch('assets/manifest.json').then((res) => res.json()),
     fetch('assets/leith.json').then((res) => res.json()),
     // The full-street catalog (100+ vendors). Absent in the single-file artifact,
@@ -32,10 +32,14 @@ export async function loadAssets() {
     // businesses on each building for name placeholders. Absent → the engine
     // falls back to its generic hash placement.
     fetch('assets/shopfronts/placement.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
+    // Whole-upper-elevation strips for the placed buildings (one draped quad
+    // each). Absent → the engine keeps its per-band stone stacking.
+    fetch('assets/shopfronts/strips.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
   ]);
 
   // The placement map rides on the atlas layout so the engine reads one object.
   if (shopfronts && placement) shopfronts.placement = placement;
+  if (shopfronts && strips) shopfronts.strips = strips;
 
   return { manifest, leith, catalog, shopfronts, images: null, audio: null };
 }

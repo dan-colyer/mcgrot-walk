@@ -83,6 +83,23 @@ export function buildShopfronts(assets, world, scene) {
   // Buildings not listed keep the generic hash placement below.
   const photoByBuilding = (layout.placement && layout.placement.photos) || {};
 
+  // Full upper-elevation strips (assets/shopfronts/strips.{jpg,json}) for the
+  // placed buildings: ONE quad drapes the building's whole real upper wall, so
+  // nothing is stamped in a grid and band seams cannot exist. Keyed by slug,
+  // split terrace/corner so a junction pub's chamfer gets its own elevation.
+  // 1-storey strips are roofline-and-sky slivers — excluded.
+  const stripsMeta = layout.strips || null;
+  const stripsBySlug = new Map();
+  if (stripsMeta && Array.isArray(stripsMeta.strips)) {
+    for (const s of stripsMeta.strips) {
+      if (s.storeys < 2) continue;
+      const rec = stripsBySlug.get(s.slug) || {};
+      const key = s.planeKind === 'corner' ? 'corner' : 'terrace';
+      if (!rec[key]) rec[key] = s;
+      stripsBySlug.set(s.slug, rec);
+    }
+  }
+
   // Businesses on each building that has NO real photo → name-on-stone
   // placeholders (Dan's call: accurate name where we lack accurate photo).
   // Buildings we DO have a photo for are covered by it, so they're skipped.
@@ -128,6 +145,22 @@ export function buildShopfronts(assets, world, scene) {
   const pIdx = [];
   let pQuadCount = 0;
 
+  // Third geometry: whole-upper-elevation strips, sampling strips.jpg.
+  const sPos = [];
+  const sUv = [];
+  const sIdx = [];
+  let sQuadCount = 0;
+  const sW = stripsMeta ? stripsMeta.width : 1;
+  const sH = stripsMeta ? stripsMeta.height : 1;
+
+  function emitStripQuad(u0, v0, u1, v1, ax, az, bx, bz, y0, y1) {
+    const base = sQuadCount * 4;
+    sPos.push(ax, y0, az,  bx, y0, bz,  bx, y1, bz,  ax, y1, az);
+    sUv.push(u0, v0,  u1, v0,  u1, v1,  u0, v1);
+    sIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    sQuadCount++;
+  }
+
   // Push one atlas.jpg quad. Closes over the photo-mesh arrays and quadCount.
   function emitPhotoQuad(tile, ax, az, bx, bz, y0, y1) {
     const col = tile % cols;
@@ -154,6 +187,15 @@ export function buildShopfronts(assets, world, scene) {
     // Does this building have a real, address-matched photo? If so its own tiles
     // clad it; otherwise it falls back to the generic pools.
     const placed = photoByBuilding[bi] || null;
+
+    // A placed building may have full upper-elevation strips. Which one covers
+    // a wall depends on the wall: the chamfer takes the corner elevation, a
+    // normal frontage the terrace one. Must match the run-loop pick EXACTLY —
+    // an edge skipped here but not draped there would be a bare gap.
+    const stripSet = placed ? stripsBySlug.get(placed.slug) : null;
+    const stripFor = (chamfer) => (stripSet
+      ? (chamfer ? (stripSet.corner || stripSet.terrace) : stripSet.terrace)
+      : null);
 
     // No photo but real businesses here → name placeholders, one business per
     // frontage unit.
@@ -259,6 +301,10 @@ export function buildShopfronts(assets, world, scene) {
       if (isFrontage) {
         frontEdges.push({ i, ax: a[0], az: a[1], bx: b[0], bz: b[1], dirx: ex * inv, dirz: ez * inv, len, isChamfer });
       }
+
+      // A frontage wall whose uppers will be draped by a strip quad (run loop)
+      // gets no stone bands here — they'd z-fight behind the strip for nothing.
+      if (isFrontage && stripFor(isChamfer)) continue;
 
       // Tenement stone: all bands on a non-frontage wall, upper bands on a
       // frontage wall. Sampling the ground pool for a third floor would hang a
@@ -375,6 +421,54 @@ export function buildShopfronts(assets, world, scene) {
         const tile = placed ? placedPool[u] : gPool[hashTile(bi, run.startEdge * 31 + u, 0, gPool.length)];
         emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
       }
+
+      // --- Upper storeys as ONE strip quad (placed buildings only) ---
+      // The whole rectified upper elevation drapes the run in a single quad:
+      // no band seams, no grid stamping. Wider run than the photo → the strip
+      // keeps natural width (centred, like the ground units) and stone bands
+      // fill the flanks; much narrower run → a centre crop of the strip's UV
+      // window, so the texture stays at life scale instead of squeezing.
+      const strip = stripFor(run.isChamfer);
+      if (strip && bands > 1) {
+        const stoneBands = (tA, tB) => {
+          const spanLen = (tB - tA) * rlen;
+          if (spanLen < 0.4) return;
+          const n = Math.max(1, Math.round(spanLen / segTarget));
+          for (let s = 0; s < n && quadCount < MAX_QUADS; s++) {
+            const a = at(tA + ((tB - tA) * s) / n);
+            const b = at(tA + ((tB - tA) * (s + 1)) / n);
+            for (let band = 1; band < bands && quadCount < MAX_QUADS; band++) {
+              const tile = placed.upper.length
+                ? placed.upper[(band - 1) % placed.upper.length]
+                : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
+              emitPhotoQuad(tile, a.x, a.z, b.x, b.z, band * BAND_HEIGHT, (band + 1) * BAND_HEIGHT);
+            }
+          }
+        };
+
+        const inset = 0.5;
+        let u0 = (strip.x + inset) / sW;
+        let u1 = (strip.x + strip.w - inset) / sW;
+        const v1 = 1 - (strip.y + inset) / sH;       // flipY: image top → V=1
+        const v0 = 1 - (strip.y + strip.h - inset) / sH;
+        let t0 = 0;
+        let t1 = 1;
+        if (rlen > strip.widthM * STRETCH_MAX) {
+          t0 = (rlen - strip.widthM) / 2 / rlen;
+          t1 = 1 - t0;
+          stoneBands(0, t0);
+          stoneBands(t1, 1);
+        } else if (rlen < strip.widthM / STRETCH_MAX) {
+          const frac = rlen / strip.widthM;
+          const mid = (u0 + u1) / 2;
+          const half = ((u1 - u0) * frac) / 2;
+          u0 = mid - half;
+          u1 = mid + half;
+        }
+        const a = at(t0);
+        const b = at(t1);
+        emitStripQuad(u0, v0, u1, v1, a.x, a.z, b.x, b.z, BAND_HEIGHT, bands * BAND_HEIGHT);
+      }
     }
   }
 
@@ -421,7 +515,33 @@ export function buildShopfronts(assets, world, scene) {
     scene.add(placeholderMesh);
   }
 
-  return { group: mesh, placeholders: placeholderMesh, count: quadCount, placeholderCount: pQuadCount };
+  // Third draw call: the whole-upper-elevation strips on their own texture.
+  let stripMesh = null;
+  if (sQuadCount) {
+    const sGeo = new THREE.BufferGeometry();
+    sGeo.setAttribute('position', new THREE.Float32BufferAttribute(sPos, 3));
+    sGeo.setAttribute('uv', new THREE.Float32BufferAttribute(sUv, 2));
+    sGeo.setIndex(sIdx);
+    sGeo.computeBoundingSphere();
+    // Version the URL from the parsed strips.json: a browser-cached strips.jpg
+    // from an older build would otherwise be sampled with the NEW json's UV
+    // offsets — misaligned walls that look like a packing bug. (Dev-server
+    // only; the single-file build resolves to a data URI, no query allowed.)
+    let sUrl = assetUrl(assets, 'shopfronts/strips.jpg');
+    if (sUrl.startsWith('assets/')) sUrl += `?v=${stripsMeta.etag || `${sW}x${sH}`}`;
+    const sTex = new THREE.TextureLoader().load(sUrl);
+    sTex.colorSpace = THREE.SRGBColorSpace;
+    sTex.anisotropy = 4;
+    stripMesh = new THREE.Mesh(sGeo, new THREE.MeshBasicMaterial({
+      map: sTex,
+      side: THREE.DoubleSide,
+      fog: true,
+    }));
+    stripMesh.name = 'shopfront-strips';
+    scene.add(stripMesh);
+  }
+
+  return { group: mesh, placeholders: placeholderMesh, strips: stripMesh, count: quadCount, placeholderCount: pQuadCount, stripCount: sQuadCount };
 }
 
 // Deterministic tile pick so the street layout is identical on every reload.
