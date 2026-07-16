@@ -40,6 +40,11 @@ const BAND_HEIGHT = 3.2;   // one storey — must match world.js LEVEL_HEIGHT
 const MAX_BANDS = 6;       // ~19m; above that the fog has swallowed it anyway
 const BASE_Y = 0.05;       // sit just above the street ribbon (STREET_Y = 0.03)
 const OUTWARD_EPS = 0.12;  // nudge proud of the wall (toward street) to avoid z-fight
+// A photo/name ground unit may stretch this far past its natural ~6.4m before
+// the run stops dividing itself among the units and lays them at natural width
+// (centred) with stone filling the rest. 1.5× is invisible; 8× was the smeared
+// Central Bar.
+const STRETCH_MAX = 1.5;
 // Runaway guard only — it must NOT bind in normal operation. Buildings are walked
 // in index order, so a cap that actually bites leaves the far end of the street
 // silently bare while the near end looks finished. 4000 (sized back when each wall
@@ -321,9 +326,40 @@ export function buildShopfronts(assets, world, scene) {
       const units = placed ? Math.max(1, placedPool.length)
         : isPlaceholder ? bizNames.length
         : Math.max(1, Math.round(rlen / segTarget)); // fictional frontage keeps ~6.4m units
+
+      // Ground-band stone filler for the frontage a photo/name block doesn't
+      // reach. Uses the same tile the storey directly above uses (band 1), so
+      // the wall stays one building rather than gaining a third texture.
+      const fillStone = (tA, tB) => {
+        const spanLen = (tB - tA) * rlen;
+        if (spanLen < 0.4) return;
+        const n = Math.max(1, Math.round(spanLen / segTarget));
+        for (let s = 0; s < n && quadCount < MAX_QUADS; s++) {
+          const a = at(tA + ((tB - tA) * s) / n);
+          const b = at(tA + ((tB - tA) * (s + 1)) / n);
+          const tile = placed && placed.upper.length
+            ? placed.upper[0]
+            : wallTiles[hashTile(bi, 0, 1, wallTiles.length)];
+          emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
+        }
+      };
+
+      // A real photo / business name keeps its NATURAL width (~segTarget — both
+      // atlases are 2:1). Stretched a little a unit still reads as itself;
+      // divided evenly over a 50m run it smears (the Central Bar was a blur,
+      // placeholder fascias went thin and wide). Past STRETCH_MAX the block is
+      // laid at natural width, centred on the run, and the rest is stone.
+      let span0 = 0;
+      let span1 = 1;
+      if ((placed || isPlaceholder) && rlen / units > segTarget * STRETCH_MAX) {
+        span0 = (rlen - units * segTarget) / 2 / rlen;
+        span1 = 1 - span0;
+        fillStone(0, span0);
+        fillStone(span1, 1);
+      }
       for (let u = 0; u < units && quadCount < MAX_QUADS; u++) {
-        const a = at(u / units);
-        const b = at((u + 1) / units);
+        const a = at(span0 + ((span1 - span0) * u) / units);
+        const b = at(span0 + ((span1 - span0) * (u + 1)) / units);
         if (isPlaceholder) {
           const uv = nameAtlas.uvFor.get(bizNames[u]);
           if (uv) {
