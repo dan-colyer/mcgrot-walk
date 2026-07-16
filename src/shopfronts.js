@@ -487,7 +487,11 @@ export function buildShopfronts(assets, world, scene) {
   geo.setIndex(indices);
   geo.computeBoundingSphere();
 
-  const texture = new THREE.TextureLoader().load(assetUrl(assets, 'shopfronts/atlas.jpg'));
+  // Versioned like the strips texture: a stale cached atlas.jpg sampled with a
+  // newer json's indices puts every tile on the wrong wall.
+  let atlasUrl = assetUrl(assets, 'shopfronts/atlas.jpg');
+  if (atlasUrl.startsWith('assets/') && layout.etag) atlasUrl += `?v=${layout.etag}`;
+  const texture = new THREE.TextureLoader().load(atlasUrl);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
 

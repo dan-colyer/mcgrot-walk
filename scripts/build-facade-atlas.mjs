@@ -20,6 +20,7 @@
 // is padded with black cells that are never sampled.
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
+import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -32,6 +33,15 @@ const TILE_W = 512;
 const TILE_H = 256;
 const COLS = 8;
 const MAX_DIM = 4096; // the common GPU max-texture-size floor
+
+// Per-slug pre-grade corrections, applied to a tile BEFORE the global grade.
+// Outliers the one-size grade can't fix: the 82-94 terrace was shot in full
+// sun and still reads as a postcard in the murk; Robbie's dark green pub
+// front goes unreadably black.
+const GRADE_OVERRIDES = [
+  { prefix: 'shops-leith-walk-geograph-org-uk-7895672', kind: 'ground', vf: 'eq=brightness=-0.07:saturation=0.8' },
+  { prefix: 'robbies-bar-leith-walk-01', kind: 'ground', vf: 'eq=brightness=0.08:gamma=1.15' },
+];
 
 const credits = existsSync(join(shopDir, 'credits.json'))
   ? JSON.parse(readFileSync(join(shopDir, 'credits.json'), 'utf8'))
@@ -82,10 +92,15 @@ if (atlasW > MAX_DIM || atlasH > MAX_DIM) {
 rmSync(tmpDir, { recursive: true, force: true });
 mkdirSync(tmpDir, { recursive: true });
 
-const cells = ordered.map((b) => join(shopDir, b.file));
-for (const f of cells) {
-  if (!existsSync(f)) { console.error(`missing tile: ${f}`); process.exit(1); }
-}
+const cells = ordered.map((b, i) => {
+  const src = join(shopDir, b.file);
+  if (!existsSync(src)) { console.error(`missing tile: ${src}`); process.exit(1); }
+  const ov = GRADE_OVERRIDES.find((o) => b.slug.startsWith(o.prefix) && b.kind === o.kind);
+  if (!ov) return src;
+  const fixed = join(tmpDir, `fix${i}.png`);
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', src, '-vf', ov.vf, '-frames:v', '1', fixed]);
+  return fixed;
+});
 
 const blanks = COLS * rows - count;
 if (blanks > 0) {
@@ -152,6 +167,9 @@ const tiles = ordered.map((b, index) => {
 });
 
 const atlas = {
+  // Content hash — the engine versions the texture URL with it so a browser-
+  // cached atlas.jpg is never sampled with a newer json's tile indices.
+  etag: createHash('md5').update(readFileSync(atlasPath)).digest('hex').slice(0, 10),
   tileW: TILE_W,
   tileH: TILE_H,
   cols: COLS,
