@@ -19,7 +19,7 @@
 // so the image MUST be exactly cols*tileW × rows*tileH. An incomplete final row
 // is padded with black cells that are never sampled.
 
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from 'fs';
 import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
 import { dirname, join } from 'path';
@@ -67,6 +67,31 @@ const EXCLUDE_UPPER_SLUGS = [
 const before = bands.length;
 bands = bands.filter((b) => !(b.kind === 'upper' && EXCLUDE_UPPER_SLUGS.some((s) => b.slug.startsWith(s))));
 if (bands.length < before) console.log(`excluded ${before - bands.length} mis-scaled upper bands`);
+
+// AI-fixed tiles (assets/shopfronts/fixed/) shadow their originals — same
+// basename, pedestrians removed / regraded via Kontext. Still derivative works
+// of the photo, so slug/attribution stay; only the pixels come from fixed/.
+let fixedCount = 0;
+for (const b of bands) {
+  const alt = `fixed/${b.file.split('/').pop()}`;
+  if (existsSync(join(shopDir, alt))) { b.file = alt; b.decayed = true; fixedCount++; }
+}
+if (fixedCount) console.log(`${fixedCount} tiles swapped for their fixed/ versions`);
+
+// Fully generated ground variants (assets/shopfronts/generated/): derelict
+// Edinburgh shopfront types with garbled signage, FLUX text-to-image — no
+// photo attribution, tagged generated for the credits page.
+const genDir = join(shopDir, 'generated');
+if (existsSync(genDir)) {
+  for (const f of readdirSync(genDir).filter((f) => f.endsWith('.jpg')).sort()) {
+    bands.push({
+      file: `generated/${f}`,
+      slug: f.replace(/\.jpg$/, ''),
+      kind: 'ground', planeKind: 'terrace', cornerBuilding: false,
+      treatment: 3, generated: true, identity: null,
+    });
+  }
+}
 
 // Ground first, then upper; stable by filename inside each group so the atlas is
 // byte-identical across rebuilds (the seeded-scenery rule applies to assets too).

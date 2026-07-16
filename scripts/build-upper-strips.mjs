@@ -37,8 +37,6 @@ const STOREY_M = 3.2;
 const GRADE = 'eq=saturation=0.42:contrast=1.08:brightness=-0.10,colorbalance=rs=0.10:rm=0.06:bs=-0.06:bm=-0.05';
 
 const plan = JSON.parse(readFileSync(join(root, 'scripts/facade-plan.json'), 'utf8'));
-const placement = JSON.parse(readFileSync(join(shopDir, 'placement.json'), 'utf8'));
-const placedSlugs = new Set(Object.values(placement.photos).map((p) => p.slug));
 
 function probe(file) {
   const out = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0',
@@ -79,9 +77,12 @@ function skyTrimPx(rectPath, cropW, cropH, cropY) {
 }
 
 // --- collect candidate strips with their crop geometry ---
+// Every photo with a usable rectified plane is a candidate now, not just the
+// address-placed ones: generic buildings drape a hash-picked whole elevation
+// instead of stamping two band samples in a grid (the wallpaper look).
 const candidates = [];
 for (const photo of plan) {
-  if (!placedSlugs.has(photo.slug) || !photo.hasUpper || !photo.planes) continue;
+  if (!photo.hasUpper || !photo.planes) continue;
   photo.planes.forEach((plane, pi) => {
     const rectPath = join(rectDir, `${photo.slug}-p${pi}.jpg`);
     if (!existsSync(rectPath)) return; // plane was skipped by rectify (confidence/degenerate)

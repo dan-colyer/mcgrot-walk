@@ -28,7 +28,11 @@ import { buildNameAtlas } from './placeholders.js';
 // past the old 25m cutoff and were left bare. The FACING/SIDE tests still reject
 // back and side walls, so widening this only reaches genuine frontages.
 const STREET_RANGE = 30;
-const MIN_EDGE = 2.0;      // skip footprint edges shorter than this
+// Was 2.0 — which left every ROUNDED footprint (the old station cylinder at
+// the foot of the walk, Robbie's curved corner) entirely bare: an OSM arc is
+// all sub-metre edges (Robbie's fan goes down to ~0.3m). Slivers get stone
+// facets via the run loop, so tiny is fine; zero-length edges still skip.
+const MIN_EDGE = 0.25;
 const FACING_MIN = 0.35;   // wall normal · direction-to-street; at or above this it's a shop frontage
 // Below this the wall has turned far enough away to be a back wall, hidden by its
 // own building. It must be NEGATIVE: a gable end facing up the street has a normal
@@ -90,9 +94,12 @@ export function buildShopfronts(assets, world, scene) {
   // 1-storey strips are roofline-and-sky slivers — excluded.
   const stripsMeta = layout.strips || null;
   const stripsBySlug = new Map();
+  const allStrips = []; // pool for GENERIC buildings — one hash-picked whole
+                        // elevation per building beats two band samples in a grid
   if (stripsMeta && Array.isArray(stripsMeta.strips)) {
     for (const s of stripsMeta.strips) {
       if (s.storeys < 2) continue;
+      allStrips.push(s);
       const rec = stripsBySlug.get(s.slug) || {};
       const key = s.planeKind === 'corner' ? 'corner' : 'terrace';
       if (!rec[key]) rec[key] = s;
@@ -188,18 +195,22 @@ export function buildShopfronts(assets, world, scene) {
     // clad it; otherwise it falls back to the generic pools.
     const placed = photoByBuilding[bi] || null;
 
-    // A placed building may have full upper-elevation strips. Which one covers
-    // a wall depends on the wall: the chamfer takes the corner elevation, a
-    // normal frontage the terrace one. Must match the run-loop pick EXACTLY —
-    // an edge skipped here but not draped there would be a bare gap.
+    // Which full upper-elevation strip covers a wall. A PLACED building uses
+    // its own photo's strips (chamfer takes the corner elevation, a normal
+    // frontage the terrace one; either kind falls back to the other — a corner
+    // pub's two street faces are both planeKind "corner", and leaving its main
+    // frontage to band-stamping was the YES-poster wallpaper on Robbie's).
+    // A GENERIC building drapes one hash-picked elevation, the same one on
+    // every wall, so it still reads as a single building. Must match the
+    // run-loop pick EXACTLY — an edge skipped in the stone loop but not draped
+    // in the run loop would be a bare gap.
     const stripSet = placed ? stripsBySlug.get(placed.slug) : null;
-    // Either kind falls back to the other: a corner pub's two street faces are
-    // both planeKind "corner", and leaving its main frontage to band-stamping
-    // (the YES-poster wallpaper on Robbie's) is worse than draping the other
-    // face's elevation on it.
+    const genericStrip = !placed && allStrips.length
+      ? allStrips[hashTile(bi, 0, 3, allStrips.length)]
+      : null;
     const stripFor = (chamfer) => (stripSet
       ? (chamfer ? (stripSet.corner || stripSet.terrace) : (stripSet.terrace || stripSet.corner))
-      : null);
+      : genericStrip);
 
     // No photo but real businesses here → name placeholders, one business per
     // frontage unit.
@@ -397,6 +408,33 @@ export function buildShopfronts(assets, world, scene) {
         }
       };
 
+      // Same, for the upper bands — the flanks beside a natural-width strip,
+      // and whole runs too short to carry a strip.
+      const stoneBands = (tA, tB) => {
+        const spanLen = (tB - tA) * rlen;
+        if (spanLen < 0.4) return;
+        const n = Math.max(1, Math.round(spanLen / segTarget));
+        for (let s = 0; s < n && quadCount < MAX_QUADS; s++) {
+          const a = at(tA + ((tB - tA) * s) / n);
+          const b = at(tA + ((tB - tA) * (s + 1)) / n);
+          for (let band = 1; band < bands && quadCount < MAX_QUADS; band++) {
+            const tile = placed && placed.upper.length
+              ? placed.upper[(band - 1) % placed.upper.length]
+              : wallTiles[hashTile(bi, s, band, wallTiles.length)];
+            emitPhotoQuad(tile, a.x, a.z, b.x, b.z, band * BAND_HEIGHT, (band + 1) * BAND_HEIGHT);
+          }
+        }
+      };
+
+      // A run this short is a sliver — a facet of a curved footprint or an odd
+      // notch. A squeezed shop unit or a centre-cropped strip slice repeated
+      // per facet reads wrong; plain stone reads as a stone building.
+      const sliver = !placed && rlen < 3;
+      if (sliver) {
+        fillStone(0, 1);
+        if (stripFor(run.isChamfer) && bands > 1) stoneBands(0, 1);
+      }
+
       // A real photo / business name keeps its NATURAL width (~segTarget — both
       // atlases are 2:1). Stretched a little a unit still reads as itself;
       // divided evenly over a 50m run it smears (the Central Bar was a blur,
@@ -410,7 +448,7 @@ export function buildShopfronts(assets, world, scene) {
         fillStone(0, span0);
         fillStone(span1, 1);
       }
-      for (let u = 0; u < units && quadCount < MAX_QUADS; u++) {
+      for (let u = 0; u < units && !sliver && quadCount < MAX_QUADS; u++) {
         const a = at(span0 + ((span1 - span0) * u) / units);
         const b = at(span0 + ((span1 - span0) * (u + 1)) / units);
         if (isPlaceholder) {
@@ -429,30 +467,18 @@ export function buildShopfronts(assets, world, scene) {
         emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
       }
 
-      // --- Upper storeys as ONE strip quad (placed buildings only) ---
+      // --- Upper storeys as ONE strip quad ---
       // The whole rectified upper elevation drapes the run in a single quad:
       // no band seams, no grid stamping. Wider run than the photo → the strip
       // keeps natural width (centred, like the ground units) and stone bands
       // fill the flanks; much narrower run → a centre crop of the strip's UV
-      // window, so the texture stays at life scale instead of squeezing.
-      const strip = stripFor(run.isChamfer);
-      if (strip && bands > 1) {
-        const stoneBands = (tA, tB) => {
-          const spanLen = (tB - tA) * rlen;
-          if (spanLen < 0.4) return;
-          const n = Math.max(1, Math.round(spanLen / segTarget));
-          for (let s = 0; s < n && quadCount < MAX_QUADS; s++) {
-            const a = at(tA + ((tB - tA) * s) / n);
-            const b = at(tA + ((tB - tA) * (s + 1)) / n);
-            for (let band = 1; band < bands && quadCount < MAX_QUADS; band++) {
-              const tile = placed.upper.length
-                ? placed.upper[(band - 1) % placed.upper.length]
-                : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
-              emitPhotoQuad(tile, a.x, a.z, b.x, b.z, band * BAND_HEIGHT, (band + 1) * BAND_HEIGHT);
-            }
-          }
-        };
-
+      // window, so the texture stays at life scale instead of squeezing —
+      // except SHORT runs, where every building would show the same central
+      // slice: those take stone bands instead.
+      const strip = sliver ? null : stripFor(run.isChamfer);
+      if (strip && bands > 1 && rlen < 4.5) {
+        stoneBands(0, 1);
+      } else if (strip && bands > 1) {
         const inset = 0.5;
         let u0 = (strip.x + inset) / sW;
         let u1 = (strip.x + strip.w - inset) / sW;
