@@ -58,12 +58,20 @@ const PHOTO_BUILDING = [
   { b: 805, slug: 'edinburgh-23-elm-row',                            note: 'Joseph Pearce @ 23 Elm Row (corner pub)' },
 ];
 
-// Slug → its atlas tiles, split by kind.
+// Slug → its atlas tiles, split by kind. Upper tiles are ordered BOTTOM-TO-TOP
+// (bandRow descending — r=0 is the top/cornice slice) so the engine, which lays
+// upper[0] on the first floor above the shops and upper[last] at the eaves,
+// stacks them the right way up. Without this the roofline lands mid-building.
 const tilesBySlug = new Map();
+const upperMeta = new Map(); // slug -> [{index, bandRow}]
 for (const t of atlas.tiles) {
-  if (!tilesBySlug.has(t.slug)) tilesBySlug.set(t.slug, { ground: [], upper: [], corner: [] });
+  if (!tilesBySlug.has(t.slug)) { tilesBySlug.set(t.slug, { ground: [], upper: [], corner: [] }); upperMeta.set(t.slug, []); }
   const rec = tilesBySlug.get(t.slug);
-  (rec[t.kind] || rec.ground).push(t.index);
+  if (t.kind === 'upper') upperMeta.get(t.slug).push({ index: t.index, bandRow: t.bandRow ?? 0 });
+  else (rec[t.kind] || rec.ground).push(t.index);
+}
+for (const [slug, rec] of tilesBySlug) {
+  rec.upper = upperMeta.get(slug).sort((a, b) => b.bandRow - a.bandRow).map((u) => u.index);
 }
 
 const photos = {};

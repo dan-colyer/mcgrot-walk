@@ -114,9 +114,14 @@ if (gotW !== atlasW || gotH !== atlasH) {
 
 const tiles = ordered.map((b, index) => {
   const c = credits[b.slug] || {};
+  // Vertical band row parsed from the extractor's `upper-<r><i>` name: r=0 is the
+  // TOP slice (cornice) and higher r is lower down the wall. The engine stacks
+  // upper tiles bottom-to-top, so placement orders them by this, highest r first.
+  const rowMatch = b.kind === 'upper' ? /-upper-(\d)\d/.exec(b.file) : null;
   return {
     index,
     kind: b.kind,                       // "ground" | "upper"
+    bandRow: rowMatch ? +rowMatch[1] : null,
     slug: b.slug,
     identity: b.identity || null,
     treatment: b.treatment,             // 1 keep real | 2 decayed | 3 generated
