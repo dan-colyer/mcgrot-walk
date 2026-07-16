@@ -300,6 +300,138 @@ function smooth(e0, e1, x) {
 // Road dressing: rails, potholes, puddles
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Bare earth: the base terrain everywhere road and pavement don't reach.
+// Replaces the flat 0x453a28 Lambert plane, which read as a smooth MUD DUNE
+// wherever it filled a gap — most damningly the Elm Row garden island, which
+// half-fills every hero shot of Valvona & Crolla.
+// ---------------------------------------------------------------------------
+
+export const EARTH_METRES = 26;
+
+export function makeEarthTexture() {
+  const S = 512;
+  const P = 8;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(S, S);
+  const px = img.data;
+
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const nx = (x / S) * P, ny = (y / S) * P;
+
+      // Base: the same muddy rust-brown family as the old flat colour, so the
+      // palette holds — just no longer a single value.
+      let r = 62, g = 52, b = 36;
+      const drift = fbmP(nx, ny, P, 4, 131) - 0.5;
+      r += drift * 30; g += drift * 26; b += drift * 20;
+
+      // Scrub: patches of sick olive weed-growth, thresholded so they clump.
+      const scrub = fbmP(nx * 0.9 + 3, ny * 0.9 + 3, P, 3, 137);
+      if (scrub > 0.56) {
+        const k = Math.min(1, (scrub - 0.56) * 5);
+        r += (52 - r) * 0.6 * k; g += (60 - g) * 0.6 * k; b += (34 - b) * 0.6 * k;
+      }
+
+      // Damp: darker waterlogged hollows.
+      const damp = fbmP(nx * 0.6 + 11, ny * 0.6 + 11, P, 3, 149);
+      if (damp < 0.42) {
+        const k = Math.min(1, (0.42 - damp) * 4);
+        r *= 1 - 0.28 * k; g *= 1 - 0.26 * k; b *= 1 - 0.22 * k;
+      }
+
+      // Grit — stones, glass, rubble crumbs. Same trick as the tarmac chips.
+      const grit = hash2(x, y, 151);
+      const chip = grit > 0.90 ? (grit - 0.90) * 220 : (grit < 0.07 ? -grit * 120 : 0);
+      r += chip; g += chip * 0.95; b += chip * 0.8;
+
+      const i = (y * S + x) * 4;
+      px[i] = Math.max(0, Math.min(255, r));
+      px[i + 1] = Math.max(0, Math.min(255, g));
+      px[i + 2] = Math.max(0, Math.min(255, b));
+      px[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return finishTexture(canvas);
+}
+
+// ---------------------------------------------------------------------------
+// The Elm Row garden island: one non-repeating decal of overgrown gardens —
+// rank grass, bushes gone feral, dry trampled lines. Alpha-feathered edges so
+// it sits on the earth without a hard rectangle seam.
+// ---------------------------------------------------------------------------
+
+export function makeGardenTexture() {
+  // One decal stretched over ~80m: features must be high-frequency in texture
+  // space to read as ~2-4m clumps on the ground (P=8 at 256px rendered as a
+  // flat bowling green).
+  const S = 512;
+  const P = 22;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(S, S);
+  const px = img.data;
+
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const nx = (x / S) * P, ny = (y / S) * P;
+
+      // Rank unmown grass — dark olive, not lawn-green; ACES exposure lifts a
+      // real green to fluorescent bowling-green.
+      let r = 40, g = 47, b = 26;
+      const drift = fbmP(nx, ny, P, 4, 211) - 0.5;
+      r += drift * 30; g += drift * 36; b += drift * 20;
+
+      // Feral bushes: big dark clumps, covering a good half of the strip.
+      const bush = fbmP(nx * 0.55 + 5, ny * 0.55 + 5, P, 3, 223);
+      if (bush > 0.50) {
+        const k = Math.min(1, (bush - 0.50) * 5);
+        r += (24 - r) * 0.8 * k; g += (33 - g) * 0.8 * k; b += (17 - b) * 0.8 * k;
+      }
+      // Dead patches — dried stalks and litter-choked corners.
+      const dead = fbmP(nx * 0.7 + 17, ny * 0.7 + 2, P, 3, 239);
+      if (dead > 0.62) {
+        const k = Math.min(1, (dead - 0.62) * 6);
+        r += (66 - r) * 0.55 * k; g += (58 - g) * 0.55 * k; b += (36 - b) * 0.55 * k;
+      }
+
+      // Dry desire-lines where feet still cross the gardens.
+      const path = Math.abs(fbmP(nx * 0.5 + 9, ny * 2.2, P, 2, 227) - 0.5);
+      if (path < 0.035) {
+        const k = 1 - path / 0.035;
+        r += (74 - r) * 0.5 * k; g += (64 - g) * 0.5 * k; b += (44 - b) * 0.5 * k;
+      }
+
+      const grit = hash2(x, y, 229);
+      const blade = grit > 0.88 ? (grit - 0.88) * 160 : 0;
+      r += blade * 0.7; g += blade; b += blade * 0.5;
+
+      // Feather: full alpha in the body, ragged noise-eaten fade in the outer
+      // 14% so the decal never shows a straight edge.
+      const ex = Math.min(x, S - 1 - x) / S;
+      const ey = Math.min(y, S - 1 - y) / S;
+      const edge = Math.min(ex, ey) / 0.14;
+      const rag = fbmP(nx * 2, ny * 2, P * 2, 2, 233) * 0.5;
+      const a = Math.max(0, Math.min(1, edge - rag));
+
+      const i = (y * S + x) * 4;
+      px[i] = Math.max(0, Math.min(255, r));
+      px[i + 1] = Math.max(0, Math.min(255, g));
+      px[i + 2] = Math.max(0, Math.min(255, b));
+      px[i + 3] = Math.round(a * 255);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 16; // seen edge-on like the road — without this it smears
+  return tex;
+}
+
 export function buildRoadDressing(world, scene) {
   const line = world.streetLine || [];
   if (line.length < 2) return { group: new THREE.Group() };

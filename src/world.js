@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { makeTarmacTexture, makePavementTexture, TARMAC_METRES, PAVEMENT_METRES } from './road.js';
+import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES } from './road.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
@@ -15,9 +15,6 @@ const STREET_Y = 0.03; // just above ground plane to avoid z-fighting
 const LEVEL_HEIGHT = 3.2;
 const CHAIN_JOIN_TOLERANCE = 2; // metres, for clustering streetPath endpoints
 
-// Muddy rust-brown, deliberately distinct in hue from the asphalt ribbon so
-// the two don't read as one undifferentiated dark mass in the near field.
-const GROUND_COLOR = 0x453a28;
 // Strictly below the street ribbon (STREET_Y = 0.03) and building bases
 // (y = 0) so nothing is ever coplanar with the ground — kills z-fighting.
 const GROUND_Y = -0.06;
@@ -44,6 +41,7 @@ export function buildWorld(leith) {
   if (buildingsMesh) group.add(buildingsMesh);
 
   group.add(buildGround(leith));
+  group.add(buildGardenIsland());
   addLighting(group);
 
   const streetLine = buildStreetChain(leith.streetPaths);
@@ -361,10 +359,68 @@ function buildGround(leith) {
 
   const geo = new THREE.PlaneGeometry(width, depth);
   geo.rotateX(-Math.PI / 2);
-  const material = new THREE.MeshLambertMaterial({ color: GROUND_COLOR });
+  // Mottled earth/scrub texture in the same palette as the old flat colour —
+  // the flat plane read as a smooth mud dune wherever it showed between the
+  // road ribbons and the buildings.
+  const tex = makeEarthTexture();
+  tex.repeat.set(width / EARTH_METRES, depth / EARTH_METRES);
+  const material = new THREE.MeshLambertMaterial({ map: tex });
   const mesh = new THREE.Mesh(geo, material);
   mesh.position.set(cx, GROUND_Y, cz);
   return mesh;
+}
+
+// The Elm Row garden island — the raised strip of gardens between the main
+// carriageway and the set-back service terrace (V&C, Greggs, Joseph Pearce).
+// Coordinates hand-derived from the terrace footprints (b805 → b433); the
+// strip half-fills every hero shot of that terrace, so it gets a bespoke
+// overgrown-gardens decal rather than bare earth.
+function buildGardenIsland() {
+  const geo = new THREE.PlaneGeometry(80, 14);
+  geo.rotateX(-Math.PI / 2);
+  const dirx = -0.483, dirz = 0.876; // Elm Row's street heading
+  geo.rotateY(Math.atan2(-dirz, dirx));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
+    map: makeGardenTexture(),
+    transparent: true,
+    depthWrite: false,
+  }));
+  mesh.position.set(-719, 0.02, 1303); // above ground (-0.06), below street (0.03)
+  mesh.name = 'elm-row-gardens';
+
+  // A flat decal at a grazing angle reads as painted lawn no matter what's in
+  // the texture — the overgrowth needs VOLUME. Two dozen squashed-sphere
+  // bushes scattered on the strip, merged into one draw call.
+  let s = 0xe1a20; // seeded: identical scatter every reload
+  const rand = () => {
+    s |= 0; s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const bushGeos = [];
+  for (let i = 0; i < 26; i++) {
+    const along = (rand() - 0.5) * 74;
+    const across = (rand() - 0.5) * 10;
+    const g = new THREE.SphereGeometry(1, 6, 4);
+    const h = 0.5 + rand() * 1.3;
+    g.scale(0.9 + rand() * 1.6, h, 0.9 + rand() * 1.6);
+    g.rotateY(rand() * Math.PI);
+    g.translate(
+      -719 + dirx * along - dirz * across,
+      h * 0.55, // partly buried so the silhouette is a mound, not a ball
+      1303 + dirz * along + dirx * across
+    );
+    bushGeos.push(g);
+  }
+  const bushes = new THREE.Mesh(
+    mergeGeometries(bushGeos),
+    new THREE.MeshLambertMaterial({ color: 0x2e3820 })
+  );
+  bushes.name = 'elm-row-bushes';
+  const group = new THREE.Group();
+  group.add(mesh, bushes);
+  return group;
 }
 
 function addLighting(group) {
