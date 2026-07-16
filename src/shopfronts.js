@@ -193,8 +193,12 @@ export function buildShopfronts(assets, world, scene) {
     // normal frontage the terrace one. Must match the run-loop pick EXACTLY —
     // an edge skipped here but not draped there would be a bare gap.
     const stripSet = placed ? stripsBySlug.get(placed.slug) : null;
+    // Either kind falls back to the other: a corner pub's two street faces are
+    // both planeKind "corner", and leaving its main frontage to band-stamping
+    // (the YES-poster wallpaper on Robbie's) is worse than draping the other
+    // face's elevation on it.
     const stripFor = (chamfer) => (stripSet
-      ? (chamfer ? (stripSet.corner || stripSet.terrace) : stripSet.terrace)
+      ? (chamfer ? (stripSet.corner || stripSet.terrace) : (stripSet.terrace || stripSet.corner))
       : null);
 
     // No photo but real businesses here → name placeholders, one business per
@@ -315,9 +319,12 @@ export function buildShopfronts(assets, world, scene) {
         const bandStart = isFrontage ? 1 : 0;
         for (let band = bandStart; band < bands && quadCount < MAX_QUADS; band++) {
           const uidx = Math.max(0, band - 1);
+          // Mixing the segment into the hash varies the stamp along the wall
+          // (both tiles come from the same building's photo, so no patchwork)
+          // — one tile repeated N× per row is what read as wallpaper.
           const tile = placed && placed.upper.length
             ? placed.upper[uidx % placed.upper.length]
-            : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
+            : wallTiles[hashTile(bi, s, band, wallTiles.length)];
           const y0 = band === 0 ? BASE_Y : band * BAND_HEIGHT;
           const y1 = (band + 1) * BAND_HEIGHT;
           emitPhotoQuad(tile, a.x, a.z, b.x, b.z, y0, y1);
@@ -385,7 +392,7 @@ export function buildShopfronts(assets, world, scene) {
           const b = at(tA + ((tB - tA) * (s + 1)) / n);
           const tile = placed && placed.upper.length
             ? placed.upper[0]
-            : wallTiles[hashTile(bi, 0, 1, wallTiles.length)];
+            : wallTiles[hashTile(bi, s, 1, wallTiles.length)];
           emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
         }
       };

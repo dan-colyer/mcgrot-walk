@@ -37,11 +37,26 @@ const credits = existsSync(join(shopDir, 'credits.json'))
   ? JSON.parse(readFileSync(join(shopDir, 'credits.json'), 'utf8'))
   : {};
 
-const bands = JSON.parse(readFileSync(join(shopDir, 'bands.json'), 'utf8'));
+let bands = JSON.parse(readFileSync(join(shopDir, 'bands.json'), 'utf8'));
 if (!bands.length) {
   console.error('assets/shopfronts/bands.json is empty — run rectify-facades.mjs first.');
   process.exit(1);
 }
+
+// Upper bands that pack a WHOLE elevation (or a full building against sky)
+// into one 3.2m storey band. Root cause: facade-plan under-counted storeys, so
+// rows=1 and rowH became the entire upper region — stamped in a grid these
+// render buildings-within-buildings. Excluded rather than re-planned; the real
+// elevations ship whole via strips.jpg where usable.
+const EXCLUDE_UPPER_SLUGS = [
+  'city-of-edinburgh-10-picardy-place',
+  'city-of-edinburgh-16-22-picardy-place',
+  'edinburgh-leith-walk-4-5-baxter-s-place',
+  'shops-and-tenements-244-6-8-leith-walk',
+];
+const before = bands.length;
+bands = bands.filter((b) => !(b.kind === 'upper' && EXCLUDE_UPPER_SLUGS.some((s) => b.slug.startsWith(s))));
+if (bands.length < before) console.log(`excluded ${before - bands.length} mis-scaled upper bands`);
 
 // Ground first, then upper; stable by filename inside each group so the atlas is
 // byte-identical across rebuilds (the seeded-scenery rule applies to assets too).
