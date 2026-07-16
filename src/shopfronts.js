@@ -123,6 +123,21 @@ export function buildShopfronts(assets, world, scene) {
   const pIdx = [];
   let pQuadCount = 0;
 
+  // Push one atlas.jpg quad. Closes over the photo-mesh arrays and quadCount.
+  function emitPhotoQuad(tile, ax, az, bx, bz, y0, y1) {
+    const col = tile % cols;
+    const row = Math.floor(tile / cols);
+    const u0 = col / cols + uInset;
+    const u1 = (col + 1) / cols - uInset;
+    const vBot = 1 - (row + 1) / rows + vInset; // atlas is row-major from the top;
+    const vTop = 1 - row / rows - vInset;        // flipY (default) puts row 0 at V=1
+    const base = quadCount * 4;
+    positions.push(ax, y0, az,  bx, y0, bz,  bx, y1, bz,  ax, y1, az);
+    uvs.push(u0, vBot,  u1, vBot,  u1, vTop,  u0, vTop);
+    indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    quadCount++;
+  }
+
   for (let bi = 0; bi < buildings.length && quadCount < MAX_QUADS; bi++) {
     const building = buildings[bi];
     const fp = building && building.footprint;
@@ -134,15 +149,11 @@ export function buildShopfronts(assets, world, scene) {
     // Does this building have a real, address-matched photo? If so its own tiles
     // clad it; otherwise it falls back to the generic pools.
     const placed = photoByBuilding[bi] || null;
-    // Counts frontage (shopfront) quads emitted for a placed building, so its
-    // real ground tiles spread left-to-right across the frontage deterministically.
-    let frontageCursor = 0;
 
     // No photo but real businesses here → name placeholders, one business per
-    // frontage segment (bizCursor spreads them left-to-right).
+    // frontage unit.
     const bizNames = !placed && nameAtlas ? (bizByBuilding[bi] || []).map((b) => b.name) : null;
     const isPlaceholder = !!(bizNames && bizNames.length);
-    let bizCursor = 0;
 
     // One source building's upper storeys clad this whole building — see the
     // upperBySlug note above.
@@ -158,6 +169,11 @@ export function buildShopfronts(assets, world, scene) {
     for (const p of fp) { cx += p[0]; cz += p[1]; }
     cx /= fp.length;
     cz /= fp.length;
+
+    // Frontage edges are collected here and merged into straight RUNS below, so
+    // the ground shopfront row can span a wall that OSM split into several
+    // collinear edges — otherwise a single photo repeats once per sub-edge.
+    const frontEdges = [];
 
     for (let i = 0; i < fp.length && quadCount < MAX_QUADS; i++) {
       const a = fp[i];
@@ -223,85 +239,105 @@ export function buildShopfronts(assets, world, scene) {
         isChamfer = align < CHAMFER_MAX_ALIGN;
       }
 
-      // Tile the frontage into ~segTarget-wide columns...
-      const nSeg = Math.max(1, Math.round(len / segTarget));
-      for (let s = 0; s < nSeg && quadCount < MAX_QUADS; s++) {
-        const t0 = s / nSeg;
-        const t1 = (s + 1) / nSeg;
-        const p0x = sx + dx * t0 + nx * OUTWARD_EPS;
-        const p0z = sz + dz * t0 + nz * OUTWARD_EPS;
-        const p1x = sx + dx * t1 + nx * OUTWARD_EPS;
-        const p1z = sz + dz * t1 + nz * OUTWARD_EPS;
+      // The STONE/upper courses keep a natural ~segTarget (6.4m) rhythm, because
+      // a tenement course really does repeat across the frontage. The ground
+      // shopfront row is emitted separately, per merged run, after this loop.
+      const stoneSegs = Math.max(1, Math.round(len / segTarget));
 
-        // ...and stack one band per storey up the wall. Band 0 is the shopfront,
-        // every band above it is tenement. Sampling the ground pool for a third
-        // floor would hang a Greggs in the sky — hence the separate pools.
-        for (let band = 0; band < bands && quadCount < MAX_QUADS; band++) {
-          // Ground: vary per segment — adjacent shop units are different shops.
-          // Upper: vary per band only, from this building's single source photo,
-          // so the storey rhythm stays uniform across the whole frontage.
-          // A non-frontage wall gets stone at every band, shopfront at none.
-          const shopBand = band === 0 && isFrontage;
+      const col = (t) => ({ // wall point at fraction t along the edge, nudged proud
+        x: sx + dx * t + nx * OUTWARD_EPS,
+        z: sz + dz * t + nz * OUTWARD_EPS,
+      });
 
-          // No-photo building with real businesses: stamp the business name on
-          // stone, one business per frontage segment, into the SECOND mesh. Then
-          // skip the photo mesh for this quad. (Upper bands fall through to the
-          // generic stone path below, so the tenement above still reads right.)
-          if (isPlaceholder && shopBand) {
-            const name = bizNames[bizCursor % bizNames.length];
-            bizCursor++;
-            const uv = nameAtlas.uvFor.get(name);
-            if (uv) {
-              const py0 = BASE_Y;
-              const py1 = BAND_HEIGHT;
-              const pb = pQuadCount * 4;
-              pPos.push(p0x, py0, p0z,  p1x, py0, p1z,  p1x, py1, p1z,  p0x, py1, p0z);
-              pUv.push(uv.u0, uv.vBot,  uv.u1, uv.vBot,  uv.u1, uv.vTop,  uv.u0, uv.vTop);
-              pIdx.push(pb, pb + 1, pb + 2, pb, pb + 2, pb + 3);
-              pQuadCount++;
-              continue;
-            }
-          }
+      // Record a frontage edge (original vertices + unit direction) for run
+      // merging below; its ground band is drawn there, not here.
+      if (isFrontage) {
+        frontEdges.push({ i, ax: a[0], az: a[1], bx: b[0], bz: b[1], dirx: ex * inv, dirz: ez * inv, len, isChamfer });
+      }
 
-          let tile;
-          if (placed) {
-            // A real building: draw from its OWN photo. Ground band spreads the
-            // building's real shop tiles across the frontage; upper bands stack
-            // its real storeys in order, falling back to generic stone when the
-            // photo held no upper (e.g. a single-storey pub crop).
-            if (shopBand) {
-              const pool = isChamfer && placed.corner.length ? placed.corner : placed.ground;
-              tile = pool[frontageCursor % pool.length];
-              frontageCursor++;
-            } else if (placed.upper.length) {
-              tile = placed.upper[(band - 1) % placed.upper.length];
-            } else {
-              tile = wallTiles[hashTile(bi, 0, band, wallTiles.length)];
-            }
-          } else {
-            const gPool = isChamfer ? cornerPool : groundPool;
-            tile = shopBand
-              ? gPool[hashTile(bi, i * 31 + s, 0, gPool.length)]
-              : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
-          }
-
-          const col = tile % cols;
-          const row = Math.floor(tile / cols);
-          const u0 = col / cols + uInset;
-          const u1 = (col + 1) / cols - uInset;
-          const vBot = 1 - (row + 1) / rows + vInset; // atlas is row-major from the top;
-          const vTop = 1 - row / rows - vInset;        // flipY (default) puts row 0 at V=1
-
+      // Tenement stone: all bands on a non-frontage wall, upper bands on a
+      // frontage wall. Sampling the ground pool for a third floor would hang a
+      // Greggs in the sky — hence the separate upper tiles.
+      for (let s = 0; s < stoneSegs && quadCount < MAX_QUADS; s++) {
+        const a = col(s / stoneSegs);
+        const b = col((s + 1) / stoneSegs);
+        const bandStart = isFrontage ? 1 : 0;
+        for (let band = bandStart; band < bands && quadCount < MAX_QUADS; band++) {
+          const uidx = Math.max(0, band - 1);
+          const tile = placed && placed.upper.length
+            ? placed.upper[uidx % placed.upper.length]
+            : wallTiles[hashTile(bi, 0, band, wallTiles.length)];
           const y0 = band === 0 ? BASE_Y : band * BAND_HEIGHT;
           const y1 = (band + 1) * BAND_HEIGHT;
-
-          const base = quadCount * 4;
-          // bottom-left, bottom-right, top-right, top-left
-          positions.push(p0x, y0, p0z,  p1x, y0, p1z,  p1x, y1, p1z,  p0x, y1, p0z);
-          uvs.push(u0, vBot,  u1, vBot,  u1, vTop,  u0, vTop);
-          indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
-          quadCount++;
+          emitPhotoQuad(tile, a.x, a.z, b.x, b.z, y0, y1);
         }
+      }
+    }
+
+    // --- Ground shopfront row, one per merged frontage RUN ---
+    // Merge consecutive collinear frontage edges (a straight wall OSM chopped
+    // into several) so one photo/name spans the whole wall once, then lay the
+    // building's real shop units across each run.
+    const runs = [];
+    for (const e of frontEdges) {
+      const last = runs[runs.length - 1];
+      const contiguous = last && e.i === last.endEdge + 1
+        && last.dirx * e.dirx + last.dirz * e.dirz > 0.985;
+      if (contiguous) {
+        last.bx = e.bx; last.bz = e.bz; last.len += e.len; last.endEdge = e.i;
+        last.isChamfer = last.isChamfer || e.isChamfer;
+      } else {
+        runs.push({ ax: e.ax, az: e.az, bx: e.bx, bz: e.bz, dirx: e.dirx, dirz: e.dirz, len: e.len, isChamfer: e.isChamfer, startEdge: e.i, endEdge: e.i });
+      }
+    }
+    // The footprint is a cycle: if the last run's end meets the first run's start
+    // and they're collinear, it's really one wall wrapped past vertex 0 — join.
+    if (runs.length > 1) {
+      const first = runs[0], lastR = runs[runs.length - 1];
+      if (lastR.endEdge === fp.length - 1 && first.startEdge === 0
+        && Math.hypot(lastR.bx - first.ax, lastR.bz - first.az) < 0.5
+        && lastR.dirx * first.dirx + lastR.dirz * first.dirz > 0.985) {
+        first.ax = lastR.ax; first.az = lastR.az; first.len += lastR.len;
+        first.isChamfer = first.isChamfer || lastR.isChamfer;
+        runs.pop();
+      }
+    }
+
+    for (const run of runs) {
+      if (quadCount >= MAX_QUADS) break;
+      const rdx = run.bx - run.ax, rdz = run.bz - run.az;
+      const rlen = Math.hypot(rdx, rdz) || 1;
+      // Outward normal + walk direction for the whole run (same convention as
+      // the per-edge code: winding set so the textured front faces the street).
+      let sx = run.ax, sz = run.az, dx = rdx, dz = rdz;
+      let nx = -rdz / rlen, nz = rdx / rlen;
+      const mx = (run.ax + run.bx) / 2, mz = (run.az + run.bz) / 2;
+      if (nx * (mx - cx) + nz * (mz - cz) < 0) {
+        nx = -nx; nz = -nz; sx = run.bx; sz = run.bz; dx = -rdx; dz = -rdz;
+      }
+      const at = (t) => ({ x: sx + dx * t + nx * OUTWARD_EPS, z: sz + dz * t + nz * OUTWARD_EPS });
+
+      const placedPool = placed ? (run.isChamfer && placed.corner.length ? placed.corner : placed.ground) : null;
+      const units = placed ? Math.max(1, placedPool.length)
+        : isPlaceholder ? bizNames.length
+        : Math.max(1, Math.round(rlen / segTarget)); // fictional frontage keeps ~6.4m units
+      for (let u = 0; u < units && quadCount < MAX_QUADS; u++) {
+        const a = at(u / units);
+        const b = at((u + 1) / units);
+        if (isPlaceholder) {
+          const uv = nameAtlas.uvFor.get(bizNames[u]);
+          if (uv) {
+            const pb = pQuadCount * 4;
+            pPos.push(a.x, BASE_Y, a.z,  b.x, BASE_Y, b.z,  b.x, BAND_HEIGHT, b.z,  a.x, BAND_HEIGHT, a.z);
+            pUv.push(uv.u0, uv.vBot,  uv.u1, uv.vBot,  uv.u1, uv.vTop,  uv.u0, uv.vTop);
+            pIdx.push(pb, pb + 1, pb + 2, pb, pb + 2, pb + 3);
+            pQuadCount++;
+            continue;
+          }
+        }
+        const gPool = run.isChamfer ? cornerPool : groundPool;
+        const tile = placed ? placedPool[u] : gPool[hashTile(bi, run.startEdge * 31 + u, 0, gPool.length)];
+        emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
       }
     }
   }
