@@ -445,8 +445,9 @@ export function buildRoadDressing(world, scene) {
   return { group };
 }
 
-// Cumulative-distance sampler along the chain.
-function sampleAt(line, target) {
+// Cumulative-distance sampler along the chain. Exported for cars.js, which
+// parks wrecks by chainage the same way the rails and decals are laid.
+export function sampleAt(line, target) {
   let acc = 0;
   for (let i = 0; i < line.length - 1; i++) {
     const [ax, az] = line[i];

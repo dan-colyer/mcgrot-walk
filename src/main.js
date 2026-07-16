@@ -13,6 +13,7 @@ import { buildRoadworks } from './roadworks.js';
 import { buildBirds } from './birds.js';
 import { buildVermin } from './vermin.js';
 import { buildFlora } from './flora.js';
+import { buildCars } from './cars.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -63,6 +64,7 @@ async function main() {
   const birds = buildBirds(world, assets.leith, scene); // gulls wheeling, gulls perched, pigeons
   const vermin = buildVermin(world, scene);             // rats darting in the gutters
   buildFlora(world, assets.leith, scene);               // buddleia, Buckfast, bins, a trolley
+  buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
   const scenery = buildScenery(world, scene);
 
   const ambience = createAmbience();

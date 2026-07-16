@@ -92,7 +92,9 @@ async function buildSite() {
   };
   ['manifest.json', 'leith.json', 'catalog.json', 'comics', 'audio', 'faces'].forEach(copy);
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
-  ['shopfronts/atlas.jpg', 'shopfronts/atlas.json', 'shopfronts/credits.json', 'shopfronts/placement.json', 'shopfronts/strips.jpg', 'shopfronts/strips.json'].forEach(copy);
+  ['shopfronts/atlas.jpg', 'shopfronts/atlas.json', 'shopfronts/credits.json', 'shopfronts/placement.json', 'shopfronts/strips.jpg', 'shopfronts/strips.json',
+   'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',
+   'cars/Textures/colormap.png'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
   for (const c of manifest.comics) copy(c.image);
 
@@ -185,6 +187,14 @@ ${shopRows}
      non-commercial fan project. All rights remain with their respective owners.</p>
   <ul>
 ${faceRows}
+  </ul>
+
+  <h2>Vehicle models</h2>
+  <ul>
+    <li>Sedan, hatchback and van — <a href="https://kenney.nl/assets/car-kit">Kenney Car Kit</a> — <em>CC0</em></li>
+    <li>Bus — Poly by Google, via <a href="https://poly.pizza/m/4CPpvEmrMoF">poly.pizza</a> —
+        <em><a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a></em>
+        (recoloured/wrecked for the scene)</li>
   </ul>
 
   <h2>Street geometry</h2>
