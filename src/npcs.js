@@ -19,7 +19,11 @@ import { assetUrl } from './assets.js';
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
 const END_MARGIN = 60;        // leave this much clear at the south end
-const COMIC_LOAD_RANGE = 34;  // load a vendor's comic texture within this range
+// FogExp2 density 0.0095 (world.js) only obscures ~35% of contrast at 70m and
+// ~50% at 90m — nowhere near opaque — so a comic held at head height is
+// legible well beyond the old 34m range. 85m loads it while still fogged
+// enough that the swap from paper placeholder to real art isn't obvious.
+const COMIC_LOAD_RANGE = 85;
 
 // Drab post-apocalyptic coat palette, cycled across vendors for variety.
 const COAT_COLORS = [
@@ -95,6 +99,56 @@ export function clothMat(colorHex, knit) {
     }));
   }
   return clothCache.get(key);
+}
+
+// ---------------------------------------------------------------------------
+// Comic placeholder — grubby newsprint, not a flat colour card. Shown on both
+// vendor-held and litter comic quads until the real page loads. Same canvas-
+// bake discipline as bakeCloth: deterministic, raw sRGB bytes (Color() is
+// linear and this canvas is SRGBColorSpace-tagged, so Color() would double-
+// convert), and toned dark to survive the ACES exposure-1.46 lift.
+// ---------------------------------------------------------------------------
+
+function bakePaper() {
+  const S = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(S, S);
+  const px = img.data;
+  const base = { r: 0.40, g: 0.38, b: 0.32 };
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const grain = 1 + (hash2(x, y, 0x9a1) - 0.5) * 0.12;
+      // Blurred, smudged text rows: a handful of horizontal bands, each
+      // dimmed unevenly along its length so it reads as illegible print
+      // rather than a barcode.
+      const row = Math.floor(y / 5);
+      const rowPick = hash2(row, 0, 0x2c3);
+      const isTextRow = rowPick > 0.45 && rowPick < 0.85;
+      const textDim = isTextRow ? 1 - 0.28 * hash2(x >> 1, row, 0x77b) : 1;
+      // Grimy edges, darker toward the border.
+      const dx = Math.min(x, S - 1 - x) / (S * 0.5);
+      const dy = Math.min(y, S - 1 - y) / (S * 0.5);
+      const edge = 1 - 0.22 * (1 - Math.min(dx, dy));
+      const k = grain * textDim * edge;
+      const i = (y * S + x) * 4;
+      px[i] = Math.min(255, base.r * 255 * k);
+      px[i + 1] = Math.min(255, base.g * 255 * k);
+      px[i + 2] = Math.min(255, base.b * 255 * k);
+      px[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+let paperTex = null;
+export function paperPlaceholder() {
+  if (!paperTex) paperTex = bakePaper();
+  return paperTex;
 }
 
 export function buildNpcs(assets, world, scene, camera) {
@@ -252,9 +306,9 @@ function buildNpc(assets, comic, coatColor, registerFace) {
   scarf.position.set(0, bodyTopY + 0.02, 0);
   group.add(scarf);
 
-  // Comic plane — unlit, placeholder dark until its texture loads on approach.
+  // Comic plane — unlit, grubby-newsprint placeholder until its texture loads.
   const comicH = bodyH * 0.55;
-  const comicMat = new THREE.MeshBasicMaterial({ color: 0x2a2822, side: THREE.DoubleSide });
+  const comicMat = new THREE.MeshBasicMaterial({ map: paperPlaceholder(), side: THREE.DoubleSide });
   const comicMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), comicMat);
   comicMesh.position.set(0, legTopY + bodyH * 0.55, bodyD * 0.5 + 0.17);
   comicMesh.scale.set(comicH * 0.7, comicH, 1);

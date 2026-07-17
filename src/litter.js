@@ -8,9 +8,13 @@
 
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
+import { paperPlaceholder } from './npcs.js';
 
 const COUNT = 24;
-const LOAD_RANGE = 30;   // texture loads as the player approaches
+// Ground-level and small (0.42x0.58m, often viewed near edge-on), so it loses
+// legibility at a shorter range than a vendor's held comic despite the same
+// fog — see COMIC_LOAD_RANGE in npcs.js for the fog-distance math.
+const LOAD_RANGE = 70;
 const START = 60;
 const END_MARGIN = 70;
 
@@ -58,7 +62,7 @@ export function buildLitter(assets, world, scene) {
     const x = sm.point[0] + -tz * side * off;
     const z = sm.point[1] + tx * side * off;
 
-    const mat = new THREE.MeshBasicMaterial({ color: 0x8f887a, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({ map: paperPlaceholder(), side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.58), mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.rotation.z = rand() * Math.PI * 2;
