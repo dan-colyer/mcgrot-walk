@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES } from './road.js';
+import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES, hash2, fbmP, finishTexture } from './road.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
@@ -30,6 +30,78 @@ const BUILDING_PALETTE = [
   0x5f5a4a, // muddy khaki
   0x7c6a5a, // pale rust
 ];
+
+// Metres of wall covered by one repeat of the base stone texture. ExtrudeGeometry's
+// default UV generator writes RAW METRE coordinates (shape x/y for U, extrusion
+// depth for V — see the note above extrudeBuilding), so repeat = 1/STONE_METRES
+// tiles it consistently in world units with no per-building UV work needed.
+const STONE_METRES = 4;
+
+// Every wall the shopfront system doesn't reach (beyond STREET_RANGE, occluded
+// behind a frontage, a back gable) used to show this mesh's raw MeshLambertMaterial
+// vertexColor — a dead-flat khaki/olive/grey slab, the single biggest defect
+// category in the D0 audit (register #1 etc) and the "corner-infill wedge" (#4) is
+// the same mesh glimpsed as a sliver. A coursed masonry bake, multiplied by the
+// existing per-building vertexColor tint, degrades every uncovered wall to stone
+// instead — cheap (one shared 256px canvas, tiled) and needs no new geometry.
+function makeStoneTexture() {
+  const S = 256;
+  const P = 16; // noise cells per STONE_METRES tile
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(S, S);
+  const px = img.data;
+
+  const COURSES = 13; // ~0.3m coursing across a 4m tile
+  const courseH = S / COURSES;
+
+  for (let y = 0; y < S; y++) {
+    const course = Math.floor(y / courseH);
+    const inCourse = y - course * courseH;
+    const joint = inCourse < 2; // mortar line at the top of each course
+    for (let x = 0; x < S; x++) {
+      const nx = (x / S) * P, ny = (y / S) * P;
+
+      // Neutral ashlar grey — multiplied by the building's own vertexColor tint,
+      // so it must stay light enough not to crush that tint toward black.
+      let r = 150, g = 146, b = 134;
+
+      const drift = fbmP(nx, ny, P, 4, 61) - 0.5;
+      r += drift * 34; g += drift * 32; b += drift * 28;
+
+      // Per-block tone: offset the coursing rows so vertical joints don't align
+      // into a grid (a real ashlar course is staggered, not a brick wall).
+      const blockSeed = Math.floor((x + course * 37) / (S / 5));
+      const blockTone = (hash2(blockSeed, course, 17) - 0.5) * 22;
+      r += blockTone; g += blockTone; b += blockTone;
+
+      if (joint) {
+        r *= 0.62; g *= 0.62; b *= 0.60;
+      }
+
+      // Weathering: dark grime streaks running down the wall, heavier than the
+      // road textures' grit since this is a vertical surface that never washes.
+      const grime = fbmP(nx * 0.35, ny * 0.9 + 4, P, 3, 83);
+      if (grime > 0.56) {
+        const k = Math.min(1, (grime - 0.56) * 4.5);
+        r *= 1 - 0.35 * k; g *= 1 - 0.33 * k; b *= 1 - 0.28 * k;
+      }
+
+      const grit = hash2(x, y, 97);
+      const chip = grit > 0.92 ? (grit - 0.92) * 200 : 0;
+      r += chip; g += chip; b += chip * 0.9;
+
+      const i = (y * S + x) * 4;
+      px[i] = Math.max(0, Math.min(255, r));
+      px[i + 1] = Math.max(0, Math.min(255, g));
+      px[i + 2] = Math.max(0, Math.min(255, b));
+      px[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return finishTexture(canvas, [1 / STONE_METRES, 1 / STONE_METRES]);
+}
 
 export function buildWorld(leith) {
   const group = new THREE.Group();
@@ -274,7 +346,11 @@ function buildBuildings(buildings) {
   }
 
   const merged = mergeGeometries(geometries, false);
-  const material = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  const material = new THREE.MeshLambertMaterial({
+    vertexColors: true,
+    flatShading: true,
+    map: makeStoneTexture(),
+  });
   return new THREE.Mesh(merged, material);
 }
 
@@ -306,7 +382,8 @@ function extrudeBuilding(building, idx) {
       cols[i * 3 + 2] = color.b;
     }
     geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-    geo.deleteAttribute('uv');
+    // UV kept (not deleted): ExtrudeGeometry's default generator writes it in raw
+    // world metres, which is exactly what the stone texture's repeat is tuned for.
     return geo;
   } catch (err) {
     return null;

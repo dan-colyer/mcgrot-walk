@@ -54,7 +54,7 @@ const DECAL_Y = 0.040;     // above the road (0.03), below the façade bases (0.
 // the texture repeats without a seam — the whole reason this is procedural.
 // ---------------------------------------------------------------------------
 
-function hash2(x, y, seed) {
+export function hash2(x, y, seed) {
   let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(seed, 2246822519);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
@@ -72,7 +72,7 @@ function pnoise(x, y, P, seed) {
 
 // Octaves double both frequency AND period together, so every octave still
 // wraps at the texture edge.
-function fbmP(x, y, P, octaves, seed) {
+export function fbmP(x, y, P, octaves, seed) {
   let v = 0, amp = 0.5, f = 1;
   for (let i = 0; i < octaves; i++) {
     v += amp * pnoise(x * f, y * f, P * f, seed + i * 17);
@@ -82,7 +82,7 @@ function fbmP(x, y, P, octaves, seed) {
   return v;
 }
 
-function finishTexture(canvas, repeat) {
+export function finishTexture(canvas, repeat) {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
