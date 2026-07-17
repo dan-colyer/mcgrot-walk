@@ -11,7 +11,7 @@ import { assetUrl } from './assets.js';
 
 const RANGE = 8; // metres — NPCs stand ~6m off the centreline, so walking the road must still trigger
 
-export function createInteract({ assets, npcs, camera, controls, proximityAudio, onReadingChange }) {
+export function createInteract({ assets, npcs, camera, controls, proximityAudio, onReadingChange, litter, leithers }) {
   const promptEl = document.getElementById('npc-prompt');
   const promptLabel = document.getElementById('npc-prompt-label');
   const overlayEl = document.getElementById('comic-overlay');
@@ -21,8 +21,10 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   const closeEl = document.getElementById('comic-close');
   const playPauseEl = document.getElementById('comic-playpause');
 
-  let nearest = null; // NPC currently in range (overlay closed)
-  let openNpc = null; // NPC whose comic overlay is open
+  let nearest = null;      // NPC currently in range (overlay closed)
+  let openNpc = null;      // NPC whose comic overlay is open
+  let nearLitter = null;   // litter comic in range (only when no NPC is nearer)
+  let openLitter = null;   // litter comic being read in the overlay
 
   function setPlayIcon(playing) {
     if (playPauseEl) playPauseEl.textContent = playing ? '⏸' : '▶'; // ⏸ / ▶
@@ -69,7 +71,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   }
 
   function close() {
-    if (!openNpc) return;
+    if (!openNpc && !openLitter) return;
     setPlayIcon(false);
     setReading(false);
     if (overlayEl) overlayEl.style.display = 'none';
@@ -77,6 +79,26 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     // Hand the voice back to proximity management (it keeps busking as you leave).
     proximityAudio.setOverlayOpen(false);
     openNpc = null;
+    openLitter = null;
+  }
+
+  // Reading a comic nobody holds. No voice plays — but closing the page may
+  // summon a passing Leither who takes it upon themselves to read it aloud.
+  function openLitterComic(item) {
+    if (openNpc || openLitter) return;
+    openLitter = item;
+    hidePrompt();
+    if (titleEl) titleEl.textContent = item.comic.title || 'McGrot';
+    if (metaEl) metaEl.textContent = 'found lying on the street';
+    if (imageEl) {
+      imageEl.src = assetUrl(assets, item.comic.image);
+      imageEl.alt = item.comic.title || 'McGrot comic';
+      imageEl.parentElement.scrollTop = 0;
+    }
+    if (overlayEl) overlayEl.style.display = 'flex';
+    controls.setEnabled(false);
+    proximityAudio.setOverlayOpen(true);
+    if (leithers && Math.random() < 0.7) leithers.summonReader(item);
   }
 
   function togglePlay() {
@@ -90,16 +112,19 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
 
   function onKeyDown(e) {
     if (e.code === 'Escape') {
-      if (openNpc) close();
+      if (openNpc || openLitter) close();
       return;
     }
-    if (e.code === 'KeyE' && !openNpc && nearest) {
-      open(nearest);
+    if (e.code === 'KeyE' && !openNpc && !openLitter) {
+      if (nearest) open(nearest);
+      else if (nearLitter) openLitterComic(nearLitter);
     }
   }
 
   function onPromptClick() {
-    if (!openNpc && nearest) open(nearest);
+    if (openNpc || openLitter) return;
+    if (nearest) open(nearest);
+    else if (nearLitter) openLitterComic(nearLitter);
   }
 
   function onOverlayClick(e) {
@@ -115,7 +140,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   // --- per-frame nearest-NPC check ---------------------------------------
 
   function update() {
-    if (openNpc) return; // overlay handles its own state while open
+    if (openNpc || openLitter) return; // overlay handles its own state while open
 
     const px = camera.position.x;
     const pz = camera.position.z;
@@ -130,10 +155,18 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
       }
     }
 
-    if (best !== nearest) {
+    // A vendor always outranks a page on the ground; litter only prompts when
+    // no reader is in range.
+    const litterBest = (!best && litter) ? litter.nearestItem(px, pz, 3.2) : null;
+
+    if (best !== nearest || litterBest !== nearLitter) {
       nearest = best;
+      nearLitter = litterBest;
       if (nearest) showPrompt(nearest);
-      else hidePrompt();
+      else if (nearLitter) {
+        if (promptLabel) promptLabel.textContent = '[E] Read the comic on the ground';
+        if (promptEl) promptEl.style.display = 'block';
+      } else hidePrompt();
     }
   }
 

@@ -84,7 +84,69 @@ export function buildLeithers(assets, world, scene, readers) {
       const w = walkers[i];
       if (w.cooldown > 0) w.cooldown -= dt;
 
-      if (w.state === 'listen') {
+      if (w.state === 'fetch') {
+        // Striding toward an orphaned comic the player just read.
+        const it = w.fetchItem;
+        const gap = it.chainage - w.s;
+        if (Math.abs(gap) > 2) {
+          w.dir = Math.sign(gap);
+          w.s += w.dir * w.speed * 1.5 * dt; // hurrying — this is IMPORTANT
+        } else {
+          w.state = 'approach';
+          w.approachT = 0;
+          const g = w.group.position;
+          w.approachFrom = { x: g.x, z: g.z };
+        }
+      } else if (w.state === 'approach') {
+        // Leave the pavement path and close on the comic itself.
+        w.approachT = Math.min(1, w.approachT + dt / 1.6);
+        const it = w.fetchItem;
+        const t = w.approachT;
+        const tx = it.x + 0.75, tz = it.z; // stand just off the page
+        w.group.position.set(
+          w.approachFrom.x + (tx - w.approachFrom.x) * t,
+          Math.abs(Math.sin((w.s + t * 8) * 2)) * 0.03,
+          w.approachFrom.z + (tz - w.approachFrom.z) * t
+        );
+        w.group.rotation.y = Math.atan2(it.x - w.group.position.x, it.z - w.group.position.z);
+        if (t >= 1) {
+          w.state = 'readaloud';
+          w.readQueue = (w.fetchItem.lines || []).slice(0, 8);
+          w.readT = 0.5;
+        }
+        continue; // position handled here, skip the chain reposition below
+      } else if (w.state === 'readaloud') {
+        // Reading the found comic aloud: its printed lines, VERBATIM, one
+        // bubble at a time — no wrapper, this is a recital not a heckle.
+        w.readT -= dt;
+        if (w.readT <= 0 && !w.bubble) {
+          const line = w.readQueue.shift();
+          if (line == null) {
+            w.state = 'walk';
+            w.fetchItem.adopted = false; // the page stays where it lay
+            w.fetchItem = null;
+            w.cooldown = LISTEN_COOLDOWN;
+          } else {
+            w.bubble = makeBubble('"' + line + '"');
+            w.bubble.position.set(0, w.headTopY + 0.5, 0);
+            w.group.add(w.bubble);
+            w.bubbleT = 4.2;
+            bubbleCount++;
+            w.readT = 0.6; // small beat between pages
+          }
+        }
+        if (w.bubble) {
+          w.bubbleT -= dt;
+          if (w.bubbleT <= 0) {
+            w.group.remove(w.bubble);
+            w.bubble.material.map.dispose();
+            w.bubble.material.dispose();
+            w.bubble = null;
+            bubbleCount--;
+          }
+        }
+        continue; // stays put, facing the page
+      } else if (w.state === 'listen') {
         w.listenT -= dt;
         if (w.listenT <= 0 || !(w.target && w.target.speaking)) {
           w.state = 'walk';
@@ -160,7 +222,27 @@ export function buildLeithers(assets, world, scene, readers) {
     }
   }
 
-  return { walkers, update };
+  // The comics-as-litter hook: the player just read an orphaned comic — a
+  // free walker within earshot takes it upon themselves to come and read it
+  // aloud. Returns true if someone's coming.
+  function summonReader(item) {
+    if (!item || item.adopted || !(item.lines && item.lines.length)) return false;
+    let best = null;
+    let bd = 70; // don't summon from beyond ~a block away
+    for (const w of walkers) {
+      if (w.state !== 'walk') continue;
+      const g = w.group.position;
+      const d = Math.hypot(g.x - item.x, g.z - item.z);
+      if (d < bd) { bd = d; best = w; }
+    }
+    if (!best) return false;
+    item.adopted = true;
+    best.state = 'fetch';
+    best.fetchItem = item;
+    return true;
+  }
+
+  return { walkers, update, summonReader };
 }
 
 // ---------------------------------------------------------------------------
