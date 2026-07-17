@@ -86,7 +86,7 @@ function bakeCloth(colorHex, seed, knit) {
 }
 
 const clothCache = new Map();
-function clothMat(colorHex, knit) {
+export function clothMat(colorHex, knit) {
   const key = colorHex * 2 + (knit ? 1 : 0);
   if (!clothCache.has(key)) {
     clothCache.set(key, new THREE.MeshLambertMaterial({

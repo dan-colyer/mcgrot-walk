@@ -14,6 +14,7 @@ import { buildBirds } from './birds.js';
 import { buildVermin } from './vermin.js';
 import { buildFlora } from './flora.js';
 import { buildCars } from './cars.js';
+import { buildLeithers } from './leithers.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 
@@ -58,6 +59,7 @@ async function main() {
   controls.setEnabled(false); // gated until the title card is dismissed
 
   const npcs = buildNpcs(assets, world, scene, camera);
+  const leithers = buildLeithers(assets, world, scene, npcs.npcs); // the ambient crowd
   buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
   buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
   buildRoadworks(world, scene);          // ...and the trench, cones and hoarding waiting at the end of them
@@ -111,10 +113,11 @@ async function main() {
   // Dev-only probe (localhost only). stepFrame lets tests drive frames
   // manually — rAF is paused whenever the preview pane is hidden.
   if (['localhost', '127.0.0.1'].includes(location.hostname)) window.__mcgrotDebug = {
-    camera, world, npcs, controls, proximityAudio, renderer,
+    camera, world, npcs, leithers, controls, proximityAudio, renderer,
     stepFrame: (dt, t) => {
       controls.update(dt);
       npcs.update(dt, t);
+      leithers.update(dt, t);
       sky.update(t);
       birds.update(dt, t);
       vermin.update(dt, t);

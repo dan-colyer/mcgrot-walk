@@ -37,11 +37,15 @@ export async function loadAssets() {
     fetch('assets/shopfronts/strips.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
   ]);
 
+  // Verbatim comic lines for Leither comments. Absent → Leithers just listen.
+  const comicLines = await fetch('assets/comic-lines.json')
+    .then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
   // The placement map rides on the atlas layout so the engine reads one object.
   if (shopfronts && placement) shopfronts.placement = placement;
   if (shopfronts && strips) shopfronts.strips = strips;
 
-  return { manifest, leith, catalog, shopfronts, images: null, audio: null };
+  return { manifest, leith, catalog, shopfronts, comicLines, images: null, audio: null };
 }
 
 // Single source of truth for resolving an asset path to a usable URL.
