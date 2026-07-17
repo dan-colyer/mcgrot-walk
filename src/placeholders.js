@@ -50,10 +50,35 @@ function drawTile(ctx, x, y, name, seed) {
       ctx.fillRect(innerX, sy, innerW, 4);
     }
   } else {
-    ctx.fillStyle = '#0d0f10'; // dark glass
-    ctx.fillRect(innerX, fasciaBot, innerW, y + TILE_H - fasciaBot);
-    ctx.fillStyle = 'rgba(120,130,140,0.05)'; // faint reflection
-    ctx.fillRect(innerX, fasciaBot, innerW, 6);
+    // Dark glass shopfront window. A flat rect here (the old version) reads —
+    // once ACES exposure 1.46 lifts it — as a dropped texture rather than a
+    // window: register D0 #25/#40/#44/#49, "flat near-black panel where the
+    // shutter should be". Mullions + a diagonal sky-reflection streak give it
+    // unambiguous window structure so it reads as an intentional variant.
+    const glassBot = y + TILE_H;
+    ctx.fillStyle = '#14181a';
+    ctx.fillRect(innerX, fasciaBot, innerW, glassBot - fasciaBot);
+    const panes = 3 + Math.floor(rnd() * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+    ctx.lineWidth = 2;
+    for (let p = 1; p < panes; p++) {
+      const px = innerX + (innerW / panes) * p;
+      ctx.beginPath(); ctx.moveTo(px, fasciaBot); ctx.lineTo(px, glassBot); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 1;
+    const midY = fasciaBot + (glassBot - fasciaBot) * 0.55;
+    ctx.beginPath(); ctx.moveTo(innerX, midY); ctx.lineTo(innerX + innerW, midY); ctx.stroke();
+    // A grazing reflection of the overcast sky — the one cue that reads as
+    // glass rather than a painted-over panel.
+    ctx.fillStyle = 'rgba(150,158,160,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(innerX, fasciaBot);
+    ctx.lineTo(innerX + innerW * 0.42, fasciaBot);
+    ctx.lineTo(innerX + innerW * 0.14, glassBot);
+    ctx.lineTo(innerX, glassBot);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // fascia sign band
