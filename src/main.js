@@ -145,6 +145,7 @@ async function main() {
     const time = now / 1000;
     controls.update(dt);
     npcs.update(dt, time);
+    leithers.update(dt, time);
     litter.update(camera.position);
     sky.update(time);
     birds.update(dt, time);
