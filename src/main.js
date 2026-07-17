@@ -114,24 +114,33 @@ async function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  // Single registered update list, consumed by BOTH animate() and stepFrame —
+  // a subsystem added to only one of the two (litter, leithers) has shipped
+  // broken before. litter.update and torch.update take (position)/(time)
+  // instead of (dt, time); wrapped here so every entry has the same signature.
+  const updaters = [
+    { name: 'controls', update: (dt) => controls.update(dt) },
+    { name: 'npcs', update: (dt, t) => npcs.update(dt, t) },
+    { name: 'leithers', update: (dt, t) => leithers.update(dt, t) },
+    { name: 'litter', update: () => litter.update(camera.position) },
+    { name: 'sky', update: (dt, t) => sky.update(t) },
+    { name: 'birds', update: (dt, t) => birds.update(dt, t) },
+    { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
+    { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
+    { name: 'interact', update: (dt) => interact.update(dt) },
+    { name: 'proximityAudio', update: () => proximityAudio.update() },
+    { name: 'torch', update: (dt, t) => torch.update(t) },
+  ];
+  function runFrame(dt, t) {
+    for (const u of updaters) u.update(dt, t);
+    renderer.render(scene, camera);
+  }
+
   // Dev-only probe (localhost only). stepFrame lets tests drive frames
   // manually — rAF is paused whenever the preview pane is hidden.
   if (['localhost', '127.0.0.1'].includes(location.hostname)) window.__mcgrotDebug = {
     camera, world, npcs, leithers, litter, controls, proximityAudio, renderer,
-    stepFrame: (dt, t) => {
-      controls.update(dt);
-      npcs.update(dt, t);
-      leithers.update(dt, t);
-      litter.update(camera.position);
-      sky.update(t);
-      birds.update(dt, t);
-      vermin.update(dt, t);
-      scenery.update(dt, t);
-      interact.update(dt);
-      proximityAudio.update();
-      torch.update(t);
-      renderer.render(scene, camera);
-    },
+    stepFrame: runFrame,
   };
 
   // THREE.Clock is deprecated in r185 and its getDelta() yields 0 here,
@@ -142,19 +151,7 @@ async function main() {
     const now = performance.now();
     const dt = Math.min((now - lastFrame) / 1000, 0.1);
     lastFrame = now;
-    const time = now / 1000;
-    controls.update(dt);
-    npcs.update(dt, time);
-    leithers.update(dt, time);
-    litter.update(camera.position);
-    sky.update(time);
-    birds.update(dt, time);
-    vermin.update(dt, time);
-    scenery.update(dt, time);
-    interact.update(dt);
-    proximityAudio.update();
-    torch.update(time);
-    renderer.render(scene, camera);
+    runFrame(dt, now / 1000);
   }
   animate();
 }
