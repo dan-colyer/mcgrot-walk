@@ -68,6 +68,23 @@ const before = bands.length;
 bands = bands.filter((b) => !(b.kind === 'upper' && EXCLUDE_UPPER_SLUGS.some((s) => b.slug.startsWith(s))));
 if (bands.length < before) console.log(`excluded ${before - bands.length} mis-scaled upper bands`);
 
+// Vision re-audit (D1, acceptance criterion 3): individual GROUND tiles whose
+// crop caught a pedestrian or the pavement in frame — the ground band sits
+// right at street level, so a passer-by mid-photo lands square in the tile.
+// Exact files, not whole slugs: the sibling ground-0/upper tiles from the same
+// plane are clean and still worth keeping.
+// robbies-bar-leith-walk-01-p0-ground-0 (pedestrian) is NOT here: it has a
+// fixed/ de-pedestrianed version (gen-facade-declutter-d1.mjs), which the
+// shadow check below picks up automatically.
+const EXCLUDE_GROUND_FILES = [
+  'bands/tesco-express-5464119321-p0-ground-0.jpg',    // pedestrian on phone, full height; no upper (storeys:1) to lose
+  'bands/albert-place-leith-walk-geograph-org-uk-8262911-p1-ground-0.jpg', // pedestrian mid-frame; generic pool only
+  'bands/croall-place-geograph-org-uk-6310908-p1-ground-1.jpg', // near-black sliver with a parked car; generic pool only
+];
+const beforeGround = bands.length;
+bands = bands.filter((b) => !EXCLUDE_GROUND_FILES.includes(b.file));
+if (bands.length < beforeGround) console.log(`excluded ${beforeGround - bands.length} ground tiles with pedestrians/pavement in frame`);
+
 // AI-fixed tiles (assets/shopfronts/fixed/) shadow their originals — same
 // basename, pedestrians removed / regraded via Kontext. Still derivative works
 // of the photo, so slug/attribution stay; only the pixels come from fixed/.

@@ -38,6 +38,32 @@ const GRADE = 'eq=saturation=0.42:contrast=1.08:brightness=-0.10,colorbalance=rs
 
 const plan = JSON.parse(readFileSync(join(root, 'scripts/facade-plan.json'), 'utf8'));
 
+// Vision re-audit (D1): planes whose rectified crop reads wrong draped whole —
+// a real defect only visible once you see the FULL elevation, not a sliced
+// band. slug#plane. Reasons:
+//   croall-place...#1        — an advertising hoarding, not a building wall
+//   ...picardy-place-...16-22-...#0 — shot down the street at a rake; same
+//                                     photo build-facade-atlas.mjs already
+//                                     excludes from upper bands (mis-scaled)
+//   shops-leith-walk...7895672#0/#1 — ground-floor shopfront glass/signage,
+//                                     not upper storeys (groundFrac misread)
+//   shops-and-tenements-244-6-8...#0 — same ground-bleed, also atlas-excluded
+//   edinburgh-9-10-11-elm-row#0 — register D0 #15: "JOLLY" reads visibly
+//                                 rotated — homography residual on this plane
+//   edinburgh-14-elm-row#0, edinburgh-15-16-17-elm-row#0, croall-place...#0
+//                             — visible diagonal residual, low/mid confidence
+const EXCLUDE_STRIPS = new Set([
+  'croall-place-geograph-org-uk-6310908#0',
+  'croall-place-geograph-org-uk-6310908#1',
+  'city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1#0',
+  'shops-leith-walk-geograph-org-uk-7895672#0',
+  'shops-leith-walk-geograph-org-uk-7895672#1',
+  'shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694#0',
+  'edinburgh-9-10-11-elm-row#0',
+  'edinburgh-14-elm-row#0',
+  'edinburgh-15-16-17-elm-row#0',
+]);
+
 function probe(file) {
   const out = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0',
     '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file]).toString().trim();
@@ -84,6 +110,7 @@ const candidates = [];
 for (const photo of plan) {
   if (!photo.hasUpper || !photo.planes) continue;
   photo.planes.forEach((plane, pi) => {
+    if (EXCLUDE_STRIPS.has(`${photo.slug}#${pi}`)) return;
     const rectPath = join(rectDir, `${photo.slug}-p${pi}.jpg`);
     if (!existsSync(rectPath)) return; // plane was skipped by rectify (confidence/degenerate)
     const storeys = Math.max(1, plane.storeys ?? 4);
