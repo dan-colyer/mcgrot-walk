@@ -1,10 +1,10 @@
 {
-  "etag": "14f0290403",
+  "etag": "def08de4d7",
   "tileW": 512,
   "tileH": 256,
   "cols": 8,
-  "rows": 12,
-  "count": 95,
+  "rows": 13,
+  "count": 98,
   "ground": [
     0,
     1,
@@ -67,10 +67,10 @@
     58,
     59,
     60,
-    61
+    61,
+    62
   ],
   "upper": [
-    62,
     63,
     64,
     65,
@@ -102,35 +102,70 @@
     91,
     92,
     93,
-    94
+    94,
+    95,
+    96,
+    97
   ],
   "corner": [
     0,
     1,
     2,
-    7,
     8,
     9,
-    10,
-    16,
+    14,
+    15,
     17,
     18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    26,
+    24,
     27,
+    28,
     29,
     30,
-    33,
-    34,
-    46
+    31,
+    32,
+    35,
+    38,
+    39,
+    41,
+    42,
+    47
   ],
   "tiles": [
     {
       "index": 0,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "165a-leith-walk-edinburgh",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "165A Leith Walk, Edinburgh",
+      "author": "McPhail",
+      "license": "CC0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:165A_Leith_Walk,_Edinburgh.jpg"
+    },
+    {
+      "index": 1,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "165a-leith-walk-edinburgh",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "165A Leith Walk, Edinburgh",
+      "author": "McPhail",
+      "license": "CC0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:165A_Leith_Walk,_Edinburgh.jpg"
+    },
+    {
+      "index": 2,
       "kind": "ground",
       "bandRow": null,
       "slug": "albert-place-leith-walk-geograph-org-uk-8262911",
@@ -146,57 +181,121 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Albert_Place,_Leith_Walk_-_geograph.org.uk_-_8262911.jpg"
     },
     {
-      "index": 1,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
-      "identity": "The Street",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
-    },
-    {
-      "index": 2,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
-      "identity": "The Street",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
-    },
-    {
       "index": 3,
       "kind": "ground",
       "bandRow": null,
-      "slug": "city-of-edinburgh-4-picardy-place-edinburgh-2025-09-19-11-26",
-      "identity": "The Wine House 1821",
-      "treatment": 1,
+      "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
+      "identity": null,
+      "treatment": 2,
       "planeKind": "terrace",
       "cornerBuilding": false,
       "generated": false,
       "decayed": false,
-      "title": "City of Edinburgh - 4 Picardy Place, Edinburgh - 2025-09-19 11-26-38 001",
+      "title": "City of Edinburgh - 10 Picardy Place, Edinburgh - 2025-09-19 11-22-48 001",
       "author": "Drnoble",
       "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_4_Picardy_Place,_Edinburgh_-_2025-09-19_11-26-38_001.jpg"
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_10_Picardy_Place,_Edinburgh_-_2025-09-19_11-22-48_001.jpg"
     },
     {
       "index": 4,
       "kind": "ground",
       "bandRow": null,
+      "slug": "city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 12 Picardy Place, Edinburgh - 2025-09-19 11-22-26 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_12_Picardy_Place,_Edinburgh_-_2025-09-19_11-22-26_001.jpg"
+    },
+    {
+      "index": 5,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 16-22 Picardy Place, Edinburgh - 2025-09-19 11-17-21 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_16-22_Picardy_Place,_Edinburgh_-_2025-09-19_11-17-21_001.jpg"
+    },
+    {
+      "index": 6,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 16-22 Picardy Place, Edinburgh - 2025-09-19 11-17-21 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_16-22_Picardy_Place,_Edinburgh_-_2025-09-19_11-17-21_001.jpg"
+    },
+    {
+      "index": 7,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 16-22 Picardy Place, Edinburgh - 2025-09-19 11-17-21 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_16-22_Picardy_Place,_Edinburgh_-_2025-09-19_11-17-21_001.jpg"
+    },
+    {
+      "index": 8,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
+      "identity": "The Street",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
+    },
+    {
+      "index": 9,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
+      "identity": "The Street",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
+    },
+    {
+      "index": 10,
+      "kind": "ground",
+      "bandRow": null,
       "slug": "city-of-edinburgh-4-picardy-place-edinburgh-2025-09-19-11-26",
       "identity": "The Wine House 1821",
       "treatment": 1,
@@ -210,7 +309,23 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_4_Picardy_Place,_Edinburgh_-_2025-09-19_11-26-38_001.jpg"
     },
     {
-      "index": 5,
+      "index": 11,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "city-of-edinburgh-4-picardy-place-edinburgh-2025-09-19-11-26",
+      "identity": "The Wine House 1821",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 4 Picardy Place, Edinburgh - 2025-09-19 11-26-38 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_4_Picardy_Place,_Edinburgh_-_2025-09-19_11-26-38_001.jpg"
+    },
+    {
+      "index": 12,
       "kind": "ground",
       "bandRow": null,
       "slug": "city-of-edinburgh-6-picardy-place-edinburgh-2025-09-19-11-23",
@@ -226,7 +341,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_6_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-27_001.jpg"
     },
     {
-      "index": 6,
+      "index": 13,
       "kind": "ground",
       "bandRow": null,
       "slug": "city-of-edinburgh-8-picardy-place-edinburgh-2025-09-19-11-23",
@@ -242,7 +357,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_8_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-09_001.jpg"
     },
     {
-      "index": 7,
+      "index": 14,
       "kind": "ground",
       "bandRow": null,
       "slug": "croall-place-geograph-org-uk-6310908",
@@ -258,7 +373,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Croall_Place_-_geograph.org.uk_-_6310908.jpg"
     },
     {
-      "index": 8,
+      "index": 15,
       "kind": "ground",
       "bandRow": null,
       "slug": "croall-place-geograph-org-uk-6310908",
@@ -274,7 +389,23 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Croall_Place_-_geograph.org.uk_-_6310908.jpg"
     },
     {
-      "index": 9,
+      "index": 16,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "derelict-business-premises-picardy-place-geograph-org-uk-791",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Derelict business premises, Picardy Place - geograph.org.uk - 7910071",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Derelict_business_premises,_Picardy_Place_-_geograph.org.uk_-_7910071.jpg"
+    },
+    {
+      "index": 17,
       "kind": "ground",
       "bandRow": null,
       "slug": "desi-pakwan-geograph-org-uk-7579664",
@@ -290,7 +421,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Desi_Pakwan_-_geograph.org.uk_-_7579664.jpg"
     },
     {
-      "index": 10,
+      "index": 18,
       "kind": "ground",
       "bandRow": null,
       "slug": "desi-pakwan-geograph-org-uk-7579664",
@@ -306,7 +437,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Desi_Pakwan_-_geograph.org.uk_-_7579664.jpg"
     },
     {
-      "index": 11,
+      "index": 19,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-14-elm-row",
@@ -322,7 +453,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_14_Elm_Row.jpg"
     },
     {
-      "index": 12,
+      "index": 20,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-15-16-17-elm-row",
@@ -338,7 +469,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_15,_16,_17_Elm_Row.jpg"
     },
     {
-      "index": 13,
+      "index": 21,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-18-19-elm-row",
@@ -354,7 +485,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_18,_19_Elm_Row.jpg"
     },
     {
-      "index": 14,
+      "index": 22,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-2-3-elm-row",
@@ -370,7 +501,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_2,_3,_Elm_Row.jpg"
     },
     {
-      "index": 15,
+      "index": 23,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-20-21-22-elm-row-post-office",
@@ -386,7 +517,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_20,_21,_22_Elm_Row,_Post_Office.jpg"
     },
     {
-      "index": 16,
+      "index": 24,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-23-elm-row",
@@ -402,7 +533,39 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_23_Elm_Row.jpg"
     },
     {
-      "index": 17,
+      "index": 25,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "edinburgh-leith-walk-4-5-baxter-s-place",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Edinburgh, Leith Walk, 4-5 Baxter's Place",
+      "author": "Victuallers",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_Leith_Walk,_4-5_Baxter%27s_Place.jpg"
+    },
+    {
+      "index": 26,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "First shop in Leith - geograph.org.uk - 4719930",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
+    },
+    {
+      "index": 27,
       "kind": "ground",
       "bandRow": null,
       "slug": "former-leith-central-station-and-the-central-bar",
@@ -418,7 +581,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Former_Leith_Central_Station_and_the_Central_Bar.jpg"
     },
     {
-      "index": 18,
+      "index": 28,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-01",
@@ -434,7 +597,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
     },
     {
-      "index": 19,
+      "index": 29,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-02",
@@ -450,7 +613,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_02.jpeg"
     },
     {
-      "index": 20,
+      "index": 30,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-02",
@@ -466,7 +629,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_02.jpeg"
     },
     {
-      "index": 21,
+      "index": 31,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-03",
@@ -482,7 +645,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_03.jpeg"
     },
     {
-      "index": 22,
+      "index": 32,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-03",
@@ -498,7 +661,39 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_03.jpeg"
     },
     {
-      "index": 23,
+      "index": 33,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Shops and tenements, 244-6-8 Leith Walk - geograph.org.uk - 5569456",
+      "author": "Alan Murray-Rust",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops_and_tenements,_244-6-8_Leith_Walk_-_geograph.org.uk_-_5569456.jpg"
+    },
+    {
+      "index": 34,
+      "kind": "ground",
+      "bandRow": null,
+      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Shops and tenements, 244-6-8 Leith Walk - geograph.org.uk - 5569456",
+      "author": "Alan Murray-Rust",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops_and_tenements,_244-6-8_Leith_Walk_-_geograph.org.uk_-_5569456.jpg"
+    },
+    {
+      "index": 35,
       "kind": "ground",
       "bandRow": null,
       "slug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
@@ -514,7 +709,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Spey_Lounge,_Leith_Walk_-_geograph.org.uk_-_8262917.jpg"
     },
     {
-      "index": 24,
+      "index": 36,
       "kind": "ground",
       "bandRow": null,
       "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
@@ -530,7 +725,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Stead%27s_Place,_Leith_Walk_-_geograph.org.uk_-_5277103.jpg"
     },
     {
-      "index": 25,
+      "index": 37,
       "kind": "ground",
       "bandRow": null,
       "slug": "tesco-express-5464116255",
@@ -546,7 +741,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Tesco_Express_(5464116255).jpg"
     },
     {
-      "index": 26,
+      "index": 38,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
@@ -562,7 +757,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
     },
     {
-      "index": 27,
+      "index": 39,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
@@ -578,7 +773,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
     },
     {
-      "index": 28,
+      "index": 40,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
@@ -594,7 +789,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Harp_%5E_Castle,_Leith_Walk_-_geograph.org.uk_-_3723957.jpg"
     },
     {
-      "index": 29,
+      "index": 41,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
@@ -610,7 +805,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Harp_%5E_Castle,_Leith_Walk_-_geograph.org.uk_-_3723957.jpg"
     },
     {
-      "index": 30,
+      "index": 42,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
@@ -626,7 +821,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Harp_%5E_Castle,_Leith_Walk_-_geograph.org.uk_-_3723957.jpg"
     },
     {
-      "index": 31,
+      "index": 43,
       "kind": "ground",
       "bandRow": null,
       "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
@@ -642,7 +837,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Harp_%5E_Castle,_Leith_Walk_-_geograph.org.uk_-_3723957.jpg"
     },
     {
-      "index": 32,
+      "index": 44,
       "kind": "ground",
       "bandRow": null,
       "slug": "valvona-and-crolla-on-elm-row-edinburgh-geograph-org-uk-3907",
@@ -658,183 +853,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Valvona_and_Crolla_on_Elm_Row_Edinburgh_-_geograph.org.uk_-_3907573.jpg"
     },
     {
-      "index": 33,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "165a-leith-walk-edinburgh",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": true,
-      "title": "165A Leith Walk, Edinburgh",
-      "author": "McPhail",
-      "license": "CC0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:165A_Leith_Walk,_Edinburgh.jpg"
-    },
-    {
-      "index": 34,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "165a-leith-walk-edinburgh",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": true,
-      "title": "165A Leith Walk, Edinburgh",
-      "author": "McPhail",
-      "license": "CC0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:165A_Leith_Walk,_Edinburgh.jpg"
-    },
-    {
-      "index": 35,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-10-picardy-place-edinburgh-2025-09-19-11-2",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "City of Edinburgh - 10 Picardy Place, Edinburgh - 2025-09-19 11-22-48 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_10_Picardy_Place,_Edinburgh_-_2025-09-19_11-22-48_001.jpg"
-    },
-    {
-      "index": 36,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-12-picardy-place-edinburgh-2025-09-19-11-2",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "City of Edinburgh - 12 Picardy Place, Edinburgh - 2025-09-19 11-22-26 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_12_Picardy_Place,_Edinburgh_-_2025-09-19_11-22-26_001.jpg"
-    },
-    {
-      "index": 37,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "City of Edinburgh - 16-22 Picardy Place, Edinburgh - 2025-09-19 11-17-21 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_16-22_Picardy_Place,_Edinburgh_-_2025-09-19_11-17-21_001.jpg"
-    },
-    {
-      "index": 38,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "city-of-edinburgh-16-22-picardy-place-edinburgh-2025-09-19-1",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "City of Edinburgh - 16-22 Picardy Place, Edinburgh - 2025-09-19 11-17-21 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_16-22_Picardy_Place,_Edinburgh_-_2025-09-19_11-17-21_001.jpg"
-    },
-    {
-      "index": 39,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "derelict-business-premises-picardy-place-geograph-org-uk-791",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "Derelict business premises, Picardy Place - geograph.org.uk - 7910071",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Derelict_business_premises,_Picardy_Place_-_geograph.org.uk_-_7910071.jpg"
-    },
-    {
-      "index": 40,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "edinburgh-leith-walk-4-5-baxter-s-place",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "Edinburgh, Leith Walk, 4-5 Baxter's Place",
-      "author": "Victuallers",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_Leith_Walk,_4-5_Baxter%27s_Place.jpg"
-    },
-    {
-      "index": 41,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "First shop in Leith - geograph.org.uk - 4719930",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
-    },
-    {
-      "index": 42,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "Shops and tenements, 244-6-8 Leith Walk - geograph.org.uk - 5569456",
-      "author": "Alan Murray-Rust",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops_and_tenements,_244-6-8_Leith_Walk_-_geograph.org.uk_-_5569456.jpg"
-    },
-    {
-      "index": 43,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "Shops and tenements, 244-6-8 Leith Walk - geograph.org.uk - 5569456",
-      "author": "Alan Murray-Rust",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops_and_tenements,_244-6-8_Leith_Walk_-_geograph.org.uk_-_5569456.jpg"
-    },
-    {
-      "index": 44,
+      "index": 45,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-4-elm-row",
@@ -850,7 +869,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_4_Elm_Row.jpg"
     },
     {
-      "index": 45,
+      "index": 46,
       "kind": "ground",
       "bandRow": null,
       "slug": "edinburgh-9-10-11-elm-row",
@@ -866,7 +885,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_9,_10,_11_Elm_Row.jpg"
     },
     {
-      "index": 46,
+      "index": 47,
       "kind": "ground",
       "bandRow": null,
       "slug": "robbies-bar-leith-walk-01",
@@ -880,22 +899,6 @@
       "author": "Brian McNeil",
       "license": "CC BY 3.0",
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
-    },
-    {
-      "index": 47,
-      "kind": "ground",
-      "bandRow": null,
-      "slug": "shops-leith-walk-geograph-org-uk-7895672",
-      "identity": "Turkish Supermarket / Little Havana / The Pipe Shop",
-      "treatment": 1,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "Shops, Leith Walk - geograph.org.uk - 7895672",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops,_Leith_Walk_-_geograph.org.uk_-_7895672.jpg"
     },
     {
       "index": 48,
@@ -933,6 +936,22 @@
       "index": 50,
       "kind": "ground",
       "bandRow": null,
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "identity": "Turkish Supermarket / Little Havana / The Pipe Shop",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": true,
+      "title": "Shops, Leith Walk - geograph.org.uk - 7895672",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops,_Leith_Walk_-_geograph.org.uk_-_7895672.jpg"
+    },
+    {
+      "index": 51,
+      "kind": "ground",
+      "bandRow": null,
       "slug": "gen-ground-barber",
       "identity": null,
       "treatment": 3,
@@ -946,7 +965,7 @@
       "pageUrl": null
     },
     {
-      "index": 51,
+      "index": 52,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-boarded-up-shop",
@@ -962,7 +981,7 @@
       "pageUrl": null
     },
     {
-      "index": 52,
+      "index": 53,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-bookmaker",
@@ -978,7 +997,7 @@
       "pageUrl": null
     },
     {
-      "index": 53,
+      "index": 54,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-charity-shop",
@@ -994,7 +1013,7 @@
       "pageUrl": null
     },
     {
-      "index": 54,
+      "index": 55,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-chippy-takeaway",
@@ -1010,7 +1029,7 @@
       "pageUrl": null
     },
     {
-      "index": 55,
+      "index": 56,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-derelict-cafe",
@@ -1026,7 +1045,7 @@
       "pageUrl": null
     },
     {
-      "index": 56,
+      "index": 57,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-greengrocer-empty-crates",
@@ -1042,7 +1061,7 @@
       "pageUrl": null
     },
     {
-      "index": 57,
+      "index": 58,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-laundrette",
@@ -1058,7 +1077,7 @@
       "pageUrl": null
     },
     {
-      "index": 58,
+      "index": 59,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-off-licence",
@@ -1074,7 +1093,7 @@
       "pageUrl": null
     },
     {
-      "index": 59,
+      "index": 60,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-old-newsagent",
@@ -1090,7 +1109,7 @@
       "pageUrl": null
     },
     {
-      "index": 60,
+      "index": 61,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-steel-shuttered-graffiti",
@@ -1106,7 +1125,7 @@
       "pageUrl": null
     },
     {
-      "index": 61,
+      "index": 62,
       "kind": "ground",
       "bandRow": null,
       "slug": "gen-ground-victorian-pub-dark-green",
@@ -1120,22 +1139,6 @@
       "author": "Unknown",
       "license": "unknown",
       "pageUrl": null
-    },
-    {
-      "index": 62,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "albert-place-leith-walk-geograph-org-uk-8262911",
-      "identity": null,
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "Albert Place, Leith Walk - geograph.org.uk - 8262911",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Albert_Place,_Leith_Walk_-_geograph.org.uk_-_8262911.jpg"
     },
     {
       "index": 63,
@@ -1157,22 +1160,22 @@
       "index": 64,
       "kind": "upper",
       "bandRow": 0,
-      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
-      "identity": "The Street",
+      "slug": "albert-place-leith-walk-geograph-org-uk-8262911",
+      "identity": null,
       "treatment": 1,
       "planeKind": "corner",
       "cornerBuilding": true,
       "generated": false,
       "decayed": false,
-      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
-      "author": "Drnoble",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
+      "title": "Albert Place, Leith Walk - geograph.org.uk - 8262911",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Albert_Place,_Leith_Walk_-_geograph.org.uk_-_8262911.jpg"
     },
     {
       "index": 65,
       "kind": "upper",
-      "bandRow": 1,
+      "bandRow": 0,
       "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
       "identity": "The Street",
       "treatment": 1,
@@ -1189,6 +1192,22 @@
       "index": 66,
       "kind": "upper",
       "bandRow": 1,
+      "slug": "city-of-edinburgh-2-picardy-place-edinburgh-2025-09-19-11-27",
+      "identity": "The Street",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 2 Picardy Place, Edinburgh - 2025-09-19 11-27-55 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_2_Picardy_Place,_Edinburgh_-_2025-09-19_11-27-55_001.jpg"
+    },
+    {
+      "index": 67,
+      "kind": "upper",
+      "bandRow": 0,
       "slug": "city-of-edinburgh-6-picardy-place-edinburgh-2025-09-19-11-23",
       "identity": "Taco Bell",
       "treatment": 1,
@@ -1202,7 +1221,23 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_6_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-27_001.jpg"
     },
     {
-      "index": 67,
+      "index": 68,
+      "kind": "upper",
+      "bandRow": 1,
+      "slug": "city-of-edinburgh-6-picardy-place-edinburgh-2025-09-19-11-23",
+      "identity": "Taco Bell",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "City of Edinburgh - 6 Picardy Place, Edinburgh - 2025-09-19 11-23-27 001",
+      "author": "Drnoble",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_6_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-27_001.jpg"
+    },
+    {
+      "index": 69,
       "kind": "upper",
       "bandRow": 0,
       "slug": "city-of-edinburgh-8-picardy-place-edinburgh-2025-09-19-11-23",
@@ -1218,7 +1253,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_8_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-09_001.jpg"
     },
     {
-      "index": 68,
+      "index": 70,
       "kind": "upper",
       "bandRow": 1,
       "slug": "city-of-edinburgh-8-picardy-place-edinburgh-2025-09-19-11-23",
@@ -1234,7 +1269,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:City_of_Edinburgh_-_8_Picardy_Place,_Edinburgh_-_2025-09-19_11-23-09_001.jpg"
     },
     {
-      "index": 69,
+      "index": 71,
       "kind": "upper",
       "bandRow": 1,
       "slug": "croall-place-geograph-org-uk-6310908",
@@ -1250,7 +1285,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Croall_Place_-_geograph.org.uk_-_6310908.jpg"
     },
     {
-      "index": 70,
+      "index": 72,
       "kind": "upper",
       "bandRow": 0,
       "slug": "desi-pakwan-geograph-org-uk-7579664",
@@ -1266,7 +1301,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Desi_Pakwan_-_geograph.org.uk_-_7579664.jpg"
     },
     {
-      "index": 71,
+      "index": 73,
       "kind": "upper",
       "bandRow": 1,
       "slug": "edinburgh-14-elm-row",
@@ -1282,57 +1317,41 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_14_Elm_Row.jpg"
     },
     {
-      "index": 72,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "edinburgh-15-16-17-elm-row",
-      "identity": "Olimpos Kebab & Pizza, Filos Cafe, William Hill",
-      "treatment": 1,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": false,
-      "title": "Edinburgh, 15, 16, 17 Elm Row",
-      "author": "Wilmm",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_15,_16,_17_Elm_Row.jpg"
-    },
-    {
-      "index": 73,
-      "kind": "upper",
-      "bandRow": 1,
-      "slug": "edinburgh-15-16-17-elm-row",
-      "identity": "Olimpos Kebab & Pizza, Filos Cafe, William Hill",
-      "treatment": 1,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": false,
-      "title": "Edinburgh, 15, 16, 17 Elm Row",
-      "author": "Wilmm",
-      "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_15,_16,_17_Elm_Row.jpg"
-    },
-    {
       "index": 74,
       "kind": "upper",
       "bandRow": 0,
-      "slug": "edinburgh-18-19-elm-row",
-      "identity": "Valvona & Crolla",
+      "slug": "edinburgh-15-16-17-elm-row",
+      "identity": "Olimpos Kebab & Pizza, Filos Cafe, William Hill",
       "treatment": 1,
       "planeKind": "terrace",
       "cornerBuilding": false,
       "generated": false,
       "decayed": false,
-      "title": "Edinburgh, 18, 19 Elm Row",
+      "title": "Edinburgh, 15, 16, 17 Elm Row",
       "author": "Wilmm",
       "license": "CC BY-SA 4.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_18,_19_Elm_Row.jpg"
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_15,_16,_17_Elm_Row.jpg"
     },
     {
       "index": 75,
       "kind": "upper",
       "bandRow": 1,
+      "slug": "edinburgh-15-16-17-elm-row",
+      "identity": "Olimpos Kebab & Pizza, Filos Cafe, William Hill",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Edinburgh, 15, 16, 17 Elm Row",
+      "author": "Wilmm",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_15,_16,_17_Elm_Row.jpg"
+    },
+    {
+      "index": 76,
+      "kind": "upper",
+      "bandRow": 0,
       "slug": "edinburgh-18-19-elm-row",
       "identity": "Valvona & Crolla",
       "treatment": 1,
@@ -1346,7 +1365,23 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_18,_19_Elm_Row.jpg"
     },
     {
-      "index": 76,
+      "index": 77,
+      "kind": "upper",
+      "bandRow": 1,
+      "slug": "edinburgh-18-19-elm-row",
+      "identity": "Valvona & Crolla",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Edinburgh, 18, 19 Elm Row",
+      "author": "Wilmm",
+      "license": "CC BY-SA 4.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_18,_19_Elm_Row.jpg"
+    },
+    {
+      "index": 78,
       "kind": "upper",
       "bandRow": 0,
       "slug": "edinburgh-2-3-elm-row",
@@ -1362,7 +1397,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_2,_3,_Elm_Row.jpg"
     },
     {
-      "index": 77,
+      "index": 79,
       "kind": "upper",
       "bandRow": 1,
       "slug": "edinburgh-2-3-elm-row",
@@ -1378,7 +1413,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_2,_3,_Elm_Row.jpg"
     },
     {
-      "index": 78,
+      "index": 80,
       "kind": "upper",
       "bandRow": 0,
       "slug": "edinburgh-20-21-22-elm-row-post-office",
@@ -1394,7 +1429,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_20,_21,_22_Elm_Row,_Post_Office.jpg"
     },
     {
-      "index": 79,
+      "index": 81,
       "kind": "upper",
       "bandRow": 0,
       "slug": "edinburgh-23-elm-row",
@@ -1410,7 +1445,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_23_Elm_Row.jpg"
     },
     {
-      "index": 80,
+      "index": 82,
       "kind": "upper",
       "bandRow": 0,
       "slug": "edinburgh-4-elm-row",
@@ -1426,7 +1461,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_4_Elm_Row.jpg"
     },
     {
-      "index": 81,
+      "index": 83,
       "kind": "upper",
       "bandRow": 1,
       "slug": "edinburgh-9-10-11-elm-row",
@@ -1442,57 +1477,89 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Edinburgh,_9,_10,_11_Elm_Row.jpg"
     },
     {
-      "index": 82,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "robbies-bar-leith-walk-01",
-      "identity": "Robbie's Bar",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "Robbies Bar, Leith Walk 01",
-      "author": "Brian McNeil",
-      "license": "CC BY 3.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
-    },
-    {
-      "index": 83,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "robbies-bar-leith-walk-01",
-      "identity": "Robbie's Bar",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "Robbies Bar, Leith Walk 01",
-      "author": "Brian McNeil",
-      "license": "CC BY 3.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
-    },
-    {
       "index": 84,
       "kind": "upper",
       "bandRow": 0,
-      "slug": "robbies-bar-leith-walk-03",
-      "identity": "Robbie's Bar",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
+      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
       "generated": false,
       "decayed": false,
-      "title": "Robbies Bar, Leith Walk 03",
-      "author": "Brian McNeil",
-      "license": "CC BY 3.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_03.jpeg"
+      "title": "First shop in Leith - geograph.org.uk - 4719930",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
     },
     {
       "index": 85,
       "kind": "upper",
       "bandRow": 0,
+      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "First shop in Leith - geograph.org.uk - 4719930",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
+    },
+    {
+      "index": 86,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
+      "identity": null,
+      "treatment": 2,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "First shop in Leith - geograph.org.uk - 4719930",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
+    },
+    {
+      "index": 87,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "robbies-bar-leith-walk-01",
+      "identity": "Robbie's Bar",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "Robbies Bar, Leith Walk 01",
+      "author": "Brian McNeil",
+      "license": "CC BY 3.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
+    },
+    {
+      "index": 88,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "robbies-bar-leith-walk-01",
+      "identity": "Robbie's Bar",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "Robbies Bar, Leith Walk 01",
+      "author": "Brian McNeil",
+      "license": "CC BY 3.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_01.jpeg"
+    },
+    {
+      "index": 89,
+      "kind": "upper",
+      "bandRow": 0,
       "slug": "robbies-bar-leith-walk-03",
       "identity": "Robbie's Bar",
       "treatment": 1,
@@ -1506,7 +1573,23 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_03.jpeg"
     },
     {
-      "index": 86,
+      "index": 90,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "robbies-bar-leith-walk-03",
+      "identity": "Robbie's Bar",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "Robbies Bar, Leith Walk 03",
+      "author": "Brian McNeil",
+      "license": "CC BY 3.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Robbies_Bar,_Leith_Walk_03.jpeg"
+    },
+    {
+      "index": 91,
       "kind": "upper",
       "bandRow": 0,
       "slug": "shops-leith-walk-geograph-org-uk-7895672",
@@ -1522,7 +1605,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops,_Leith_Walk_-_geograph.org.uk_-_7895672.jpg"
     },
     {
-      "index": 87,
+      "index": 92,
       "kind": "upper",
       "bandRow": 1,
       "slug": "shops-leith-walk-geograph-org-uk-7895672",
@@ -1538,7 +1621,7 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Shops,_Leith_Walk_-_geograph.org.uk_-_7895672.jpg"
     },
     {
-      "index": 88,
+      "index": 93,
       "kind": "upper",
       "bandRow": 0,
       "slug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
@@ -1554,100 +1637,68 @@
       "pageUrl": "https://commons.wikimedia.org/wiki/File:Spey_Lounge,_Leith_Walk_-_geograph.org.uk_-_8262917.jpg"
     },
     {
-      "index": 89,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
-      "identity": "Frangos / Barnardo's Furniture",
-      "treatment": 1,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": false,
-      "title": "Stead's Place, Leith Walk - geograph.org.uk - 5277103",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Stead%27s_Place,_Leith_Walk_-_geograph.org.uk_-_5277103.jpg"
-    },
-    {
-      "index": 90,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
-      "identity": "Frangos / Barnardo's Furniture",
-      "treatment": 1,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": false,
-      "title": "Stead's Place, Leith Walk - geograph.org.uk - 5277103",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:Stead%27s_Place,_Leith_Walk_-_geograph.org.uk_-_5277103.jpg"
-    },
-    {
-      "index": 91,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
-      "identity": "The Dog House",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "The Dog House, Leith Walk - geograph.org.uk - 7579613",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
-    },
-    {
-      "index": 92,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
-      "identity": "The Dog House",
-      "treatment": 1,
-      "planeKind": "corner",
-      "cornerBuilding": true,
-      "generated": false,
-      "decayed": false,
-      "title": "The Dog House, Leith Walk - geograph.org.uk - 7579613",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
-    },
-    {
-      "index": 93,
-      "kind": "upper",
-      "bandRow": 0,
-      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
-      "identity": null,
-      "treatment": 2,
-      "planeKind": "terrace",
-      "cornerBuilding": false,
-      "generated": false,
-      "decayed": true,
-      "title": "First shop in Leith - geograph.org.uk - 4719930",
-      "author": "Richard Webb",
-      "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
-    },
-    {
       "index": 94,
       "kind": "upper",
       "bandRow": 0,
-      "slug": "first-shop-in-leith-geograph-org-uk-4719930",
-      "identity": null,
-      "treatment": 2,
+      "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
+      "identity": "Frangos / Barnardo's Furniture",
+      "treatment": 1,
       "planeKind": "terrace",
       "cornerBuilding": false,
       "generated": false,
-      "decayed": true,
-      "title": "First shop in Leith - geograph.org.uk - 4719930",
+      "decayed": false,
+      "title": "Stead's Place, Leith Walk - geograph.org.uk - 5277103",
       "author": "Richard Webb",
       "license": "CC BY-SA 2.0",
-      "pageUrl": "https://commons.wikimedia.org/wiki/File:First_shop_in_Leith_-_geograph.org.uk_-_4719930.jpg"
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Stead%27s_Place,_Leith_Walk_-_geograph.org.uk_-_5277103.jpg"
+    },
+    {
+      "index": 95,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
+      "identity": "Frangos / Barnardo's Furniture",
+      "treatment": 1,
+      "planeKind": "terrace",
+      "cornerBuilding": false,
+      "generated": false,
+      "decayed": false,
+      "title": "Stead's Place, Leith Walk - geograph.org.uk - 5277103",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:Stead%27s_Place,_Leith_Walk_-_geograph.org.uk_-_5277103.jpg"
+    },
+    {
+      "index": 96,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
+      "identity": "The Dog House",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "The Dog House, Leith Walk - geograph.org.uk - 7579613",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
+    },
+    {
+      "index": 97,
+      "kind": "upper",
+      "bandRow": 0,
+      "slug": "the-dog-house-leith-walk-geograph-org-uk-7579613",
+      "identity": "The Dog House",
+      "treatment": 1,
+      "planeKind": "corner",
+      "cornerBuilding": true,
+      "generated": false,
+      "decayed": false,
+      "title": "The Dog House, Leith Walk - geograph.org.uk - 7579613",
+      "author": "Richard Webb",
+      "license": "CC BY-SA 2.0",
+      "pageUrl": "https://commons.wikimedia.org/wiki/File:The_Dog_House,_Leith_Walk_-_geograph.org.uk_-_7579613.jpg"
     }
   ]
 }

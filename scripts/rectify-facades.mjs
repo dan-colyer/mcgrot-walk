@@ -38,8 +38,11 @@ const TOP_INSET = 0.10;      // drop the top 10% of a plane: eaves, cornice, sky
 const MIN_EDGE_BALANCE = 0.25; // opposite edges this lopsided => shot down the street
 
 // Caps keep the atlas inside its VRAM budget (see build-facade-atlas.mjs).
-const MAX_GROUND_PER_PLANE = 2;
-const MAX_UPPER_PER_PLANE = 2;
+// D1/W2b: the pools are too small for ~1600m of street (D0's dominant
+// facade-repeat category) — bumped from 2 to slice more usable tiles out of
+// the SAME 47 rectified photos rather than adding new sources.
+const MAX_GROUND_PER_PLANE = 3;
+const MAX_UPPER_PER_PLANE = 3;
 
 const only = process.argv.includes('--only')
   ? process.argv[process.argv.indexOf('--only') + 1]

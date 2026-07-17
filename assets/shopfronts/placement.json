@@ -3,8 +3,8 @@
     "11": {
       "slug": "165a-leith-walk-edinburgh",
       "ground": [
-        33,
-        34
+        0,
+        1
       ],
       "upper": [],
       "corner": [],
@@ -13,10 +13,10 @@
     "32": {
       "slug": "edinburgh-14-elm-row",
       "ground": [
-        11
+        19
       ],
       "upper": [
-        71
+        73
       ],
       "corner": [],
       "note": "Rimmers Music @ 14 Elm Row"
@@ -24,7 +24,7 @@
     "54": {
       "slug": "former-leith-central-station-and-the-central-bar",
       "ground": [
-        17
+        27
       ],
       "upper": [],
       "corner": [],
@@ -33,11 +33,11 @@
     "83": {
       "slug": "desi-pakwan-geograph-org-uk-7579664",
       "ground": [
-        9,
-        10
+        17,
+        18
       ],
       "upper": [
-        70
+        72
       ],
       "corner": [],
       "note": "Desi Pakwan @ 61 Leith Walk"
@@ -45,8 +45,8 @@
     "126": {
       "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
       "ground": [
-        42,
-        43
+        33,
+        34
       ],
       "upper": [],
       "corner": [],
@@ -55,10 +55,10 @@
     "173": {
       "slug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
       "ground": [
-        23
+        35
       ],
       "upper": [
-        88
+        93
       ],
       "corner": [],
       "note": "Spey Lounge @ 39 Leith Walk"
@@ -66,12 +66,12 @@
     "272": {
       "slug": "robbies-bar-leith-walk-01",
       "ground": [
-        18,
-        46
+        28,
+        47
       ],
       "upper": [
-        82,
-        83
+        87,
+        88
       ],
       "corner": [],
       "note": "Robbie's @ 367 Leith Walk (corner pub)"
@@ -79,11 +79,11 @@
     "283": {
       "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
       "ground": [
-        24
+        36
       ],
       "upper": [
-        89,
-        90
+        94,
+        95
       ],
       "corner": [],
       "note": "Barnardo's @ 28 Crighton Place / Stead's Place"
@@ -91,10 +91,10 @@
     "422": {
       "slug": "edinburgh-20-21-22-elm-row-post-office",
       "ground": [
-        15
+        23
       ],
       "upper": [
-        78
+        80
       ],
       "corner": [],
       "note": "Greggs @ 21 + Post Office @ 20 Elm Row"
@@ -102,11 +102,11 @@
     "424": {
       "slug": "edinburgh-18-19-elm-row",
       "ground": [
-        13
+        21
       ],
       "upper": [
-        75,
-        74
+        77,
+        76
       ],
       "corner": [],
       "note": "Valvona & Crolla @ 19 + William Hill @ 18 Elm Row (photo covers both)"
@@ -114,11 +114,11 @@
     "430": {
       "slug": "edinburgh-15-16-17-elm-row",
       "ground": [
-        12
+        20
       ],
       "upper": [
-        73,
-        72
+        75,
+        74
       ],
       "corner": [],
       "note": "15-17 Elm Row tenement (Star Kebab/kul; photo id names dated tenants Olimpos/Filos/WilliamHill)"
@@ -126,10 +126,10 @@
     "433": {
       "slug": "edinburgh-9-10-11-elm-row",
       "ground": [
-        45
+        46
       ],
       "upper": [
-        81
+        83
       ],
       "corner": [],
       "note": "Jolly @ 9 Elm Row"
@@ -137,10 +137,10 @@
     "604": {
       "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
       "ground": [
-        28,
-        29,
-        30,
-        31
+        40,
+        41,
+        42,
+        43
       ],
       "upper": [],
       "corner": [],
@@ -149,13 +149,13 @@
     "730": {
       "slug": "shops-leith-walk-geograph-org-uk-7895672",
       "ground": [
-        47,
         48,
-        49
+        49,
+        50
       ],
       "upper": [
-        87,
-        86
+        92,
+        91
       ],
       "corner": [],
       "note": "Turkish Supermarket @ 82-90 (terrace photo, shared with b731)"
@@ -163,13 +163,13 @@
     "731": {
       "slug": "shops-leith-walk-geograph-org-uk-7895672",
       "ground": [
-        47,
         48,
-        49
+        49,
+        50
       ],
       "upper": [
-        87,
-        86
+        92,
+        91
       ],
       "corner": [],
       "note": "Pipe Shop/Little Havana @ 92-94 (terrace photo, shared with b730)"
@@ -177,11 +177,11 @@
     "801": {
       "slug": "edinburgh-2-3-elm-row",
       "ground": [
-        14
+        22
       ],
       "upper": [
-        77,
-        76
+        79,
+        78
       ],
       "corner": [],
       "note": "2-3 Elm Row (Elm Row Cafe)"
@@ -189,10 +189,10 @@
     "805": {
       "slug": "edinburgh-23-elm-row",
       "ground": [
-        16
+        24
       ],
       "upper": [
-        79
+        81
       ],
       "corner": [],
       "note": "Joseph Pearce @ 23 Elm Row (corner pub)"
@@ -200,10 +200,10 @@
     "808": {
       "slug": "edinburgh-4-elm-row",
       "ground": [
-        44
+        45
       ],
       "upper": [
-        80
+        82
       ],
       "corner": [],
       "note": "Ladbrokes @ 4 Elm Row"
