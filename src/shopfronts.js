@@ -183,10 +183,72 @@ export function buildShopfronts(assets, world, scene) {
     quadCount++;
   }
 
-  for (let bi = 0; bi < buildings.length && quadCount < MAX_QUADS; bi++) {
-    const building = buildings[bi];
+  // Anti-repeat: no generic ground/corner unit, upper-source slug or whole-strip
+  // gets reused within MIN_REPEAT_SEPARATION metres of its last use along the
+  // street. That "last use" only means something if buildings are visited in
+  // GEOGRAPHIC order, so this walks the street chain (north to south) instead
+  // of leith.json's array order — a safe reorder, since geometry lands in one
+  // merged draw call regardless of emission order. Placed (address-matched)
+  // buildings are untouched: they always draw from their OWN photo.
+  const MIN_REPEAT_SEPARATION = 120;
+  const streetLine = (world && world.streetLine) || [];
+  function chainageOf(px, pz) {
+    let best = Infinity;
+    let bestChain = 0;
+    let acc = 0;
+    for (let i = 0; i < streetLine.length - 1; i++) {
+      const [ax, az] = streetLine[i];
+      const [bx, bz] = streetLine[i + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const lenSq = dx * dx + dz * dz;
+      const segLen = Math.sqrt(lenSq);
+      let t = lenSq > 0 ? ((px - ax) * dx + (pz - az) * dz) / lenSq : 0;
+      t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+      if (d < best) { best = d; bestChain = acc + t * segLen; }
+      acc += segLen;
+    }
+    return bestChain;
+  }
+  const buildingChainage = new Array(buildings.length).fill(Infinity);
+  const buildingOrder = [];
+  buildings.forEach((building, bi) => {
     const fp = building && building.footprint;
-    if (!fp || fp.length < 3) continue;
+    if (!fp || fp.length < 3) return;
+    let cx = 0, cz = 0;
+    for (const p of fp) { cx += p[0]; cz += p[1]; }
+    buildingChainage[bi] = chainageOf(cx / fp.length, cz / fp.length);
+    buildingOrder.push(bi);
+  });
+  buildingOrder.sort((a, b) => buildingChainage[a] - buildingChainage[b]);
+
+  // key "category:poolIndex" -> chainage where it was last used. A deterministic
+  // probe (seeded by the caller's hash) walks the pool from a hashed start point
+  // until it finds a slot unused within MIN_REPEAT_SEPARATION; an exhausted small
+  // pool falls back to the seed slot itself rather than stall (still deterministic).
+  const lastUsedChainage = new Map();
+  function pickSpaced(category, poolLength, chainage, hashSeed) {
+    if (poolLength <= 0) return 0;
+    const start = ((hashSeed % poolLength) + poolLength) % poolLength;
+    for (let k = 0; k < poolLength; k++) {
+      const idx = (start + k) % poolLength;
+      const key = category + ':' + idx;
+      const last = lastUsedChainage.get(key);
+      if (last === undefined || Math.abs(chainage - last) >= MIN_REPEAT_SEPARATION) {
+        lastUsedChainage.set(key, chainage);
+        return idx;
+      }
+    }
+    lastUsedChainage.set(category + ':' + start, chainage);
+    return start;
+  }
+
+  for (const bi of buildingOrder) {
+    if (quadCount >= MAX_QUADS) break;
+    const building = buildings[bi];
+    const fp = building.footprint;
+    const chainage = buildingChainage[bi];
 
     const levels = Math.max(1, building.levels || 1);
     const bands = Math.min(MAX_BANDS, levels);
@@ -206,7 +268,7 @@ export function buildShopfronts(assets, world, scene) {
     // in the run loop would be a bare gap.
     const stripSet = placed ? stripsBySlug.get(placed.slug) : null;
     const genericStrip = !placed && allStrips.length
-      ? allStrips[hashTile(bi, 0, 3, allStrips.length)]
+      ? allStrips[pickSpaced('strip', allStrips.length, chainage, hashTile(bi, 0, 3, allStrips.length))]
       : null;
     const stripFor = (chamfer) => (stripSet
       ? (chamfer ? (stripSet.corner || stripSet.terrace) : (stripSet.terrace || stripSet.corner))
@@ -220,7 +282,7 @@ export function buildShopfronts(assets, world, scene) {
     // One source building's upper storeys clad this whole building — see the
     // upperBySlug note above.
     const wallTiles = upperSlugs.length
-      ? upperBySlug.get(upperSlugs[hashTile(bi, 0, 7, upperSlugs.length)])
+      ? upperBySlug.get(upperSlugs[pickSpaced('upperSlug', upperSlugs.length, chainage, hashTile(bi, 0, 7, upperSlugs.length))])
       : upperPool;
 
     // Centroid gives the TRUE outward normal of each wall (the perpendicular
@@ -236,6 +298,13 @@ export function buildShopfronts(assets, world, scene) {
     // the ground shopfront row can span a wall that OSM split into several
     // collinear edges — otherwise a single photo repeats once per sub-edge.
     const frontEdges = [];
+
+    // Runs the round-robin rotation ACROSS the whole building's edges, not just
+    // within one edge's own stoneSegs. A rounded footprint (Robbie's fan, the
+    // old station cylinder) is a run of many SHORT edges — each edge alone only
+    // ever has stoneSegs=1, so a per-edge-local counter would reset to the same
+    // tile on every edge and the curve would wallpaper regardless (D0 #30/#35).
+    let stoneSegCounter = 0;
 
     for (let i = 0; i < fp.length && quadCount < MAX_QUADS; i++) {
       const a = fp[i];
@@ -330,16 +399,20 @@ export function buildShopfronts(assets, world, scene) {
         const bandStart = isFrontage ? 1 : 0;
         for (let band = bandStart; band < bands && quadCount < MAX_QUADS; band++) {
           const uidx = Math.max(0, band - 1);
-          // Mixing the segment into the hash varies the stamp along the wall
-          // (both tiles come from the same building's photo, so no patchwork)
-          // — one tile repeated N× per row is what read as wallpaper.
+          // Round-robin through the pool as s increments, offset by a per-band
+          // hash: guarantees no two ADJACENT segments repeat a tile (a plain
+          // per-segment hash collides often on a long or curved wall with many
+          // segments and a small pool — the "unit tiled 6-8x round the curve"
+          // wallpaper look, D0 #30/#35) — until the whole pool cycles, which
+          // needs the pool itself widened (see W2b) to push out further.
           const tile = placed && placed.upper.length
             ? placed.upper[uidx % placed.upper.length]
-            : wallTiles[hashTile(bi, s, band, wallTiles.length)];
+            : wallTiles[(hashTile(bi, 0, band, wallTiles.length) + stoneSegCounter) % wallTiles.length];
           const y0 = band === 0 ? BASE_Y : band * BAND_HEIGHT;
           const y1 = (band + 1) * BAND_HEIGHT;
           emitPhotoQuad(tile, a.x, a.z, b.x, b.z, y0, y1);
         }
+        stoneSegCounter++;
       }
     }
 
@@ -348,6 +421,7 @@ export function buildShopfronts(assets, world, scene) {
     // into several) so one photo/name spans the whole wall once, then lay the
     // building's real shop units across each run.
     const runs = [];
+    let usedStripThisBuilding = false;
     for (const e of frontEdges) {
       const last = runs[runs.length - 1];
       const contiguous = last && e.i === last.endEdge + 1
@@ -403,7 +477,7 @@ export function buildShopfronts(assets, world, scene) {
           const b = at(tA + ((tB - tA) * (s + 1)) / n);
           const tile = placed && placed.upper.length
             ? placed.upper[0]
-            : wallTiles[hashTile(bi, s, 1, wallTiles.length)];
+            : wallTiles[(hashTile(bi, 0, 1, wallTiles.length) + s) % wallTiles.length];
           emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
         }
       };
@@ -420,7 +494,7 @@ export function buildShopfronts(assets, world, scene) {
           for (let band = 1; band < bands && quadCount < MAX_QUADS; band++) {
             const tile = placed && placed.upper.length
               ? placed.upper[(band - 1) % placed.upper.length]
-              : wallTiles[hashTile(bi, s, band, wallTiles.length)];
+              : wallTiles[(hashTile(bi, 0, band, wallTiles.length) + s) % wallTiles.length];
             emitPhotoQuad(tile, a.x, a.z, b.x, b.z, band * BAND_HEIGHT, (band + 1) * BAND_HEIGHT);
           }
         }
@@ -463,7 +537,9 @@ export function buildShopfronts(assets, world, scene) {
           }
         }
         const gPool = run.isChamfer ? cornerPool : groundPool;
-        const tile = placed ? placedPool[u] : gPool[hashTile(bi, run.startEdge * 31 + u, 0, gPool.length)];
+        const category = run.isChamfer ? 'corner' : 'ground';
+        const seed = hashTile(bi, run.startEdge * 31 + u, 0, gPool.length);
+        const tile = placed ? placedPool[u] : gPool[pickSpaced(category, gPool.length, chainage, seed)];
         emitPhotoQuad(tile, a.x, a.z, b.x, b.z, BASE_Y, BAND_HEIGHT);
       }
 
@@ -475,7 +551,18 @@ export function buildShopfronts(assets, world, scene) {
       // window, so the texture stays at life scale instead of squeezing —
       // except SHORT runs, where every building would show the same central
       // slice: those take stone bands instead.
-      const strip = sliver ? null : stripFor(run.isChamfer);
+      // A curved footprint (Robbie's fan, the old station cylinder) is chopped
+      // by OSM into several NON-collinear frontage runs, one per facet — and a
+      // GENERIC building's strip is one hash-picked elevation reused "on every
+      // wall" (see stripFor above) so it still reads as one building. On a
+      // simple building with 2-3 walls that is coherent; on 5+ curve facets it
+      // means the same photo drapes again and again, which is what D0 #30/#35
+      // actually is (a wide run's crop is already ~the full strip width, so
+      // there is no slice left to pan). One strip per building, and only for
+      // its FIRST run — later facets take the (round-robin) stone bands, which
+      // read as the same masonry continuing rather than the photo repeating.
+      const strip = sliver || usedStripThisBuilding ? null : stripFor(run.isChamfer);
+      if (strip) usedStripThisBuilding = true;
       if (strip && bands > 1 && rlen < 4.5) {
         stoneBands(0, 1);
       } else if (strip && bands > 1) {
@@ -492,15 +579,30 @@ export function buildShopfronts(assets, world, scene) {
           stoneBands(0, t0);
           stoneBands(t1, 1);
         } else if (rlen < strip.widthM / STRETCH_MAX) {
+          // A run this narrow only needs a slice of the strip's width — but
+          // always taking the CENTRE slice (the old behaviour) means every
+          // narrow run of the same building samples the identical crop. A
+          // curved footprint (Robbie's fan, the old station cylinder) is many
+          // narrow runs in a row, so that read as the same window bay tiled
+          // N times round the curve (D0 #30/#35). Panning the crop window by
+          // how far round the building's edge list this run sits makes each
+          // facet show a different slice of the SAME real elevation instead.
           const frac = rlen / strip.widthM;
-          const mid = (u0 + u1) / 2;
           const half = ((u1 - u0) * frac) / 2;
-          u0 = mid - half;
-          u1 = mid + half;
+          const panT = fp.length > 1 ? run.startEdge / fp.length : 0.5;
+          const center = (u0 + half) + panT * ((u1 - half) - (u0 + half));
+          u0 = center - half;
+          u1 = center + half;
         }
         const a = at(t0);
         const b = at(t1);
         emitStripQuad(u0, v0, u1, v1, a.x, a.z, b.x, b.z, BAND_HEIGHT, bands * BAND_HEIGHT);
+      } else if (!sliver && bands > 1 && stripFor(run.isChamfer)) {
+        // This run drew no strip (pool already used once for this building, or
+        // it failed the sliver/short-run checks above) — but stripFor() is
+        // truthy, so the FIRST loop already skipped stone-banding this run's
+        // edge(s) on the assumption a strip would cover them. Fill the gap.
+        stoneBands(0, 1);
       }
     }
   }
