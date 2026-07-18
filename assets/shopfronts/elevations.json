@@ -1,0 +1,234 @@
+{
+  "elevations": [
+    {
+      "slug": "165a-leith-walk-edinburgh",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/165a-leith-walk-edinburgh-p0.jpg",
+      "widthM": 15.5,
+      "heightM": 5.3,
+      "storeys": 2,
+      "declutteredGround": false
+    },
+    {
+      "slug": "desi-pakwan-geograph-org-uk-7579664",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/desi-pakwan-geograph-org-uk-7579664-p0.jpg",
+      "widthM": 2.4,
+      "heightM": 4.4,
+      "storeys": 2,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-14-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-14-elm-row-p0.jpg",
+      "widthM": 4.7,
+      "heightM": 6.3,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-15-16-17-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-15-16-17-elm-row-p0.jpg",
+      "widthM": 6.8,
+      "heightM": 8,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-18-19-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-18-19-elm-row-p0.jpg",
+      "widthM": 6,
+      "heightM": 8.2,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-2-3-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-2-3-elm-row-p0.jpg",
+      "widthM": 7.7,
+      "heightM": 9,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-20-21-22-elm-row-post-office",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-20-21-22-elm-row-post-office-p0.jpg",
+      "widthM": 4.9,
+      "heightM": 7.6,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-23-elm-row",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/edinburgh-23-elm-row-p0.jpg",
+      "widthM": 3.9,
+      "heightM": 6,
+      "storeys": 3,
+      "declutteredGround": false
+    },
+    {
+      "slug": "edinburgh-4-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-4-elm-row-p0.jpg",
+      "widthM": 4.8,
+      "heightM": 7.2,
+      "storeys": 3,
+      "declutteredGround": true
+    },
+    {
+      "slug": "edinburgh-9-10-11-elm-row",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/edinburgh-9-10-11-elm-row-p0.jpg",
+      "widthM": 4.9,
+      "heightM": 7.1,
+      "storeys": 4,
+      "declutteredGround": true
+    },
+    {
+      "slug": "former-leith-central-station-and-the-central-bar",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/former-leith-central-station-and-the-central-bar-p0.jpg",
+      "widthM": 6,
+      "heightM": 4,
+      "storeys": 2,
+      "declutteredGround": false
+    },
+    {
+      "slug": "robbies-bar-leith-walk-01",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/robbies-bar-leith-walk-01-p0.jpg",
+      "widthM": 5.7,
+      "heightM": 10.3,
+      "storeys": 4,
+      "declutteredGround": true
+    },
+    {
+      "slug": "robbies-bar-leith-walk-01",
+      "plane": 1,
+      "planeKind": "corner",
+      "file": "elevations/robbies-bar-leith-walk-01-p1.jpg",
+      "widthM": 4.6,
+      "heightM": 8.2,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694-p0.jpg",
+      "widthM": 12.4,
+      "heightM": 9.3,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/shops-leith-walk-geograph-org-uk-7895672-p0.jpg",
+      "widthM": 6.3,
+      "heightM": 9,
+      "storeys": 4,
+      "declutteredGround": true
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 1,
+      "planeKind": "terrace",
+      "file": "elevations/shops-leith-walk-geograph-org-uk-7895672-p1.jpg",
+      "widthM": 4.8,
+      "heightM": 7.1,
+      "storeys": 4,
+      "declutteredGround": true
+    },
+    {
+      "slug": "shops-leith-walk-geograph-org-uk-7895672",
+      "plane": 2,
+      "planeKind": "terrace",
+      "file": "elevations/shops-leith-walk-geograph-org-uk-7895672-p2.jpg",
+      "widthM": 6.2,
+      "heightM": 10.3,
+      "storeys": 4,
+      "declutteredGround": true
+    },
+    {
+      "slug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
+      "plane": 0,
+      "planeKind": "corner",
+      "file": "elevations/spey-lounge-leith-walk-geograph-org-uk-8262917-p0.jpg",
+      "widthM": 4.2,
+      "heightM": 4.6,
+      "storeys": 2,
+      "declutteredGround": false
+    },
+    {
+      "slug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/stead-s-place-leith-walk-geograph-org-uk-5277103-p0.jpg",
+      "widthM": 9,
+      "heightM": 5.7,
+      "storeys": 2,
+      "declutteredGround": false
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 0,
+      "planeKind": "terrace",
+      "file": "elevations/the-harp-castle-leith-walk-geograph-org-uk-3723957-p0.jpg",
+      "widthM": 9,
+      "heightM": 6.8,
+      "storeys": 5,
+      "declutteredGround": false
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 1,
+      "planeKind": "corner",
+      "file": "elevations/the-harp-castle-leith-walk-geograph-org-uk-3723957-p1.jpg",
+      "widthM": 5,
+      "heightM": 6.5,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 2,
+      "planeKind": "corner",
+      "file": "elevations/the-harp-castle-leith-walk-geograph-org-uk-3723957-p2.jpg",
+      "widthM": 5.3,
+      "heightM": 7,
+      "storeys": 4,
+      "declutteredGround": false
+    },
+    {
+      "slug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "plane": 3,
+      "planeKind": "terrace",
+      "file": "elevations/the-harp-castle-leith-walk-geograph-org-uk-3723957-p3.jpg",
+      "widthM": 7.4,
+      "heightM": 5.7,
+      "storeys": 3,
+      "declutteredGround": false
+    }
+  ]
+}
