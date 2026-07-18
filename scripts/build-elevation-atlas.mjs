@@ -142,7 +142,7 @@ pages.forEach((p, pi) => {
   const etag = createHash('md5').update(readFileSync(pageFile)).digest('hex').slice(0, 10);
   const chainages = p.items.map((it) => it.chainage);
   pagesMeta.push({
-    file: `atlas-pages/page${pi}.jpg`, width: dims.w, height: dims.h, etag,
+    file: `shopfronts/atlas-pages/page${pi}.jpg`, width: dims.w, height: dims.h, etag,
     chainageMin: Math.min(...chainages), chainageMax: Math.max(...chainages),
   });
 

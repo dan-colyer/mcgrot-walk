@@ -62,7 +62,7 @@ async function main() {
   const npcs = buildNpcs(assets, world, scene, camera);
   const leithers = buildLeithers(assets, world, scene, npcs.npcs); // the ambient crowd
   const litter = buildLitter(assets, world, scene); // readable comics in the gutters
-  buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
+  const shopfronts = buildShopfronts(assets, world, scene); // real Leith Walk shop windows on near façades
   buildRoadDressing(world, scene);       // tram rails that stop dead, potholes, standing water
   buildRoadworks(world, scene);          // ...and the trench, cones and hoarding waiting at the end of them
   const birds = buildBirds(world, assets.leith, scene); // gulls wheeling, gulls perched, pigeons
@@ -123,6 +123,7 @@ async function main() {
     { name: 'npcs', update: (dt, t) => npcs.update(dt, t) },
     { name: 'leithers', update: (dt, t) => leithers.update(dt, t) },
     { name: 'litter', update: () => litter.update(camera.position) },
+    { name: 'shopfronts', update: () => shopfronts.update(camera.position) },
     { name: 'sky', update: (dt, t) => sky.update(t) },
     { name: 'birds', update: (dt, t) => birds.update(dt, t) },
     { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
@@ -139,7 +140,7 @@ async function main() {
   // Dev-only probe (localhost only). stepFrame lets tests drive frames
   // manually — rAF is paused whenever the preview pane is hidden.
   if (['localhost', '127.0.0.1'].includes(location.hostname)) window.__mcgrotDebug = {
-    camera, world, npcs, leithers, litter, controls, proximityAudio, renderer,
+    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer,
     stepFrame: runFrame,
   };
 

@@ -19,33 +19,27 @@ export async function loadAssets() {
     return window.MCGROT_ASSETS;
   }
 
-  const [manifest, leith, catalog, shopfronts, placement, strips] = await Promise.all([
+  const [manifest, leith, catalog, facadeManifest, facadeAtlas] = await Promise.all([
     fetch('assets/manifest.json').then((res) => res.json()),
     fetch('assets/leith.json').then((res) => res.json()),
     // The full-street catalog (100+ vendors). Absent in the single-file artifact,
     // where the 3-comic manifest is the source of truth instead.
     fetch('assets/catalog.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
-    // Shopfront texture atlas layout (real Leith Walk photos, tiled). Absent in
-    // the single-file artifact — buildShopfronts() no-ops when this is null.
-    fetch('assets/shopfronts/atlas.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
-    // Which real photo clads which real building (address-verified), plus the
-    // businesses on each building for name placeholders. Absent → the engine
-    // falls back to its generic hash placement.
-    fetch('assets/shopfronts/placement.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
-    // Whole-upper-elevation strips for the placed buildings (one draped quad
-    // each). Absent → the engine keeps its per-band stone stacking.
-    fetch('assets/shopfronts/strips.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
+    // D4 façade v3: every street-facing frontage building, geometry-free
+    // (chainage/levels/businesses/placed-photo slug) — scripts/build-facade-
+    // manifest.mjs. Absent in the single-file artifact — buildShopfronts()
+    // no-ops when either this or facadeAtlas is null.
+    fetch('assets/shopfronts/manifest.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
+    // Chainage-bucketed atlas pages (one authored elevation image per
+    // building, real photo or AI) — scripts/build-elevation-atlas.mjs.
+    fetch('assets/shopfronts/atlas-pages.json').then((res) => (res.ok ? res.json() : null)).catch(() => null),
   ]);
 
   // Verbatim comic lines for Leither comments. Absent → Leithers just listen.
   const comicLines = await fetch('assets/comic-lines.json')
     .then((res) => (res.ok ? res.json() : null)).catch(() => null);
 
-  // The placement map rides on the atlas layout so the engine reads one object.
-  if (shopfronts && placement) shopfronts.placement = placement;
-  if (shopfronts && strips) shopfronts.strips = strips;
-
-  return { manifest, leith, catalog, shopfronts, comicLines, images: null, audio: null };
+  return { manifest, leith, catalog, facadeManifest, facadeAtlas, comicLines, images: null, audio: null };
 }
 
 // Single source of truth for resolving an asset path to a usable URL.

@@ -84,15 +84,17 @@ async function buildSite() {
   });
   writeFileSync(join(out, 'bundle.js'), siteBundle.outputFiles[0].text);
 
-  // Runtime assets only. shopfronts/{raw,tiles} are build intermediates (~32MB)
-  // and must not ship; the engine reads shopfronts/atlas.{jpg,json}.
+  // Runtime assets only. shopfronts/{raw,tiles,rect,bands,generated,fixed,
+  // qa,decay,.{elevations,atlas-pages,signage}-tmp} are build intermediates
+  // and must not ship; the engine reads shopfronts/{manifest,atlas-pages}.json
+  // + shopfronts/atlas-pages/page*.jpg (D4 façade v3).
   const copy = (rel) => {
     const src = join(root, 'assets', rel);
     if (existsSync(src)) cpSync(src, join(out, 'assets', rel), { recursive: true });
   };
   ['manifest.json', 'leith.json', 'catalog.json', 'comics', 'audio', 'faces'].forEach(copy);
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
-  ['shopfronts/atlas.jpg', 'shopfronts/atlas.json', 'shopfronts/credits.json', 'shopfronts/placement.json', 'shopfronts/strips.jpg', 'shopfronts/strips.json',
+  ['shopfronts/manifest.json', 'shopfronts/atlas-pages.json', 'shopfronts/atlas-pages', 'shopfronts/credits.json',
    'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',
    'cars/Textures/colormap.png', 'comic-lines.json'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
@@ -117,24 +119,25 @@ async function buildSite() {
 function renderCredits() {
   const read = (p) => (existsSync(join(root, p)) ? JSON.parse(readFileSync(join(root, p), 'utf8')) : {});
   const credits = read('assets/shopfronts/credits.json');
-  const atlas = read('assets/shopfronts/atlas.json');
+  const elevations = read('assets/shopfronts/elevations.json');
   const faces = read('assets/faces/credits.json');
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
   // Credit the photographs that ACTUALLY SHIP, not everything ever fetched.
-  // The rectify → cull pipeline drops whole photos (unusable planes, sky, duds),
-  // so credits.json over-lists. Derive the roll from the atlas's own tiles, and
-  // note that AI-derived tiles carry no photo attribution.
-  const usedSlugs = atlas.tiles
-    ? [...new Set(atlas.tiles.filter((t) => !t.generated).map((t) => t.slug))].sort()
+  // The rectify pipeline drops whole photos (unusable planes, sky, duds), so
+  // credits.json over-lists. Derive the roll from elevations.json (D4 façade
+  // v3) — AI-generated elevations carry no photo attribution.
+  const usedSlugs = elevations.elevations
+    ? [...new Set(elevations.elevations.filter((e) => !e.generated).map((e) => e.slug))].sort()
     : Object.keys(credits);
   const shopfronts = Object.fromEntries(
     usedSlugs.filter((s) => credits[s]).map((s) => [s, credits[s]])
   );
-  // Tiles additionally aged with FLUX.1-kontext (rust, boarding, graffiti) are
-  // still derivative works of the photo, so they keep attribution — this only
+  // Elevations whose ground band was additionally decluttered with
+  // FLUX.1-kontext (erasing pedestrians/bicycles/parked cars) are still
+  // derivative works of the photo, so they keep attribution — this only
   // counts them for the disclosure paragraph below.
-  const decayedCount = atlas.tiles ? atlas.tiles.filter((t) => t.decayed).length : 0;
+  const decayedCount = elevations.elevations ? elevations.elevations.filter((e) => e.declutteredGround).length : 0;
 
   const shopRows = Object.entries(shopfronts).map(([slug, c]) =>
     `<li><a href="${esc(c.pageUrl)}">${esc(c.title)}</a> — ${esc(c.author)} — <em>${esc(c.license)}</em></li>`

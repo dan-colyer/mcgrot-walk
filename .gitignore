@@ -14,5 +14,13 @@ assets/shopfronts/rect/
 assets/shopfronts/bands/
 assets/shopfronts/qa/
 
+# D4 façade v3 intermediates: raw AI generations (generated/) and the
+# per-building graded elevations (elevations/, real-photo + AI, signage
+# baked in) that scripts/build-elevation-atlas.mjs packs into atlas-pages/ —
+# only the packed pages ship. Re-running gen-facade-elevations.mjs/
+# apply-signage.mjs/build-elevation-atlas.mjs regenerates all three.
+assets/shopfronts/generated/
+assets/shopfronts/elevations/
+
 # Site build output (published to the gh-pages branch)
 dist-site/

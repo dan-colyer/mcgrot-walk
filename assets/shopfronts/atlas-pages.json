@@ -1,0 +1,2213 @@
+{
+  "storeyPx": 180,
+  "pxPerMetre": 56.25,
+  "pages": [
+    {
+      "file": "shopfronts/atlas-pages/page0.jpg",
+      "width": 4030,
+      "height": 3600,
+      "etag": "1a5f621fc6",
+      "chainageMin": 0,
+      "chainageMax": 218
+    },
+    {
+      "file": "shopfronts/atlas-pages/page1.jpg",
+      "width": 4038,
+      "height": 3600,
+      "etag": "788ceeacba",
+      "chainageMin": 223,
+      "chainageMax": 418
+    },
+    {
+      "file": "shopfronts/atlas-pages/page2.jpg",
+      "width": 4069,
+      "height": 3600,
+      "etag": "f7bcc1507f",
+      "chainageMin": 419,
+      "chainageMax": 571
+    },
+    {
+      "file": "shopfronts/atlas-pages/page3.jpg",
+      "width": 3992,
+      "height": 3600,
+      "etag": "c44b3791f7",
+      "chainageMin": 585,
+      "chainageMax": 742
+    },
+    {
+      "file": "shopfronts/atlas-pages/page4.jpg",
+      "width": 3960,
+      "height": 2160,
+      "etag": "b290889da6",
+      "chainageMin": 746,
+      "chainageMax": 1571
+    }
+  ],
+  "buildings": {
+    "0": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1207,
+          "y": 720,
+          "w": 1125,
+          "h": 720,
+          "widthM": 20,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "6": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 1440,
+          "w": 785,
+          "h": 720,
+          "widthM": 13.95,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "11": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2990,
+          "y": 1440,
+          "w": 872,
+          "h": 298,
+          "widthM": 15.5,
+          "heightM": 5.3
+        }
+      ]
+    },
+    "15": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1125,
+          "y": 2880,
+          "w": 622,
+          "h": 720,
+          "widthM": 11.06,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "32": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2718,
+          "y": 1440,
+          "w": 264,
+          "h": 354,
+          "widthM": 4.7,
+          "heightM": 6.3
+        }
+      ]
+    },
+    "54": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2515,
+          "y": 0,
+          "w": 338,
+          "h": 225,
+          "widthM": 6,
+          "heightM": 4
+        }
+      ]
+    },
+    "57": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1438,
+          "y": 720,
+          "w": 978,
+          "h": 720,
+          "widthM": 17.39,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "83": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2185,
+          "y": 1440,
+          "w": 135,
+          "h": 248,
+          "widthM": 2.4,
+          "heightM": 4.4
+        }
+      ]
+    },
+    "84": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 1440,
+          "w": 526,
+          "h": 720,
+          "widthM": 9.35,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "86": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2329,
+          "y": 2160,
+          "w": 829,
+          "h": 720,
+          "widthM": 14.74,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "90": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3207,
+          "y": 1440,
+          "w": 630,
+          "h": 720,
+          "widthM": 11.2,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "100": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1057,
+          "y": 2160,
+          "w": 436,
+          "h": 720,
+          "widthM": 7.75,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "101": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1493,
+          "y": 2160,
+          "w": 866,
+          "h": 720,
+          "widthM": 15.39,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "102": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2880,
+          "w": 977,
+          "h": 720,
+          "widthM": 17.37,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "109": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 720,
+          "w": 1013,
+          "h": 720,
+          "widthM": 18,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "110": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1512,
+          "y": 0,
+          "w": 542,
+          "h": 720,
+          "widthM": 9.63,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "111": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 0,
+          "w": 485,
+          "h": 720,
+          "widthM": 8.62,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "119": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 720,
+          "w": 716,
+          "h": 720,
+          "widthM": 12.73,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "122": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1901,
+          "y": 1440,
+          "w": 1125,
+          "h": 720,
+          "widthM": 20,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "123": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2880,
+          "w": 1125,
+          "h": 720,
+          "widthM": 20,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "124": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2589,
+          "y": 2880,
+          "w": 858,
+          "h": 720,
+          "widthM": 15.25,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "125": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2927,
+          "y": 0,
+          "w": 598,
+          "h": 720,
+          "widthM": 10.63,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "126": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 1132,
+          "y": 2160,
+          "w": 698,
+          "h": 523,
+          "widthM": 12.4,
+          "heightM": 9.3
+        }
+      ]
+    },
+    "128": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2416,
+          "y": 720,
+          "w": 1125,
+          "h": 720,
+          "widthM": 20,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "137": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3442,
+          "y": 2880,
+          "w": 370,
+          "h": 720,
+          "widthM": 6.58,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "140": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3074,
+          "y": 2160,
+          "w": 298,
+          "h": 720,
+          "widthM": 5.29,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "142": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3609,
+          "y": 1440,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "144": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1237,
+          "y": 2880,
+          "w": 926,
+          "h": 720,
+          "widthM": 16.47,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "158": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2054,
+          "y": 0,
+          "w": 1091,
+          "h": 720,
+          "widthM": 19.4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "171": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 526,
+          "y": 1440,
+          "w": 1019,
+          "h": 720,
+          "widthM": 18.11,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "172": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2880,
+          "w": 470,
+          "h": 720,
+          "widthM": 8.35,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "173": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 3367,
+          "y": 720,
+          "w": 236,
+          "h": 259,
+          "widthM": 4.2,
+          "heightM": 4.6
+        }
+      ]
+    },
+    "174": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2160,
+          "w": 618,
+          "h": 720,
+          "widthM": 10.99,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "183": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 1440,
+          "w": 745,
+          "h": 720,
+          "widthM": 13.25,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "186": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3040,
+          "y": 2160,
+          "w": 645,
+          "h": 720,
+          "widthM": 11.46,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "187": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3447,
+          "y": 2880,
+          "w": 486,
+          "h": 720,
+          "widthM": 8.64,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "189": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1202,
+          "y": 2880,
+          "w": 350,
+          "h": 720,
+          "widthM": 6.23,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "191": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 485,
+          "y": 0,
+          "w": 1027,
+          "h": 360,
+          "widthM": 18.25,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "193": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1552,
+          "y": 2880,
+          "w": 1037,
+          "h": 720,
+          "widthM": 18.44,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "195": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2359,
+          "y": 2160,
+          "w": 681,
+          "h": 720,
+          "widthM": 12.1,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "198": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 633,
+          "y": 2160,
+          "w": 499,
+          "h": 720,
+          "widthM": 8.87,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "199": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2363,
+          "y": 2160,
+          "w": 539,
+          "h": 720,
+          "widthM": 9.59,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "200": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3026,
+          "y": 1440,
+          "w": 510,
+          "h": 720,
+          "widthM": 9.06,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "201": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1747,
+          "y": 2880,
+          "w": 765,
+          "h": 720,
+          "widthM": 13.6,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "203": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1830,
+          "y": 2160,
+          "w": 533,
+          "h": 720,
+          "widthM": 9.48,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "204": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2902,
+          "y": 2160,
+          "w": 625,
+          "h": 720,
+          "widthM": 11.11,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "205": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1133,
+          "y": 1440,
+          "w": 768,
+          "h": 720,
+          "widthM": 13.66,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "209": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 745,
+          "y": 1440,
+          "w": 388,
+          "h": 720,
+          "widthM": 6.89,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "210": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3536,
+          "y": 1440,
+          "w": 533,
+          "h": 720,
+          "widthM": 9.48,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "217": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 0,
+          "w": 558,
+          "h": 720,
+          "widthM": 9.92,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "218": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2356,
+          "y": 720,
+          "w": 512,
+          "h": 720,
+          "widthM": 9.11,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "228": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1678,
+          "y": 720,
+          "w": 678,
+          "h": 720,
+          "widthM": 12.05,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "229": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1981,
+          "y": 0,
+          "w": 946,
+          "h": 720,
+          "widthM": 16.81,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "230": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 716,
+          "y": 720,
+          "w": 962,
+          "h": 720,
+          "widthM": 17.11,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "231": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1280,
+          "y": 0,
+          "w": 701,
+          "h": 720,
+          "widthM": 12.46,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "256": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1445,
+          "y": 2160,
+          "w": 1028,
+          "h": 720,
+          "widthM": 18.27,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "258": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2034,
+          "y": 0,
+          "w": 1001,
+          "h": 720,
+          "widthM": 17.79,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "265": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1973,
+          "y": 720,
+          "w": 834,
+          "h": 720,
+          "widthM": 14.82,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "266": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 0,
+          "w": 1012,
+          "h": 720,
+          "widthM": 17.99,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "267": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 720,
+          "w": 1019,
+          "h": 720,
+          "widthM": 18.12,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "268": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2880,
+          "w": 1028,
+          "h": 720,
+          "widthM": 18.27,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "269": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1976,
+          "y": 1440,
+          "w": 795,
+          "h": 720,
+          "widthM": 14.14,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "270": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2771,
+          "y": 1440,
+          "w": 426,
+          "h": 720,
+          "widthM": 7.58,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "272": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 3469,
+          "y": 720,
+          "w": 321,
+          "h": 579,
+          "widthM": 5.7,
+          "heightM": 10.3
+        }
+      ]
+    },
+    "280": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 1440,
+          "w": 502,
+          "h": 720,
+          "widthM": 8.92,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "281": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 502,
+          "y": 1440,
+          "w": 494,
+          "h": 720,
+          "widthM": 8.79,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "283": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 996,
+          "y": 1440,
+          "w": 506,
+          "h": 321,
+          "widthM": 9,
+          "heightM": 5.7
+        }
+      ]
+    },
+    "409": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1605,
+          "y": 2880,
+          "w": 1064,
+          "h": 720,
+          "widthM": 18.91,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "411": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1105,
+          "y": 1440,
+          "w": 293,
+          "h": 720,
+          "widthM": 5.2,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "412": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2147,
+          "y": 720,
+          "w": 1034,
+          "h": 720,
+          "widthM": 18.39,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "414": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 299,
+          "y": 720,
+          "w": 781,
+          "h": 720,
+          "widthM": 13.89,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "417": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 548,
+          "y": 0,
+          "w": 859,
+          "h": 720,
+          "widthM": 15.27,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "418": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3158,
+          "y": 0,
+          "w": 566,
+          "h": 720,
+          "widthM": 10.06,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "419": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2475,
+          "y": 0,
+          "w": 379,
+          "h": 360,
+          "widthM": 6.73,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "422": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 1721,
+          "y": 1440,
+          "w": 276,
+          "h": 427,
+          "widthM": 4.9,
+          "heightM": 7.6
+        }
+      ]
+    },
+    "424": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 1997,
+          "y": 1440,
+          "w": 338,
+          "h": 461,
+          "widthM": 6,
+          "heightM": 8.2
+        }
+      ]
+    },
+    "430": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2335,
+          "y": 1440,
+          "w": 383,
+          "h": 450,
+          "widthM": 6.8,
+          "heightM": 8
+        }
+      ]
+    },
+    "433": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 2982,
+          "y": 1440,
+          "w": 276,
+          "h": 399,
+          "widthM": 4.9,
+          "heightM": 7.1
+        }
+      ]
+    },
+    "524": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1323,
+          "y": 2880,
+          "w": 282,
+          "h": 720,
+          "widthM": 5.01,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "525": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1028,
+          "y": 2880,
+          "w": 295,
+          "h": 720,
+          "widthM": 5.24,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "526": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2669,
+          "y": 2880,
+          "w": 378,
+          "h": 720,
+          "widthM": 6.72,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "528": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 558,
+          "y": 0,
+          "w": 722,
+          "h": 720,
+          "widthM": 12.83,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "532": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 977,
+          "y": 2880,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "536": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 824,
+          "y": 2880,
+          "w": 413,
+          "h": 360,
+          "widthM": 7.34,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "537": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3585,
+          "y": 2880,
+          "w": 446,
+          "h": 360,
+          "widthM": 7.93,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "538": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1670,
+          "y": 2160,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "539": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1895,
+          "y": 2160,
+          "w": 434,
+          "h": 720,
+          "widthM": 7.72,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "588": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 975,
+          "y": 2160,
+          "w": 470,
+          "h": 720,
+          "widthM": 8.36,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "592": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3197,
+          "y": 1440,
+          "w": 412,
+          "h": 720,
+          "widthM": 7.32,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "593": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2868,
+          "y": 720,
+          "w": 1125,
+          "h": 720,
+          "widthM": 20,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "594": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1466,
+          "y": 1440,
+          "w": 510,
+          "h": 720,
+          "widthM": 9.07,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "598": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 1440,
+          "w": 679,
+          "h": 720,
+          "widthM": 12.07,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "604": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 679,
+          "y": 1440,
+          "w": 506,
+          "h": 383,
+          "widthM": 9,
+          "heightM": 6.8
+        },
+        {
+          "kind": "corner",
+          "x": 1185,
+          "y": 1440,
+          "w": 281,
+          "h": 366,
+          "widthM": 5,
+          "heightM": 6.5
+        }
+      ]
+    },
+    "607": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2160,
+          "w": 975,
+          "h": 720,
+          "widthM": 17.34,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "608": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3032,
+          "y": 720,
+          "w": 437,
+          "h": 720,
+          "widthM": 7.77,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "609": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1019,
+          "y": 720,
+          "w": 954,
+          "h": 720,
+          "widthM": 16.96,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "610": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2473,
+          "y": 2160,
+          "w": 601,
+          "h": 720,
+          "widthM": 10.68,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "615": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2807,
+          "y": 720,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "651": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 720,
+          "w": 561,
+          "h": 720,
+          "widthM": 9.98,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "652": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2332,
+          "y": 720,
+          "w": 1035,
+          "h": 720,
+          "widthM": 18.4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "654": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 561,
+          "y": 720,
+          "w": 646,
+          "h": 720,
+          "widthM": 11.49,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "655": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2853,
+          "y": 0,
+          "w": 765,
+          "h": 720,
+          "widthM": 13.6,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "678": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 0,
+          "w": 768,
+          "h": 720,
+          "widthM": 13.66,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "680": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 768,
+          "y": 0,
+          "w": 411,
+          "h": 720,
+          "widthM": 7.31,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "686": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2512,
+          "y": 2880,
+          "w": 1062,
+          "h": 720,
+          "widthM": 18.88,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "701": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2160,
+          "w": 633,
+          "h": 720,
+          "widthM": 11.25,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "719": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3080,
+          "y": 2880,
+          "w": 505,
+          "h": 720,
+          "widthM": 8.98,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "722": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2163,
+          "y": 2880,
+          "w": 917,
+          "h": 360,
+          "widthM": 16.31,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "729": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2320,
+          "y": 1440,
+          "w": 887,
+          "h": 720,
+          "widthM": 15.77,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "730": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 3626,
+          "y": 2160,
+          "w": 354,
+          "h": 506,
+          "widthM": 6.3,
+          "heightM": 9
+        }
+      ]
+    },
+    "731": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 470,
+          "y": 2880,
+          "w": 354,
+          "h": 506,
+          "widthM": 6.3,
+          "heightM": 9
+        }
+      ]
+    },
+    "753": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1545,
+          "y": 1440,
+          "w": 640,
+          "h": 720,
+          "widthM": 11.38,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "755": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 618,
+          "y": 2160,
+          "w": 1052,
+          "h": 720,
+          "widthM": 18.71,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "757": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3158,
+          "y": 2160,
+          "w": 468,
+          "h": 720,
+          "widthM": 8.32,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "759": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1744,
+          "y": 0,
+          "w": 426,
+          "h": 720,
+          "widthM": 7.57,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "763": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1179,
+          "y": 0,
+          "w": 565,
+          "h": 720,
+          "widthM": 10.05,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "771": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2170,
+          "y": 0,
+          "w": 345,
+          "h": 720,
+          "widthM": 6.14,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "794": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 806,
+          "y": 2160,
+          "w": 251,
+          "h": 720,
+          "widthM": 4.46,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "801": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 3528,
+          "y": 1440,
+          "w": 433,
+          "h": 506,
+          "widthM": 7.7,
+          "heightM": 9
+        }
+      ]
+    },
+    "805": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 1502,
+          "y": 1440,
+          "w": 219,
+          "h": 338,
+          "widthM": 3.9,
+          "heightM": 6
+        }
+      ]
+    },
+    "808": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "terrace",
+          "x": 3258,
+          "y": 1440,
+          "w": 270,
+          "h": 405,
+          "widthM": 4.8,
+          "heightM": 7.2
+        }
+      ]
+    },
+    "840": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1330,
+          "y": 0,
+          "w": 457,
+          "h": 360,
+          "widthM": 8.12,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "841": {
+      "page": 3,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3047,
+          "y": 2880,
+          "w": 395,
+          "h": 720,
+          "widthM": 7.03,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "842": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1787,
+          "y": 0,
+          "w": 247,
+          "h": 360,
+          "widthM": 4.39,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "843": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1012,
+          "y": 0,
+          "w": 318,
+          "h": 720,
+          "widthM": 5.66,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "846": {
+      "page": 4,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3035,
+          "y": 0,
+          "w": 681,
+          "h": 720,
+          "widthM": 12.11,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "865": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 720,
+          "w": 299,
+          "h": 720,
+          "widthM": 5.31,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "866": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2765,
+          "y": 1440,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "867": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1610,
+          "y": 720,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "868": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1398,
+          "y": 1440,
+          "w": 299,
+          "h": 720,
+          "widthM": 5.32,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "869": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1723,
+          "y": 0,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "870": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1407,
+          "y": 0,
+          "w": 316,
+          "h": 720,
+          "widthM": 5.61,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "871": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3406,
+          "y": 720,
+          "w": 304,
+          "h": 720,
+          "widthM": 5.4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "874": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3724,
+          "y": 0,
+          "w": 314,
+          "h": 720,
+          "widthM": 5.58,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "875": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 785,
+          "y": 1440,
+          "w": 320,
+          "h": 720,
+          "widthM": 5.69,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "876": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1697,
+          "y": 1440,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "877": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2854,
+          "y": 0,
+          "w": 304,
+          "h": 720,
+          "widthM": 5.4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "878": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1080,
+          "y": 720,
+          "w": 227,
+          "h": 720,
+          "widthM": 4.03,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "879": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3710,
+          "y": 720,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "880": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1922,
+          "y": 1440,
+          "w": 309,
+          "h": 720,
+          "widthM": 5.49,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "881": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1835,
+          "y": 720,
+          "w": 312,
+          "h": 720,
+          "widthM": 5.54,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "884": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3181,
+          "y": 720,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "885": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 323,
+          "y": 0,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "886": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1948,
+          "y": 0,
+          "w": 302,
+          "h": 720,
+          "widthM": 5.37,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "887": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1307,
+          "y": 720,
+          "w": 303,
+          "h": 720,
+          "widthM": 5.39,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "888": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2250,
+          "y": 0,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "889": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2456,
+          "y": 1440,
+          "w": 309,
+          "h": 720,
+          "widthM": 5.49,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "890": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 2231,
+          "y": 1440,
+          "w": 225,
+          "h": 720,
+          "widthM": 4,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "894": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 0,
+          "w": 323,
+          "h": 720,
+          "widthM": 5.74,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "895": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 0,
+          "y": 2160,
+          "w": 323,
+          "h": 720,
+          "widthM": 5.75,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "942": {
+      "page": 0,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3603,
+          "y": 720,
+          "w": 294,
+          "h": 720,
+          "widthM": 5.23,
+          "heightM": 12.8
+        }
+      ]
+    },
+    "952": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 3685,
+          "y": 2160,
+          "w": 225,
+          "h": 360,
+          "widthM": 4,
+          "heightM": 6.4
+        }
+      ]
+    },
+    "984": {
+      "page": 2,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 1013,
+          "y": 720,
+          "w": 425,
+          "h": 540,
+          "widthM": 7.55,
+          "heightM": 9.600000000000001
+        }
+      ]
+    },
+    "992": {
+      "page": 1,
+      "regions": [
+        {
+          "kind": "all",
+          "x": 323,
+          "y": 2160,
+          "w": 483,
+          "h": 360,
+          "widthM": 8.59,
+          "heightM": 6.4
+        }
+      ]
+    }
+  }
+}

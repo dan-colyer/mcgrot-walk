@@ -125,29 +125,37 @@ export function makeNearestStreetPoint(streetLine) {
   };
 }
 
+// Cumulative arc-length chainage of the point on streetLine closest to
+// (px, pz), from the north end. Shared by computeBuildingChainage below and
+// by the engine's atlas-page lazy loader (both need point -> chainage; a
+// second reimplementation drifting from this one would load the wrong pages
+// at the wrong distance, which is silent — nothing crashes, buildings near a
+// page boundary just intermittently go bare).
+export function chainageOfPoint(px, pz, streetLine) {
+  let best = Infinity;
+  let bestChain = 0;
+  let acc = 0;
+  for (let i = 0; i < streetLine.length - 1; i++) {
+    const [ax, az] = streetLine[i];
+    const [bx, bz] = streetLine[i + 1];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const lenSq = dx * dx + dz * dz;
+    const segLen = Math.sqrt(lenSq);
+    let t = lenSq > 0 ? ((px - ax) * dx + (pz - az) * dz) / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    const d = Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+    if (d < best) { best = d; bestChain = acc + t * segLen; }
+    acc += segLen;
+  }
+  return bestChain;
+}
+
 // Cumulative chainage (arc length from the north end) of every building, keyed
 // by centroid, plus the building index order sorted north -> south. Used both
 // for the engine's anti-repeat spacing and the manifest's chainage field.
 export function computeBuildingChainage(buildings, streetLine) {
-  function chainageOf(px, pz) {
-    let best = Infinity;
-    let bestChain = 0;
-    let acc = 0;
-    for (let i = 0; i < streetLine.length - 1; i++) {
-      const [ax, az] = streetLine[i];
-      const [bx, bz] = streetLine[i + 1];
-      const dx = bx - ax;
-      const dz = bz - az;
-      const lenSq = dx * dx + dz * dz;
-      const segLen = Math.sqrt(lenSq);
-      let t = lenSq > 0 ? ((px - ax) * dx + (pz - az) * dz) / lenSq : 0;
-      t = Math.max(0, Math.min(1, t));
-      const d = Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
-      if (d < best) { best = d; bestChain = acc + t * segLen; }
-      acc += segLen;
-    }
-    return bestChain;
-  }
+  function chainageOf(px, pz) { return chainageOfPoint(px, pz, streetLine); }
   const buildingChainage = new Array(buildings.length).fill(Infinity);
   const buildingOrder = [];
   buildings.forEach((building, bi) => {

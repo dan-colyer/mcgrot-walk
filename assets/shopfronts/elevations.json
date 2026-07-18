@@ -229,6 +229,1230 @@
       "heightM": 5.7,
       "storeys": 3,
       "declutteredGround": false
+    },
+    {
+      "buildingIndex": 678,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b678.jpg",
+      "widthM": 13.66,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 680,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b680.jpg",
+      "widthM": 7.31,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 763,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b763.jpg",
+      "widthM": 10.05,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 759,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b759.jpg",
+      "widthM": 7.57,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 771,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b771.jpg",
+      "widthM": 6.14,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 655,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b655.jpg",
+      "widthM": 13.6,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 651,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b651.jpg",
+      "widthM": 9.98,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 654,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b654.jpg",
+      "widthM": 11.49,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 0,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b0.jpg",
+      "widthM": 20,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 652,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b652.jpg",
+      "widthM": 18.4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 942,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b942.jpg",
+      "widthM": 5.23,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 84,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b84.jpg",
+      "widthM": 9.35,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 171,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b171.jpg",
+      "widthM": 18.11,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 753,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b753.jpg",
+      "widthM": 11.38,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 729,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b729.jpg",
+      "widthM": 15.77,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 90,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b90.jpg",
+      "widthM": 11.2,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 174,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b174.jpg",
+      "widthM": 10.99,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 755,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b755.jpg",
+      "widthM": 18.71,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 538,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b538.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 539,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b539.jpg",
+      "widthM": 7.72,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 86,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b86.jpg",
+      "widthM": 14.74,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 757,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b757.jpg",
+      "widthM": 8.32,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 172,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b172.jpg",
+      "widthM": 8.35,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 536,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b536.jpg",
+      "widthM": 7.34,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 144,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b144.jpg",
+      "widthM": 16.47,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 722,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b722.jpg",
+      "widthM": 16.31,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 719,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b719.jpg",
+      "widthM": 8.98,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 537,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b537.jpg",
+      "widthM": 7.93,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 894,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b894.jpg",
+      "widthM": 5.74,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 885,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b885.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 417,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b417.jpg",
+      "widthM": 15.27,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 870,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b870.jpg",
+      "widthM": 5.61,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 869,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b869.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 886,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b886.jpg",
+      "widthM": 5.37,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 888,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b888.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 419,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b419.jpg",
+      "widthM": 6.73,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 877,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b877.jpg",
+      "widthM": 5.4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 418,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b418.jpg",
+      "widthM": 10.06,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 874,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b874.jpg",
+      "widthM": 5.58,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 865,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b865.jpg",
+      "widthM": 5.31,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 414,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b414.jpg",
+      "widthM": 13.89,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 878,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b878.jpg",
+      "widthM": 4.03,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 887,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b887.jpg",
+      "widthM": 5.39,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 867,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b867.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 881,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b881.jpg",
+      "widthM": 5.54,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 412,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b412.jpg",
+      "widthM": 18.39,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 884,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b884.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 871,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b871.jpg",
+      "widthM": 5.4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 879,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b879.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 6,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b6.jpg",
+      "widthM": 13.95,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 875,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b875.jpg",
+      "widthM": 5.69,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 411,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b411.jpg",
+      "widthM": 5.2,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 868,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b868.jpg",
+      "widthM": 5.32,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 876,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b876.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 880,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b880.jpg",
+      "widthM": 5.49,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 890,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b890.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 889,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b889.jpg",
+      "widthM": 5.49,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 866,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b866.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 895,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b895.jpg",
+      "widthM": 5.75,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 992,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b992.jpg",
+      "widthM": 8.59,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 794,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b794.jpg",
+      "widthM": 4.46,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 100,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b100.jpg",
+      "widthM": 7.75,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 101,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b101.jpg",
+      "widthM": 15.39,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 195,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b195.jpg",
+      "widthM": 12.1,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 186,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b186.jpg",
+      "widthM": 11.46,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 952,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b952.jpg",
+      "widthM": 4,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 102,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b102.jpg",
+      "widthM": 17.37,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 532,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b532.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 189,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b189.jpg",
+      "widthM": 6.23,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 193,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b193.jpg",
+      "widthM": 18.44,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 124,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b124.jpg",
+      "widthM": 15.25,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 187,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b187.jpg",
+      "widthM": 8.64,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 111,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b111.jpg",
+      "widthM": 8.62,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 191,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b191.jpg",
+      "widthM": 18.25,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 110,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b110.jpg",
+      "widthM": 9.63,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 158,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b158.jpg",
+      "widthM": 19.4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 109,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b109.jpg",
+      "widthM": 18,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 984,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b984.jpg",
+      "widthM": 7.55,
+      "heightM": 9.600000000000001,
+      "storeys": 3
+    },
+    {
+      "buildingIndex": 57,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b57.jpg",
+      "widthM": 17.39,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 128,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b128.jpg",
+      "widthM": 20,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 183,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b183.jpg",
+      "widthM": 13.25,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 209,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b209.jpg",
+      "widthM": 6.89,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 205,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b205.jpg",
+      "widthM": 13.66,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 122,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b122.jpg",
+      "widthM": 20,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 200,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b200.jpg",
+      "widthM": 9.06,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 210,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b210.jpg",
+      "widthM": 9.48,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 701,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b701.jpg",
+      "widthM": 11.25,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 198,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b198.jpg",
+      "widthM": 8.87,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 203,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b203.jpg",
+      "widthM": 9.48,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 199,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b199.jpg",
+      "widthM": 9.59,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 204,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b204.jpg",
+      "widthM": 11.11,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 123,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b123.jpg",
+      "widthM": 20,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 15,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b15.jpg",
+      "widthM": 11.06,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 201,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b201.jpg",
+      "widthM": 13.6,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 686,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b686.jpg",
+      "widthM": 18.88,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 217,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b217.jpg",
+      "widthM": 9.92,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 528,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b528.jpg",
+      "widthM": 12.83,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 231,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b231.jpg",
+      "widthM": 12.46,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 229,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b229.jpg",
+      "widthM": 16.81,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 125,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b125.jpg",
+      "widthM": 10.63,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 119,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b119.jpg",
+      "widthM": 12.73,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 230,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b230.jpg",
+      "widthM": 17.11,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 228,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b228.jpg",
+      "widthM": 12.05,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 218,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b218.jpg",
+      "widthM": 9.11,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 593,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b593.jpg",
+      "widthM": 20,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 598,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b598.jpg",
+      "widthM": 12.07,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 594,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b594.jpg",
+      "widthM": 9.07,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 269,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b269.jpg",
+      "widthM": 14.14,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 270,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b270.jpg",
+      "widthM": 7.58,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 592,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b592.jpg",
+      "widthM": 7.32,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 142,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b142.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 607,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b607.jpg",
+      "widthM": 17.34,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 588,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b588.jpg",
+      "widthM": 8.36,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 256,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b256.jpg",
+      "widthM": 18.27,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 610,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b610.jpg",
+      "widthM": 10.68,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 140,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b140.jpg",
+      "widthM": 5.29,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 268,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b268.jpg",
+      "widthM": 18.27,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 525,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b525.jpg",
+      "widthM": 5.24,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 524,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b524.jpg",
+      "widthM": 5.01,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 409,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b409.jpg",
+      "widthM": 18.91,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 526,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b526.jpg",
+      "widthM": 6.72,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 841,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b841.jpg",
+      "widthM": 7.03,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 137,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b137.jpg",
+      "widthM": 6.58,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 266,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b266.jpg",
+      "widthM": 17.99,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 843,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b843.jpg",
+      "widthM": 5.66,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 840,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b840.jpg",
+      "widthM": 8.12,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 842,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b842.jpg",
+      "widthM": 4.39,
+      "heightM": 6.4,
+      "storeys": 2
+    },
+    {
+      "buildingIndex": 258,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b258.jpg",
+      "widthM": 17.79,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 846,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b846.jpg",
+      "widthM": 12.11,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 267,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b267.jpg",
+      "widthM": 18.12,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 609,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b609.jpg",
+      "widthM": 16.96,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 265,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b265.jpg",
+      "widthM": 14.82,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 615,
+      "generated": true,
+      "tier": "cheap",
+      "file": "elevations/b615.jpg",
+      "widthM": 4,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 608,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b608.jpg",
+      "widthM": 7.77,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 280,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b280.jpg",
+      "widthM": 8.92,
+      "heightM": 12.8,
+      "storeys": 4
+    },
+    {
+      "buildingIndex": 281,
+      "generated": true,
+      "tier": "premium",
+      "file": "elevations/b281.jpg",
+      "widthM": 8.79,
+      "heightM": 12.8,
+      "storeys": 4
     }
   ]
 }
