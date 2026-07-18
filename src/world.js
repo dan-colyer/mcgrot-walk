@@ -7,13 +7,13 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES, hash2, fbmP, finishTexture } from './road.js';
+import { buildStreetChain, makeNearestStreetPoint } from './frontage.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
 const RIBBON_HALF_WIDTH = CARRIAGEWAY_HALF_WIDTH + PAVEMENT_WIDTH; // 10m
 const STREET_Y = 0.03; // just above ground plane to avoid z-fighting
 const LEVEL_HEIGHT = 3.2;
-const CHAIN_JOIN_TOLERANCE = 2; // metres, for clustering streetPath endpoints
 
 // Strictly below the street ribbon (STREET_Y = 0.03) and building bases
 // (y = 0) so nothing is ever coplanar with the ground — kills z-fighting.
@@ -213,116 +213,6 @@ function buildRibbonGeometry(path) {
       strip(-RIBBON_HALF_WIDTH, -CARRIAGEWAY_HALF_WIDTH, PAVEMENT_METRES),
       strip(CARRIAGEWAY_HALF_WIDTH, RIBBON_HALF_WIDTH, PAVEMENT_METRES),
     ], false),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Centreline chain: walk streetPaths end-to-end, keep the longest chain
-// ---------------------------------------------------------------------------
-
-function buildStreetChain(streetPaths) {
-  const nodes = []; // { x, z }
-  const nodeOfSeg = []; // [startNodeIdx, endNodeIdx] per segment
-  const adjacency = []; // adjacency[nodeIdx] = [{ segIdx, otherNode }]
-
-  function findOrAddNode(pt) {
-    for (let i = 0; i < nodes.length; i++) {
-      const dx = nodes[i].x - pt[0];
-      const dz = nodes[i].z - pt[1];
-      if (Math.hypot(dx, dz) < CHAIN_JOIN_TOLERANCE) return i;
-    }
-    nodes.push({ x: pt[0], z: pt[1] });
-    return nodes.length - 1;
-  }
-
-  streetPaths.forEach((path, segIdx) => {
-    if (path.length < 2) return;
-    const a = findOrAddNode(path[0]);
-    const b = findOrAddNode(path[path.length - 1]);
-    nodeOfSeg[segIdx] = [a, b];
-    (adjacency[a] ??= []).push({ segIdx, otherNode: b });
-    (adjacency[b] ??= []).push({ segIdx, otherNode: a });
-  });
-
-  const usedSegs = new Set();
-
-  function walkFrom(startNode) {
-    const points = [[nodes[startNode].x, nodes[startNode].z]];
-    let curNode = startNode;
-    while (true) {
-      const options = (adjacency[curNode] || []).filter((o) => !usedSegs.has(o.segIdx));
-      if (options.length === 0) break;
-      const { segIdx, otherNode } = options[0];
-      usedSegs.add(segIdx);
-      const path = streetPaths[segIdx];
-      const [a] = nodeOfSeg[segIdx];
-      const seq = a === curNode ? path : [...path].reverse();
-      for (let i = 1; i < seq.length; i++) points.push(seq[i]);
-      curNode = otherNode;
-    }
-    return points;
-  }
-
-  function chainLength(pts) {
-    let len = 0;
-    for (let i = 1; i < pts.length; i++) {
-      len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    }
-    return len;
-  }
-
-  const chains = [];
-
-  // Start from dead-ends / junctions first (degree != 2), then mop up loops.
-  const startCandidates = nodes.map((_, i) => i).filter((i) => (adjacency[i] || []).length !== 2);
-  for (const s of startCandidates) {
-    const before = usedSegs.size;
-    const pts = walkFrom(s);
-    if (usedSegs.size > before) chains.push(pts);
-  }
-  for (let i = 0; i < nodes.length; i++) {
-    const hasUnused = (adjacency[i] || []).some((o) => !usedSegs.has(o.segIdx));
-    if (hasUnused) chains.push(walkFrom(i));
-  }
-
-  chains.sort((a, b) => chainLength(b) - chainLength(a));
-  const longest = chains[0] || [];
-
-  // Orient north (small z) to south (large z) for predictable spawn/traversal.
-  if (longest.length > 1 && longest[0][1] > longest[longest.length - 1][1]) {
-    longest.reverse();
-  }
-  return longest;
-}
-
-function makeNearestStreetPoint(streetLine) {
-  return function nearestStreetPoint(x, z) {
-    let best = null;
-    let bestDist = Infinity;
-    let bestTangent = null;
-    for (let i = 0; i < streetLine.length - 1; i++) {
-      const [ax, az] = streetLine[i];
-      const [bx, bz] = streetLine[i + 1];
-      const dx = bx - ax;
-      const dz = bz - az;
-      const lenSq = dx * dx + dz * dz;
-      let t = lenSq > 0 ? ((x - ax) * dx + (z - az) * dz) / lenSq : 0;
-      t = Math.max(0, Math.min(1, t));
-      const px = ax + t * dx;
-      const pz = az + t * dz;
-      const dist = Math.hypot(x - px, z - pz);
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = [px, pz];
-        // The closest segment's direction. Callers need it to tell a frontage
-        // that runs ALONG the street from a chamfered corner that cuts across
-        // it at ~45° — the real Leith Walk junctions (Robbie's, the Harp &
-        // Castle) put the pub door on that chamfer.
-        const len = Math.sqrt(lenSq);
-        bestTangent = len > 0 ? [dx / len, dz / len] : [0, 1];
-      }
-    }
-    return { point: best, distance: bestDist, tangent: bestTangent };
   };
 }
 

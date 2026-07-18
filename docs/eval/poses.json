@@ -1,0 +1,1218 @@
+[
+  {
+    "id": "0040-east-close",
+    "chainage": 40,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -17.28,
+      "y": 1.7,
+      "z": 34.88
+    },
+    "lookAt": {
+      "x": -53.64,
+      "y": 1.7,
+      "z": 18.21
+    }
+  },
+  {
+    "id": "0040-east-far",
+    "chainage": 40,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": 4.54,
+      "y": 1.7,
+      "z": 44.88
+    },
+    "lookAt": {
+      "x": -31.82,
+      "y": 1.7,
+      "z": 28.21
+    }
+  },
+  {
+    "id": "0040-west-close",
+    "chainage": 40,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": 4.54,
+      "y": 1.7,
+      "z": 44.88
+    },
+    "lookAt": {
+      "x": 40.9,
+      "y": 1.7,
+      "z": 61.55
+    }
+  },
+  {
+    "id": "0040-west-far",
+    "chainage": 40,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -17.28,
+      "y": 1.7,
+      "z": 34.88
+    },
+    "lookAt": {
+      "x": 19.08,
+      "y": 1.7,
+      "z": 51.55
+    }
+  },
+  {
+    "id": "0125-east-close",
+    "chainage": 125,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -53.13,
+      "y": 1.7,
+      "z": 111.78
+    },
+    "lookAt": {
+      "x": -89.28,
+      "y": 1.7,
+      "z": 94.66
+    }
+  },
+  {
+    "id": "0125-east-far",
+    "chainage": 125,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -31.44,
+      "y": 1.7,
+      "z": 122.05
+    },
+    "lookAt": {
+      "x": -67.59,
+      "y": 1.7,
+      "z": 104.93
+    }
+  },
+  {
+    "id": "0125-west-close",
+    "chainage": 125,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -31.44,
+      "y": 1.7,
+      "z": 122.05
+    },
+    "lookAt": {
+      "x": 4.71,
+      "y": 1.7,
+      "z": 139.17
+    }
+  },
+  {
+    "id": "0125-west-far",
+    "chainage": 125,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -53.13,
+      "y": 1.7,
+      "z": 111.78
+    },
+    "lookAt": {
+      "x": -16.98,
+      "y": 1.7,
+      "z": 128.9
+    }
+  },
+  {
+    "id": "0210-east-close",
+    "chainage": 210,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -89.4,
+      "y": 1.7,
+      "z": 188.32
+    },
+    "lookAt": {
+      "x": -125.13,
+      "y": 1.7,
+      "z": 170.33
+    }
+  },
+  {
+    "id": "0210-east-far",
+    "chainage": 210,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -67.96,
+      "y": 1.7,
+      "z": 199.11
+    },
+    "lookAt": {
+      "x": -103.69,
+      "y": 1.7,
+      "z": 181.13
+    }
+  },
+  {
+    "id": "0210-west-close",
+    "chainage": 210,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -67.96,
+      "y": 1.7,
+      "z": 199.11
+    },
+    "lookAt": {
+      "x": -32.23,
+      "y": 1.7,
+      "z": 217.09
+    }
+  },
+  {
+    "id": "0210-west-far",
+    "chainage": 210,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -89.4,
+      "y": 1.7,
+      "z": 188.32
+    },
+    "lookAt": {
+      "x": -53.67,
+      "y": 1.7,
+      "z": 206.3
+    }
+  },
+  {
+    "id": "0295-east-close",
+    "chainage": 295,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -126.41,
+      "y": 1.7,
+      "z": 265.1
+    },
+    "lookAt": {
+      "x": -162.5,
+      "y": 1.7,
+      "z": 247.83
+    }
+  },
+  {
+    "id": "0295-east-far",
+    "chainage": 295,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -104.77,
+      "y": 1.7,
+      "z": 275.46
+    },
+    "lookAt": {
+      "x": -140.85,
+      "y": 1.7,
+      "z": 258.19
+    }
+  },
+  {
+    "id": "0295-west-close",
+    "chainage": 295,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -104.77,
+      "y": 1.7,
+      "z": 275.46
+    },
+    "lookAt": {
+      "x": -68.69,
+      "y": 1.7,
+      "z": 292.73
+    }
+  },
+  {
+    "id": "0295-west-far",
+    "chainage": 295,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -126.41,
+      "y": 1.7,
+      "z": 265.1
+    },
+    "lookAt": {
+      "x": -90.33,
+      "y": 1.7,
+      "z": 282.37
+    }
+  },
+  {
+    "id": "0380-east-close",
+    "chainage": 380,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -162.89,
+      "y": 1.7,
+      "z": 341.56
+    },
+    "lookAt": {
+      "x": -198.57,
+      "y": 1.7,
+      "z": 323.48
+    }
+  },
+  {
+    "id": "0380-east-far",
+    "chainage": 380,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -141.49,
+      "y": 1.7,
+      "z": 352.41
+    },
+    "lookAt": {
+      "x": -177.17,
+      "y": 1.7,
+      "z": 334.33
+    }
+  },
+  {
+    "id": "0380-west-close",
+    "chainage": 380,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -141.49,
+      "y": 1.7,
+      "z": 352.41
+    },
+    "lookAt": {
+      "x": -105.81,
+      "y": 1.7,
+      "z": 370.5
+    }
+  },
+  {
+    "id": "0380-west-far",
+    "chainage": 380,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -162.89,
+      "y": 1.7,
+      "z": 341.56
+    },
+    "lookAt": {
+      "x": -127.21,
+      "y": 1.7,
+      "z": 359.65
+    }
+  },
+  {
+    "id": "0465-east-close",
+    "chainage": 465,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -200.79,
+      "y": 1.7,
+      "z": 417.8
+    },
+    "lookAt": {
+      "x": -236.66,
+      "y": 1.7,
+      "z": 400.1
+    }
+  },
+  {
+    "id": "0465-east-far",
+    "chainage": 465,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -179.26,
+      "y": 1.7,
+      "z": 428.41
+    },
+    "lookAt": {
+      "x": -215.13,
+      "y": 1.7,
+      "z": 410.72
+    }
+  },
+  {
+    "id": "0465-west-close",
+    "chainage": 465,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -179.26,
+      "y": 1.7,
+      "z": 428.41
+    },
+    "lookAt": {
+      "x": -143.39,
+      "y": 1.7,
+      "z": 446.11
+    }
+  },
+  {
+    "id": "0465-west-far",
+    "chainage": 465,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -200.79,
+      "y": 1.7,
+      "z": 417.8
+    },
+    "lookAt": {
+      "x": -164.91,
+      "y": 1.7,
+      "z": 435.49
+    }
+  },
+  {
+    "id": "0550-east-close",
+    "chainage": 550,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -237.19,
+      "y": 1.7,
+      "z": 494.99
+    },
+    "lookAt": {
+      "x": -273.59,
+      "y": 1.7,
+      "z": 478.39
+    }
+  },
+  {
+    "id": "0550-east-far",
+    "chainage": 550,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -215.36,
+      "y": 1.7,
+      "z": 504.95
+    },
+    "lookAt": {
+      "x": -251.75,
+      "y": 1.7,
+      "z": 488.35
+    }
+  },
+  {
+    "id": "0550-west-close",
+    "chainage": 550,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -215.36,
+      "y": 1.7,
+      "z": 504.95
+    },
+    "lookAt": {
+      "x": -178.97,
+      "y": 1.7,
+      "z": 521.55
+    }
+  },
+  {
+    "id": "0550-west-far",
+    "chainage": 550,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -237.19,
+      "y": 1.7,
+      "z": 494.99
+    },
+    "lookAt": {
+      "x": -200.8,
+      "y": 1.7,
+      "z": 511.59
+    }
+  },
+  {
+    "id": "0635-east-close",
+    "chainage": 635,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -273.13,
+      "y": 1.7,
+      "z": 571.63
+    },
+    "lookAt": {
+      "x": -309.02,
+      "y": 1.7,
+      "z": 553.98
+    }
+  },
+  {
+    "id": "0635-east-far",
+    "chainage": 635,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -251.59,
+      "y": 1.7,
+      "z": 582.22
+    },
+    "lookAt": {
+      "x": -287.49,
+      "y": 1.7,
+      "z": 564.57
+    }
+  },
+  {
+    "id": "0635-west-close",
+    "chainage": 635,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -251.59,
+      "y": 1.7,
+      "z": 582.22
+    },
+    "lookAt": {
+      "x": -215.69,
+      "y": 1.7,
+      "z": 599.87
+    }
+  },
+  {
+    "id": "0635-west-far",
+    "chainage": 635,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -273.13,
+      "y": 1.7,
+      "z": 571.63
+    },
+    "lookAt": {
+      "x": -237.23,
+      "y": 1.7,
+      "z": 589.28
+    }
+  },
+  {
+    "id": "0720-east-close",
+    "chainage": 720,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -309.62,
+      "y": 1.7,
+      "z": 648.58
+    },
+    "lookAt": {
+      "x": -345.75,
+      "y": 1.7,
+      "z": 631.41
+    }
+  },
+  {
+    "id": "0720-east-far",
+    "chainage": 720,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -287.94,
+      "y": 1.7,
+      "z": 658.88
+    },
+    "lookAt": {
+      "x": -324.07,
+      "y": 1.7,
+      "z": 641.71
+    }
+  },
+  {
+    "id": "0720-west-close",
+    "chainage": 720,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -287.94,
+      "y": 1.7,
+      "z": 658.88
+    },
+    "lookAt": {
+      "x": -251.81,
+      "y": 1.7,
+      "z": 676.04
+    }
+  },
+  {
+    "id": "0720-west-far",
+    "chainage": 720,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -309.62,
+      "y": 1.7,
+      "z": 648.58
+    },
+    "lookAt": {
+      "x": -273.49,
+      "y": 1.7,
+      "z": 665.74
+    }
+  },
+  {
+    "id": "0805-east-close",
+    "chainage": 805,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -352.38,
+      "y": 1.7,
+      "z": 720.65
+    },
+    "lookAt": {
+      "x": -386.65,
+      "y": 1.7,
+      "z": 700.02
+    }
+  },
+  {
+    "id": "0805-east-far",
+    "chainage": 805,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -331.81,
+      "y": 1.7,
+      "z": 733.02
+    },
+    "lookAt": {
+      "x": -366.09,
+      "y": 1.7,
+      "z": 712.4
+    }
+  },
+  {
+    "id": "0805-west-close",
+    "chainage": 805,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -331.81,
+      "y": 1.7,
+      "z": 733.02
+    },
+    "lookAt": {
+      "x": -297.54,
+      "y": 1.7,
+      "z": 753.64
+    }
+  },
+  {
+    "id": "0805-west-far",
+    "chainage": 805,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -352.38,
+      "y": 1.7,
+      "z": 720.65
+    },
+    "lookAt": {
+      "x": -318.1,
+      "y": 1.7,
+      "z": 741.27
+    }
+  },
+  {
+    "id": "0890-east-close",
+    "chainage": 890,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -395.97,
+      "y": 1.7,
+      "z": 793.38
+    },
+    "lookAt": {
+      "x": -429.92,
+      "y": 1.7,
+      "z": 772.24
+    }
+  },
+  {
+    "id": "0890-east-far",
+    "chainage": 890,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -375.6,
+      "y": 1.7,
+      "z": 806.07
+    },
+    "lookAt": {
+      "x": -409.55,
+      "y": 1.7,
+      "z": 784.93
+    }
+  },
+  {
+    "id": "0890-west-close",
+    "chainage": 890,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -375.6,
+      "y": 1.7,
+      "z": 806.07
+    },
+    "lookAt": {
+      "x": -341.64,
+      "y": 1.7,
+      "z": 827.22
+    }
+  },
+  {
+    "id": "0890-west-far",
+    "chainage": 890,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -395.97,
+      "y": 1.7,
+      "z": 793.38
+    },
+    "lookAt": {
+      "x": -362.02,
+      "y": 1.7,
+      "z": 814.53
+    }
+  },
+  {
+    "id": "0975-east-close",
+    "chainage": 975,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -441.48,
+      "y": 1.7,
+      "z": 864.57
+    },
+    "lookAt": {
+      "x": -474.58,
+      "y": 1.7,
+      "z": 842.11
+    }
+  },
+  {
+    "id": "0975-east-far",
+    "chainage": 975,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -421.62,
+      "y": 1.7,
+      "z": 878.05
+    },
+    "lookAt": {
+      "x": -454.72,
+      "y": 1.7,
+      "z": 855.59
+    }
+  },
+  {
+    "id": "0975-west-close",
+    "chainage": 975,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -421.62,
+      "y": 1.7,
+      "z": 878.05
+    },
+    "lookAt": {
+      "x": -388.52,
+      "y": 1.7,
+      "z": 900.51
+    }
+  },
+  {
+    "id": "0975-west-far",
+    "chainage": 975,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -441.48,
+      "y": 1.7,
+      "z": 864.57
+    },
+    "lookAt": {
+      "x": -408.38,
+      "y": 1.7,
+      "z": 887.03
+    }
+  },
+  {
+    "id": "1060-east-close",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -490.56,
+      "y": 1.7,
+      "z": 933.55
+    },
+    "lookAt": {
+      "x": -523.03,
+      "y": 1.7,
+      "z": 910.19
+    }
+  },
+  {
+    "id": "1060-east-far",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -471.08,
+      "y": 1.7,
+      "z": 947.57
+    },
+    "lookAt": {
+      "x": -503.55,
+      "y": 1.7,
+      "z": 924.21
+    }
+  },
+  {
+    "id": "1060-west-close",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -471.08,
+      "y": 1.7,
+      "z": 947.57
+    },
+    "lookAt": {
+      "x": -438.62,
+      "y": 1.7,
+      "z": 970.94
+    }
+  },
+  {
+    "id": "1060-west-far",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -490.56,
+      "y": 1.7,
+      "z": 933.55
+    },
+    "lookAt": {
+      "x": -458.1,
+      "y": 1.7,
+      "z": 956.92
+    }
+  },
+  {
+    "id": "1145-east-close",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -540.49,
+      "y": 1.7,
+      "z": 1002.29
+    },
+    "lookAt": {
+      "x": -572.88,
+      "y": 1.7,
+      "z": 978.82
+    }
+  },
+  {
+    "id": "1145-east-far",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -521.06,
+      "y": 1.7,
+      "z": 1016.37
+    },
+    "lookAt": {
+      "x": -553.45,
+      "y": 1.7,
+      "z": 992.9
+    }
+  },
+  {
+    "id": "1145-west-close",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -521.06,
+      "y": 1.7,
+      "z": 1016.37
+    },
+    "lookAt": {
+      "x": -488.67,
+      "y": 1.7,
+      "z": 1039.84
+    }
+  },
+  {
+    "id": "1145-west-far",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -540.49,
+      "y": 1.7,
+      "z": 1002.29
+    },
+    "lookAt": {
+      "x": -508.1,
+      "y": 1.7,
+      "z": 1025.76
+    }
+  },
+  {
+    "id": "1230-east-close",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -589.59,
+      "y": 1.7,
+      "z": 1071.44
+    },
+    "lookAt": {
+      "x": -621.6,
+      "y": 1.7,
+      "z": 1047.45
+    }
+  },
+  {
+    "id": "1230-east-far",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -570.38,
+      "y": 1.7,
+      "z": 1085.83
+    },
+    "lookAt": {
+      "x": -602.39,
+      "y": 1.7,
+      "z": 1061.84
+    }
+  },
+  {
+    "id": "1230-west-close",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -570.38,
+      "y": 1.7,
+      "z": 1085.83
+    },
+    "lookAt": {
+      "x": -538.37,
+      "y": 1.7,
+      "z": 1109.81
+    }
+  },
+  {
+    "id": "1230-west-far",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -589.59,
+      "y": 1.7,
+      "z": 1071.44
+    },
+    "lookAt": {
+      "x": -557.58,
+      "y": 1.7,
+      "z": 1095.42
+    }
+  },
+  {
+    "id": "1315-east-close",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -640.9,
+      "y": 1.7,
+      "z": 1138.97
+    },
+    "lookAt": {
+      "x": -672.56,
+      "y": 1.7,
+      "z": 1114.52
+    }
+  },
+  {
+    "id": "1315-east-far",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -621.91,
+      "y": 1.7,
+      "z": 1153.65
+    },
+    "lookAt": {
+      "x": -653.56,
+      "y": 1.7,
+      "z": 1129.19
+    }
+  },
+  {
+    "id": "1315-west-close",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -621.91,
+      "y": 1.7,
+      "z": 1153.65
+    },
+    "lookAt": {
+      "x": -590.26,
+      "y": 1.7,
+      "z": 1178.1
+    }
+  },
+  {
+    "id": "1315-west-far",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -640.9,
+      "y": 1.7,
+      "z": 1138.97
+    },
+    "lookAt": {
+      "x": -609.25,
+      "y": 1.7,
+      "z": 1163.43
+    }
+  },
+  {
+    "id": "1400-east-close",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -692.07,
+      "y": 1.7,
+      "z": 1206.99
+    },
+    "lookAt": {
+      "x": -723.97,
+      "y": 1.7,
+      "z": 1182.85
+    }
+  },
+  {
+    "id": "1400-east-far",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -672.94,
+      "y": 1.7,
+      "z": 1221.47
+    },
+    "lookAt": {
+      "x": -704.83,
+      "y": 1.7,
+      "z": 1197.34
+    }
+  },
+  {
+    "id": "1400-west-close",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -672.94,
+      "y": 1.7,
+      "z": 1221.47
+    },
+    "lookAt": {
+      "x": -641.04,
+      "y": 1.7,
+      "z": 1245.61
+    }
+  },
+  {
+    "id": "1400-west-far",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -692.07,
+      "y": 1.7,
+      "z": 1206.99
+    },
+    "lookAt": {
+      "x": -660.18,
+      "y": 1.7,
+      "z": 1231.13
+    }
+  },
+  {
+    "id": "1485-east-close",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -740.6,
+      "y": 1.7,
+      "z": 1278.6
+    },
+    "lookAt": {
+      "x": -775.46,
+      "y": 1.7,
+      "z": 1258.97
+    }
+  },
+  {
+    "id": "1485-east-far",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -719.69,
+      "y": 1.7,
+      "z": 1290.38
+    },
+    "lookAt": {
+      "x": -754.54,
+      "y": 1.7,
+      "z": 1270.75
+    }
+  },
+  {
+    "id": "1485-west-close",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -719.69,
+      "y": 1.7,
+      "z": 1290.38
+    },
+    "lookAt": {
+      "x": -684.84,
+      "y": 1.7,
+      "z": 1310.01
+    }
+  },
+  {
+    "id": "1485-west-far",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -740.6,
+      "y": 1.7,
+      "z": 1278.6
+    },
+    "lookAt": {
+      "x": -705.75,
+      "y": 1.7,
+      "z": 1298.23
+    }
+  },
+  {
+    "id": "1570-east-close",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "close",
+    "camera": {
+      "x": -780.86,
+      "y": 1.7,
+      "z": 1354.63
+    },
+    "lookAt": {
+      "x": -817.29,
+      "y": 1.7,
+      "z": 1338.12
+    }
+  },
+  {
+    "id": "1570-east-far",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "far",
+    "camera": {
+      "x": -759,
+      "y": 1.7,
+      "z": 1364.54
+    },
+    "lookAt": {
+      "x": -795.43,
+      "y": 1.7,
+      "z": 1348.03
+    }
+  },
+  {
+    "id": "1570-west-close",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "close",
+    "camera": {
+      "x": -759,
+      "y": 1.7,
+      "z": 1364.54
+    },
+    "lookAt": {
+      "x": -722.57,
+      "y": 1.7,
+      "z": 1381.05
+    }
+  },
+  {
+    "id": "1570-west-far",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "far",
+    "camera": {
+      "x": -780.86,
+      "y": 1.7,
+      "z": 1354.63
+    },
+    "lookAt": {
+      "x": -744.43,
+      "y": 1.7,
+      "z": 1371.15
+    }
+  }
+]

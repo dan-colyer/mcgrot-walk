@@ -1,0 +1,458 @@
+[
+  {
+    "id": "0040-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The upper storeys show an obviously tiled window-bay texture repeated as wallpaper, breaking the illusion immediately."
+  },
+  {
+    "id": "0040-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close-up on a wall shows a mirrored/backwards shop sign reading like '\u042fAB JA\u042f' instead of legible text."
+  },
+  {
+    "id": "0040-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The shopfront sign reads as a garbled mix of Latin letters and unrelated glyphs ('e 5\u8bcd ABER'), not any coherent real shop name."
+  },
+  {
+    "id": "0040-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The entire building facade is made of one window-bay module copy-pasted repeatedly across the whole width, clearly readable as wallpaper tiling."
+  },
+  {
+    "id": "0125-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The central building shows the same window/wall tile stacked four times vertically in an obvious repeating grid."
+  },
+  {
+    "id": "0125-east-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The corner facade texture is skewed at a steep diagonal angle that doesn't match its flat vertical mounting, and the street sign text is mirrored."
+  },
+  {
+    "id": "0125-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The nearest building is a plain untextured brown/grey box with no windows or shopfront at all, and a skewed photo fragment is pasted on an adjacent wall at the wrong angle."
+  },
+  {
+    "id": "0125-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The curved corner building shows a diagonal-striped panel tiled in a clear 3x3 repeating grid around the corner."
+  },
+  {
+    "id": "0210-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The right-hand building shows the same pair of arched windows duplicated identically stacked on top of itself."
+  },
+  {
+    "id": "0210-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The shopfront sign reads backwards/mirrored ('LEITH MAKERS' appears flipped), breaking the illusion of a real shop sign."
+  },
+  {
+    "id": "0210-west-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Readable 'LEITH ARCHES' venue signage with coherent stonework and windows above; a distant building on the right is soft/blurred but shows no clear stretching, mirroring, or repetition fault."
+  },
+  {
+    "id": "0210-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of distinct, legibly-named shopfronts sits under coherent upper-storey stonework with no obvious stretching or tiling."
+  },
+  {
+    "id": "0295-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The shopfront under the 'CONTINENT...' sign and flags shows a photo of a residential stone stairwell/entrance with railings rather than any kind of shop window or door, an incoherent mismatched fragment."
+  },
+  {
+    "id": "0295-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The 'FISH & CHIPS' sign and a neighbouring sign are mirrored/reversed, rendering the shopfront text backwards and illegible as real signage."
+  },
+  {
+    "id": "0295-west-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "A building segment in the middle of frame is visible edge-on as a paper-thin flat plane with no depth, and the adjoining left-hand facade shows windows sheared into parallelogram shapes, breaking the sense of solid architecture."
+  },
+  {
+    "id": "0295-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Background facades read as coherent real buildings; a low-poly foreground prop is a stylistic mismatch but not a facade texture fault."
+  },
+  {
+    "id": "0380-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The identical 'EASY TAN' shopfront and its window-bay tile above are duplicated side by side, an obvious wallpapered repeat rather than distinct building units."
+  },
+  {
+    "id": "0380-east-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The same storefront reappears again beside others, with the upper floors showing an obviously tiled diagonal crosshatch pattern repeated across multiple building bays."
+  },
+  {
+    "id": "0380-west-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Foreground tenement facades with balconies and windows read as coherent buildings; the flat-toned gable end walls further down the gap are plausible as exposed party walls of demolished neighbours."
+  },
+  {
+    "id": "0380-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Despite legible shopfronts, both flanking buildings' upper storeys show the same diagonal crosshatch tile repeated many times in an obvious wallpaper pattern."
+  },
+  {
+    "id": "0465-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The upper stonework/window bays repeat as an obvious identical tile 3-4 times across the frame, reading as wallpaper rather than a real facade."
+  },
+  {
+    "id": "0465-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfront signage 'ALHAMBRA BAR' and 'LA BELLE ADVENTURE' is mirrored/backwards text, breaking the illusion immediately."
+  },
+  {
+    "id": "0465-west-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Near head-on view of a Georgian frontage with 'MIGHTY BARBERS AND BEAUTY' signage reads coherently as a real shop with consistent upper-storey windows."
+  },
+  {
+    "id": "0465-west-far",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Near the corner by 'ALHAMBRA BAR' the stone texture visibly warps/smears into a curved blur rather than meeting at a clean corner."
+  },
+  {
+    "id": "0550-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Close-up upper facade shows the same window-and-masonry tile repeated identically left, centre, and right of frame."
+  },
+  {
+    "id": "0550-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Signage reads 'SEA BREEZE CAFE' and 'GILMOUR' mirrored/backwards, an immediate tell that breaks the illusion."
+  },
+  {
+    "id": "0550-west-close",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Mid-distance buildings down the street are flat, texture-less grey/brown boxes with no windows or detail, breaking the illusion of a real street."
+  },
+  {
+    "id": "0550-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The right-hand building shows an obvious tiled diamond/lattice window pattern repeating both vertically and horizontally like wallpaper."
+  },
+  {
+    "id": "0635-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The left building's window bays repeat identically down its curved surface, an unmistakable tiling artefact."
+  },
+  {
+    "id": "0635-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Signage 'INDO SOUL' and '+48 TATTOO SALOON' is mirrored/backwards, immediately breaking the illusion."
+  },
+  {
+    "id": "0635-west-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "A close near-camera building wall fills most of the right two-thirds of frame at a steep diagonal, verticals leaning hard and texture smeared out of proportion."
+  },
+  {
+    "id": "0635-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Ground-floor frontages (Balfour Street, +48 Tattoo Salon, Indo Soul, Arthur's, Your Move, Druid) are flat black bars with plain white text, not photographic or coherent shopfronts."
+  },
+  {
+    "id": "0720-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The 'CAKE BOX' unit is a flat black bar with plain text and no shopfront detail, even though the barber shop further along the row reads well."
+  },
+  {
+    "id": "0720-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The 'BRAID VETS' signage is mirrored/backwards, reading as garbled reversed text rather than a real shop sign."
+  },
+  {
+    "id": "0720-west-close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "The central Tesco Express frontage reads well, but both left and right frame edges are dominated by extreme close-up, smeared/stretched wall textures from camera-clipping proximity."
+  },
+  {
+    "id": "0720-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Entire shopfront row (Wellers, Cherry Bay Cafe, Bardics Ltd, Vacuum Exchange, Braid Vets, Cupp) is flat placeholder text bars, and the upper-storey tenement texture shows visible repeat seams."
+  },
+  {
+    "id": "0805-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfronts (AR Alterations & Dry Cleaning, Kukina, Tas...) are flat black text-label bars with no real shopfront imagery."
+  },
+  {
+    "id": "0805-east-far",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Building facade texture is severely warped into diagonal streaky smears, unrecognisable as brick or stonework."
+  },
+  {
+    "id": "0805-west-close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Upper-storey texture on the left building breaks into distorted triangular slices through the windows, and the right edge again shows a smeared close-up wall."
+  },
+  {
+    "id": "0805-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfronts (Yellow Express, Regions Beyond, Bee Tech) are flat text-label bars, and the curved corner building has a warped diamond-zigzag brick texture that doesn't read as real masonry."
+  },
+  {
+    "id": "0890-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The upper-storey window bays and masonry are visibly the same tile repeated three times across the frame, while the ground floor shows generic 'STARLIGHT' and 'SCOTMID' shutter signage with no real shop detail."
+  },
+  {
+    "id": "0890-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop signage reads as mirrored/backwards text, making the frontages illegible, and the upper floor windows are also clearly tiled/repeated."
+  },
+  {
+    "id": "0890-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "A curved building corner shows an obviously wallpapered grid of identical window/masonry tiles repeating both horizontally and vertically around the curve."
+  },
+  {
+    "id": "0890-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The central building's upper storeys show the same window-bay texture tiled in an unmistakable repeating grid, despite legible shop signs ('PC Repair Man', 'William Hill') at street level."
+  },
+  {
+    "id": "0975-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Despite readable ground-floor signage (Starbucks, Sainsbury's Local, Pret A Manger), the masonry/window texture above is clearly the same tile duplicated three times across the facade."
+  },
+  {
+    "id": "0975-east-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "A large stretch of upper facade is an obvious wallpapered repeat of one window-bay tile, tiled roughly 4x2 times above the shopfronts."
+  },
+  {
+    "id": "0975-west-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of legible, distinct shopfronts (Word of Mouth Bistro Cafe, a Market/Butchers) recedes down a plausible narrow street with no obvious stretching, repetition, or mis-angled textures."
+  },
+  {
+    "id": "0975-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "A large curved building on the left shows an unmistakable repeating grid of identical window/masonry tiles wrapped around its facade."
+  },
+  {
+    "id": "1060-east-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "On the left, photographic panels showing a duplicated street-lamp are pasted at odd, leaning angles that don't match the wall geometry, causing verticals to tilt unnaturally."
+  },
+  {
+    "id": "1060-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "A shop sign reads as mirrored/backwards text, immediately breaking the illusion of a real storefront."
+  },
+  {
+    "id": "1060-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Upper floors show a noisy, mottled grid of small window-like patches with no clear coherent stonework, and the right side of frame is dominated by an extreme close, heavily blurred wall segment that reads as nothing recognisable."
+  },
+  {
+    "id": "1060-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of distinct, legible shopfronts with plausible tenement windows and curtains above; one facade is noticeably lighter/flatter in tone than its neighbours but this reads as a lighting quibble rather than a structural fault."
+  },
+  {
+    "id": "1145-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Left-hand fascia reads 'MADEB', a nonsensical fragment that doesn't resolve to any coherent real-world shop name, even though the neighbour is fine."
+  },
+  {
+    "id": "1145-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Both shopfront signs ('TESCO EXPRESS' and 'NOT JUST COFFEE') are mirrored/backwards, making the lettering read as reversed text rather than a coherent real-world shop sign, which immediately breaks the illusion."
+  },
+  {
+    "id": "1145-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Both fascia signs are mirrored/rendered backwards, which no real shopfront would ever show and immediately breaks the illusion."
+  },
+  {
+    "id": "1145-west-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The upper-floor facade texture has a diagonal slanted roofline baked into it that doesn't match the flat vertical building geometry, and near-identical building segments repeat across the row."
+  },
+  {
+    "id": "1230-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The same column-and-window masonry tile is visibly repeated (twice on the left, three times on the right) as an obvious wallpaper pattern above the shopfronts."
+  },
+  {
+    "id": "1230-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Every fascia sign in view is mirrored/backwards text, breaking the illusion outright."
+  },
+  {
+    "id": "1230-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Aside from one legible shopfront, the entire flank wall is a long, featureless stretch of uniformly tiled brick texture with no windows or architectural variation for an implausible distance."
+  },
+  {
+    "id": "1230-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The corner building's upper storeys show the same window-and-pilaster bay tiled roughly four times in an obviously uniform repeat, though the ground-floor shop signage is legible and correctly oriented here."
+  },
+  {
+    "id": "1315-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Ground-floor units are just flat dark bars with white shop-name text and no photographic shopfront imagery at all, so nothing reads as an actual shop frontage."
+  },
+  {
+    "id": "1315-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The 'PACK & SEND' and neighbouring shop sign text is mirrored/backwards, and the shutters are the same generic unlit dark-bar treatment with no real shopfront detail."
+  },
+  {
+    "id": "1315-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera looks into a gap between two buildings showing bare, windowless brick side elevations and open ground with no coherent ground-floor frontage at all."
+  },
+  {
+    "id": "1315-west-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The left-hand building's whole facade leans at a clear diagonal angle (windows and stonework tilted off-vertical), and the shopfronts below are again flat text-on-dark-bar placeholders."
+  },
+  {
+    "id": "1400-east-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The 'Edinburgh Central Youth Hostel' building shows the same window-and-poster tile repeated identically four times straight up the facade."
+  },
+  {
+    "id": "1400-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The 'PHONE SPOT' shop sign text is mirrored/backwards over a plain dark shutter, breaking any sense of a real shopfront."
+  },
+  {
+    "id": "1400-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Although the 'S. WINES & SPIRITS' shopfront itself reads reasonably well, the adjoining building to its right shows an identical window-bay pattern tiled repeatedly across its upper floors."
+  },
+  {
+    "id": "1400-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Long run of ground-floor units (The Cat's Miaou, Guajira, Phone Spot, etc.) are all flat dark bars with text labels only, none reading as a real shop frontage."
+  },
+  {
+    "id": "1485-east-close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "The building above the Christadelphian Church sign is badly warped/leaning with a stretched, fluted vertical striping texture that doesn't match real masonry or a coherent camera angle."
+  },
+  {
+    "id": "1485-east-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "From further back the same building still shows a pronounced diagonal lean and stretched ribbed texture on its side wall, clearly breaking the street's realism."
+  },
+  {
+    "id": "1485-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The right-hand terrace block shows an identical window-bay tile repeated multiple times across its width with no perspective diminishment, reading as a wallpapered texture rather than a real receding facade."
+  },
+  {
+    "id": "1485-west-far",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "A section of the terrace near the Max Spielmann/Johnsons shopfronts shows an obvious diagonal cross-hatch texture band, clearly a skewed/stretched texture rather than masonry or windows."
+  },
+  {
+    "id": "1570-east-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The gable-end building's window texture is mapped onto a triangular wall shape, making the window verticals lean sharply at an angle instead of standing straight."
+  },
+  {
+    "id": "1570-east-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Same terrace row viewed from farther back still shows leaning, skewed windows on the near gable-end building where the texture is stretched across an angled wall segment."
+  },
+  {
+    "id": "1570-west-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The curved corner building beside the Ladbrokes unit shows its window texture visibly bending and warping around the curved facets, with windows narrowing and slanting unnaturally toward the corner."
+  },
+  {
+    "id": "1570-west-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "From a wider vantage the same curved corner building's upper-storey window strips are still visibly twisted/warped around the rotunda shape, breaking the illusion of a real masonry corner."
+  }
+]
