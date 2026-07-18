@@ -57,6 +57,10 @@ const manifest = JSON.parse(readFileSync(join(shopDir, 'manifest.json'), 'utf8')
 const elev = JSON.parse(readFileSync(join(shopDir, 'elevations.json'), 'utf8'));
 const names = JSON.parse(readFileSync(join(shopDir, 'signage-names.json'), 'utf8'));
 const nameIndex = new Map(names.map((n, i) => [n, i]));
+// D4.1/W2 — a handmade elevation already carries real, photographed
+// signage; overlaying the name atlas on top would double it up.
+const handmadePath = join(shopDir, 'handmade.json');
+const handmade = existsSync(handmadePath) ? JSON.parse(readFileSync(handmadePath, 'utf8')) : {};
 
 const genByBuilding = new Map(elev.elevations.filter((e) => e.generated).map((e) => [e.buildingIndex, e]));
 
@@ -73,7 +77,7 @@ let done = 0, skippedNoElev = 0, skippedNarrow = 0;
 const missingNames = new Set();
 
 for (const b of manifest.buildings) {
-  if (b.placedSlug || !b.businesses.length) continue;
+  if (b.placedSlug || !b.businesses.length || handmade[b.buildingIndex]) continue;
   const g = genByBuilding.get(b.buildingIndex);
   if (!g || g.tier !== 'premium') { skippedNoElev++; continue; }
   const imgPath = join(elevDir, `b${b.buildingIndex}.jpg`);
