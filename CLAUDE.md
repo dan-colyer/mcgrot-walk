@@ -21,7 +21,9 @@ the architecture session).
 milestone end-to-end: reading and modifying code, running builds, browser QA via
 the preview harness, and iterating until the milestone is complete — fix issues
 rather than handing control back. It finishes with a concise implementation
-summary (what changed, what was verified, anything that deviated from the brief).
+summary (what changed, what was verified, anything that deviated from the brief)
+— copy that summary to the clipboard (`/cb`) as the last step, so it's ready to
+paste into the Fable session for review.
 
 **Session boundaries.** Planning, implementation and review are separate phases:
 
