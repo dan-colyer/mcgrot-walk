@@ -48,6 +48,12 @@ const GRADE = 'eq=saturation=0.42:contrast=1.08:brightness=-0.10,colorbalance=rs
 const manifest = JSON.parse(readFileSync(join(shopDir, 'manifest.json'), 'utf8'));
 const targets = manifest.buildings.filter((b) => !b.placedSlug && (!ONLY || ONLY.has(b.buildingIndex)));
 
+// D4.1/W1 — a borrow-filled building (assets/shopfronts/borrowed.json) has a
+// b<index>.jpg on disk but it's a donor's image, not this building's own
+// generation — treat it as missing so a real generation replaces it freely.
+const borrowedPath = join(shopDir, 'borrowed.json');
+const borrowed = existsSync(borrowedPath) ? JSON.parse(readFileSync(borrowedPath, 'utf8')) : {};
+
 mkdirSync(genDir, { recursive: true });
 mkdirSync(elevDir, { recursive: true });
 
@@ -202,7 +208,7 @@ function skyTrimTopPx(path, w, h) {
 }
 
 const jobs = targets.map((b) => ({ b, spec: buildSpec(b) }));
-const pending = jobs.filter((j) => FORCE || !existsSync(join(elevDir, `b${j.b.buildingIndex}.jpg`)));
+const pending = jobs.filter((j) => FORCE || !existsSync(join(elevDir, `b${j.b.buildingIndex}.jpg`)) || borrowed[j.b.buildingIndex] !== undefined);
 const estUsd = pending.reduce((s, j) => s + PRICE[j.spec.model], 0);
 const premiumN = pending.filter((j) => j.spec.tier === 'premium').length;
 const cheapN = pending.length - premiumN;
@@ -213,8 +219,10 @@ if (estUsd > HARD_CAP_USD) { console.error('ABORT: estimated spend exceeds cap')
 if (!pending.length) { console.log('Nothing to do (pass --force to regenerate).'); process.exit(0); }
 
 console.log(`\nPreflight: b${pending[0].b.buildingIndex} (${pending[0].spec.tier}, ${pending[0].spec.genW}x${pending[0].spec.genH})`);
+const generatedIndices = new Set();
 try {
   await generateOne(pending[0].b, pending[0].spec);
+  generatedIndices.add(pending[0].b.buildingIndex);
   console.log(`Preflight OK. Running spend: $${spendUsd.toFixed(4)}\n`);
 } catch (err) {
   console.error(`PREFLIGHT FAILED: ${err.message}`);
@@ -230,6 +238,7 @@ for (const { b, spec } of pending.slice(1)) {
   }
   try {
     await generateOne(b, spec);
+    generatedIndices.add(b.buildingIndex);
     done++;
     if (done % 10 === 0) console.log(`  ${done}/${pending.length} done, spend $${spendUsd.toFixed(4)}`);
   } catch (err) {
@@ -243,13 +252,17 @@ console.log(`\n${done} generated, ${failed} failed. Actual spend: $${spendUsd.to
 if (failedList.length) console.log(`Failed building indices: ${failedList.join(', ')}`);
 
 // --- merge into elevations.json ---
+// Only buildings actually generated THIS run (generatedIndices) get a fresh
+// entry — a `jobs` member whose file merely exists because it was
+// borrow-filled (D4.1/W1) and wasn't reached before the spend cap must keep
+// its borrowed entry (donor-cropped widthM) untouched, or the atlas packer
+// would stretch its still-donor-sized image to the wrong declared width.
 const elevJsonPath = join(shopDir, 'elevations.json');
 const elev = JSON.parse(readFileSync(elevJsonPath, 'utf8'));
 const bySlugPlane = new Map(elev.elevations.filter((e) => !e.generated).map((e) => [`${e.slug}#${e.plane}`, e]));
 const byBuilding = new Map(elev.elevations.filter((e) => e.generated).map((e) => [e.buildingIndex, e]));
 for (const { b, spec } of jobs) {
-  const outPath = join(elevDir, `b${b.buildingIndex}.jpg`);
-  if (!existsSync(outPath)) continue;
+  if (!generatedIndices.has(b.buildingIndex)) continue;
   byBuilding.set(b.buildingIndex, {
     buildingIndex: b.buildingIndex, generated: true, tier: spec.tier,
     file: `elevations/b${b.buildingIndex}.jpg`,
@@ -259,4 +272,14 @@ for (const { b, spec } of jobs) {
 elev.elevations = [...bySlugPlane.values(), ...byBuilding.values()];
 writeFileSync(elevJsonPath, JSON.stringify(elev, null, 2));
 console.log(`elevations.json updated: ${elev.elevations.length} total (${byBuilding.size} generated).`);
+
+if (generatedIndices.size && existsSync(borrowedPath)) {
+  const stillBorrowed = JSON.parse(readFileSync(borrowedPath, 'utf8'));
+  let cleared = 0;
+  for (const bi of generatedIndices) if (stillBorrowed[bi] !== undefined) { delete stillBorrowed[bi]; cleared++; }
+  if (cleared) {
+    writeFileSync(borrowedPath, JSON.stringify(stillBorrowed, null, 2));
+    console.log(`borrowed.json: cleared ${cleared} entr${cleared === 1 ? 'y' : 'ies'} now covered by a real generation.`);
+  }
+}
 if (failed) process.exitCode = 1;
