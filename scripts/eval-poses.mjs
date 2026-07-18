@@ -19,6 +19,51 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const evalDir = join(root, 'docs/eval');
 
 const streetLine = JSON.parse(readFileSync(join(evalDir, 'streetline.json'), 'utf8'));
+const manifest = JSON.parse(readFileSync(join(root, 'assets/shopfronts/manifest.json'), 'utf8'));
+
+// D4.1/W3 — corridor clamp. The street polyline hugs the west building line
+// in places (it stitched a minor OSM way), so a naive 12m offset can land a
+// pose INSIDE or BEHIND a building there, letting the camera see the back
+// face of a shopfront quad. For each candidate pose, pull the camera out to
+// ~2m in front of the nearest frontage run it would otherwise cross. Outward
+// direction per run is resolved via the coarse street-tangent + side-sign
+// heuristic (no full footprint/centroid available in manifest.json) — good
+// enough to fix "camera behind the wall", not a precise per-run normal.
+const CLAMP_MARGIN = 2;      // metres kept in front of a crossed frontage plane
+const CHAINAGE_WINDOW = 20;  // metres — only buildings this close to the pose's chainage are candidates
+
+const buildingsBySide = { east: [], west: [] };
+for (const b of manifest.buildings) {
+  if (b.side === 'east' || b.side === 'west') buildingsBySide[b.side].push(b);
+}
+
+function clampPose(camX, camZ, chainage, side, streetNx, streetNz) {
+  const sideSign = side === 'east' ? 1 : -1;
+  let best = null;
+  for (const b of buildingsBySide[side]) {
+    if (Math.abs(b.chainage - chainage) > CHAINAGE_WINDOW) continue;
+    for (const run of b.runs) {
+      const ddx = run.bx - run.ax, ddz = run.bz - run.az;
+      const len = Math.hypot(ddx, ddz);
+      if (len < 0.3) continue;
+      const ux = ddx / len, uz = ddz / len;
+      // Outward (building -> street) points toward the centreline, i.e.
+      // OPPOSITE the side's own stand direction (an east-side building's
+      // frontage faces west) — flip toward -sideSign*streetN, not +sideSign*streetN.
+      let nx = -uz, nz = ux;
+      if (nx * streetNx * sideSign + nz * streetNz * sideSign > 0) { nx = -nx; nz = -nz; }
+      const t = ((camX - run.ax) * ux + (camZ - run.az) * uz) / len;
+      if (t < -0.1 || t > 1.1) continue; // camera doesn't project onto this run
+      const d = nx * (camX - run.ax) + nz * (camZ - run.az);
+      if (d < CLAMP_MARGIN && (!best || d < best.d)) {
+        const clampedT = Math.max(0, Math.min(1, t));
+        const px = run.ax + clampedT * ddx, pz = run.az + clampedT * ddz;
+        best = { d, x: px + nx * CLAMP_MARGIN, z: pz + nz * CLAMP_MARGIN };
+      }
+    }
+  }
+  return best;
+}
 
 const CHAINAGE_STEP = 85; // metres — same spacing as the D0 audit (docs/audit/)
 const SIDE_OFFSET = 12;   // metres from centreline — matches the brief's "~12m
@@ -80,8 +125,11 @@ for (let chainage = 40; chainage < totalLen; chainage += CHAINAGE_STEP) {
       // close: stand ON the target side, 12m out, looking outward at it.
       // far: stand on the OPPOSITE side, 12m out, looking across at it.
       const standSign = distance === 'close' ? sign : -sign;
-      const camX = x + nx * SIDE_OFFSET * standSign;
-      const camZ = z + nz * SIDE_OFFSET * standSign;
+      const standSide = standSign === 1 ? 'east' : 'west';
+      let camX = x + nx * SIDE_OFFSET * standSign;
+      let camZ = z + nz * SIDE_OFFSET * standSign;
+      const clamp = clampPose(camX, camZ, chainage, standSide, nx, nz);
+      if (clamp) { camX = clamp.x; camZ = clamp.z; }
       const lookX = camX + nx * sign * 40; // look far enough to face the target side
       const lookZ = camZ + nz * sign * 40;
       poses.push({

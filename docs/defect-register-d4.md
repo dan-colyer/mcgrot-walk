@@ -161,3 +161,171 @@ winding bug) is the next highest-value fix after that.
   automated script, because there's no headless-browser dependency in this
   project (constraint: no new npm deps) and canvas text rendering needs a
   DOM. Re-running it only matters if `signage-names.json` changes.
+
+## D4.1 — coverage stopgap, hand-made pipeline, back-face fix, re-score
+
+Four workstreams closing D4's biggest gaps without further Together spend:
+W1 borrow-fills missing elevations from similar donor buildings, W2 builds a
+loop for Dan's manual ChatGPT-generated shopfronts, W3 fixes the back-face
+mirroring defect and re-scores the full 76-pose blind eval (this time with
+no missing batch). See `git log` (`D4.1/W1`-`D4.1/W3`) for the commit-level
+record.
+
+### W1 — borrow-fill (73/79 filled, zero Together spend)
+
+`scripts/borrow-elevations.mjs` copies a same-storey donor's already-generated
+elevation for a building with none, subject to: donor ≥150m away in
+chainage, donor not already borrowed by a neighbour within 150m, and never a
+real-photo building. Donor image is centre-cropped to the borrower's own
+width (never stretched — heightM already matches exactly since it's
+storey-derived, not photo-derived). Verified programmatically: 0 spacing
+violations across 73 borrows, 59 unique donors. `assets/shopfronts/borrowed.json`
+records every borrow; `gen-facade-elevations.mjs` and `ingest-handmade.mjs`
+both treat a borrowed file as MISSING so a real generation or handmade drop
+replaces it freely (and clears the borrowed.json entry).
+
+**6 buildings remain unfillable** (940, 962, 73, 150, 440, 30) — all have a
+rare storey count (5 or 6 storeys; only 1-3 buildings citywide share that
+count) with no eligible same-storey donor within the spacing rules. The
+brief's "±0 storeys" constraint was kept strict rather than quietly loosened
+to cover these — they're flagged at the top of the W2 wishlist instead (5 of
+the 6 have known businesses; b440 has none, so it isn't on the wishlist and
+stays bare-stone background fill, same as any other unnamed building).
+
+### W2 — hand-made pipeline (built, tested, zero real drops yet)
+
+`docs/shopfront-wishlist.md` — 151 frontage buildings with a known business
+but no real photographed identity (borrowed, generic AI, or nothing),
+sorted by visibility priority (buildings with no elevation at all rank
+first, then junction corners and proximity to an existing real photo, closer
+= higher). Each row has a paste-ready ChatGPT prompt (voice cribbed from
+`whatsapp-bot`'s `krankerverse-photograph` skill: photographic specifics
+first, then subject/setting/composition) with the row's own target aspect
+ratio computed from width × storeys·3.2m.
+
+`scripts/ingest-handmade.mjs` validates the dropped file's building index,
+warns (doesn't abort) if aspect is >25% off, centre-crops to the true
+aspect, grades with the same filter chain as every other façade texture,
+clears any borrowed.json entry, registers the building in `handmade.json`
+(so `apply-signage.mjs` skips the name overlay — the image already carries
+real signage) and re-runs signage + atlas rebuild automatically. **Tested
+end-to-end** with a stand-in image (an existing elevation copied under
+building 30's index): ingested, cropped to the right aspect, atlas-packed,
+verified via a direct atlas-region crop that no duplicate signage was
+stamped on top — then fully reverted (file removed, `elevations.json`/
+`borrowed.json` restored, `handmade.json` entry deleted) so Dan's first real
+drop is the first one that sticks. `assets/shopfronts/handmade/README.md`
+documents the two-line drop-and-run flow.
+
+### W3 — back-face fix, eval corridor clamp, re-score
+
+**Back-face fix**: `src/shopfronts.js`'s page-mesh and name-placeholder
+materials switched from `THREE.DoubleSide` to `THREE.FrontSide`. Verified at
+building 722 (chainage ~204, the "LEITH MAKERS" building the D4 register
+flagged): from the street side, signage reads correctly; from the reverse
+(the position that showed mirrored text in D4) the ground floor now shows
+plain base geometry, no text at all. Also checked building 73 (the
+suspected genuine winding-error candidate) — reads correctly from the
+street with no invisible-wall regression, confirming the D4 register's
+conclusion that the engine's winding is correct and this really was a pure
+DoubleSide back-face problem.
+
+**Eval corridor clamp**: `scripts/eval-poses.mjs` now pulls a pose back to
+~2m in front of the nearest frontage plane it would otherwise cross, using
+`manifest.json`'s frontage runs and a street-tangent/side-sign heuristic for
+outward direction (no full footprint/centroid available offline). Caught and
+fixed a sign inversion during development (the first version flipped every
+building's outward normal, moving the WRONG poses by huge distances) —
+verified the fix by hand-deriving the correct sign algebraically and
+spot-checking that only close-range poses near the known west-hugging
+streetline stretch moved (28/76 poses, all `*-west-close`/matching
+`*-east-far` pairs, 5-9.6m each). `docs/eval/RUBRIC.md` notes pose IDs are
+comparable to D4's run but positions are not (v2).
+
+**Full re-score**: 76/76 poses scored this run (D4's final run was missing
+10 to an account spend limit) via 8 parallel blind sub-agents, each with
+only the rubric text and its assigned camera poses — no implementation
+context, no source code. Results: `docs/eval/final-scores-d4.1.json`.
+
+| Run | Pass rate | Poses scored |
+|---|---|---|
+| D4 baseline (pre-D4, same 76 poses) | 7/76 (9.2%) | 76/76 |
+| D4 final | 16/66 (24.2%) | 66/76 (spend-limited) |
+| **D4.1 final** | **35/76 (46.1%)** | **76/76** |
+
+A genuine ~5x improvement over the original baseline and ~1.9x over D4's own
+partial final score — real progress, still well short of the 80% bar.
+Fault breakdown (41 fails): `unreadable-shopfront` 22, `repeating-upper` 10,
+`cropped-facade` 5, `stretched` 3, `none`-labelled fail 1.
+
+**Root causes, in order of impact:**
+
+1. **Wide-run whole-elevation repetition — D4's residual #1, still
+   unresolved** (~16 of the 41 fails, spread across most fault categories).
+   Duplicated legible signage on both AI buildings (`0125-west-*`,
+   `0380-east-*`) and real photos (`0890-west-far`'s Barnardo's/Frangos
+   block, `1485-west-*`) is still the single biggest contributor. D4's
+   defect register already named the fix (gutter-padded atlas regions so a
+   region can safely UV-wrap past its own edge, or cap real-photo width to 1
+   instance) — out of scope here, carried forward.
+2. **The AI+signage overlay's own visual design reads as "placeholder, not a
+   real shop" to a blind grader** (new finding this run — 8 of the 41
+   fails, concentrated at chainage 1315 and 1400). A flat dark fascia band
+   with plain white text, no windows/glazing/awnings, is legible but doesn't
+   look like a photographed shopfront — and when several buildings in a row
+   all use the same overlay style with no upper-storey variety to
+   distinguish them, it reads as a placeholder list rather than distinct
+   shops. This is the SAME overlay design used everywhere signage gets
+   stamped (unchanged since D4) — D4.1's borrow-fill made MORE of it visible
+   by covering ground that used to be bare stone, so the residual shifted
+   shape rather than disappearing. The real fix is photographic content at
+   ground level, which is exactly what W2's handmade pipeline exists to
+   supply — this is direct evidence for prioritising Dan's manual drops at
+   this stretch specifically (both buildings are on the wishlist already,
+   ranked by the "no elevation"/junction/proximity heuristic, not this
+   specific defect — worth a manual bump).
+3. **Corridor-clamp close-ups can be too tight** (5 of the 41 fails, all
+   `*-close` poses at the west-hugging stretch). The clamp fixes a strictly
+   worse defect — a pose standing inside/behind a building seeing its
+   mirrored (pre-FrontSide-fix) or now-invisible back face — by pulling the
+   camera to the brief-specified ~2m in front of the wall. At 2m a wide
+   frontage overfills the frame and reads as an illegible close-up blur to
+   a blind grader. This is the brief's literal instruction working as
+   specified, not a bug; flagged as a genuine trade-off, not silently
+   accepted — a future iteration could scale the margin by frontage width
+   (e.g. `max(2, widthM / 4)`) if this matters more than schedule allows
+   right now.
+4. **Genuine coverage gaps** (buildings still bare/blank — `0720`, `0805-west`,
+   `1060-west-far`, and the `1570` pair at the street's southern end).
+   These map to the 6 W1-unfillable buildings and/or wishlist items Dan
+   hasn't dropped yet — expected, not a new defect, tracked on the wishlist.
+5. **One narrow-chamfer garble** (`1485-east`, building 444/"ante", 4.0m
+   wide) — `shopfronts.js`'s narrow-run centre-slice-with-pan logic produces
+   near-duplicate, visibly distorted crops across a chamfer's multiple short
+   runs. Not previously flagged in D4's register (that building may not
+   have had signage before borrow-fill); worth its own follow-up.
+6. **One baked-in-context artifact** (`0295-east-close`) — a real photo's
+   own pavement/road bleeds into frame. Pre-existing D4 real-photo framing
+   issue, not new.
+
+### D4.1 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Zero frontage buildings without an elevation; no borrow within 150m of its donor; borrowed buildings show their own names | **Not fully met.** 227/233 covered (73/79 borrow-filled); 6 remain (rare storey counts, no eligible donor) — flagged on the wishlist, not silently dropped. 0 spacing violations, own names verified. |
+| 2 | Handmade loop proven end-to-end; wishlist committed; drop-and-run is one command | ✅ Tested with a stand-in image, fully reverted. 151-row wishlist committed. `node scripts/ingest-handmade.mjs` is the one command. |
+| 3 | Building 722 shows no mirrored text from any player-reachable position; no street-visible façade lost to the FrontSide change | ✅ Verified both directions at 722; building 73 (winding-error suspect) unaffected. |
+| 4 | Full blind eval re-scored (76/76) | ✅ 76/76 scored (D4 was missing 10). 35/76 (46.1%) pass — real improvement, root causes attributed, not yet at the 80% bar. |
+| 5 | Console clean, draw calls bounded, determinism spot-check, docs updated | Pending final verification pass (see below). |
+
+**Bottom line**: this milestone closed D4's two loudest gaps (missing
+elevations, mirrored back-faces) and built durable infrastructure for the
+third (a working, tested, one-command pipeline for Dan's real photos). The
+pass rate roughly doubled again. It did NOT close D4's residual #1
+(wide-run repetition) — deliberately out of scope here — and surfaced two
+new, smaller findings (the signage-overlay-reads-as-placeholder pattern, and
+the clamp's tight close-range margin) that are genuine trade-offs of the
+choices made, not oversights. The single highest-leverage next step is
+Dan's manual handmade drops, now that the pipeline is proven: every drop
+directly attacks root cause #2 (the largest new contributor) and, at
+priority-ranked buildings, root cause #1 as well.

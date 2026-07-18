@@ -126,3 +126,15 @@ copy(JSON.stringify(window.__mcgrotDebug.world.streetLine))
 
 then paste the result into `docs/eval/streetline.json` and re-run
 `node scripts/eval-poses.mjs`.
+
+## D4.1 — corridor clamp (positions v2)
+
+`eval-poses.mjs` now clamps each pose against `assets/shopfronts/manifest.json`'s
+frontage runs: if a naive 12m offset would land the camera inside or behind a
+building (the street polyline hugs the west building line in places), the
+camera is pulled to ~2m in front of the nearest crossed frontage plane
+instead. This changed 28/76 poses — every changed pose is a `*-west-close` or
+matching `*-east-far` (same physical position, opposite look direction),
+consistent with the known west-hugging streetline defect. Pose **ids** are
+still comparable to D4's baseline/final runs; pose **positions** are not
+(v2) — compare pass-rate aggregates, not per-pose deltas, against the D4 run.

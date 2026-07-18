@@ -204,7 +204,7 @@ export function buildShopfronts(assets, world, scene) {
     pGeo.setAttribute('uv', new THREE.Float32BufferAttribute(pUv, 2));
     pGeo.setIndex(pIdx);
     pGeo.computeBoundingSphere();
-    placeholderMesh = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ map: nameAtlas.texture, side: THREE.DoubleSide, fog: true }));
+    placeholderMesh = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ map: nameAtlas.texture, side: THREE.FrontSide, fog: true }));
     placeholderMesh.name = 'shopfront-placeholders';
     scene.add(placeholderMesh);
   }
@@ -231,7 +231,7 @@ export function buildShopfronts(assets, world, scene) {
     const texture = new THREE.TextureLoader().load(p.url);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 4;
-    p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, fog: true }));
+    p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide, fog: true }));
     p.mesh.name = 'shopfronts-page';
     scene.add(p.mesh);
   }
