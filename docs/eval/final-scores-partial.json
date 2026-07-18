@@ -1,0 +1,398 @@
+[
+  {
+    "id": "0040-east-close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Building frontage is cropped mid-window on the left edge (black-and-white photo fragment reading 'OF LEITH WALK') and abruptly meets a flat untextured grey wall on the right instead of a natural building edge."
+  },
+  {
+    "id": "0040-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The pub signage text ('GENERAL BAR') appears mirrored/reversed on one tiled repeat of the facade, reading as backwards gibberish."
+  },
+  {
+    "id": "0040-west-close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Ground-floor shopfront area shows multiple vertical smeared/stretched texture bars running through the columns and shutters."
+  },
+  {
+    "id": "0040-west-far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Foreground is a blank flat gable wall, and the row of shops visible across the street shows an identical 'GENERAL BAR' signage tile repeated multiple times in a row."
+  },
+  {
+    "id": "0125-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A large boarded/hoarding panel covers part of the frontage but reads as a plausible boarded-up derelict shop next to a legible partial sign; no stretching or mirroring visible."
+  },
+  {
+    "id": "0125-east-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "A 'Desi Pakwan' shopfront photo taken at a steep angle (converging diagonal lines, tilted flower boxes) is pasted flat onto the vertical wall and repeated identically three times."
+  },
+  {
+    "id": "0125-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera faces plain untextured brick side/back walls with no windows, doors, or signage at all \u2014 does not read as a street frontage or shopfront of any kind."
+  },
+  {
+    "id": "0125-west-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The same angled 'Desi Pakwan' photo (converging perspective lines) is tiled identically five times across the ground floor beneath a plain black windowless upper storey."
+  },
+  {
+    "id": "0210-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Columned red-painted doorway entrance with sash windows above reads as a coherent, plausible Georgian/Victorian Edinburgh shopfront entrance."
+  },
+  {
+    "id": "0210-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop sign text 'LEITH MAKERS' is mirrored/reversed, reading as backwards gibberish above a decayed but otherwise coherent upper facade."
+  },
+  {
+    "id": "0210-west-close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "The Leith Arches frontage is cut off abruptly at a hard vertical seam next to a plain dark siding wall that doesn't continue the building, reading as a mid-block crop rather than a natural building edge."
+  },
+  {
+    "id": "0210-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A run of distinct legible shopfronts reads as a coherent derelict tenement row."
+  },
+  {
+    "id": "0295-east-close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The 'VENUE' shopfront is a bright, clean daylight photograph (with its own pavement and road visible inside the image) pasted flat into the grimy street, an obvious mismatched insert that breaks the illusion immediately."
+  },
+  {
+    "id": "0295-east-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A dark maroon painted shopfront with fanlight window and monogram reads as a coherent, real-looking closed shop; no texture faults visible."
+  },
+  {
+    "id": "0295-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The view shows only a plain dark corrugated/panelled wall with no windows, signage, or shopfront features at all \u2014 doesn't read as a building frontage."
+  },
+  {
+    "id": "0295-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Upper-storey stonework and windows read coherently; the ground-floor shopfront is obscured by a parked van and debris but no texture fault is visible in what is shown."
+  },
+  {
+    "id": "0380-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "One ground-floor unit is a blank flat grey/brown panel with no signage or shop features, sitting beside a partial 'TAN' sign, not reading as any real shopfront."
+  },
+  {
+    "id": "0380-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfront signage across units reads as fragmented nonsense, not a coherent real shop name."
+  },
+  {
+    "id": "0380-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The frame shows only flat, featureless dark walls with no windows or shopfront details on either side \u2014 nothing here reads as a building frontage."
+  },
+  {
+    "id": "0380-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Surrounding walls are blank untextured grey/dark panels with no shopfront features; only a small distant building fragment has any detail, so the immediate street frontage doesn't read as real shops."
+  },
+  {
+    "id": "0465-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Ground-floor shopfronts read as legible, correctly-oriented signage under a coherent sandstone tenement front."
+  },
+  {
+    "id": "0465-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop signage reads as mirrored gibberish (both 'ALHAMBRA' and another sign backwards), breaking the illusion immediately."
+  },
+  {
+    "id": "0465-west-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "'BARBERS AND BEAUTY' shopfront is clearly legible beneath a weathered sandstone facade with intact window bays."
+  },
+  {
+    "id": "0465-west-far",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "An oversized close-up wood/shutter panel dominates the right half of frame at a distorted scale while the building corner on the left appears to float disconnected from the ground plane."
+  },
+  {
+    "id": "0550-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "'THE FAIRY BOY OF LEITH' shopfront sign is clearly readable under a plausible derelict tenement facade."
+  },
+  {
+    "id": "0550-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "'SEA BREEZE CAFE' signage is fully mirrored/backwards, making it illegible as real signage."
+  },
+  {
+    "id": "0550-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Visible shop sign fragment is mirrored/backwards text, unreadable as a coherent shop name."
+  },
+  {
+    "id": "0550-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Two adjacent shopfronts both read correctly beneath varied, plausible tenement facades."
+  },
+  {
+    "id": "0635-east-close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Left half of frame is a flat, featureless diagonal-plank textured wall spanning multiple storeys with no windows or masonry detail, reading as a stretched placeholder surface rather than a real building side."
+  },
+  {
+    "id": "0635-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop sign 'INDO SOUL' appears upside-down/mirrored, and an oversized close orange plank wall fills the left half of frame at a distorted scale."
+  },
+  {
+    "id": "0890-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Starlight (shuttered) and Scotmid glass frontages read clearly as coherent shops at close range."
+  },
+  {
+    "id": "0890-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfront text for Barnardo's and Frango's appears mirrored/backwards, making the signage unreadable."
+  },
+  {
+    "id": "0890-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "No coherent shopfront is visible at all, just a bare gap between plain wall panels and open ground."
+  },
+  {
+    "id": "0890-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The same shopfront photo (Frango's/Barnardo's) is duplicated side-by-side as an inset collage, flanked by flat dark panels with text labels and no real facade detail."
+  },
+  {
+    "id": "0975-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Sainsbury's Local reads as a clear, coherent glass-fronted shop with legible signage."
+  },
+  {
+    "id": "0975-east-far",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Shopfronts are legible, but the entire upper storey is a flat blank wall with no windows or detail across the whole street, breaking the illusion."
+  },
+  {
+    "id": "0975-west-close",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Word of Mouth Bistro shutter sign is readable, but the receding street is lined with plain featureless brick walls with no windows at all."
+  },
+  {
+    "id": "0975-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Buildings are odd blank curved wood/brick masses with no windows; small shop text labels sit awkwardly against them."
+  },
+  {
+    "id": "1060-east-close",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Grace Church Leith signage and glass front are legible, but the wall above is a flat blank wood-panel surface with no windows."
+  },
+  {
+    "id": "1060-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop sign text is mirrored/backwards, making it unreadable and clearly incorrect."
+  },
+  {
+    "id": "1060-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera faces a corner of plain horizontal wood-plank cladding with only a fragment of signage, no coherent shopfront visible."
+  },
+  {
+    "id": "1060-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of legible shopfronts with roller shutters reads as a plausible derelict shopping strip."
+  },
+  {
+    "id": "1145-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop signage reads 'MADEB', a truncated/nonsensical fragment, next to a legible 'British Red Cross' unit."
+  },
+  {
+    "id": "1145-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Signage text is mirrored/backwards, reading 'TESCO' and 'COFFEE' in reverse across two shopfronts."
+  },
+  {
+    "id": "1145-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Frame shows only blank plank/brick wall segments with a thin free-floating wall slab; no shopfront or legible signage present at all."
+  },
+  {
+    "id": "1145-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible shopfronts with a parked car read as a believable derelict high-street row."
+  },
+  {
+    "id": "1230-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Shopfronts are legible and read as coherent shop units along the frontage."
+  },
+  {
+    "id": "1230-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shop sign text is mirrored, reading 'UMEGA' backwards."
+  },
+  {
+    "id": "1230-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "A very long stretch of blank plank/brick wall with no windows or doors, only a sliver of a sign clipped at the frame edge."
+  },
+  {
+    "id": "1230-west-far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Multiple legible shopfronts form a coherent, readable street row."
+  },
+  {
+    "id": "1315-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Row of ground-floor units all share the exact same generic roller-shutter texture and differ only by a text label, so none reads as a distinct real shopfront."
+  },
+  {
+    "id": "1315-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is jammed into the shopfront and the sign text is rendered mirrored/backwards, making the shopfront illegible."
+  },
+  {
+    "id": "1315-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "No shopfront is visible at all here \u2014 just flat, windowless brown and olive-green wall slabs facing an empty yard."
+  },
+  {
+    "id": "1315-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Another long row of identical generic shutter units distinguished only by name labels, none reading as a specific coherent shop."
+  },
+  {
+    "id": "1400-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Almost the entire frame is a blank, windowless plank/brick wall with only a small dark doorway \u2014 no real shopfront detail."
+  },
+  {
+    "id": "1400-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Sign text 'PHONE SPOT' is mirrored/backwards on the shutter, making the shopfront unreadable."
+  },
+  {
+    "id": "1400-west-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Frame shows only blank, windowless brick/plank walls receding down an empty lot with no shopfront present."
+  },
+  {
+    "id": "1400-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Row of shops again all share one identical generic shutter texture, only the name signage differs."
+  },
+  {
+    "id": "1485-east-close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "A plain roller-shutter unit labelled 'Edinburgh Christadelphian Church' looks identical to the generic retail shutters elsewhere."
+  },
+  {
+    "id": "1485-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Wide view of another row of shops all rendered with the same blank wall and generic shutter/label treatment, none individually legible."
+  },
+  {
+    "id": "1485-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The William Hill shopfront and building above are tiled twice identically side by side, and the Olimpos shopfront is likewise duplicated."
+  },
+  {
+    "id": "1485-west-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "A large blank wood-plank wall with no windows dominates the foreground, and the distant buildings beyond are flat untextured grey silhouettes."
+  },
+  {
+    "id": "1570-east-close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close shot of closed roller-shutter shopfronts with legible signage; reads plausibly as shuttered derelict units."
+  },
+  {
+    "id": "1570-east-far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The name 'FITSHOP' appears twice on adjacent identical shutter units, and every building above is a flat, blank, untextured silhouette."
+  },
+  {
+    "id": "1570-west-close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "The building housing Spielmann is tiled four times identically across the frontage, an obvious repeated wallpaper texture."
+  },
+  {
+    "id": "1570-west-far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "A photographed Ladbrokes/arched-window facade is duplicated side-by-side and pasted onto a curved wall surface, causing the verticals to lean and warp."
+  }
+]

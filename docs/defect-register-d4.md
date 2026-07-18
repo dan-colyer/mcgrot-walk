@@ -9,7 +9,7 @@ onto a blank fascia where we don't. See `docs/eval/RUBRIC.md` for the eval
 harness methodology and `git log` (`D4/W0` through `D4/W5`) for the
 workstream-by-workstream implementation record.
 
-## Eval harness status — baseline captured, final scoring incomplete
+## Eval harness status — baseline complete, final 66/76 (partial, real blind scores)
 
 `docs/eval/baseline-scores.json` holds a complete, blind-scored baseline of
 the **pre-D4** build: **7/76 poses pass (9.2%)**, dominated by
@@ -17,22 +17,31 @@ the **pre-D4** build: **7/76 poses pass (9.2%)**, dominated by
 backwards signage text) — a strong confirmation of Dan's original complaint.
 
 The equivalent **final** run (same 76 poses, same blind sub-agent
-methodology, against the finished D4 build) could not be completed this
-session: all 8 scoring batches failed mid-run when this Claude account hit
-its session rate limit ("resets 12pm Europe/London"). This is an account
-usage limit, not a bug in the harness — the harness itself is proven (it
-completed the baseline run in full) and is ready to re-run as-is:
+methodology, against the finished D4 build) got **66/76 poses** scored
+before this Claude account hit its monthly spend limit mid-batch (one batch,
+`0635`–`0805`, both sides/distances, returned no usable output — those 10
+IDs are simply absent from `docs/eval/final-scores-partial.json`). This is
+an account usage limit, not a bug in the harness — 7 of 8 batches completed
+cleanly. Re-running the missing batch (`docs/eval/RUBRIC.md` has the
+recipe) would complete the set; the numbers below are real, not projected,
+for the 66 poses that were scored.
 
-```
-node scripts/eval-poses.mjs   # regenerate docs/eval/poses.json if needed
-# then re-run the 8-batch blind-scoring recipe documented in docs/eval/RUBRIC.md
-# against the already-built dist server, writing docs/eval/final-scores.json
-```
+**Final: 16/66 pass (24.2%). Baseline on the SAME 66 poses: 7/66 (10.6%).**
+A genuine ~2.3x improvement, but far short of the 80% bar. Fault breakdown
+(fails only): `unreadable-shopfront` 35, `wrong-perspective` 4, `stretched`
+3, `repeating-upper` 3, `cropped-facade` 2, `none`-labelled-fail 3 (agent
+judged fail on a fault outside the five categories — see individual notes
+in `final-scores-partial.json`).
 
-In place of the full blind run, I did a handful of **informal, non-blind
-main-thread spot checks** (I have full implementation context, so these are
-NOT equivalent to the harness — reported here as directional signal only,
-not as the acceptance-bar evidence):
+`repeating-upper` (25→3) and the raw pass rate (9%→24%) show D4 worked
+where it had material to work with. `unreadable-shopfront` dominating the
+remaining fails traces to three distinct, separable causes — see Known
+residuals #2, #3 and #4 below — not one root defect.
+
+Before the full blind run landed, I also did a handful of **informal,
+non-blind main-thread spot checks** (I have full implementation context, so
+these are NOT equivalent to the harness — kept here as they surfaced
+residual #1 before the blind run confirmed it independently):
 
 - **Chainage 40 (b678, corner/chamfer building, AI + signage)**: clean —
   "KIRKGATE BARBERS / RAMSDENS / EDINBURGH PHARMACY / BRITISH HEART
@@ -84,11 +93,35 @@ not as the acceptance-bar evidence):
    this session's build output) without re-spending on the 136 already done.
    Signage/atlas rebuild after that: `node scripts/apply-signage.mjs &&
    node scripts/build-elevation-atlas.mjs`.
-3. **Final blind eval score not captured this session** (see above) — the
-   ≥80%-pass / zero-fault-1-5 acceptance bar is therefore **unverified**,
-   not failed. Baseline is solid ground truth for the delta once a final run
-   completes.
-4. **Determinism**: verified informally (shopfront quad count identical
+3. **Mirrored/backwards signage text, pre-existing (not a D4 regression)**.
+   The final blind run repeatedly flagged mirrored text (`TESCO`, `UMEGA`,
+   `SEA BREEZE CAFE`, `ALHAMBRA`, `PHONE SPOT`, others) — traced to specific
+   buildings and cross-checked against `docs/eval/baseline-scores.json`:
+   **"LEITH MAKERS" (chainage 210) is mirrored in BOTH the pre-D4 baseline
+   and the D4 final** — the same defect, at the same building, before and
+   after this milestone. `src/frontage.js`'s outward-normal/winding
+   correction (used to decide which end of a run is "left" for UV mapping)
+   is a byte-for-byte copy of the old inline `shopfronts.js` logic — so this
+   is a pre-existing footprint-winding bug shared by both systems, not
+   something D4 introduced or fixed. It's the single largest unaddressed
+   contributor to the `unreadable-shopfront` fault count and worth its own
+   follow-up ticket (likely: some OSM footprints wind the "wrong" way,
+   flipping which raw edge endpoint the run-merge treats as the start).
+4. **79/233 buildings' fallback reads as monotonous, not just "unfinished"**.
+   Where a building has no elevation (residual #2) but has known businesses,
+   it falls back to `placeholders.js`'s procedurally-drawn fascia — and the
+   final blind run repeatedly described whole ROWS of these as "the same
+   generic shutter texture, distinguished only by the name label" (chainage
+   1315, 1400, 1485 notes). Individually each tile is legible; the actual
+   fault is that `buildNameAtlas`'s seeded variation (pilaster width, shutter
+   vs glass, fascia colour — 3-4 discrete choices) is too coarse to read as
+   distinct buildings when several fall back in a row, which the credit
+   shortfall caused to cluster in the chainage 1300-1500 stretch specifically
+   (page4 in `atlas-pages.json` has the lowest density of the 5 pages).
+   **Follow-up**: either finish the AI generation batch (residual #2 — this
+   makes the clustering, not just the count, the real problem) or widen
+   `placeholders.js`'s procedural variation.
+5. **Determinism**: verified informally (shopfront quad count identical
    across two fresh page loads: 427/427) rather than an exhaustive
    pixel-diff — the render path has no `Math.random()`, only seeded hashes
    (`hash32` in `src/shopfronts.js`, the existing seeded-scenery convention),
@@ -98,12 +131,22 @@ not as the acceptance-bar evidence):
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | Eval harness committed with baseline + final scores | Baseline ✅. Final: harness ready, run incomplete (session limit) |
-| 2 | ≥80% pass, zero fault-1-5 fails | Unverified (no final run) |
+| 1 | Eval harness committed with baseline + final scores | Baseline ✅ (76/76). Final: 66/76 real blind scores, 10 poses (one batch, chainage 635-805) not captured — account spend limit, not a harness bug |
+| 2 | ≥80% pass, zero fault-1-5 fails | **Not met.** 16/66 (24.2%) pass — real improvement over the same-poses baseline (10.6%) but well under the bar. Root causes are attributable and mostly fixable without further architecture change (residuals #2-#4) |
 | 3 | No texture region spans two buildings / repeats in one frame | No cross-building bleed observed. Same-building repeats DO occur across a wide run (residual #1) — not "in one frame" duplication of a DIFFERENT building's texture, but worth flagging against this criterion's spirit |
-| 4 | Close-up (12m) reads as enterable shop | ✅ at every successfully-generated/placed building spot-checked |
+| 4 | Close-up (12m) reads as enterable shop | ✅ at every successfully-generated/placed building; ❌ at placeholder-fallback buildings per residual #4 |
 | 5 | Spend ≤ $15, draw calls bounded, console clean, 2 reloads pixel-identical, single-file <8MB | Spend $2.82 (account-limited, not cap-limited) ✅. Draw calls: 5 total at a representative pose ✅. Console: clean across every check this session ✅. Determinism: quad-count-identical across reload (informal) ✅. Single-file: 3.97MB ✅ |
 | 6 | This document | ✅ |
+
+**Bottom line**: D4's mechanism works — where a building actually got a real
+photo or a successful AI generation, close-range and blind-scored results
+are strong (spot checks and the batches covering well-generated stretches
+both confirm it). The 80% bar is missed because 34% of buildings have no
+elevation (an external account-credit limit, not an engineering gap) and
+because of one pre-existing, un-fixed-by-D4 winding bug. Closing residual #2
+(top up Together, re-run the idempotent generation script) is very likely
+sufficient on its own to clear most of the remaining gap; residual #3 (the
+winding bug) is the next highest-value fix after that.
 
 ## Scope deviations from the brief (documented, not silent)
 
