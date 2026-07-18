@@ -198,17 +198,16 @@ export function computeFrontageRuns(building, nearestStreetPoint) {
     const edgeDist = Math.min(np.distance, nearA ? nearA.distance : Infinity, nearB ? nearB.distance : Infinity);
     if (edgeDist > STREET_RANGE) continue;
 
+    // Outward normal, used only for the facing test — NOT for the edge
+    // endpoints/direction recorded below, which stay in the footprint's own
+    // (raw, un-flipped) winding order so consecutive edges of the same wall
+    // always chain start-to-end and the collinearity/merge test below is
+    // comparing like with like.
     const inv = 1 / len;
     let nx = -ez * inv;
     let nz = ex * inv;
-    let sx = a[0];
-    let sz = a[1];
-    let dx = ex;
-    let dz = ez;
     if (nx * (mx - cx) + nz * (mz - cz) < 0) {
       nx = -nx; nz = -nz;
-      sx = b[0]; sz = b[1];
-      dx = -ex; dz = -ez;
     }
 
     const dsx = np.point[0] - mx;
@@ -221,11 +220,11 @@ export function computeFrontageRuns(building, nearestStreetPoint) {
 
     let isChamfer = false;
     if (np.tangent && len <= CHAMFER_MAX_LEN) {
-      const align = Math.abs(dx * inv * np.tangent[0] + dz * inv * np.tangent[1]);
+      const align = Math.abs(ex * inv * np.tangent[0] + ez * inv * np.tangent[1]);
       isChamfer = align < CHAMFER_MAX_ALIGN;
     }
 
-    frontEdges.push({ i, ax: sx, az: sz, bx: sx + dx, bz: sz + dz, dirx: dx * inv, dirz: dz * inv, len, isChamfer });
+    frontEdges.push({ i, ax: a[0], az: a[1], bx: b[0], bz: b[1], dirx: ex * inv, dirz: ez * inv, len, isChamfer });
   }
 
   for (const e of frontEdges) {

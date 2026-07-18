@@ -1,0 +1,7530 @@
+{
+  "buildings": [
+    {
+      "buildingIndex": 678,
+      "levels": 4,
+      "chainage": 0,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 4.32,
+          "isChamfer": true,
+          "ax": 19.14,
+          "az": -24.46,
+          "bx": 15.85,
+          "bz": -27.26
+        },
+        {
+          "widthM": 2.42,
+          "isChamfer": true,
+          "ax": 31.76,
+          "az": -15.3,
+          "bx": 29.34,
+          "bz": -15.38
+        },
+        {
+          "widthM": 13.66,
+          "isChamfer": true,
+          "ax": 29.34,
+          "az": -15.38,
+          "bx": 19.14,
+          "bz": -24.46
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Kirkgate Barbers",
+          "kind": "hairdresser",
+          "addr": "2 Newkirkgate"
+        },
+        {
+          "name": "Ramsdens",
+          "kind": "bureau_de_change",
+          "addr": "1 Duke Street"
+        },
+        {
+          "name": "Edinburgh Pharmacy",
+          "kind": "pharmacy",
+          "addr": "3-5 Duke Street"
+        },
+        {
+          "name": "British Heart Foundation Home Store",
+          "kind": "furniture",
+          "addr": "5A Duke Street"
+        },
+        {
+          "name": "Pinnacle",
+          "kind": "artwork",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 680,
+      "levels": 4,
+      "chainage": 0,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 7.31,
+          "isChamfer": false,
+          "ax": -3.56,
+          "az": -25.14,
+          "bx": -5.56,
+          "bz": -18.11
+        },
+        {
+          "widthM": 2.07,
+          "isChamfer": true,
+          "ax": -5.56,
+          "az": -18.11,
+          "bx": -7.63,
+          "bz": -18.24
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Newkirkgate Dental Care",
+          "kind": "dentist",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 763,
+      "levels": 4,
+      "chainage": 10,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.04,
+          "isChamfer": true,
+          "ax": -17.96,
+          "az": -1.71,
+          "bx": -19.97,
+          "bz": -3.99
+        },
+        {
+          "widthM": 10.05,
+          "isChamfer": false,
+          "ax": -25.44,
+          "az": 5,
+          "bx": -17.96,
+          "bz": -1.71
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "William Hill",
+          "kind": "bookmaker",
+          "addr": "5 Great Junction Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 759,
+      "levels": 4,
+      "chainage": 12,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 6.25,
+          "isChamfer": false,
+          "ax": -14.7,
+          "az": 9.95,
+          "bx": -12.94,
+          "bz": 3.95
+        },
+        {
+          "widthM": 7.57,
+          "isChamfer": true,
+          "ax": -12.94,
+          "az": 3.95,
+          "bx": -17.96,
+          "bz": -1.71
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Gadget Technician",
+          "kind": "computer",
+          "addr": "3 Great Junction Street"
+        },
+        {
+          "name": "Leith Barbers",
+          "kind": "hairdresser",
+          "addr": "1 Great Junction Street"
+        },
+        {
+          "name": "Bloks",
+          "kind": "hairdresser",
+          "addr": "2 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 771,
+      "levels": 4,
+      "chainage": 19,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 6.14,
+          "isChamfer": false,
+          "ax": -16.47,
+          "az": 15.83,
+          "bx": -14.7,
+          "bz": 9.95
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Subway",
+          "kind": "fast_food",
+          "addr": "4 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 54,
+      "levels": 4,
+      "chainage": 21,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 45.82,
+          "isChamfer": false,
+          "ax": 22.06,
+          "az": 27.73,
+          "bx": 1.35,
+          "bz": 68.6
+        },
+        {
+          "widthM": 51.51,
+          "isChamfer": false,
+          "ax": -8.2,
+          "az": 63.47,
+          "bx": 15.19,
+          "bz": 17.59
+        },
+        {
+          "widthM": 1.86,
+          "isChamfer": false,
+          "ax": 15.19,
+          "az": 17.59,
+          "bx": 16.44,
+          "bz": 16.21
+        },
+        {
+          "widthM": 1.2,
+          "isChamfer": true,
+          "ax": 16.44,
+          "az": 16.21,
+          "bx": 17.47,
+          "bz": 15.59
+        },
+        {
+          "widthM": 1.22,
+          "isChamfer": true,
+          "ax": 17.47,
+          "az": 15.59,
+          "bx": 18.63,
+          "bz": 15.21
+        },
+        {
+          "widthM": 1.42,
+          "isChamfer": true,
+          "ax": 18.63,
+          "az": 15.21,
+          "bx": 20.05,
+          "bz": 15.11
+        }
+      ],
+      "placedSlug": "former-leith-central-station-and-the-central-bar",
+      "businesses": [
+        {
+          "name": "Leith Surgery",
+          "kind": "doctors",
+          "addr": "2 Duke Street"
+        },
+        {
+          "name": "The Central Bar",
+          "kind": "pub",
+          "addr": "7-9 Leith Walk"
+        },
+        {
+          "name": "PekoeTea",
+          "kind": "tea",
+          "addr": "11 Leith Walk"
+        },
+        {
+          "name": "Logan Malloch",
+          "kind": "gift",
+          "addr": "13 Leith Walk"
+        },
+        {
+          "name": "Argonaut Books",
+          "kind": "books",
+          "addr": "15-17 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 655,
+      "levels": 4,
+      "chainage": 40,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 13.6,
+          "isChamfer": false,
+          "ax": -34.56,
+          "az": 33.84,
+          "bx": -28.68,
+          "bz": 21.58
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 651,
+      "levels": 4,
+      "chainage": 51,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 9.98,
+          "isChamfer": false,
+          "ax": -38.89,
+          "az": 42.83,
+          "bx": -34.56,
+          "bz": 33.84
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Adams Whyte Criminal Lawyer",
+          "kind": "lawyer",
+          "addr": "20 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 654,
+      "levels": 4,
+      "chainage": 61,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.49,
+          "isChamfer": false,
+          "ax": -43.86,
+          "az": 53.19,
+          "bx": -38.89,
+          "bz": 42.83
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Gondolin Land and Water",
+          "kind": "engineer",
+          "addr": "26 Leith Walk"
+        },
+        {
+          "name": "Foot of Leith Walk",
+          "kind": "taxi",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 0,
+      "levels": 4,
+      "chainage": 62,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 45.82,
+          "isChamfer": false,
+          "ax": 1.35,
+          "az": 68.6,
+          "bx": 22.06,
+          "bz": 27.73
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 652,
+      "levels": 4,
+      "chainage": 78,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 18.4,
+          "isChamfer": false,
+          "ax": -51.82,
+          "az": 69.78,
+          "bx": -43.86,
+          "bz": 53.19
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 173,
+      "levels": 4,
+      "chainage": 86,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 11.52,
+          "isChamfer": false,
+          "ax": -21.37,
+          "az": 89.86,
+          "bx": -16.16,
+          "bz": 79.59
+        },
+        {
+          "widthM": 2.33,
+          "isChamfer": true,
+          "ax": -16.16,
+          "az": 79.59,
+          "bx": -13.92,
+          "bz": 78.94
+        }
+      ],
+      "placedSlug": "spey-lounge-leith-walk-geograph-org-uk-8262917",
+      "businesses": [
+        {
+          "name": "Krema Bakehouse",
+          "kind": "pastry",
+          "addr": "21 Leith Walk"
+        },
+        {
+          "name": "Ancient Robot Games",
+          "kind": "games",
+          "addr": "23 Leith Walk"
+        },
+        {
+          "name": "Spey Lounge",
+          "kind": "pub",
+          "addr": "39 Leith Walk"
+        },
+        {
+          "name": "Side Street",
+          "kind": "fast_food",
+          "addr": "43-45 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 942,
+      "levels": 4,
+      "chainage": 87,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 4.93,
+          "isChamfer": true,
+          "ax": -1.34,
+          "az": 94.67,
+          "bx": 0.45,
+          "bz": 99.26
+        },
+        {
+          "widthM": 5.23,
+          "isChamfer": true,
+          "ax": 3.54,
+          "az": 92.8,
+          "bx": -1.34,
+          "bz": 94.67
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 84,
+      "levels": 4,
+      "chainage": 90,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 9.35,
+          "isChamfer": false,
+          "ax": -55.86,
+          "az": 78.21,
+          "bx": -51.82,
+          "bz": 69.78
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 171,
+      "levels": 4,
+      "chainage": 98,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.11,
+          "isChamfer": false,
+          "ax": -29.57,
+          "az": 106.01,
+          "bx": -21.37,
+          "bz": 89.86
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Best-one",
+          "kind": "convenience",
+          "addr": "47-49 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 753,
+      "levels": 4,
+      "chainage": 111,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.38,
+          "isChamfer": false,
+          "ax": -60.42,
+          "az": 87.28,
+          "bx": -65.31,
+          "bz": 97.56
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 83,
+      "levels": 4,
+      "chainage": 119,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.55,
+          "isChamfer": true,
+          "ax": -36.11,
+          "az": 122.63,
+          "bx": -36.69,
+          "bz": 120.15
+        },
+        {
+          "widthM": 15.83,
+          "isChamfer": false,
+          "ax": -36.69,
+          "az": 120.15,
+          "bx": -29.57,
+          "bz": 106.01
+        }
+      ],
+      "placedSlug": "desi-pakwan-geograph-org-uk-7579664",
+      "businesses": [
+        {
+          "name": "Desi Pakwan",
+          "kind": "restaurant",
+          "addr": "61 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 729,
+      "levels": 4,
+      "chainage": 124,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 15.77,
+          "isChamfer": false,
+          "ax": -65.31,
+          "az": 97.56,
+          "bx": -72.46,
+          "bz": 111.61
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Edinburgh Carers' Hub",
+          "kind": "charity",
+          "addr": "60 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 90,
+      "levels": 4,
+      "chainage": 143,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.2,
+          "isChamfer": false,
+          "ax": -67.5,
+          "az": 117.94,
+          "bx": -72.31,
+          "bz": 128.06
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Beveridge & Kellas",
+          "kind": "estate_agent",
+          "addr": "68 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 174,
+      "levels": 4,
+      "chainage": 144,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 10.99,
+          "isChamfer": false,
+          "ax": -47,
+          "az": 140.94,
+          "bx": -42.28,
+          "bz": 131.01
+        },
+        {
+          "widthM": 1.08,
+          "isChamfer": true,
+          "ax": -42.28,
+          "az": 131.01,
+          "bx": -41.31,
+          "bz": 130.53
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Papa John's",
+          "kind": "fast_food",
+          "addr": "77A;77;79 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 755,
+      "levels": 4,
+      "chainage": 149,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.09,
+          "isChamfer": true,
+          "ax": -80.93,
+          "az": 130.82,
+          "bx": -83.84,
+          "bz": 131.87
+        },
+        {
+          "widthM": 11.2,
+          "isChamfer": false,
+          "ax": -72.31,
+          "az": 128.06,
+          "bx": -67.5,
+          "bz": 117.94
+        },
+        {
+          "widthM": 18.71,
+          "isChamfer": false,
+          "ax": -63.66,
+          "az": 119.81,
+          "bx": -71.61,
+          "bz": 136.74
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Artisan Roast/Circular Coffee",
+          "kind": "cafe",
+          "addr": "72-74 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 538,
+      "levels": 4,
+      "chainage": 155,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.89,
+          "isChamfer": false,
+          "ax": -37.45,
+          "az": 153.29,
+          "bx": -36.57,
+          "bz": 151.62
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 539,
+      "levels": 4,
+      "chainage": 155,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.72,
+          "isChamfer": false,
+          "ax": -32.74,
+          "az": 150.69,
+          "bx": -36.31,
+          "bz": 157.53
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 86,
+      "levels": 4,
+      "chainage": 156,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 14.74,
+          "isChamfer": false,
+          "ax": -53.75,
+          "az": 154.04,
+          "bx": -47,
+          "bz": 140.94
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Edinburgh Bike Fitting",
+          "kind": "company",
+          "addr": "81 Leith Walk"
+        },
+        {
+          "name": "Leith Walk Dental Practice",
+          "kind": "dentist",
+          "addr": "83 Leith Walk"
+        },
+        {
+          "name": "All Together",
+          "kind": "charity",
+          "addr": "87 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 757,
+      "levels": 4,
+      "chainage": 160,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.32,
+          "isChamfer": false,
+          "ax": -72.22,
+          "az": 139.29,
+          "bx": -75.9,
+          "bz": 146.75
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "The Tattie Creel",
+          "kind": "fast_food",
+          "addr": "80 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 730,
+      "levels": 4,
+      "chainage": 169,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.23,
+          "isChamfer": false,
+          "ax": -75.9,
+          "az": 146.75,
+          "bx": -79.65,
+          "bz": 154.08
+        }
+      ],
+      "placedSlug": "shops-leith-walk-geograph-org-uk-7895672",
+      "businesses": [
+        {
+          "name": "Turkish Supermarket",
+          "kind": "convenience",
+          "addr": "82-90 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 172,
+      "levels": 4,
+      "chainage": 170,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.43,
+          "isChamfer": true,
+          "ax": -57.2,
+          "az": 162.73,
+          "bx": -57.44,
+          "bz": 162.37
+        },
+        {
+          "widthM": 0.41,
+          "isChamfer": false,
+          "ax": -57.54,
+          "az": 161.93,
+          "bx": -57.44,
+          "bz": 161.53
+        },
+        {
+          "widthM": 8.35,
+          "isChamfer": false,
+          "ax": -57.44,
+          "az": 161.53,
+          "bx": -53.75,
+          "bz": 154.04
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Cafe Praline",
+          "kind": "cafe",
+          "addr": "91 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 731,
+      "levels": 4,
+      "chainage": 185,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 16.96,
+          "isChamfer": false,
+          "ax": -79.65,
+          "az": 154.08,
+          "bx": -86.8,
+          "bz": 169.46
+        },
+        {
+          "widthM": 2.62,
+          "isChamfer": true,
+          "ax": -86.8,
+          "az": 169.46,
+          "bx": -89.18,
+          "bz": 170.55
+        }
+      ],
+      "placedSlug": "shops-leith-walk-geograph-org-uk-7895672",
+      "businesses": [
+        {
+          "name": "The Pipe Shop",
+          "kind": "tobacco",
+          "addr": "92 Leith Walk"
+        },
+        {
+          "name": "Little Havana Cigar Store",
+          "kind": "tobacco",
+          "addr": "94 Leith Walk"
+        },
+        {
+          "name": "Little Havana",
+          "kind": "coffee",
+          "addr": "94 Leith Walk"
+        },
+        {
+          "name": "Steam Bunny",
+          "kind": "fast_food",
+          "addr": "4 Jane Street"
+        },
+        {
+          "name": "The Mother Superior",
+          "kind": "pub",
+          "addr": "96-98 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 536,
+      "levels": 1,
+      "chainage": 193,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.93,
+          "isChamfer": true,
+          "ax": -62.99,
+          "az": 177.52,
+          "bx": -65.72,
+          "bz": 178.58
+        },
+        {
+          "widthM": 7.34,
+          "isChamfer": false,
+          "ax": -65.72,
+          "az": 178.58,
+          "bx": -68.89,
+          "bz": 185.2
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Arches",
+          "kind": "bar",
+          "addr": "99 Leith Walk"
+        },
+        {
+          "name": "Leith Domestic Appliances",
+          "kind": "electronics",
+          "addr": "4 Manderston Street"
+        },
+        {
+          "name": "Kvasa",
+          "kind": "bakery",
+          "addr": "101 Leith Walk"
+        },
+        {
+          "name": "Bandits",
+          "kind": "fast_food",
+          "addr": "6 Manderston Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 144,
+      "levels": 4,
+      "chainage": 202,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.47,
+          "isChamfer": false,
+          "ax": -54.64,
+          "az": 190.46,
+          "bx": -61.37,
+          "bz": 205.49
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Arches",
+          "kind": "pub",
+          "addr": "6 Manderston Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 722,
+      "levels": 2,
+      "chainage": 204,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.31,
+          "isChamfer": false,
+          "ax": -68.89,
+          "az": 185.2,
+          "bx": -76.13,
+          "bz": 199.81
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Tip Top Tresses",
+          "kind": "hairdresser",
+          "addr": "103 Leith Walk"
+        },
+        {
+          "name": "Leith Makers",
+          "kind": "studio",
+          "addr": "105 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 786,
+      "levels": 4,
+      "chainage": 205,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 2.84,
+          "isChamfer": false,
+          "ax": -92.62,
+          "az": 178.82,
+          "bx": -93.83,
+          "bz": 181.39
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Bobs Garage",
+          "kind": "car_repair",
+          "addr": "5 Jane Street"
+        },
+        {
+          "name": "Kwick Auto Works",
+          "kind": "car_repair",
+          "addr": "3 Jane Street"
+        },
+        {
+          "name": "VAS Motors",
+          "kind": "car_repair",
+          "addr": "3 Jane Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 719,
+      "levels": 4,
+      "chainage": 217,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.98,
+          "isChamfer": false,
+          "ax": -93.83,
+          "az": 181.39,
+          "bx": -97.63,
+          "bz": 189.52
+        },
+        {
+          "widthM": 4.91,
+          "isChamfer": false,
+          "ax": -106.18,
+          "az": 186.7,
+          "bx": -107.94,
+          "bz": 191.28
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 537,
+      "levels": 1,
+      "chainage": 218,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.93,
+          "isChamfer": false,
+          "ax": -76.13,
+          "az": 199.81,
+          "bx": -79.65,
+          "bz": 206.92
+        },
+        {
+          "widthM": 4.2,
+          "isChamfer": false,
+          "ax": -68.63,
+          "az": 212.06,
+          "bx": -70.43,
+          "bz": 215.85
+        },
+        {
+          "widthM": 3.15,
+          "isChamfer": false,
+          "ax": -60.66,
+          "az": 220.46,
+          "bx": -59.35,
+          "bz": 217.59
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 894,
+      "levels": 4,
+      "chainage": 223,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.74,
+          "isChamfer": false,
+          "ax": -101.67,
+          "az": 199.71,
+          "bx": -99.15,
+          "bz": 194.55
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Rikki's Music Shop",
+          "kind": "musical_instrument",
+          "addr": "100 Leith Walk"
+        },
+        {
+          "name": "Canderson's Sweet Shop",
+          "kind": "confectionery",
+          "addr": "102 Leith Walk"
+        },
+        {
+          "name": "Carpet Bargain Store",
+          "kind": "carpet",
+          "addr": "104 Leith Walk"
+        },
+        {
+          "name": "Sloe Lane Bakery",
+          "kind": "bakery",
+          "addr": "106 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 885,
+      "levels": 4,
+      "chainage": 226,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.37,
+          "isChamfer": false,
+          "ax": -102.28,
+          "az": 200.94,
+          "bx": -101.67,
+          "bz": 199.71
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 417,
+      "levels": 4,
+      "chainage": 230,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 15.27,
+          "isChamfer": false,
+          "ax": -79.65,
+          "az": 206.92,
+          "bx": -86.17,
+          "bz": 220.73
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "The Salvation Army",
+          "kind": "charity",
+          "addr": "109 Leith Walk"
+        },
+        {
+          "name": "Purusha",
+          "kind": "hairdresser",
+          "addr": "111 Leith Walk"
+        },
+        {
+          "name": "Tidal Yoga",
+          "kind": "fitness_centre",
+          "addr": "115 Leith Walk"
+        },
+        {
+          "name": "Elph Mural",
+          "kind": "artwork",
+          "addr": "115 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 870,
+      "levels": 4,
+      "chainage": 230,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.61,
+          "isChamfer": false,
+          "ax": -104.77,
+          "az": 205.97,
+          "bx": -102.28,
+          "bz": 200.94
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 869,
+      "levels": 4,
+      "chainage": 235,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.8,
+          "isChamfer": false,
+          "ax": -106.45,
+          "az": 209.38,
+          "bx": -104.77,
+          "bz": 205.97
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 886,
+      "levels": 4,
+      "chainage": 239,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.37,
+          "isChamfer": false,
+          "ax": -108.84,
+          "az": 214.19,
+          "bx": -106.45,
+          "bz": 209.38
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 888,
+      "levels": 4,
+      "chainage": 244,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.99,
+          "isChamfer": false,
+          "ax": -110.61,
+          "az": 217.77,
+          "bx": -108.84,
+          "bz": 214.19
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Tesco Express",
+          "kind": "convenience",
+          "addr": "110-120 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 419,
+      "levels": 2,
+      "chainage": 245,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 6.73,
+          "isChamfer": false,
+          "ax": -89.02,
+          "az": 224.46,
+          "bx": -91.79,
+          "bz": 230.59
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Domino's",
+          "kind": "fast_food",
+          "addr": "119-121 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 877,
+      "levels": 4,
+      "chainage": 249,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.4,
+          "isChamfer": false,
+          "ax": -113,
+          "az": 222.61,
+          "bx": -110.61,
+          "bz": 217.77
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 418,
+      "levels": 4,
+      "chainage": 254,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 10.06,
+          "isChamfer": false,
+          "ax": -91.79,
+          "az": 230.59,
+          "bx": -95.94,
+          "bz": 239.75
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "MagiKats",
+          "kind": "tuition",
+          "addr": "123 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 874,
+      "levels": 4,
+      "chainage": 254,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.58,
+          "isChamfer": false,
+          "ax": -115.49,
+          "az": 227.6,
+          "bx": -113,
+          "bz": 222.61
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 873,
+      "levels": 4,
+      "chainage": 259,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 4.04,
+          "isChamfer": false,
+          "ax": -117.28,
+          "az": 231.22,
+          "bx": -115.49,
+          "bz": 227.6
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 865,
+      "levels": 4,
+      "chainage": 264,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.31,
+          "isChamfer": false,
+          "ax": -119.64,
+          "az": 235.98,
+          "bx": -117.28,
+          "bz": 231.22
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Rhinestone Cowboys",
+          "kind": "clothes",
+          "addr": "124 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 414,
+      "levels": 4,
+      "chainage": 265,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.89,
+          "isChamfer": false,
+          "ax": -95.94,
+          "az": 239.75,
+          "bx": -101.67,
+          "bz": 252.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Sett Studios",
+          "kind": "studio",
+          "addr": "127 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 878,
+      "levels": 4,
+      "chainage": 268,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 4.03,
+          "isChamfer": false,
+          "ax": -121.42,
+          "az": 239.6,
+          "bx": -119.64,
+          "bz": 235.98
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Chorrito Hot Sauce Cantina",
+          "kind": "restaurant",
+          "addr": "126 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 887,
+      "levels": 4,
+      "chainage": 273,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.39,
+          "isChamfer": false,
+          "ax": -123.81,
+          "az": 244.43,
+          "bx": -121.42,
+          "bz": 239.6
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Cornelius",
+          "kind": "wine",
+          "addr": "128 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 867,
+      "levels": 4,
+      "chainage": 276,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.44,
+          "isChamfer": false,
+          "ax": -124.46,
+          "az": 245.72,
+          "bx": -123.81,
+          "bz": 244.43
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 881,
+      "levels": 4,
+      "chainage": 280,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.54,
+          "isChamfer": false,
+          "ax": -126.92,
+          "az": 250.68,
+          "bx": -124.46,
+          "bz": 245.72
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Kiki's Cafe",
+          "kind": "cafe",
+          "addr": "132 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 412,
+      "levels": 4,
+      "chainage": 282,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.39,
+          "isChamfer": false,
+          "ax": -110.36,
+          "az": 268.65,
+          "bx": -102.78,
+          "bz": 251.9
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Inchkeith House - Podiatry Dept.",
+          "kind": "clinic",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 884,
+      "levels": 4,
+      "chainage": 284,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.94,
+          "isChamfer": false,
+          "ax": -128.68,
+          "az": 254.21,
+          "bx": -126.92,
+          "bz": 250.68
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 871,
+      "levels": 4,
+      "chainage": 289,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.4,
+          "isChamfer": false,
+          "ax": -131.08,
+          "az": 259.05,
+          "bx": -128.68,
+          "bz": 254.21
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Ella Taste of Greece",
+          "kind": "restaurant",
+          "addr": "134-136 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 879,
+      "levels": 4,
+      "chainage": 294,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.65,
+          "isChamfer": false,
+          "ax": -132.71,
+          "az": 262.32,
+          "bx": -131.08,
+          "bz": 259.05
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Depot",
+          "kind": "pub",
+          "addr": "138-140 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 6,
+      "levels": 4,
+      "chainage": 296,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.95,
+          "isChamfer": false,
+          "ax": -115.8,
+          "az": 281.5,
+          "bx": -110.05,
+          "bz": 268.79
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 875,
+      "levels": 4,
+      "chainage": 299,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.69,
+          "isChamfer": false,
+          "ax": -135.24,
+          "az": 267.42,
+          "bx": -132.71,
+          "bz": 262.32
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 411,
+      "levels": 4,
+      "chainage": 302,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 5.2,
+          "isChamfer": false,
+          "ax": -102.93,
+          "az": 287.25,
+          "bx": -100.78,
+          "bz": 282.51
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 868,
+      "levels": 4,
+      "chainage": 304,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.32,
+          "isChamfer": false,
+          "ax": -137.62,
+          "az": 272.18,
+          "bx": -135.24,
+          "bz": 267.42
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Depot Venue",
+          "kind": "music_venue",
+          "addr": "142 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 876,
+      "levels": 4,
+      "chainage": 309,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.86,
+          "isChamfer": false,
+          "ax": -139.33,
+          "az": 275.64,
+          "bx": -137.62,
+          "bz": 272.18
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 880,
+      "levels": 4,
+      "chainage": 313,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.49,
+          "isChamfer": false,
+          "ax": -141.76,
+          "az": 280.56,
+          "bx": -139.33,
+          "bz": 275.64
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Zoomo",
+          "kind": "bicycle",
+          "addr": "144-150 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 890,
+      "levels": 4,
+      "chainage": 317,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 3.88,
+          "isChamfer": false,
+          "ax": -143.48,
+          "az": 284.04,
+          "bx": -141.76,
+          "bz": 280.56
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 889,
+      "levels": 4,
+      "chainage": 322,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.49,
+          "isChamfer": false,
+          "ax": -145.92,
+          "az": 288.96,
+          "bx": -143.48,
+          "bz": 284.04
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "San Ciro's",
+          "kind": "restaurant",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 866,
+      "levels": 4,
+      "chainage": 325,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.66,
+          "isChamfer": false,
+          "ax": -146.66,
+          "az": 290.45,
+          "bx": -145.92,
+          "bz": 288.96
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 11,
+      "levels": 4,
+      "chainage": 328,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.14,
+          "isChamfer": false,
+          "ax": -121.55,
+          "az": 293.84,
+          "bx": -128.51,
+          "bz": 309.5
+        }
+      ],
+      "placedSlug": "165a-leith-walk-edinburgh",
+      "businesses": [
+        {
+          "name": "Capital City Partnership",
+          "kind": "ngo",
+          "addr": "165A Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 895,
+      "levels": 4,
+      "chainage": 329,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.75,
+          "isChamfer": false,
+          "ax": -149.21,
+          "az": 295.6,
+          "bx": -146.66,
+          "bz": 290.45
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Shawarma",
+          "kind": "fast_food",
+          "addr": "154 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 992,
+      "levels": 1,
+      "chainage": 341,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.59,
+          "isChamfer": false,
+          "ax": -113.42,
+          "az": 326,
+          "bx": -109.55,
+          "bz": 318.33
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 794,
+      "levels": 4,
+      "chainage": 349,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 4.46,
+          "isChamfer": false,
+          "ax": -134.52,
+          "az": 322.52,
+          "bx": -132.58,
+          "bz": 318.5
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Not Just Coffee",
+          "kind": "cafe",
+          "addr": "167 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 100,
+      "levels": 4,
+      "chainage": 353,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.75,
+          "isChamfer": false,
+          "ax": -137.89,
+          "az": 329.5,
+          "bx": -134.52,
+          "bz": 322.52
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Superior Cuts",
+          "kind": "hairdresser",
+          "addr": "169 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 101,
+      "levels": 4,
+      "chainage": 358,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 15.39,
+          "isChamfer": false,
+          "ax": -158.04,
+          "az": 311.88,
+          "bx": -164.76,
+          "bz": 325.73
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Bandits",
+          "kind": "fast_food",
+          "addr": "166 Leith Walk"
+        },
+        {
+          "name": "Pizza Hut Delivery",
+          "kind": "fast_food",
+          "addr": "170 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 195,
+      "levels": 4,
+      "chainage": 360,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.1,
+          "isChamfer": false,
+          "ax": -129.78,
+          "az": 346.73,
+          "bx": -124.56,
+          "bz": 335.81
+        },
+        {
+          "widthM": 10.46,
+          "isChamfer": false,
+          "ax": -122.33,
+          "az": 336.85,
+          "bx": -117.82,
+          "bz": 327.41
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Smith Place Hotel",
+          "kind": "hotel",
+          "addr": "3 Smith's Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 186,
+      "levels": 4,
+      "chainage": 366,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.9,
+          "isChamfer": false,
+          "ax": -142.7,
+          "az": 340.91,
+          "bx": -142.32,
+          "bz": 340.09
+        },
+        {
+          "widthM": 11.46,
+          "isChamfer": false,
+          "ax": -142.68,
+          "az": 339.91,
+          "bx": -137.89,
+          "bz": 329.5
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Qupi",
+          "kind": "cafe",
+          "addr": "171 Leith Walk"
+        },
+        {
+          "name": "Millers Flooring",
+          "kind": "flooring",
+          "addr": "177 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 952,
+      "levels": 1,
+      "chainage": 374,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.41,
+          "isChamfer": false,
+          "ax": -130.04,
+          "az": 350.84,
+          "bx": -130.65,
+          "bz": 352.11
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 102,
+      "levels": 4,
+      "chainage": 376,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.08,
+          "isChamfer": false,
+          "ax": -168.84,
+          "az": 329.53,
+          "bx": -172.27,
+          "bz": 336.85
+        },
+        {
+          "widthM": 17.37,
+          "isChamfer": false,
+          "ax": -171.01,
+          "az": 337.77,
+          "bx": -178.66,
+          "bz": 353.36
+        },
+        {
+          "widthM": 1.25,
+          "isChamfer": false,
+          "ax": -166.56,
+          "az": 324.69,
+          "bx": -167.09,
+          "bz": 325.82
+        },
+        {
+          "widthM": 1.42,
+          "isChamfer": true,
+          "ax": -166.99,
+          "az": 325.86,
+          "bx": -166.58,
+          "bz": 327.22
+        },
+        {
+          "widthM": 1.98,
+          "isChamfer": false,
+          "ax": -166.58,
+          "az": 327.22,
+          "bx": -167.4,
+          "bz": 329.02
+        },
+        {
+          "widthM": 1.42,
+          "isChamfer": true,
+          "ax": -167.4,
+          "az": 329.02,
+          "bx": -168.7,
+          "bz": 329.6
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Easy Tan",
+          "kind": "beauty",
+          "addr": "172 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 532,
+      "levels": 4,
+      "chainage": 393,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.71,
+          "isChamfer": true,
+          "ax": -150.75,
+          "az": 360.44,
+          "bx": -151.46,
+          "bz": 360.36
+        },
+        {
+          "widthM": 0.81,
+          "isChamfer": true,
+          "ax": -151.46,
+          "az": 360.36,
+          "bx": -152.26,
+          "bz": 360.5
+        },
+        {
+          "widthM": 0.9,
+          "isChamfer": false,
+          "ax": -152.26,
+          "az": 360.5,
+          "bx": -152.88,
+          "bz": 361.15
+        },
+        {
+          "widthM": 3.66,
+          "isChamfer": false,
+          "ax": -152.88,
+          "az": 361.15,
+          "bx": -154.68,
+          "bz": 364.34
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Toast",
+          "kind": "cafe",
+          "addr": "185 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 189,
+      "levels": 4,
+      "chainage": 402,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.59,
+          "isChamfer": true,
+          "ax": -139.07,
+          "az": 380.31,
+          "bx": -138.21,
+          "bz": 381.65
+        },
+        {
+          "widthM": 6.23,
+          "isChamfer": false,
+          "ax": -141.18,
+          "az": 371.41,
+          "bx": -143.87,
+          "bz": 377.03
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 193,
+      "levels": 4,
+      "chainage": 404,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.44,
+          "isChamfer": false,
+          "ax": -154.68,
+          "az": 364.34,
+          "bx": -162.41,
+          "bz": 381.08
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Urban Jungle Brunch Room",
+          "kind": "plants",
+          "addr": "189 Leith Walk"
+        },
+        {
+          "name": "Cashino Gaming",
+          "kind": "adult_gaming_centre",
+          "addr": "193 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 124,
+      "levels": 4,
+      "chainage": 414,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 15.25,
+          "isChamfer": false,
+          "ax": -182.45,
+          "az": 361.08,
+          "bx": -189.02,
+          "bz": 374.84
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Majestic",
+          "kind": "alcohol",
+          "addr": "200 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 187,
+      "levels": 4,
+      "chainage": 418,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.64,
+          "isChamfer": false,
+          "ax": -156.85,
+          "az": 393.25,
+          "bx": -153.04,
+          "bz": 385.5
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 111,
+      "levels": 4,
+      "chainage": 419,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.62,
+          "isChamfer": false,
+          "ax": -148.2,
+          "az": 387.87,
+          "bx": -152.01,
+          "bz": 395.6
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 191,
+      "levels": 1,
+      "chainage": 422,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.25,
+          "isChamfer": false,
+          "ax": -162.41,
+          "az": 381.08,
+          "bx": -170.2,
+          "bz": 397.58
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "PCY Oriental 百佳行",
+          "kind": "deli",
+          "addr": "199 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 110,
+      "levels": 4,
+      "chainage": 429,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.63,
+          "isChamfer": false,
+          "ax": -156.85,
+          "az": 393.25,
+          "bx": -161.11,
+          "bz": 401.89
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 158,
+      "levels": 4,
+      "chainage": 435,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 19.4,
+          "isChamfer": false,
+          "ax": -197.37,
+          "az": 392.35,
+          "bx": -189.02,
+          "bz": 374.84
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Ladbrokes",
+          "kind": "bookmaker",
+          "addr": null
+        },
+        {
+          "name": "Folly Antiques",
+          "kind": "antiques",
+          "addr": "208-210 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 109,
+      "levels": 4,
+      "chainage": 441,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18,
+          "isChamfer": false,
+          "ax": -170.2,
+          "az": 397.58,
+          "bx": -177.99,
+          "bz": 413.81
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Scotmid",
+          "kind": "convenience",
+          "addr": "207 Leith Walk"
+        },
+        {
+          "name": "Leith Walk Post Office",
+          "kind": "post_office",
+          "addr": "207A Leith Walk"
+        },
+        {
+          "name": "William Hill",
+          "kind": "bookmaker",
+          "addr": "217 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 984,
+      "levels": 3,
+      "chainage": 453,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 7.55,
+          "isChamfer": false,
+          "ax": -201.08,
+          "az": 399.55,
+          "bx": -204.33,
+          "bz": 406.37
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Volunteer Edinburgh",
+          "kind": "ngo",
+          "addr": "222 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 57,
+      "levels": 4,
+      "chainage": 464,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.95,
+          "isChamfer": true,
+          "ax": -184.65,
+          "az": 431.36,
+          "bx": -185.15,
+          "bz": 430.55
+        },
+        {
+          "widthM": 0.43,
+          "isChamfer": true,
+          "ax": -185.15,
+          "az": 430.55,
+          "bx": -185.25,
+          "bz": 430.13
+        },
+        {
+          "widthM": 0.52,
+          "isChamfer": false,
+          "ax": -185.25,
+          "az": 430.13,
+          "bx": -185.24,
+          "bz": 429.61
+        },
+        {
+          "widthM": 17.39,
+          "isChamfer": false,
+          "ax": -185.24,
+          "az": 429.61,
+          "bx": -177.99,
+          "bz": 413.81
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Subway",
+          "kind": "fast_food",
+          "addr": "219 Leith Walk"
+        },
+        {
+          "name": "The Phone Stop",
+          "kind": "mobile_phone",
+          "addr": "221 Leith Walk"
+        },
+        {
+          "name": "La Belle Adventure",
+          "kind": "books",
+          "addr": "225 Leith Walk"
+        },
+        {
+          "name": "Alhambra Bar",
+          "kind": "pub",
+          "addr": "227 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 128,
+      "levels": 4,
+      "chainage": 466,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 20.83,
+          "isChamfer": false,
+          "ax": -204.33,
+          "az": 406.37,
+          "bx": -213.17,
+          "bz": 425.23
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Frites",
+          "kind": "fast_food",
+          "addr": "224 Leith Walk"
+        },
+        {
+          "name": "Arkay Imaging",
+          "kind": "copyshop",
+          "addr": "228 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 183,
+      "levels": 4,
+      "chainage": 466,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.25,
+          "isChamfer": false,
+          "ax": -171.86,
+          "az": 437.96,
+          "bx": -166.1,
+          "bz": 426.03
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Mighty Barbers and Beauty",
+          "kind": "hairdresser",
+          "addr": "4 Lorne Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 209,
+      "levels": 4,
+      "chainage": 488,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.01,
+          "isChamfer": true,
+          "ax": -190.85,
+          "az": 445.37,
+          "bx": -191.86,
+          "bz": 445.4
+        },
+        {
+          "widthM": 0.99,
+          "isChamfer": true,
+          "ax": -191.86,
+          "az": 445.4,
+          "bx": -192.75,
+          "bz": 445.84
+        },
+        {
+          "widthM": 0.49,
+          "isChamfer": false,
+          "ax": -192.75,
+          "az": 445.84,
+          "bx": -193.11,
+          "bz": 446.17
+        },
+        {
+          "widthM": 0.94,
+          "isChamfer": false,
+          "ax": -193.11,
+          "az": 446.17,
+          "bx": -193.67,
+          "bz": 446.92
+        },
+        {
+          "widthM": 6.89,
+          "isChamfer": false,
+          "ax": -193.67,
+          "az": 446.92,
+          "bx": -196.65,
+          "bz": 453.13
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "abode",
+          "kind": "pub",
+          "addr": "229 Leith Walk"
+        },
+        {
+          "name": "Polak w Szkocji",
+          "kind": "yes",
+          "addr": "231 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 205,
+      "levels": 4,
+      "chainage": 492,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.66,
+          "isChamfer": false,
+          "ax": -180.65,
+          "az": 465.33,
+          "bx": -175.04,
+          "bz": 452.88
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 122,
+      "levels": 4,
+      "chainage": 499,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.18,
+          "isChamfer": false,
+          "ax": -222.98,
+          "az": 421.47,
+          "bx": -215.76,
+          "bz": 430
+        },
+        {
+          "widthM": 31.57,
+          "isChamfer": false,
+          "ax": -215.76,
+          "az": 430,
+          "bx": -229.33,
+          "bz": 458.5
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Origano",
+          "kind": "restaurant",
+          "addr": "236 Leith Walk"
+        },
+        {
+          "name": "Mobile Tech and Vape",
+          "kind": "mobile_phone;vape",
+          "addr": "238 Leith Walk"
+        },
+        {
+          "name": "Inner (City) Sanctum",
+          "kind": "beauty",
+          "addr": "240 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 200,
+      "levels": 4,
+      "chainage": 499,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.06,
+          "isChamfer": false,
+          "ax": -196.65,
+          "az": 453.13,
+          "bx": -200.49,
+          "bz": 461.34
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "The Remedy",
+          "kind": "cafe",
+          "addr": "235-237 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 210,
+      "levels": 4,
+      "chainage": 508,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.48,
+          "isChamfer": false,
+          "ax": -200.49,
+          "az": 461.34,
+          "bx": -204.47,
+          "bz": 469.94
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Sweetland Cafe",
+          "kind": "cafe",
+          "addr": "241 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 701,
+      "levels": 4,
+      "chainage": 513,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.25,
+          "isChamfer": false,
+          "ax": -232.37,
+          "az": 441.32,
+          "bx": -237.36,
+          "bz": 451.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 198,
+      "levels": 4,
+      "chainage": 517,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.87,
+          "isChamfer": false,
+          "ax": -204.47,
+          "az": 469.94,
+          "bx": -208.2,
+          "bz": 477.99
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Arif Jewelers",
+          "kind": "jewelry",
+          "addr": "245 Leith Walk"
+        },
+        {
+          "name": "Pedal Forth",
+          "kind": "bicycle",
+          "addr": "247 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 126,
+      "levels": 4,
+      "chainage": 524,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 2.25,
+          "isChamfer": true,
+          "ax": -239.08,
+          "az": 475.71,
+          "bx": -237.04,
+          "bz": 474.77
+        },
+        {
+          "widthM": 18,
+          "isChamfer": false,
+          "ax": -237.04,
+          "az": 474.77,
+          "bx": -229.33,
+          "bz": 458.5
+        }
+      ],
+      "placedSlug": "shops-and-tenements-244-6-8-leith-walk-geograph-org-uk-55694",
+      "businesses": [
+        {
+          "name": "Peluquero de Hombres",
+          "kind": "hairdresser",
+          "addr": "244 Leith Walk"
+        },
+        {
+          "name": "Sunset Nails",
+          "kind": "beauty",
+          "addr": "246 Leith Walk"
+        },
+        {
+          "name": "Uwagboe's Kitchen & Grill",
+          "kind": "restaurant",
+          "addr": "250-252 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 203,
+      "levels": 4,
+      "chainage": 527,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.48,
+          "isChamfer": false,
+          "ax": -208.2,
+          "az": 477.99,
+          "bx": -212.18,
+          "bz": 486.59
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Zabka",
+          "kind": "convenience",
+          "addr": "249-251 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 199,
+      "levels": 4,
+      "chainage": 536,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.59,
+          "isChamfer": false,
+          "ax": -212.18,
+          "az": 486.59,
+          "bx": -216.21,
+          "bz": 495.29
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Dixy Chicken",
+          "kind": "fast_food",
+          "addr": "255-257 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 204,
+      "levels": 4,
+      "chainage": 547,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 11.11,
+          "isChamfer": false,
+          "ax": -216.21,
+          "az": 495.29,
+          "bx": -221.02,
+          "bz": 505.31
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Lindsay & Gilmour",
+          "kind": "chemist",
+          "addr": "257A Leith Walk"
+        },
+        {
+          "name": "Sea Breeze Cafe",
+          "kind": "cafe",
+          "addr": "261 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 123,
+      "levels": 4,
+      "chainage": 551,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 23.46,
+          "isChamfer": false,
+          "ax": -239.35,
+          "az": 480.16,
+          "bx": -249.62,
+          "bz": 501.25
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Best Kebab House",
+          "kind": "fast_food",
+          "addr": "256 Leith Walk"
+        },
+        {
+          "name": "The Fairy Boy of Leith",
+          "kind": "artwork",
+          "addr": null
+        },
+        {
+          "name": "Satyr",
+          "kind": "pub",
+          "addr": "260-262 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 15,
+      "levels": 4,
+      "chainage": 558,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 11.06,
+          "isChamfer": false,
+          "ax": -221.02,
+          "az": 505.31,
+          "bx": -225.65,
+          "bz": 515.35
+        },
+        {
+          "widthM": 1.77,
+          "isChamfer": true,
+          "ax": -225.65,
+          "az": 515.35,
+          "bx": -224.96,
+          "bz": 516.98
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Ahmad and Nabi Mcmullan Accountants and Tax Consultants",
+          "kind": "accountant",
+          "addr": "263A Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 201,
+      "levels": 4,
+      "chainage": 558,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.6,
+          "isChamfer": false,
+          "ax": -204.26,
+          "az": 511.48,
+          "bx": -209.96,
+          "bz": 523.83
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 686,
+      "levels": 4,
+      "chainage": 571,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 0.99,
+          "isChamfer": false,
+          "ax": -257.88,
+          "az": 518.23,
+          "bx": -258.56,
+          "bz": 518.95
+        },
+        {
+          "widthM": 1.01,
+          "isChamfer": true,
+          "ax": -258.56,
+          "az": 518.95,
+          "bx": -259.51,
+          "bz": 519.29
+        },
+        {
+          "widthM": 0.95,
+          "isChamfer": true,
+          "ax": -259.51,
+          "az": 519.29,
+          "bx": -260.46,
+          "bz": 519.23
+        },
+        {
+          "widthM": 4.96,
+          "isChamfer": true,
+          "ax": -257.71,
+          "az": 493.63,
+          "bx": -254.69,
+          "bz": 497.56
+        },
+        {
+          "widthM": 18.88,
+          "isChamfer": false,
+          "ax": -249.62,
+          "az": 501.25,
+          "bx": -257.88,
+          "bz": 518.23
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "In Style Alterations",
+          "kind": "tailor",
+          "addr": "268 Leith Walk"
+        },
+        {
+          "name": "Romeo",
+          "kind": "hairdresser",
+          "addr": "272 Leith Walk"
+        },
+        {
+          "name": "Artisan Coffee Leith",
+          "kind": "cafe",
+          "addr": "274 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 217,
+      "levels": 4,
+      "chainage": 585,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.52,
+          "isChamfer": true,
+          "ax": -226.62,
+          "az": 542.8,
+          "bx": -225.53,
+          "bz": 545.07
+        },
+        {
+          "widthM": 2.01,
+          "isChamfer": true,
+          "ax": -230.3,
+          "az": 529.06,
+          "bx": -232.27,
+          "bz": 529.44
+        },
+        {
+          "widthM": 9.92,
+          "isChamfer": false,
+          "ax": -232.27,
+          "az": 529.44,
+          "bx": -236.68,
+          "bz": 538.33
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Victoria",
+          "kind": "pub",
+          "addr": "265 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 528,
+      "levels": 4,
+      "chainage": 586,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.89,
+          "isChamfer": true,
+          "ax": -217.35,
+          "az": 549.3,
+          "bx": -216.98,
+          "bz": 550.11
+        },
+        {
+          "widthM": 12.83,
+          "isChamfer": false,
+          "ax": -215.24,
+          "az": 536.12,
+          "bx": -220.71,
+          "bz": 547.73
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 231,
+      "levels": 4,
+      "chainage": 595,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.46,
+          "isChamfer": false,
+          "ax": -236.68,
+          "az": 538.33,
+          "bx": -241.8,
+          "bz": 549.69
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Fountain Desserts",
+          "kind": "ice_cream",
+          "addr": "267a Leith Walk"
+        },
+        {
+          "name": "Estate Salon",
+          "kind": "hairdresser",
+          "addr": "267B Leith Walk"
+        },
+        {
+          "name": "Home Essentials",
+          "kind": "hardware",
+          "addr": "269 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 229,
+      "levels": 4,
+      "chainage": 609,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.81,
+          "isChamfer": false,
+          "ax": -241.8,
+          "az": 549.69,
+          "bx": -249.16,
+          "bz": 564.8
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Walk Fruits",
+          "kind": "greengrocer",
+          "addr": "271-273 Leith Walk"
+        },
+        {
+          "name": "OriganoGo",
+          "kind": "fast_food",
+          "addr": "277 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 125,
+      "levels": 4,
+      "chainage": 613,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 10.63,
+          "isChamfer": false,
+          "ax": -275.54,
+          "az": 553.92,
+          "bx": -270.98,
+          "bz": 544.32
+        },
+        {
+          "widthM": 1.41,
+          "isChamfer": false,
+          "ax": -270.98,
+          "az": 544.32,
+          "bx": -271,
+          "bz": 542.91
+        },
+        {
+          "widthM": 8.29,
+          "isChamfer": true,
+          "ax": -271,
+          "az": 542.91,
+          "bx": -276.08,
+          "bz": 536.36
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Griffen Fitness",
+          "kind": "sports",
+          "addr": "3 Balfour Street"
+        },
+        {
+          "name": "Leith Cycle Co",
+          "kind": "bicycle",
+          "addr": "276 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 119,
+      "levels": 4,
+      "chainage": 628,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.95,
+          "isChamfer": true,
+          "ax": -282.91,
+          "az": 565.84,
+          "bx": -281.01,
+          "bz": 565.42
+        },
+        {
+          "widthM": 12.73,
+          "isChamfer": false,
+          "ax": -281.01,
+          "az": 565.42,
+          "bx": -275.54,
+          "bz": 553.92
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Mo's Sharp Style Barber",
+          "kind": "hairdresser",
+          "addr": "280 Leith Walk"
+        },
+        {
+          "name": "Goldie Loxx",
+          "kind": "hairdresser",
+          "addr": "284 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 230,
+      "levels": 4,
+      "chainage": 628,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.11,
+          "isChamfer": false,
+          "ax": -249.16,
+          "az": 564.8,
+          "bx": -256.37,
+          "bz": 580.32
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Storries Home Bakery",
+          "kind": "bakery",
+          "addr": "279 Leith Walk"
+        },
+        {
+          "name": "The Bami",
+          "kind": "fast_food",
+          "addr": "281 Leith Walk"
+        },
+        {
+          "name": "Balfour Street",
+          "kind": "shelter",
+          "addr": null
+        },
+        {
+          "name": "+48 Tattoo Saloon",
+          "kind": "tattoo",
+          "addr": "283 Leith Walk"
+        },
+        {
+          "name": "Indo Soul",
+          "kind": "hairdresser",
+          "addr": "289 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 228,
+      "levels": 4,
+      "chainage": 637,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.62,
+          "isChamfer": true,
+          "ax": -239.66,
+          "az": 585.03,
+          "bx": -241.27,
+          "bz": 585.21
+        },
+        {
+          "widthM": 12.05,
+          "isChamfer": false,
+          "ax": -241.27,
+          "az": 585.21,
+          "bx": -244.63,
+          "bz": 596.78
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 218,
+      "levels": 4,
+      "chainage": 644,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.11,
+          "isChamfer": false,
+          "ax": -256.37,
+          "az": 580.32,
+          "bx": -260.38,
+          "bz": 588.5
+        },
+        {
+          "widthM": 1,
+          "isChamfer": false,
+          "ax": -260.38,
+          "az": 588.5,
+          "bx": -260.45,
+          "bz": 589.5
+        },
+        {
+          "widthM": 1.1,
+          "isChamfer": true,
+          "ax": -260.45,
+          "az": 589.5,
+          "bx": -260.26,
+          "bz": 590.58
+        },
+        {
+          "widthM": 1.04,
+          "isChamfer": true,
+          "ax": -260.26,
+          "az": 590.58,
+          "bx": -259.82,
+          "bz": 591.52
+        },
+        {
+          "widthM": 0.52,
+          "isChamfer": true,
+          "ax": -259.82,
+          "az": 591.52,
+          "bx": -259.5,
+          "bz": 591.93
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Arthur's",
+          "kind": "hairdresser",
+          "addr": "291 Leith Walk"
+        },
+        {
+          "name": "Your Move",
+          "kind": "estate_agent",
+          "addr": "295 Leith Walk"
+        },
+        {
+          "name": "Druid",
+          "kind": "candles",
+          "addr": "5 Dalmeny Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 593,
+      "levels": 4,
+      "chainage": 650,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 21.55,
+          "isChamfer": false,
+          "ax": -295.62,
+          "az": 594.22,
+          "bx": -285.92,
+          "bz": 574.98
+        },
+        {
+          "widthM": 0.45,
+          "isChamfer": false,
+          "ax": -285.92,
+          "az": 574.98,
+          "bx": -285.82,
+          "bz": 574.54
+        },
+        {
+          "widthM": 0.74,
+          "isChamfer": true,
+          "ax": -285.82,
+          "az": 574.54,
+          "bx": -285.92,
+          "bz": 573.81
+        },
+        {
+          "widthM": 0.31,
+          "isChamfer": true,
+          "ax": -285.92,
+          "az": 573.81,
+          "bx": -286.12,
+          "bz": 573.57
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Neighbourwood",
+          "kind": "fast_food",
+          "addr": "294 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 598,
+      "levels": 4,
+      "chainage": 651,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 12.07,
+          "isChamfer": false,
+          "ax": -296.18,
+          "az": 583.77,
+          "bx": -290.47,
+          "bz": 573.14
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 604,
+      "levels": 4,
+      "chainage": 661,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.28,
+          "isChamfer": false,
+          "ax": -301.52,
+          "az": 593.71,
+          "bx": -296.18,
+          "bz": 583.77
+        }
+      ],
+      "placedSlug": "the-harp-castle-leith-walk-geograph-org-uk-3723957",
+      "businesses": [
+        {
+          "name": "The Harp & Castle",
+          "kind": "pub",
+          "addr": "298 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 594,
+      "levels": 4,
+      "chainage": 672,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 9.07,
+          "isChamfer": false,
+          "ax": -305.93,
+          "az": 601.63,
+          "bx": -301.52,
+          "bz": 593.71
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 269,
+      "levels": 4,
+      "chainage": 673,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 14.14,
+          "isChamfer": false,
+          "ax": -259.02,
+          "az": 629.58,
+          "bx": -254.84,
+          "bz": 616.07
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 270,
+      "levels": 4,
+      "chainage": 674,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.58,
+          "isChamfer": false,
+          "ax": -276.51,
+          "az": 622.15,
+          "bx": -273.25,
+          "bz": 615.31
+        },
+        {
+          "widthM": 3.38,
+          "isChamfer": false,
+          "ax": -273.25,
+          "az": 615.31,
+          "bx": -271.13,
+          "bz": 612.68
+        },
+        {
+          "widthM": 1.06,
+          "isChamfer": true,
+          "ax": -271.13,
+          "az": 612.68,
+          "bx": -270.22,
+          "bz": 612.13
+        },
+        {
+          "widthM": 1.81,
+          "isChamfer": true,
+          "ax": -270.22,
+          "az": 612.13,
+          "bx": -268.43,
+          "bz": 611.89
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "La Casa",
+          "kind": "restaurant",
+          "addr": "297 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 592,
+      "levels": 4,
+      "chainage": 680,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 7.32,
+          "isChamfer": false,
+          "ax": -309.32,
+          "az": 608.12,
+          "bx": -305.93,
+          "bz": 601.63
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 142,
+      "levels": 4,
+      "chainage": 684,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.49,
+          "isChamfer": false,
+          "ax": -309.96,
+          "az": 609.47,
+          "bx": -309.32,
+          "bz": 608.12
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 607,
+      "levels": 4,
+      "chainage": 685,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 17.34,
+          "isChamfer": false,
+          "ax": -308.58,
+          "az": 619.59,
+          "bx": -300.53,
+          "bz": 604.23
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "兴成行 Hing Sing Chinese Supermarket",
+          "kind": "convenience",
+          "addr": "310 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 588,
+      "levels": 4,
+      "chainage": 689,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.36,
+          "isChamfer": false,
+          "ax": -313.87,
+          "az": 616.86,
+          "bx": -309.96,
+          "bz": 609.47
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 256,
+      "levels": 4,
+      "chainage": 691,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.27,
+          "isChamfer": false,
+          "ax": -284.47,
+          "az": 638.6,
+          "bx": -276.51,
+          "bz": 622.15
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Best-one",
+          "kind": "convenience",
+          "addr": "301 Leith Walk"
+        },
+        {
+          "name": "Ernest & Bob",
+          "kind": "cafe",
+          "addr": "305 Leith Walk"
+        },
+        {
+          "name": "Aslam Jewellers",
+          "kind": "jewelry",
+          "addr": "307 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 610,
+      "levels": 4,
+      "chainage": 700,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 10.68,
+          "isChamfer": false,
+          "ax": -318.94,
+          "az": 626.26,
+          "bx": -313.87,
+          "bz": 616.86
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 140,
+      "levels": 4,
+      "chainage": 708,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.29,
+          "isChamfer": false,
+          "ax": -321.42,
+          "az": 630.93,
+          "bx": -318.94,
+          "bz": 626.26
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 268,
+      "levels": 4,
+      "chainage": 709,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.27,
+          "isChamfer": false,
+          "ax": -292.44,
+          "az": 655.04,
+          "bx": -284.47,
+          "bz": 638.6
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Cherry Bay Cafe",
+          "kind": "cafe",
+          "addr": "309 Leith Walk"
+        },
+        {
+          "name": "Bardot Aesthics Ltd",
+          "kind": "beauty",
+          "addr": "309B Leith Walk"
+        },
+        {
+          "name": "Vacuum Exchange",
+          "kind": "vacuum_cleaner",
+          "addr": "315-317 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 525,
+      "levels": 4,
+      "chainage": 717,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 5.24,
+          "isChamfer": false,
+          "ax": -279.33,
+          "az": 662.27,
+          "bx": -276.78,
+          "bz": 657.69
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 524,
+      "levels": 4,
+      "chainage": 722,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 5.01,
+          "isChamfer": false,
+          "ax": -281.78,
+          "az": 666.64,
+          "bx": -279.33,
+          "bz": 662.27
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 409,
+      "levels": 4,
+      "chainage": 726,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.91,
+          "isChamfer": false,
+          "ax": -301.67,
+          "az": 671.55,
+          "bx": -292.44,
+          "bz": 655.04
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Braid Vets",
+          "kind": "veterinary",
+          "addr": "319 Leith Walk"
+        },
+        {
+          "name": "Cupp",
+          "kind": "cafe",
+          "addr": "321 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 526,
+      "levels": 4,
+      "chainage": 732,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 6.72,
+          "isChamfer": false,
+          "ax": -288.56,
+          "az": 678.78,
+          "bx": -285.28,
+          "bz": 672.91
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 841,
+      "levels": 4,
+      "chainage": 734,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 7.03,
+          "isChamfer": false,
+          "ax": -326.48,
+          "az": 656.44,
+          "bx": -323.2,
+          "bz": 650.22
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Cake Box",
+          "kind": "pastry",
+          "addr": "328 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 137,
+      "levels": 4,
+      "chainage": 742,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 6.58,
+          "isChamfer": false,
+          "ax": -329.85,
+          "az": 663.48,
+          "bx": -326.77,
+          "bz": 657.67
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Indigo",
+          "kind": "hairdresser",
+          "addr": "332 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 266,
+      "levels": 4,
+      "chainage": 746,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.99,
+          "isChamfer": false,
+          "ax": -310.55,
+          "az": 687.19,
+          "bx": -301.67,
+          "bz": 671.55
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Ivor and Ineta's Hair n' Beauty",
+          "kind": "beauty",
+          "addr": "335 Leith Walk"
+        },
+        {
+          "name": "Dofos",
+          "kind": "pet",
+          "addr": "337 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 843,
+      "levels": 4,
+      "chainage": 748,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.66,
+          "isChamfer": false,
+          "ax": -340.13,
+          "az": 665.95,
+          "bx": -337.5,
+          "bz": 660.94
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 840,
+      "levels": 1,
+      "chainage": 750,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.12,
+          "isChamfer": false,
+          "ax": -333.74,
+          "az": 672.04,
+          "bx": -329.95,
+          "bz": 664.86
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Handsel",
+          "kind": "gift",
+          "addr": "336 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 842,
+      "levels": 1,
+      "chainage": 756,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.72,
+          "isChamfer": false,
+          "ax": -339.34,
+          "az": 672.13,
+          "bx": -340.14,
+          "bz": 673.65
+        },
+        {
+          "widthM": 4.39,
+          "isChamfer": false,
+          "ax": -335.79,
+          "az": 675.92,
+          "bx": -333.74,
+          "bz": 672.04
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Framing Studio",
+          "kind": "frame",
+          "addr": "Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 839,
+      "levels": 4,
+      "chainage": 759,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 15.7,
+          "isChamfer": false,
+          "ax": -347.46,
+          "az": 679.83,
+          "bx": -340.13,
+          "bz": 665.95
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 258,
+      "levels": 4,
+      "chainage": 763,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.79,
+          "isChamfer": false,
+          "ax": -319.64,
+          "az": 702.48,
+          "bx": -310.55,
+          "bz": 687.19
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Lila Thai Massage",
+          "kind": "massage",
+          "addr": "339 Leith Walk"
+        },
+        {
+          "name": "Babyfaced Baker",
+          "kind": "pastry",
+          "addr": "341 Leith Walk"
+        },
+        {
+          "name": "Elvis Shakespeare",
+          "kind": "books",
+          "addr": "347 Leith Walk"
+        },
+        {
+          "name": "SB Barber",
+          "kind": "hairdresser",
+          "addr": "349 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 846,
+      "levels": 4,
+      "chainage": 766,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 12.11,
+          "isChamfer": false,
+          "ax": -342.2,
+          "az": 688.87,
+          "bx": -336.53,
+          "bz": 678.17
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Laundrette",
+          "kind": "laundry",
+          "addr": "344-346 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 844,
+      "levels": 4,
+      "chainage": 772,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 7.17,
+          "isChamfer": false,
+          "ax": -350.9,
+          "az": 686.12,
+          "bx": -347.46,
+          "bz": 679.83
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 267,
+      "levels": 4,
+      "chainage": 780,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.12,
+          "isChamfer": false,
+          "ax": -328.96,
+          "az": 718.02,
+          "bx": -319.64,
+          "bz": 702.48
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Terrafirma",
+          "kind": "cannabis",
+          "addr": "351 Leith Walk"
+        },
+        {
+          "name": "Yellow Express",
+          "kind": "e-cigarette",
+          "addr": "353 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 609,
+      "levels": 4,
+      "chainage": 783,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 16.96,
+          "isChamfer": false,
+          "ax": -343.31,
+          "az": 690.83,
+          "bx": -351.86,
+          "bz": 705.48
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "First Mortgage",
+          "kind": "financial",
+          "addr": "348 Leith Walk"
+        },
+        {
+          "name": "St Columba's Hospice Care",
+          "kind": "charity",
+          "addr": "352 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 265,
+      "levels": 4,
+      "chainage": 791,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 14.82,
+          "isChamfer": false,
+          "ax": -313.4,
+          "az": 723.74,
+          "bx": -298.75,
+          "bz": 725.95
+        },
+        {
+          "widthM": 11.26,
+          "isChamfer": false,
+          "ax": -316.74,
+          "az": 735.98,
+          "bx": -314.81,
+          "bz": 724.89
+        },
+        {
+          "widthM": 1.82,
+          "isChamfer": false,
+          "ax": -314.81,
+          "az": 724.89,
+          "bx": -313.4,
+          "bz": 723.74
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 255,
+      "levels": 4,
+      "chainage": 800,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.1,
+          "isChamfer": true,
+          "ax": -332.74,
+          "az": 732.13,
+          "bx": -333.29,
+          "bz": 731.18
+        },
+        {
+          "widthM": 1.76,
+          "isChamfer": true,
+          "ax": -333.29,
+          "az": 731.18,
+          "bx": -333.82,
+          "bz": 729.5
+        },
+        {
+          "widthM": 1.65,
+          "isChamfer": true,
+          "ax": -333.82,
+          "az": 729.5,
+          "bx": -333.87,
+          "bz": 727.85
+        },
+        {
+          "widthM": 1.71,
+          "isChamfer": false,
+          "ax": -333.87,
+          "az": 727.85,
+          "bx": -333.49,
+          "bz": 726.18
+        },
+        {
+          "widthM": 9.33,
+          "isChamfer": false,
+          "ax": -333.49,
+          "az": 726.18,
+          "bx": -328.96,
+          "bz": 718.02
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Regions Beyond",
+          "kind": "tattoo",
+          "addr": "361 Leith Walk"
+        },
+        {
+          "name": "Bee Tech",
+          "kind": "repair",
+          "addr": "363 Leith Walk"
+        },
+        {
+          "name": "Epoca",
+          "kind": "clothes",
+          "addr": "365 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 611,
+      "levels": 4,
+      "chainage": 801,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 17.43,
+          "isChamfer": false,
+          "ax": -351.86,
+          "az": 705.48,
+          "bx": -360.66,
+          "bz": 720.52
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "AR Alterations & Dry Cleaning",
+          "kind": "dry_cleaning",
+          "addr": "354 Leith Walk"
+        },
+        {
+          "name": "Kukina",
+          "kind": "cafe",
+          "addr": "356 Leith Walk"
+        },
+        {
+          "name": "Taste of Poland",
+          "kind": "convenience",
+          "addr": "360 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 615,
+      "levels": 4,
+      "chainage": 810,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 2.71,
+          "isChamfer": false,
+          "ax": -360.92,
+          "az": 720.37,
+          "bx": -362.44,
+          "bz": 722.61
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 612,
+      "levels": 4,
+      "chainage": 819,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.54,
+          "isChamfer": false,
+          "ax": -362.13,
+          "az": 722.8,
+          "bx": -368.29,
+          "bz": 732.56
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Brass Monkey",
+          "kind": "pub",
+          "addr": "362 Leith Walk"
+        },
+        {
+          "name": "Amor",
+          "kind": "hairdresser",
+          "addr": "366 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 285,
+      "levels": 4,
+      "chainage": 825,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 13.61,
+          "isChamfer": true,
+          "ax": -334.1,
+          "az": 755.24,
+          "bx": -320.65,
+          "bz": 757.33
+        },
+        {
+          "widthM": 12.69,
+          "isChamfer": false,
+          "ax": -336.05,
+          "az": 767.78,
+          "bx": -334.1,
+          "bz": 755.24
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 608,
+      "levels": 4,
+      "chainage": 834,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.29,
+          "isChamfer": false,
+          "ax": -369.67,
+          "az": 731.7,
+          "bx": -370.37,
+          "bz": 732.78
+        },
+        {
+          "widthM": 0.88,
+          "isChamfer": false,
+          "ax": -369.85,
+          "az": 733.11,
+          "bx": -370.32,
+          "bz": 733.85
+        },
+        {
+          "widthM": 2.74,
+          "isChamfer": false,
+          "ax": -370.85,
+          "az": 733.51,
+          "bx": -372.34,
+          "bz": 735.81
+        },
+        {
+          "widthM": 0.95,
+          "isChamfer": false,
+          "ax": -371.72,
+          "az": 736.21,
+          "bx": -372.24,
+          "bz": 737
+        },
+        {
+          "widthM": 7.77,
+          "isChamfer": false,
+          "ax": -372.41,
+          "az": 736.89,
+          "bx": -376.64,
+          "bz": 743.41
+        },
+        {
+          "widthM": 1.07,
+          "isChamfer": false,
+          "ax": -376.43,
+          "az": 743.56,
+          "bx": -377.01,
+          "bz": 744.46
+        },
+        {
+          "widthM": 3.44,
+          "isChamfer": false,
+          "ax": -377.67,
+          "az": 744.04,
+          "bx": -379.54,
+          "bz": 746.93
+        },
+        {
+          "widthM": 1.02,
+          "isChamfer": false,
+          "ax": -379,
+          "az": 747.27,
+          "bx": -379.56,
+          "bz": 748.12
+        },
+        {
+          "widthM": 0.44,
+          "isChamfer": false,
+          "ax": -380.1,
+          "az": 747.78,
+          "bx": -380.33,
+          "bz": 748.15
+        },
+        {
+          "widthM": 0.43,
+          "isChamfer": false,
+          "ax": -380.81,
+          "az": 747.84,
+          "bx": -380.58,
+          "bz": 747.48
+        },
+        {
+          "widthM": 0.64,
+          "isChamfer": false,
+          "ax": -384.46,
+          "az": 745.27,
+          "bx": -384.11,
+          "bz": 744.73
+        },
+        {
+          "widthM": 0.69,
+          "isChamfer": false,
+          "ax": -384.51,
+          "az": 744.48,
+          "bx": -384.13,
+          "bz": 743.9
+        },
+        {
+          "widthM": 0.56,
+          "isChamfer": false,
+          "ax": -383.74,
+          "az": 744.16,
+          "bx": -383.44,
+          "bz": 743.69
+        },
+        {
+          "widthM": 0.54,
+          "isChamfer": false,
+          "ax": -384.93,
+          "az": 742.73,
+          "bx": -385.22,
+          "bz": 743.18
+        },
+        {
+          "widthM": 0.54,
+          "isChamfer": false,
+          "ax": -385.99,
+          "az": 742.69,
+          "bx": -385.7,
+          "bz": 742.24
+        },
+        {
+          "widthM": 0.6,
+          "isChamfer": false,
+          "ax": -376.46,
+          "az": 728.97,
+          "bx": -376.78,
+          "bz": 729.48
+        },
+        {
+          "widthM": 1.18,
+          "isChamfer": false,
+          "ax": -374.96,
+          "az": 730.64,
+          "bx": -374.32,
+          "bz": 729.65
+        },
+        {
+          "widthM": 0.43,
+          "isChamfer": false,
+          "ax": -373.79,
+          "az": 730.01,
+          "bx": -374.03,
+          "bz": 730.37
+        },
+        {
+          "widthM": 1.22,
+          "isChamfer": false,
+          "ax": -370.96,
+          "az": 732.34,
+          "bx": -370.3,
+          "bz": 731.31
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Pilrig St Paul's",
+          "kind": "place_of_worship",
+          "addr": "1A Pilrig Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 272,
+      "levels": 4,
+      "chainage": 835,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.47,
+          "isChamfer": false,
+          "ax": -355.21,
+          "az": 761.92,
+          "bx": -350.38,
+          "bz": 754.97
+        },
+        {
+          "widthM": 1.14,
+          "isChamfer": false,
+          "ax": -350.38,
+          "az": 754.97,
+          "bx": -349.53,
+          "bz": 754.21
+        },
+        {
+          "widthM": 1.26,
+          "isChamfer": true,
+          "ax": -349.53,
+          "az": 754.21,
+          "bx": -348.41,
+          "bz": 753.64
+        },
+        {
+          "widthM": 1.43,
+          "isChamfer": true,
+          "ax": -348.41,
+          "az": 753.64,
+          "bx": -347.01,
+          "bz": 753.33
+        },
+        {
+          "widthM": 13.06,
+          "isChamfer": true,
+          "ax": -347.01,
+          "az": 753.33,
+          "bx": -334.1,
+          "bz": 755.24
+        }
+      ],
+      "placedSlug": "robbies-bar-leith-walk-01",
+      "businesses": [
+        {
+          "name": "The 'Pilrig Muddle'",
+          "kind": "information",
+          "addr": null
+        },
+        {
+          "name": "Pilrig wheels",
+          "kind": "artwork",
+          "addr": null
+        },
+        {
+          "name": "Robbie's",
+          "kind": "pub",
+          "addr": "367 Leith Walk"
+        },
+        {
+          "name": "Maria's Tailoring, Alterations & Repairs",
+          "kind": "tailor",
+          "addr": "371 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 280,
+      "levels": 4,
+      "chainage": 847,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.92,
+          "isChamfer": false,
+          "ax": -359.72,
+          "az": 769.62,
+          "bx": -355.21,
+          "bz": 761.92
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Lounge 33",
+          "kind": "cafe",
+          "addr": "373-375 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 281,
+      "levels": 4,
+      "chainage": 856,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.79,
+          "isChamfer": false,
+          "ax": -364.31,
+          "az": 777.12,
+          "bx": -359.72,
+          "bz": 769.62
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Boundary Bar",
+          "kind": "pub",
+          "addr": "379 Leith Walk"
+        },
+        {
+          "name": "GAIA Italian Delicatessen",
+          "kind": "cafe",
+          "addr": "32 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 291,
+      "levels": 4,
+      "chainage": 869,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.96,
+          "isChamfer": false,
+          "ax": -373.55,
+          "az": 792.52,
+          "bx": -364.31,
+          "bz": 777.12
+        },
+        {
+          "widthM": 1.66,
+          "isChamfer": true,
+          "ax": -359.68,
+          "az": 801.53,
+          "bx": -360.68,
+          "bz": 800.21
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Raku",
+          "kind": "restaurant",
+          "addr": "31 Crighton Place"
+        },
+        {
+          "name": "La Querencia",
+          "kind": "restaurant",
+          "addr": "29 Crighton Place"
+        },
+        {
+          "name": "PC Repair Man",
+          "kind": "computer",
+          "addr": "28 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 141,
+      "levels": 4,
+      "chainage": 887,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 23.55,
+          "isChamfer": false,
+          "ax": -407.92,
+          "az": 796.44,
+          "bx": -395.55,
+          "bz": 776.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Starlight",
+          "kind": "convenience",
+          "addr": "368 Leith Walk"
+        },
+        {
+          "name": "Scotmid",
+          "kind": "supermarket",
+          "addr": "370 Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 283,
+      "levels": 4,
+      "chainage": 888,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.43,
+          "isChamfer": false,
+          "ax": -383.13,
+          "az": 808.26,
+          "bx": -373.55,
+          "bz": 792.52
+        }
+      ],
+      "placedSlug": "stead-s-place-leith-walk-geograph-org-uk-5277103",
+      "businesses": [
+        {
+          "name": "WeighToGo",
+          "kind": "grocery",
+          "addr": "27 Crighton Place"
+        },
+        {
+          "name": "Barnardo's",
+          "kind": "charity",
+          "addr": "28 Crighton Place"
+        },
+        {
+          "name": "Leith Mortgage Centre",
+          "kind": "financial_advisor",
+          "addr": "23-24 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 288,
+      "levels": 4,
+      "chainage": 897,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 5.82,
+          "isChamfer": false,
+          "ax": -373.21,
+          "az": 820.98,
+          "bx": -370.19,
+          "bz": 816
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 523,
+      "levels": 4,
+      "chainage": 905,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.88,
+          "isChamfer": false,
+          "ax": -392.28,
+          "az": 823.62,
+          "bx": -383.13,
+          "bz": 808.26
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "William Hill",
+          "kind": "bookmaker",
+          "addr": "22 Crighton Place"
+        },
+        {
+          "name": "Freak Body Supplements",
+          "kind": "nutrition_supplements",
+          "addr": "20-21 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 282,
+      "levels": 4,
+      "chainage": 925,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.17,
+          "isChamfer": false,
+          "ax": -401.78,
+          "az": 839.11,
+          "bx": -392.28,
+          "bz": 823.62
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Edinburgh Collectables",
+          "kind": "collector",
+          "addr": "16-18 Crighton Place"
+        },
+        {
+          "name": "Aros Barbers",
+          "kind": "hairdresser",
+          "addr": "14 Crighton Place"
+        },
+        {
+          "name": "Nótt",
+          "kind": "cafe",
+          "addr": "13 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 554,
+      "levels": 4,
+      "chainage": 936,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 15.36,
+          "isChamfer": false,
+          "ax": -430.86,
+          "az": 833.77,
+          "bx": -422.58,
+          "bz": 820.83
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Marpole",
+          "kind": "fitness_centre",
+          "addr": "378 Leith Walk"
+        },
+        {
+          "name": "VPZ",
+          "kind": "e-cigarette",
+          "addr": "6A Middlefield"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 271,
+      "levels": 4,
+      "chainage": 942,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.15,
+          "isChamfer": false,
+          "ax": -411.16,
+          "az": 854.65,
+          "bx": -401.78,
+          "bz": 839.11
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Greet the Greek",
+          "kind": "fast_food",
+          "addr": "12"
+        },
+        {
+          "name": "The Leith Walk Gallery",
+          "kind": "gift",
+          "addr": "10-11 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 287,
+      "levels": 4,
+      "chainage": 950,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 10.71,
+          "isChamfer": false,
+          "ax": -397.29,
+          "az": 873.22,
+          "bx": -397,
+          "bz": 862.51
+        },
+        {
+          "widthM": 2.29,
+          "isChamfer": false,
+          "ax": -397,
+          "az": 862.51,
+          "bx": -395.24,
+          "bz": 861.05
+        },
+        {
+          "widthM": 1.38,
+          "isChamfer": true,
+          "ax": -395.24,
+          "az": 861.05,
+          "bx": -393.9,
+          "bz": 860.72
+        },
+        {
+          "widthM": 14.15,
+          "isChamfer": false,
+          "ax": -393.9,
+          "az": 860.72,
+          "bx": -379.76,
+          "bz": 861.34
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Sicilian Pastry Shop",
+          "kind": "pastry",
+          "addr": "10-14-16 Albert Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 275,
+      "levels": 4,
+      "chainage": 959,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.73,
+          "isChamfer": true,
+          "ax": -416.3,
+          "az": 869.75,
+          "bx": -417.06,
+          "bz": 867.13
+        },
+        {
+          "widthM": 1.34,
+          "isChamfer": true,
+          "ax": -417.06,
+          "az": 867.13,
+          "bx": -417.21,
+          "bz": 865.8
+        },
+        {
+          "widthM": 1.28,
+          "isChamfer": true,
+          "ax": -417.21,
+          "az": 865.8,
+          "bx": -417.11,
+          "bz": 864.52
+        },
+        {
+          "widthM": 11.52,
+          "isChamfer": false,
+          "ax": -417.11,
+          "az": 864.52,
+          "bx": -411.16,
+          "bz": 854.65
+        },
+        {
+          "widthM": 3.19,
+          "isChamfer": true,
+          "ax": -400.19,
+          "az": 862.54,
+          "bx": -397,
+          "bz": 862.51
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Crighton Pharmacy",
+          "kind": "pharmacy",
+          "addr": "7 Crighton Place"
+        },
+        {
+          "name": "Edinburgh Mortgage Center",
+          "kind": "financial_advisor",
+          "addr": "4-5 Crighton Place"
+        },
+        {
+          "name": "Tepuy",
+          "kind": "coffee",
+          "addr": "2 Crighton Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 374,
+      "levels": 4,
+      "chainage": 980,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.59,
+          "isChamfer": true,
+          "ax": -401.04,
+          "az": 891.13,
+          "bx": -408.62,
+          "bz": 890.78
+        },
+        {
+          "widthM": 12.72,
+          "isChamfer": false,
+          "ax": -408.62,
+          "az": 890.78,
+          "bx": -409.1,
+          "bz": 903.49
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 76,
+      "levels": 4,
+      "chainage": 985,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 14.93,
+          "isChamfer": true,
+          "ax": -408.62,
+          "az": 890.78,
+          "bx": -423.54,
+          "bz": 890.22
+        },
+        {
+          "widthM": 12.59,
+          "isChamfer": false,
+          "ax": -423.54,
+          "az": 890.22,
+          "bx": -424.04,
+          "bz": 902.8
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Word of Mouth Bistro Cafe",
+          "kind": "cafe",
+          "addr": "3A Albert Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 940,
+      "levels": 5,
+      "chainage": 988,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.03,
+          "isChamfer": false,
+          "ax": -480.77,
+          "az": 892.57,
+          "bx": -481.49,
+          "bz": 893.3
+        },
+        {
+          "widthM": 24.44,
+          "isChamfer": false,
+          "ax": -477.59,
+          "az": 897.08,
+          "bx": -463.39,
+          "bz": 877.2
+        },
+        {
+          "widthM": 44.29,
+          "isChamfer": false,
+          "ax": -462.7,
+          "az": 877.64,
+          "bx": -435.9,
+          "bz": 842.38
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Starbucks",
+          "kind": "cafe",
+          "addr": "3 Leith Walk"
+        },
+        {
+          "name": "Sainsbury's Local",
+          "kind": "convenience",
+          "addr": null
+        },
+        {
+          "name": "Pret A Manger",
+          "kind": "fast_food",
+          "addr": "1"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 75,
+      "levels": 4,
+      "chainage": 998,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.6,
+          "isChamfer": true,
+          "ax": -423.54,
+          "az": 890.22,
+          "bx": -432.13,
+          "bz": 889.87
+        },
+        {
+          "widthM": 1.14,
+          "isChamfer": true,
+          "ax": -432.13,
+          "az": 889.87,
+          "bx": -433.26,
+          "bz": 890.03
+        },
+        {
+          "widthM": 1.22,
+          "isChamfer": true,
+          "ax": -433.26,
+          "az": 890.03,
+          "bx": -434.4,
+          "bz": 890.47
+        },
+        {
+          "widthM": 1.34,
+          "isChamfer": false,
+          "ax": -434.4,
+          "az": 890.47,
+          "bx": -435.48,
+          "bz": 891.26
+        },
+        {
+          "widthM": 13.34,
+          "isChamfer": false,
+          "ax": -435.48,
+          "az": 891.26,
+          "bx": -443.3,
+          "bz": 902.05
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Golden Ambal",
+          "kind": "restaurant",
+          "addr": "1"
+        },
+        {
+          "name": "PrintSponge",
+          "kind": "copyshop",
+          "addr": "3"
+        },
+        {
+          "name": "Cilantro",
+          "kind": "fast_food",
+          "addr": "4"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 375,
+      "levels": 4,
+      "chainage": 1017,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.87,
+          "isChamfer": false,
+          "ax": -443.3,
+          "az": 902.05,
+          "bx": -453.6,
+          "bz": 916.65
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Bargain Store",
+          "kind": "variety_store",
+          "addr": "5"
+        },
+        {
+          "name": "Poly Pak Continental Foods",
+          "kind": "convenience",
+          "addr": "7/8"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 72,
+      "levels": 4,
+      "chainage": 1032,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.24,
+          "isChamfer": false,
+          "ax": -453.6,
+          "az": 916.65,
+          "bx": -464.33,
+          "bz": 931.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Mirin",
+          "kind": "restaurant",
+          "addr": "9"
+        },
+        {
+          "name": "Fastleith Ltd",
+          "kind": "money_transfer",
+          "addr": "10"
+        },
+        {
+          "name": "Bangkok on the Walk",
+          "kind": "fast_food",
+          "addr": null
+        },
+        {
+          "name": "Airlink Travel",
+          "kind": "travel_agency",
+          "addr": "13"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 962,
+      "levels": 6,
+      "chainage": 1048,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 41.19,
+          "isChamfer": false,
+          "ax": -483.75,
+          "az": 904.15,
+          "bx": -508.16,
+          "bz": 937.32
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Grace Church Leith",
+          "kind": "place_of_worship",
+          "addr": "3 Shrubhill Walk"
+        },
+        {
+          "name": "Places Leisure",
+          "kind": "fitness_centre",
+          "addr": "Leith Walk"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 71,
+      "levels": 4,
+      "chainage": 1052,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.36,
+          "isChamfer": false,
+          "ax": -475.01,
+          "az": 946.34,
+          "bx": -464.33,
+          "bz": 931.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Bodega Leith",
+          "kind": "restaurant",
+          "addr": "14-15"
+        },
+        {
+          "name": "Otherworld",
+          "kind": "pub",
+          "addr": "17 Albert Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 521,
+      "levels": 4,
+      "chainage": 1063,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.34,
+          "isChamfer": false,
+          "ax": -463.03,
+          "az": 954.92,
+          "bx": -451.08,
+          "bz": 957.98
+        },
+        {
+          "widthM": 5.57,
+          "isChamfer": false,
+          "ax": -471.57,
+          "az": 955.66,
+          "bx": -468.23,
+          "bz": 951.2
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "On the Walk",
+          "kind": "apartment",
+          "addr": "18"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 373,
+      "levels": 2,
+      "chainage": 1082,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 40.17,
+          "isChamfer": false,
+          "ax": -499.64,
+          "az": 980.5,
+          "bx": -476.16,
+          "bz": 947.91
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Pascal & Co",
+          "kind": "clothes",
+          "addr": "20"
+        },
+        {
+          "name": "Carnivale",
+          "kind": "clothes",
+          "addr": "21-22"
+        },
+        {
+          "name": "Tailor",
+          "kind": "tailor",
+          "addr": "25"
+        },
+        {
+          "name": "The Whispering Kettle",
+          "kind": "cafe",
+          "addr": "26"
+        },
+        {
+          "name": "Curioso",
+          "kind": "popup",
+          "addr": "27"
+        },
+        {
+          "name": "The Cutting Room",
+          "kind": "hairdresser",
+          "addr": "28"
+        },
+        {
+          "name": "eleanore",
+          "kind": "restaurant",
+          "addr": "30-31"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 959,
+      "levels": 4,
+      "chainage": 1092,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.69,
+          "isChamfer": false,
+          "ax": -517.14,
+          "az": 954.35,
+          "bx": -516.12,
+          "bz": 953
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Little Free Library",
+          "kind": "public_bookcase",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 376,
+      "levels": 1,
+      "chainage": 1118,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 24.13,
+          "isChamfer": false,
+          "ax": -503.41,
+          "az": 1010.37,
+          "bx": -489.04,
+          "bz": 990.98
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 74,
+      "levels": 2,
+      "chainage": 1120,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 24.13,
+          "isChamfer": false,
+          "ax": -513.57,
+          "az": 1002.94,
+          "bx": -499.2,
+          "bz": 983.55
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Magnet",
+          "kind": "kitchen",
+          "addr": "10B Brunswick Place"
+        },
+        {
+          "name": "Leith Army Stores Outdoors",
+          "kind": "military_surplus",
+          "addr": "7-10 Brunswick Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 723,
+      "levels": 4,
+      "chainage": 1124,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 20.67,
+          "isChamfer": false,
+          "ax": -529.53,
+          "az": 972.27,
+          "bx": -541.99,
+          "bz": 988.76
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Salon 5",
+          "kind": "beauty",
+          "addr": "10 Croall Place"
+        },
+        {
+          "name": "The Walnut",
+          "kind": "restaurant",
+          "addr": "9 Croall Place"
+        },
+        {
+          "name": "Borlands",
+          "kind": "sports",
+          "addr": "7 Croall Place"
+        },
+        {
+          "name": "Nails & Spa",
+          "kind": "beauty",
+          "addr": "6 Croall Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 724,
+      "levels": 4,
+      "chainage": 1143,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 18.65,
+          "isChamfer": false,
+          "ax": -541.99,
+          "az": 988.76,
+          "bx": -553.23,
+          "bz": 1003.64
+        },
+        {
+          "widthM": 1.72,
+          "isChamfer": true,
+          "ax": -553.23,
+          "az": 1003.64,
+          "bx": -554.95,
+          "bz": 1003.53
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "MaDeb",
+          "kind": "convenience",
+          "addr": "5 Croall Place"
+        },
+        {
+          "name": "British Red Cross",
+          "kind": "charity",
+          "addr": "1 Croall Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 73,
+      "levels": 2,
+      "chainage": 1146,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 28.88,
+          "isChamfer": false,
+          "ax": -533.14,
+          "az": 1025.58,
+          "bx": -516.07,
+          "bz": 1002.28
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Not Just Coffee",
+          "kind": "cafe",
+          "addr": "7 Brunswick Place"
+        },
+        {
+          "name": "Tesco Express",
+          "kind": "convenience",
+          "addr": "4-6 Brunswick Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 159,
+      "levels": 4,
+      "chainage": 1178,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 11.42,
+          "isChamfer": false,
+          "ax": -528.92,
+          "az": 1045.23,
+          "bx": -536.02,
+          "bz": 1054.18
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 2,
+      "levels": 4,
+      "chainage": 1182,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 1.04,
+          "isChamfer": true,
+          "ax": -570.35,
+          "az": 1021.91,
+          "bx": -569.86,
+          "bz": 1022.83
+        },
+        {
+          "widthM": 0.88,
+          "isChamfer": true,
+          "ax": -569.86,
+          "az": 1022.83,
+          "bx": -569.77,
+          "bz": 1023.71
+        },
+        {
+          "widthM": 0.75,
+          "isChamfer": false,
+          "ax": -569.77,
+          "az": 1023.71,
+          "bx": -569.93,
+          "bz": 1024.44
+        },
+        {
+          "widthM": 1.13,
+          "isChamfer": false,
+          "ax": -569.93,
+          "az": 1024.44,
+          "bx": -570.56,
+          "bz": 1025.38
+        },
+        {
+          "widthM": 0.89,
+          "isChamfer": false,
+          "ax": -570.56,
+          "az": 1025.38,
+          "bx": -571.3,
+          "bz": 1025.88
+        },
+        {
+          "widthM": 0.69,
+          "isChamfer": true,
+          "ax": -571.3,
+          "az": 1025.88,
+          "bx": -571.96,
+          "bz": 1026.07
+        },
+        {
+          "widthM": 17.1,
+          "isChamfer": false,
+          "ax": -571.96,
+          "az": 1026.07,
+          "bx": -581.78,
+          "bz": 1040.07
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "McDonald Road Library",
+          "kind": "library",
+          "addr": "2-4 McDonald Road"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 357,
+      "levels": 4,
+      "chainage": 1182,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.76,
+          "isChamfer": true,
+          "ax": -538.99,
+          "az": 1036.83,
+          "bx": -541.74,
+          "bz": 1037.03
+        },
+        {
+          "widthM": 17.05,
+          "isChamfer": false,
+          "ax": -541.74,
+          "az": 1037.03,
+          "bx": -551.99,
+          "bz": 1050.65
+        },
+        {
+          "widthM": 7.63,
+          "isChamfer": true,
+          "ax": -551.99,
+          "az": 1050.65,
+          "bx": -550.01,
+          "bz": 1058.02
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Vittoria",
+          "kind": "restaurant",
+          "addr": null
+        },
+        {
+          "name": "Eatalia's",
+          "kind": "fast_food",
+          "addr": "1 Brunswick Place"
+        },
+        {
+          "name": "Brunswick Book Club",
+          "kind": "restaurant",
+          "addr": "113 Brunswick Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 356,
+      "levels": 4,
+      "chainage": 1199,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 14.32,
+          "isChamfer": true,
+          "ax": -546.55,
+          "az": 1071.92,
+          "bx": -550.01,
+          "bz": 1058.02
+        },
+        {
+          "widthM": 11.41,
+          "isChamfer": false,
+          "ax": -550.01,
+          "az": 1058.02,
+          "bx": -538.87,
+          "bz": 1055.54
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 341,
+      "levels": 4,
+      "chainage": 1207,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 10.04,
+          "isChamfer": true,
+          "ax": -543.93,
+          "az": 1081.59,
+          "bx": -546.31,
+          "bz": 1071.84
+        },
+        {
+          "widthM": 12.53,
+          "isChamfer": false,
+          "ax": -546.31,
+          "az": 1071.84,
+          "bx": -534.13,
+          "bz": 1068.9
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Wizardrops",
+          "kind": "herbalist",
+          "addr": null
+        },
+        {
+          "name": "Ariana's Kebab",
+          "kind": "fast_food",
+          "addr": "103 Brunswick Street"
+        },
+        {
+          "name": "Dine Thyme",
+          "kind": "fast_food",
+          "addr": "99 Brunswick Street"
+        },
+        {
+          "name": "Magic Hair",
+          "kind": "hairdresser",
+          "addr": "97 Brunswick Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 150,
+      "levels": 5,
+      "chainage": 1223,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 45.17,
+          "isChamfer": false,
+          "ax": -613.1,
+          "az": 1083.41,
+          "bx": -586.65,
+          "bz": 1046.79
+        },
+        {
+          "widthM": 8.31,
+          "isChamfer": false,
+          "ax": -587.97,
+          "az": 1045.89,
+          "bx": -583.1,
+          "bz": 1039.16
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Wex Photo Video",
+          "kind": "photo",
+          "addr": "39 Haddington Place"
+        },
+        {
+          "name": "Haddington Place",
+          "kind": "student_accommodation",
+          "addr": "35 Haddington Place"
+        },
+        {
+          "name": "Indigo Sun",
+          "kind": "beauty",
+          "addr": null
+        }
+      ]
+    },
+    {
+      "buildingIndex": 34,
+      "levels": 4,
+      "chainage": 1236,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 5.4,
+          "isChamfer": true,
+          "ax": -567.55,
+          "az": 1082.26,
+          "bx": -572.83,
+          "bz": 1081.11
+        },
+        {
+          "widthM": 19.25,
+          "isChamfer": false,
+          "ax": -572.83,
+          "az": 1081.11,
+          "bx": -584.24,
+          "bz": 1096.62
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Umega",
+          "kind": "estate_agent",
+          "addr": "94-96 Brunswick Street"
+        },
+        {
+          "name": "Leomax",
+          "kind": "computer",
+          "addr": "75 Elm Row"
+        },
+        {
+          "name": "Oh Deer",
+          "kind": "cafe",
+          "addr": "73 Elm Row"
+        },
+        {
+          "name": "Twelve Triangles",
+          "kind": "cafe",
+          "addr": "90 Brunswick Street"
+        },
+        {
+          "name": "Adeel",
+          "kind": "mobile_phone",
+          "addr": "72 Elm Row"
+        },
+        {
+          "name": "Brazen",
+          "kind": "hairdresser",
+          "addr": "88 Brunswick Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 336,
+      "levels": 4,
+      "chainage": 1256,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 4.42,
+          "isChamfer": true,
+          "ax": -569.84,
+          "az": 1116.87,
+          "bx": -574.13,
+          "bz": 1117.92
+        },
+        {
+          "widthM": 18.61,
+          "isChamfer": false,
+          "ax": -574.13,
+          "az": 1117.92,
+          "bx": -569.65,
+          "bz": 1135.98
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 345,
+      "levels": 4,
+      "chainage": 1256,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 15.85,
+          "isChamfer": false,
+          "ax": -584.24,
+          "az": 1096.62,
+          "bx": -593.54,
+          "bz": 1109.45
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "McDonald Road",
+          "kind": "shelter",
+          "addr": null
+        },
+        {
+          "name": "The Joker & The Thief",
+          "kind": "pub",
+          "addr": "71 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 138,
+      "levels": 4,
+      "chainage": 1262,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 14.36,
+          "isChamfer": false,
+          "ax": -621.54,
+          "az": 1095.03,
+          "bx": -613.1,
+          "bz": 1083.41
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Tribe Yoga",
+          "kind": "fitness_centre",
+          "addr": "35-36 Haddington Place"
+        },
+        {
+          "name": "Settlement Projects",
+          "kind": "charity",
+          "addr": "34A Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 36,
+      "levels": 4,
+      "chainage": 1271,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 15.81,
+          "isChamfer": false,
+          "ax": -593.54,
+          "az": 1109.45,
+          "bx": -602.82,
+          "bz": 1122.25
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Replayit Entertainment Xchange",
+          "kind": "pawnbroker",
+          "addr": "68 Elm Row"
+        },
+        {
+          "name": "Harburn Hobbies",
+          "kind": "model",
+          "addr": "67 Elm Row"
+        },
+        {
+          "name": "Bon Bon",
+          "kind": "ice_cream",
+          "addr": "65 Elm Row"
+        },
+        {
+          "name": "Veen Barbers",
+          "kind": "hairdresser",
+          "addr": "64 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 325,
+      "levels": 4,
+      "chainage": 1276,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 16.74,
+          "isChamfer": false,
+          "ax": -631.53,
+          "az": 1108.46,
+          "bx": -621.54,
+          "bz": 1095.03
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "The Bethany Bookshop",
+          "kind": "books",
+          "addr": "33A Haddington Place"
+        },
+        {
+          "name": "The Bethany Shop",
+          "kind": "charity",
+          "addr": "32B Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 342,
+      "levels": 4,
+      "chainage": 1287,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.2,
+          "isChamfer": false,
+          "ax": -602.82,
+          "az": 1122.25,
+          "bx": -612.33,
+          "bz": 1135.36
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Instacash",
+          "kind": "pawnbroker",
+          "addr": "63 Elm Row"
+        },
+        {
+          "name": "Kawaneko Cafe",
+          "kind": "cafe",
+          "addr": "62 Elm Row"
+        },
+        {
+          "name": "Elm Row Barber Shop",
+          "kind": "hairdresser",
+          "addr": "59 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 135,
+      "levels": 4,
+      "chainage": 1297,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 23.71,
+          "isChamfer": false,
+          "ax": -648.85,
+          "az": 1125.16,
+          "bx": -634.69,
+          "bz": 1106.14
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "LW Dental",
+          "kind": "dentist",
+          "addr": "32 Haddington Place"
+        },
+        {
+          "name": "Emma Hall Hair",
+          "kind": "hairdresser",
+          "addr": null
+        },
+        {
+          "name": "Embo",
+          "kind": "cafe",
+          "addr": "29 Haddington Place"
+        },
+        {
+          "name": "Outliers Barber Co",
+          "kind": "hairdresser",
+          "addr": "28A Haddington Place"
+        },
+        {
+          "name": "5th Season Vintage",
+          "kind": "clothes",
+          "addr": "28 Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 350,
+      "levels": 4,
+      "chainage": 1303,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.26,
+          "isChamfer": false,
+          "ax": -612.33,
+          "az": 1135.36,
+          "bx": -621.88,
+          "bz": 1148.52
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Nem",
+          "kind": "restaurant",
+          "addr": "58 Elm Row"
+        },
+        {
+          "name": "Pera",
+          "kind": "restaurant",
+          "addr": "57 Elm Row"
+        },
+        {
+          "name": "Green Leith",
+          "kind": "garden_centre",
+          "addr": "55 Elm Row"
+        },
+        {
+          "name": "Repair Centre",
+          "kind": "mobile_phone",
+          "addr": "54 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 340,
+      "levels": 4,
+      "chainage": 1319,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 15.96,
+          "isChamfer": false,
+          "ax": -621.88,
+          "az": 1148.52,
+          "bx": -631.25,
+          "bz": 1161.44
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Pack & Send",
+          "kind": "post_office",
+          "addr": "53 Elm Row"
+        },
+        {
+          "name": "MM Global Ltd",
+          "kind": "travel_agency",
+          "addr": "51 Elm Row"
+        },
+        {
+          "name": "SmarTravels",
+          "kind": "travel_agency",
+          "addr": "50 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 314,
+      "levels": 4,
+      "chainage": 1322,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 22.62,
+          "isChamfer": false,
+          "ax": -662.23,
+          "az": 1143.4,
+          "bx": -648.85,
+          "bz": 1125.16
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Tale of You",
+          "kind": "tattoo",
+          "addr": "27A Haddington Place"
+        },
+        {
+          "name": "Mera Lãhorë",
+          "kind": "cafe",
+          "addr": "26-27 Haddington Place"
+        },
+        {
+          "name": "Leith Walk Dental Studio",
+          "kind": "dentist",
+          "addr": "26A Haddington Place"
+        },
+        {
+          "name": "Ivy",
+          "kind": "beauty",
+          "addr": "24A Haddington Place"
+        },
+        {
+          "name": "Little Plaza",
+          "kind": "events_venue",
+          "addr": "24"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 351,
+      "levels": 4,
+      "chainage": 1339,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 23.62,
+          "isChamfer": false,
+          "ax": -631.25,
+          "az": 1161.44,
+          "bx": -645.3,
+          "bz": 1180.43
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Bike Central",
+          "kind": "bicycle",
+          "addr": "48 Elm Row"
+        },
+        {
+          "name": "Bowls & Rolls",
+          "kind": "fast_food",
+          "addr": "47 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 335,
+      "levels": 4,
+      "chainage": 1341,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 22.88,
+          "isChamfer": false,
+          "ax": -675.81,
+          "az": 1161.82,
+          "bx": -662.23,
+          "bz": 1143.4
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Wheel of Fate",
+          "kind": "handicraft",
+          "addr": "24 Haddington Place"
+        },
+        {
+          "name": "McCalls",
+          "kind": "clothes",
+          "addr": "21-22A Haddington Place"
+        },
+        {
+          "name": "The Nook",
+          "kind": "cafe",
+          "addr": "19 Haddington Place"
+        },
+        {
+          "name": "iTravel4u",
+          "kind": "travel_agency",
+          "addr": "18 Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 809,
+      "levels": 4,
+      "chainage": 1351,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.18,
+          "isChamfer": false,
+          "ax": -645.3,
+          "az": 1180.43,
+          "bx": -646.02,
+          "bz": 1181.36
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Leith Soothes",
+          "kind": "artwork",
+          "addr": null
+        },
+        {
+          "name": "The Windsor",
+          "kind": "bar",
+          "addr": "45 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 974,
+      "levels": 4,
+      "chainage": 1356,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 3.5,
+          "isChamfer": true,
+          "ax": -635.49,
+          "az": 1204.6,
+          "bx": -635.84,
+          "bz": 1201.12
+        },
+        {
+          "widthM": 3.17,
+          "isChamfer": true,
+          "ax": -634.5,
+          "az": 1200.98,
+          "bx": -634.82,
+          "bz": 1197.83
+        },
+        {
+          "widthM": 2.95,
+          "isChamfer": true,
+          "ax": -634.82,
+          "az": 1197.83,
+          "bx": -631.88,
+          "bz": 1197.54
+        },
+        {
+          "widthM": 1.37,
+          "isChamfer": true,
+          "ax": -631.88,
+          "az": 1197.54,
+          "bx": -632.01,
+          "bz": 1196.18
+        },
+        {
+          "widthM": 3.62,
+          "isChamfer": true,
+          "ax": -632.01,
+          "az": 1196.18,
+          "bx": -628.41,
+          "bz": 1195.81
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 348,
+      "levels": 4,
+      "chainage": 1360,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 16.19,
+          "isChamfer": false,
+          "ax": -655.74,
+          "az": 1194.31,
+          "bx": -646.02,
+          "bz": 1181.36
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Aberdein Considine",
+          "kind": "estate_agent",
+          "addr": "42 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 33,
+      "levels": 4,
+      "chainage": 1376,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 17.01,
+          "isChamfer": false,
+          "ax": -665.85,
+          "az": 1207.99,
+          "bx": -655.74,
+          "bz": 1194.31
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Pepe's",
+          "kind": "fast_food",
+          "addr": "38-39 Elm Row"
+        },
+        {
+          "name": "The Cat's Miaou",
+          "kind": "jewelry",
+          "addr": "36 Elm Row"
+        },
+        {
+          "name": "Shine My Nails",
+          "kind": "beauty",
+          "addr": "35 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 305,
+      "levels": 4,
+      "chainage": 1377,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 36.8,
+          "isChamfer": false,
+          "ax": -675.81,
+          "az": 1161.82,
+          "bx": -697.89,
+          "bz": 1191.21
+        },
+        {
+          "widthM": 2.9,
+          "isChamfer": true,
+          "ax": -697.89,
+          "az": 1191.21,
+          "bx": -700.64,
+          "bz": 1192.12
+        },
+        {
+          "widthM": 3.63,
+          "isChamfer": true,
+          "ax": -700.64,
+          "az": 1192.12,
+          "bx": -704.26,
+          "bz": 1192.33
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Edinburgh Central Youth Hostel",
+          "kind": "hostel",
+          "addr": "9 Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 352,
+      "levels": 4,
+      "chainage": 1394,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 18.92,
+          "isChamfer": false,
+          "ax": -677.23,
+          "az": 1223.1,
+          "bx": -665.85,
+          "bz": 1207.99
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Workwear Direct",
+          "kind": "clothes",
+          "addr": "34 Elm Row"
+        },
+        {
+          "name": "Guajira",
+          "kind": "cafe",
+          "addr": "33 Elm Row"
+        },
+        {
+          "name": "Phone Spot",
+          "kind": "mobile_phone",
+          "addr": "31 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 332,
+      "levels": 4,
+      "chainage": 1409,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 11.96,
+          "isChamfer": true,
+          "ax": -654.38,
+          "az": 1232,
+          "bx": -666.28,
+          "bz": 1233.23
+        },
+        {
+          "widthM": 3.21,
+          "isChamfer": true,
+          "ax": -666.28,
+          "az": 1233.23,
+          "bx": -665.95,
+          "bz": 1236.42
+        },
+        {
+          "widthM": 1.72,
+          "isChamfer": true,
+          "ax": -665.95,
+          "az": 1236.42,
+          "bx": -667.66,
+          "bz": 1236.6
+        },
+        {
+          "widthM": 9.16,
+          "isChamfer": false,
+          "ax": -667.66,
+          "az": 1236.6,
+          "bx": -666.7,
+          "bz": 1245.71
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 35,
+      "levels": 4,
+      "chainage": 1418,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.43,
+          "isChamfer": false,
+          "ax": -687.63,
+          "az": 1238.89,
+          "bx": -687.94,
+          "bz": 1241.3
+        },
+        {
+          "widthM": 2.79,
+          "isChamfer": true,
+          "ax": -687.94,
+          "az": 1241.3,
+          "bx": -687.23,
+          "bz": 1244
+        },
+        {
+          "widthM": 2.69,
+          "isChamfer": true,
+          "ax": -687.23,
+          "az": 1244,
+          "bx": -685.81,
+          "bz": 1246.29
+        },
+        {
+          "widthM": 0.6,
+          "isChamfer": true,
+          "ax": -683.41,
+          "az": 1248.09,
+          "bx": -683.4,
+          "bz": 1248.69
+        },
+        {
+          "widthM": 19.01,
+          "isChamfer": false,
+          "ax": -677.23,
+          "az": 1223.1,
+          "bx": -688.2,
+          "bz": 1238.62
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Garlands",
+          "kind": "florist",
+          "addr": "29 Elm Row"
+        },
+        {
+          "name": "Medusa Hair",
+          "kind": "hairdresser",
+          "addr": "28 Elm Row"
+        },
+        {
+          "name": "Digital Images Centre",
+          "kind": "photo",
+          "addr": "27 Elm Row"
+        },
+        {
+          "name": "Premier",
+          "kind": "convenience",
+          "addr": "25-26 Elm Row"
+        },
+        {
+          "name": "Toranj",
+          "kind": "restaurant",
+          "addr": "5-7 Montgomery Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 61,
+      "levels": 4,
+      "chainage": 1434,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.81,
+          "isChamfer": false,
+          "ax": -727.69,
+          "az": 1234.44,
+          "bx": -722.42,
+          "bz": 1227.38
+        },
+        {
+          "widthM": 0.37,
+          "isChamfer": true,
+          "ax": -722.42,
+          "az": 1227.38,
+          "bx": -722.44,
+          "bz": 1227.01
+        },
+        {
+          "widthM": 2.15,
+          "isChamfer": false,
+          "ax": -722.44,
+          "az": 1227.01,
+          "bx": -721.79,
+          "bz": 1224.97
+        },
+        {
+          "widthM": 1.9,
+          "isChamfer": true,
+          "ax": -721.79,
+          "az": 1224.97,
+          "bx": -721.68,
+          "bz": 1223.08
+        },
+        {
+          "widthM": 1.89,
+          "isChamfer": true,
+          "ax": -721.68,
+          "az": 1223.08,
+          "bx": -721.99,
+          "bz": 1221.22
+        },
+        {
+          "widthM": 1.64,
+          "isChamfer": true,
+          "ax": -721.99,
+          "az": 1221.22,
+          "bx": -722.6,
+          "bz": 1219.7
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Zest Skin Spa",
+          "kind": "beauty",
+          "addr": "8 Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 455,
+      "levels": 4,
+      "chainage": 1449,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 9.54,
+          "isChamfer": false,
+          "ax": -733.74,
+          "az": 1241.84,
+          "bx": -728.06,
+          "bz": 1234.18
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Typewronger Books",
+          "kind": "books",
+          "addr": "4A Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 436,
+      "levels": 4,
+      "chainage": 1451,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 10.92,
+          "isChamfer": false,
+          "ax": -687.96,
+          "az": 1283.45,
+          "bx": -689.14,
+          "bz": 1272.59
+        },
+        {
+          "widthM": 2.44,
+          "isChamfer": true,
+          "ax": -689.14,
+          "az": 1272.59,
+          "bx": -686.71,
+          "bz": 1272.82
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Bliss Studio",
+          "kind": "clothes",
+          "addr": "12 Montgomery Street"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 134,
+      "levels": 4,
+      "chainage": 1461,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 8.38,
+          "isChamfer": false,
+          "ax": -746.23,
+          "az": 1259.22,
+          "bx": -741.21,
+          "bz": 1252.51
+        },
+        {
+          "widthM": 13.02,
+          "isChamfer": false,
+          "ax": -741.54,
+          "az": 1252.26,
+          "bx": -733.74,
+          "bz": 1241.84
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "McNaughtan's Bookshop",
+          "kind": "books",
+          "addr": "3A-4A Haddington Place"
+        },
+        {
+          "name": "M1 Barbers",
+          "kind": "hairdresser",
+          "addr": "3 Haddington Place"
+        },
+        {
+          "name": "Spry",
+          "kind": "alcohol",
+          "addr": "1 Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 805,
+      "levels": 4,
+      "chainage": 1461,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 0.97,
+          "isChamfer": true,
+          "ax": -697.76,
+          "az": 1279.12,
+          "bx": -698.2,
+          "bz": 1278.25
+        },
+        {
+          "widthM": 11.22,
+          "isChamfer": false,
+          "ax": -698.2,
+          "az": 1278.25,
+          "bx": -689.23,
+          "bz": 1271.51
+        }
+      ],
+      "placedSlug": "edinburgh-23-elm-row",
+      "businesses": [
+        {
+          "name": "Joseph Pearce",
+          "kind": "pub",
+          "addr": "23 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 422,
+      "levels": 4,
+      "chainage": 1472,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.63,
+          "isChamfer": false,
+          "ax": -705.03,
+          "az": 1291.27,
+          "bx": -699.05,
+          "bz": 1280.15
+        },
+        {
+          "widthM": 1.65,
+          "isChamfer": false,
+          "ax": -699.05,
+          "az": 1280.15,
+          "bx": -697.76,
+          "bz": 1279.12
+        }
+      ],
+      "placedSlug": "edinburgh-20-21-22-elm-row-post-office",
+      "businesses": [
+        {
+          "name": "Greggs",
+          "kind": "bakery",
+          "addr": "21 Elm Row"
+        },
+        {
+          "name": "Elm Row Post Office",
+          "kind": "post_office",
+          "addr": "20 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 444,
+      "levels": 4,
+      "chainage": 1477,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 0.72,
+          "isChamfer": true,
+          "ax": -748.1,
+          "az": 1262.52,
+          "bx": -748.03,
+          "bz": 1263.24
+        },
+        {
+          "widthM": 0.73,
+          "isChamfer": false,
+          "ax": -748.03,
+          "az": 1263.24,
+          "bx": -748.1,
+          "bz": 1263.97
+        },
+        {
+          "widthM": 0.73,
+          "isChamfer": false,
+          "ax": -748.1,
+          "az": 1263.97,
+          "bx": -748.3,
+          "bz": 1264.67
+        },
+        {
+          "widthM": 0.73,
+          "isChamfer": false,
+          "ax": -748.3,
+          "az": 1264.67,
+          "bx": -748.63,
+          "bz": 1265.32
+        },
+        {
+          "widthM": 1.34,
+          "isChamfer": false,
+          "ax": -748.63,
+          "az": 1265.32,
+          "bx": -749.52,
+          "bz": 1266.32
+        },
+        {
+          "widthM": 1.34,
+          "isChamfer": true,
+          "ax": -749.52,
+          "az": 1266.32,
+          "bx": -750.68,
+          "bz": 1266.98
+        },
+        {
+          "widthM": 1.35,
+          "isChamfer": true,
+          "ax": -750.68,
+          "az": 1266.98,
+          "bx": -752,
+          "bz": 1267.24
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "ante",
+          "kind": "cafe",
+          "addr": "1A Haddington Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 133,
+      "levels": 4,
+      "chainage": 1485,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.52,
+          "isChamfer": false,
+          "ax": -752,
+          "az": 1267.24,
+          "bx": -758.29,
+          "bz": 1276.89
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Edinburgh Christadelphian Church",
+          "kind": "place_of_worship",
+          "addr": "4 Gayfield Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 424,
+      "levels": 3,
+      "chainage": 1486,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.78,
+          "isChamfer": false,
+          "ax": -710.36,
+          "az": 1302.86,
+          "bx": -704.28,
+          "bz": 1291.62
+        }
+      ],
+      "placedSlug": "edinburgh-18-19-elm-row",
+      "businesses": [
+        {
+          "name": "Valvona & Crolla",
+          "kind": "deli",
+          "addr": "19 Elm Row"
+        },
+        {
+          "name": "William Hill",
+          "kind": "bookmaker",
+          "addr": "18 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 440,
+      "levels": 5,
+      "chainage": 1496,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 13.87,
+          "isChamfer": false,
+          "ax": -757.72,
+          "az": 1277.12,
+          "bx": -765.35,
+          "bz": 1288.7
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 430,
+      "levels": 3,
+      "chainage": 1497,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.6,
+          "isChamfer": false,
+          "ax": -716.26,
+          "az": 1313.99,
+          "bx": -710.36,
+          "bz": 1302.86
+        }
+      ],
+      "placedSlug": "edinburgh-15-16-17-elm-row",
+      "businesses": [
+        {
+          "name": "Star Kebab and Pizza House",
+          "kind": "fast_food",
+          "addr": "16 Elm Row"
+        },
+        {
+          "name": "kul",
+          "kind": "cafe",
+          "addr": "15 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 32,
+      "levels": 4,
+      "chainage": 1509,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.41,
+          "isChamfer": false,
+          "ax": -720.89,
+          "az": 1321.06,
+          "bx": -716.99,
+          "bz": 1313.61
+        }
+      ],
+      "placedSlug": "edinburgh-14-elm-row",
+      "businesses": [
+        {
+          "name": "Rimmers Music",
+          "kind": "musical_instrument",
+          "addr": "14 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 438,
+      "levels": 4,
+      "chainage": 1516,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 11.06,
+          "isChamfer": false,
+          "ax": -765.81,
+          "az": 1288.41,
+          "bx": -772.02,
+          "bz": 1297.56
+        },
+        {
+          "widthM": 0.9,
+          "isChamfer": false,
+          "ax": -771.45,
+          "az": 1297.87,
+          "bx": -771.81,
+          "bz": 1298.69
+        },
+        {
+          "widthM": 0.69,
+          "isChamfer": true,
+          "ax": -771.81,
+          "az": 1298.69,
+          "bx": -771.78,
+          "bz": 1299.38
+        },
+        {
+          "widthM": 0.79,
+          "isChamfer": false,
+          "ax": -771.78,
+          "az": 1299.38,
+          "bx": -771.93,
+          "bz": 1300.16
+        },
+        {
+          "widthM": 0.6,
+          "isChamfer": false,
+          "ax": -771.93,
+          "az": 1300.16,
+          "bx": -772.16,
+          "bz": 1300.71
+        },
+        {
+          "widthM": 0.6,
+          "isChamfer": false,
+          "ax": -772.16,
+          "az": 1300.71,
+          "bx": -772.49,
+          "bz": 1301.21
+        },
+        {
+          "widthM": 0.66,
+          "isChamfer": false,
+          "ax": -772.49,
+          "az": 1301.21,
+          "bx": -772.95,
+          "bz": 1301.69
+        },
+        {
+          "widthM": 1.32,
+          "isChamfer": true,
+          "ax": -772.95,
+          "az": 1301.69,
+          "bx": -774.11,
+          "bz": 1302.32
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    },
+    {
+      "buildingIndex": 427,
+      "levels": 4,
+      "chainage": 1517,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.48,
+          "isChamfer": false,
+          "ax": -723.86,
+          "az": 1327.92,
+          "bx": -720.29,
+          "bz": 1321.35
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Max Spielmann",
+          "kind": "photo",
+          "addr": "12 Elm Row"
+        },
+        {
+          "name": "Johnsons",
+          "kind": "dry_cleaning",
+          "addr": "12 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 433,
+      "levels": 4,
+      "chainage": 1530,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.95,
+          "isChamfer": false,
+          "ax": -732.58,
+          "az": 1342.86,
+          "bx": -728.42,
+          "bz": 1334.93
+        },
+        {
+          "widthM": 8.32,
+          "isChamfer": false,
+          "ax": -727.72,
+          "az": 1335.29,
+          "bx": -723.86,
+          "bz": 1327.92
+        }
+      ],
+      "placedSlug": "edinburgh-9-10-11-elm-row",
+      "businesses": [
+        {
+          "name": "Lindsay & Gilmour",
+          "kind": "pharmacy",
+          "addr": "11 Elm Row"
+        },
+        {
+          "name": "Jolly",
+          "kind": "restaurant",
+          "addr": "9 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 799,
+      "levels": 3,
+      "chainage": 1544,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 9.62,
+          "isChamfer": false,
+          "ax": -736.52,
+          "az": 1351.63,
+          "bx": -732.04,
+          "bz": 1343.12
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Jeremiah's Taproom",
+          "kind": "pub",
+          "addr": "7-8 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 30,
+      "levels": 3,
+      "chainage": 1550,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 7.23,
+          "isChamfer": false,
+          "ax": -739.89,
+          "az": 1358.03,
+          "bx": -736.52,
+          "bz": 1351.63
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Vinyl Villains",
+          "kind": "music",
+          "addr": "5 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 808,
+      "levels": 3,
+      "chainage": 1559,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 8.19,
+          "isChamfer": false,
+          "ax": -743.77,
+          "az": 1365.24,
+          "bx": -739.89,
+          "bz": 1358.03
+        }
+      ],
+      "placedSlug": "edinburgh-4-elm-row",
+      "businesses": [
+        {
+          "name": "Ladbrokes",
+          "kind": "bookmaker",
+          "addr": "4 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 801,
+      "levels": 4,
+      "chainage": 1571,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 12.27,
+          "isChamfer": false,
+          "ax": -749.97,
+          "az": 1375.89,
+          "bx": -744.2,
+          "bz": 1365.06
+        }
+      ],
+      "placedSlug": "edinburgh-2-3-elm-row",
+      "businesses": [
+        {
+          "name": "A Leith Walk",
+          "kind": "artwork",
+          "addr": null
+        },
+        {
+          "name": "Dean Jones Hair",
+          "kind": "hairdresser",
+          "addr": "3A Elm Row"
+        },
+        {
+          "name": "Elm Row Cafe Bistro",
+          "kind": "cafe",
+          "addr": "3 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 26,
+      "levels": 4,
+      "chainage": 1581,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.2,
+          "isChamfer": true,
+          "ax": -747.62,
+          "az": 1383.99,
+          "bx": -748.4,
+          "bz": 1383.08
+        },
+        {
+          "widthM": 1.4,
+          "isChamfer": true,
+          "ax": -748.4,
+          "az": 1383.08,
+          "bx": -749.02,
+          "bz": 1381.83
+        },
+        {
+          "widthM": 2.84,
+          "isChamfer": true,
+          "ax": -749.02,
+          "az": 1381.83,
+          "bx": -749.67,
+          "bz": 1379.07
+        },
+        {
+          "widthM": 3.01,
+          "isChamfer": false,
+          "ax": -749.67,
+          "az": 1379.07,
+          "bx": -749.34,
+          "bz": 1376.09
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Kuna Café and Bakery",
+          "kind": "cafe",
+          "addr": "1 Elm Row"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 835,
+      "levels": 4,
+      "chainage": 1587,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.56,
+          "isChamfer": false,
+          "ax": -803.91,
+          "az": 1368.01,
+          "bx": -801.57,
+          "bz": 1362.97
+        },
+        {
+          "widthM": 15.57,
+          "isChamfer": false,
+          "ax": -801.57,
+          "az": 1362.97,
+          "bx": -811.52,
+          "bz": 1350.99
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Fitshop",
+          "kind": "sports",
+          "addr": "14"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 475,
+      "levels": 4,
+      "chainage": 1593,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 5.55,
+          "isChamfer": false,
+          "ax": -806.46,
+          "az": 1372.94,
+          "bx": -803.91,
+          "bz": 1368.01
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Down The Hatch",
+          "kind": "fast_food",
+          "addr": "13"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 812,
+      "levels": 4,
+      "chainage": 1603,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 17.2,
+          "isChamfer": false,
+          "ax": -815.15,
+          "az": 1389.93,
+          "bx": -807.24,
+          "bz": 1374.66
+        },
+        {
+          "widthM": 1.89,
+          "isChamfer": false,
+          "ax": -808.78,
+          "az": 1373.88,
+          "bx": -807.91,
+          "bz": 1372.2
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Kahani",
+          "kind": "restaurant",
+          "addr": "10"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 295,
+      "levels": 4,
+      "chainage": 1617,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 2.95,
+          "isChamfer": true,
+          "ax": -779,
+          "az": 1427.91,
+          "bx": -781.61,
+          "bz": 1426.54
+        },
+        {
+          "widthM": 1.08,
+          "isChamfer": true,
+          "ax": -781.61,
+          "az": 1426.54,
+          "bx": -782.63,
+          "bz": 1426.19
+        },
+        {
+          "widthM": 1.53,
+          "isChamfer": true,
+          "ax": -782.63,
+          "az": 1426.19,
+          "bx": -784.15,
+          "bz": 1426.05
+        },
+        {
+          "widthM": 1.19,
+          "isChamfer": true,
+          "ax": -784.15,
+          "az": 1426.05,
+          "bx": -785.32,
+          "bz": 1426.25
+        },
+        {
+          "widthM": 1.23,
+          "isChamfer": true,
+          "ax": -785.32,
+          "az": 1426.25,
+          "bx": -786.43,
+          "bz": 1426.77
+        },
+        {
+          "widthM": 1.43,
+          "isChamfer": false,
+          "ax": -786.43,
+          "az": 1426.77,
+          "bx": -787.51,
+          "bz": 1427.7
+        },
+        {
+          "widthM": 3.98,
+          "isChamfer": false,
+          "ax": -787.51,
+          "az": 1427.7,
+          "bx": -789.84,
+          "bz": 1430.92
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Taste of Italy",
+          "kind": "restaurant",
+          "addr": "9 Baxter's Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 296,
+      "levels": 4,
+      "chainage": 1617,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 1.9,
+          "isChamfer": true,
+          "ax": -765.2,
+          "az": 1421.84,
+          "bx": -767.05,
+          "bz": 1421.43
+        },
+        {
+          "widthM": 3.47,
+          "isChamfer": true,
+          "ax": -767.05,
+          "az": 1421.43,
+          "bx": -770.51,
+          "bz": 1421.5
+        },
+        {
+          "widthM": 2.01,
+          "isChamfer": true,
+          "ax": -770.51,
+          "az": 1421.5,
+          "bx": -772.42,
+          "bz": 1422.11
+        },
+        {
+          "widthM": 1.9,
+          "isChamfer": true,
+          "ax": -772.42,
+          "az": 1422.11,
+          "bx": -774.04,
+          "bz": 1423.09
+        },
+        {
+          "widthM": 3.78,
+          "isChamfer": false,
+          "ax": -774.04,
+          "az": 1423.09,
+          "bx": -776.58,
+          "bz": 1425.88
+        },
+        {
+          "widthM": 3.35,
+          "isChamfer": false,
+          "ax": -776.58,
+          "az": 1425.88,
+          "bx": -778.5,
+          "bz": 1428.63
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Topping & Company Booksellers",
+          "kind": "books",
+          "addr": "2 Blenheim Place"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 479,
+      "levels": 4,
+      "chainage": 1617,
+      "side": "east",
+      "runs": [
+        {
+          "widthM": 4.9,
+          "isChamfer": false,
+          "ax": -817.38,
+          "az": 1394.29,
+          "bx": -815.15,
+          "bz": 1389.93
+        }
+      ],
+      "placedSlug": null,
+      "businesses": [
+        {
+          "name": "Ada",
+          "kind": "restaurant",
+          "addr": "9A"
+        },
+        {
+          "name": "Picture Framer",
+          "kind": "frame",
+          "addr": "8"
+        }
+      ]
+    },
+    {
+      "buildingIndex": 788,
+      "levels": 4,
+      "chainage": 1617,
+      "side": "west",
+      "runs": [
+        {
+          "widthM": 6.53,
+          "isChamfer": true,
+          "ax": -773.15,
+          "az": 1432.38,
+          "bx": -778.5,
+          "bz": 1428.63
+        },
+        {
+          "widthM": 0.36,
+          "isChamfer": false,
+          "ax": -778.5,
+          "az": 1428.63,
+          "bx": -778.3,
+          "bz": 1428.33
+        },
+        {
+          "widthM": 0.82,
+          "isChamfer": true,
+          "ax": -778.3,
+          "az": 1428.33,
+          "bx": -779,
+          "bz": 1427.91
+        },
+        {
+          "widthM": 6.58,
+          "isChamfer": false,
+          "ax": -779,
+          "az": 1427.91,
+          "bx": -782.84,
+          "bz": 1433.25
+        }
+      ],
+      "placedSlug": null,
+      "businesses": []
+    }
+  ]
+}
