@@ -43,6 +43,11 @@ const SLIVER_MAX = 3;      // below this a NAME-PLACEHOLDER run isn't worth a un
 // defect register.
 const STRETCH_MAX = 1.2;
 const LOAD_RANGE = 250; // metres either side of a page's chainage span
+const STOREY_M = 3.2;          // matches build-elevation-atlas.mjs / gen-facade-elevations.mjs
+const EDGE_STRIP_FRAC = 0.18;  // D5/W1: fraction of a region's own width reused as an edge-bay strip
+const TOP_AVOID_FRAC = 0.08;   // avoid the top ~8% of an elevation (baked roofline/sky edge)
+const V_BAND_FRAC = 0.16;      // height of the reused upper-wall band, as a fraction of region height
+const VERT_EXT_MIN = 1.5;      // metres a building must exceed its image by before extending upward
 
 export function buildShopfronts(assets, world, scene) {
   const manifest = assets && assets.facadeManifest;
@@ -107,6 +112,32 @@ export function buildShopfronts(assets, world, scene) {
 
     const atlasEntry = atlasByIndex[bi];
 
+    // D5/W1 (residual #5): multiple narrow runs of the same building that map
+    // to the same atlas region (e.g. a chamfer's several short facets) used to
+    // each independently pick a randomly-panned centre-slice, producing
+    // near-duplicate distorted crops. Where a group has more than one narrow
+    // run, give them non-overlapping proportional slices across the WHOLE
+    // image instead — a single continuous slice split across the facets.
+    // Keyed on the RESOLVED region object itself (not the isChamfer flag) —
+    // a building with no dedicated corner region falls back to the same
+    // single region for every run regardless of isChamfer, so grouping by
+    // flag would split one shared region into two independently-sliced
+    // (and therefore overlapping) groups.
+    const narrowGroups = new Map(); // region -> { totalSpan, count, cursor }
+    if (atlasEntry) {
+      for (const run of runs) {
+        const span = Math.hypot(run.bx - run.ax, run.bz - run.az);
+        if (span < MIN_RUN) continue;
+        const region = atlasEntry.regions.find((r) => (run.isChamfer ? r.kind === 'corner' : r.kind !== 'corner')) || atlasEntry.regions[0];
+        if (!region) continue;
+        if (span / region.widthM >= 1 / STRETCH_MAX) continue; // not narrow
+        const g = narrowGroups.get(region) || { totalSpan: 0, count: 0, cursor: 0 };
+        g.totalSpan += span;
+        g.count += 1;
+        narrowGroups.set(region, g);
+      }
+    }
+
     runs.forEach((run, runIdx) => {
       const rdx = run.bx - run.ax, rdz = run.bz - run.az;
       const span = Math.hypot(rdx, rdz);
@@ -138,31 +169,70 @@ export function buildShopfronts(assets, world, scene) {
         const vBot = 1 - (region.y + region.h - vInset) * pxV;
 
         const ratio = span / region.widthM;
+        const hQuads = []; // {u0,u1,ax,az,bx,bz} — every horizontal quad this run emits at BASE_Y..region.heightM
+
         if (ratio > STRETCH_MAX) {
-          // Too wide for one natural-width quad. A packed atlas page can't
-          // safely UV-wrap past a region's own edge (the next building's
-          // pixels sit right there), so "extend the edge bays" (brief) isn't
-          // achievable per-region — instead repeat the WHOLE coherent
-          // elevation across the run at natural width. Coarse, building-scale
-          // repetition (a real terrace often does repeat its unit a few
-          // times) reads utterly differently from the old system's small
-          // window-bay wallpaper, and never leaves a bare/cropped gap next to
-          // a photo (Dan's fault #4). Noted as a deliberate brief deviation
-          // in the D4 defect register.
-          const reps = Math.max(1, Math.round(ratio));
-          const repSpan = span / reps;
-          for (let r = 0; r < reps; r++) {
-            const a = at((r * repSpan) / span), b = at(((r + 1) * repSpan) / span);
-            emitInto(buf, u0Full, vBot, u1Full, vTop, a.x, a.z, b.x, b.z, BASE_Y, region.heightM);
-            quadCount++;
+          // Too wide for one natural-width quad. D5/W1: emit the ONE authored
+          // elevation at natural width, centred on the run, and fill the
+          // excess on each side with edge-bay quads that resample only the
+          // outer EDGE_STRIP_FRAC of the SAME region (inset by the region's
+          // own uInset/vInset, so this never reads into a neighbour's atlas
+          // pixels) with mirrored ping-pong UVs. This replaces D4/D4.1's
+          // whole-elevation repetition, which duplicated legible baked
+          // signage across the run — an edge-bay strip carries no signage
+          // (signage lives centred in the image) so it tiles as plausible
+          // continuing masonry instead.
+          const centerSpanT = Math.min(1, region.widthM / span);
+          const tStart = Math.max(0, 0.5 - centerSpanT / 2);
+          const tEnd = Math.min(1, 0.5 + centerSpanT / 2);
+          const ca = at(tStart), cb = at(tEnd);
+          hQuads.push({ u0: u0Full, u1: u1Full, ax: ca.x, az: ca.z, bx: cb.x, bz: cb.z });
+
+          const uSpan = u1Full - u0Full;
+          const stripUV = EDGE_STRIP_FRAC * uSpan;
+          const stripWorldM = EDGE_STRIP_FRAC * region.widthM;
+          const tileT = stripWorldM / span;
+
+          let t = tStart, li = 0;
+          while (t > 1e-6) { // left excess: tStart -> 0, tiling outward
+            const dt = Math.min(tileT, t);
+            const tNext = t - dt;
+            const frac = tileT > 0 ? dt / tileT : 1;
+            const mirrored = li % 2 === 0;
+            const uNear = mirrored ? u0Full : u0Full + stripUV;
+            const uFar = mirrored ? u0Full + stripUV : u0Full;
+            const uFarClipped = uNear + (uFar - uNear) * frac;
+            const a = at(tNext), b = at(t);
+            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+            t = tNext; li++;
           }
-        } else {
-          let u0 = u0Full, u1 = u1Full;
-          if (ratio < 1 / STRETCH_MAX) {
-            // Too narrow: take a centre slice sized to the run, panned a
-            // little per run so several narrow facets of the same curved
-            // building (e.g. a rounded corner) don't all show the identical
-            // crop.
+          t = tEnd; li = 0;
+          while (t < 1 - 1e-6) { // right excess: tEnd -> 1, tiling outward
+            const dt = Math.min(tileT, 1 - t);
+            const tNext = t + dt;
+            const frac = tileT > 0 ? dt / tileT : 1;
+            const mirrored = li % 2 === 0;
+            const uNear = mirrored ? u1Full : u1Full - stripUV;
+            const uFar = mirrored ? u1Full - stripUV : u1Full;
+            const uFarClipped = uNear + (uFar - uNear) * frac;
+            const a = at(t), b = at(tNext);
+            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+            t = tNext; li++;
+          }
+        } else if (ratio < 1 / STRETCH_MAX) {
+          const g = narrowGroups.get(region);
+          let u0, u1;
+          if (g && g.count > 1 && g.totalSpan > 0) {
+            // D5/W1 (residual #5): several narrow facets sharing one region —
+            // non-overlapping proportional slices across the whole image.
+            const uSpanFull = u1Full - u0Full;
+            const startU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
+            g.cursor += span;
+            const endU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
+            u0 = startU; u1 = endU;
+          } else {
+            // Only one narrow run in this group: a centre slice sized to the
+            // run, panned a little so it doesn't always show the dead centre.
             const frac = Math.max(0.08, ratio);
             const half = ((u1Full - u0Full) * frac) / 2;
             const panT = ((hash32(bi, runIdx) % 1000) / 1000 - 0.5) * 0.3;
@@ -171,8 +241,44 @@ export function buildShopfronts(assets, world, scene) {
             u1 = Math.min(u1Full, center + half);
           }
           const a = at(0), b = at(1);
-          emitInto(buf, u0, vBot, u1, vTop, a.x, a.z, b.x, b.z, BASE_Y, region.heightM);
+          hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+        } else {
+          const a = at(0), b = at(1);
+          hQuads.push({ u0: u0Full, u1: u1Full, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+        }
+
+        for (const q of hQuads) {
+          emitInto(buf, q.u0, vBot, q.u1, vTop, q.ax, q.az, q.bx, q.bz, BASE_Y, region.heightM);
           quadCount++;
+        }
+
+        // D5/W1: buildings taller than their authored elevation (e.g. a
+        // 2-storey photo on a 4-storey OSM footprint) used to leave a bare
+        // procedural-stone slab above the image. Stack extra quads sampling a
+        // reused upper-wall band (avoiding the top TOP_AVOID_FRAC where a
+        // baked roofline/sky edge may sit), mirrored ping-pong vertically, up
+        // to the building's real height — same hQuads footprint as the base.
+        const buildingHeightM = Math.max(2, mb.levels || 2) * STOREY_M;
+        if (buildingHeightM - region.heightM > VERT_EXT_MIN) {
+          const vSpan = vTop - vBot;
+          const bandTop = vTop - TOP_AVOID_FRAC * vSpan;
+          const bandBot = Math.max(vBot, bandTop - V_BAND_FRAC * vSpan);
+          const tileWorldH = V_BAND_FRAC * region.heightM;
+          let y = region.heightM, vi = 0;
+          while (y < buildingHeightM - 1e-6 && tileWorldH > 1e-4) {
+            const dh = Math.min(tileWorldH, buildingHeightM - y);
+            const frac = dh / tileWorldH;
+            const mirrored = vi % 2 === 0;
+            const vNear = mirrored ? bandTop : bandBot;
+            const vFar = mirrored ? bandBot : bandTop;
+            const vFarClipped = vNear + (vFar - vNear) * frac;
+            const y0 = y, y1 = y + dh;
+            for (const q of hQuads) {
+              emitInto(buf, q.u0, vNear, q.u1, vFarClipped, q.ax, q.az, q.bx, q.bz, y0, y1);
+              quadCount++;
+            }
+            y = y1; vi++;
+          }
         }
       } else if (nameAtlas && mb.businesses && mb.businesses.length && span >= SLIVER_MAX) {
         const units = Math.min(mb.businesses.length, Math.max(1, Math.round(span / 6.4)));
