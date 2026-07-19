@@ -44,7 +44,8 @@ const SLIVER_MAX = 3;      // below this a NAME-PLACEHOLDER run isn't worth a un
 const STRETCH_MAX = 1.2;
 const LOAD_RANGE = 250; // metres either side of a page's chainage span
 const STOREY_M = 3.2;          // matches build-elevation-atlas.mjs / gen-facade-elevations.mjs
-const EDGE_STRIP_FRAC = 0.18;  // D5/W1: fraction of a region's own width reused as an edge-bay strip
+const EDGE_STRIP_FRAC = 0.3;   // D5/W1: fraction of a region's own width reused as an edge-bay strip
+const GROUND_AVOID_FRAC = 0.4; // D5/W1: edge-bay tiles never sample this bottom fraction (ground floor/signage)
 const TOP_AVOID_FRAC = 0.08;   // avoid the top ~8% of an elevation (baked roofline/sky edge)
 const V_BAND_FRAC = 0.16;      // height of the reused upper-wall band, as a fraction of region height
 const VERT_EXT_MIN = 1.5;      // metres a building must exceed its image by before extending upward
@@ -188,6 +189,14 @@ export function buildShopfronts(assets, world, scene) {
           const ca = at(tStart), cb = at(tEnd);
           hQuads.push({ u0: u0Full, u1: u1Full, ax: ca.x, az: ca.z, bx: cb.x, bz: cb.z });
 
+          // Edge-bay tiles reuse a v-range clamped to the UPPER portion of the
+          // image only (never the ground floor), where real-photo AND AI+
+          // signage buildings alike carry their business names — this is what
+          // guarantees an edge bay can never duplicate legible signage,
+          // regardless of how wide the reused strip is horizontally.
+          const vSpanFull = vTop - vBot;
+          const edgeVBot = vBot + GROUND_AVOID_FRAC * vSpanFull;
+
           const uSpan = u1Full - u0Full;
           const stripUV = EDGE_STRIP_FRAC * uSpan;
           const stripWorldM = EDGE_STRIP_FRAC * region.widthM;
@@ -203,7 +212,7 @@ export function buildShopfronts(assets, world, scene) {
             const uFar = mirrored ? u0Full + stripUV : u0Full;
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(tNext), b = at(t);
-            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z, v0: edgeVBot, v1: vTop });
             t = tNext; li++;
           }
           t = tEnd; li = 0;
@@ -216,7 +225,7 @@ export function buildShopfronts(assets, world, scene) {
             const uFar = mirrored ? u1Full - stripUV : u1Full;
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(t), b = at(tNext);
-            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z, v0: edgeVBot, v1: vTop });
             t = tNext; li++;
           }
         } else if (ratio < 1 / STRETCH_MAX) {
@@ -248,7 +257,7 @@ export function buildShopfronts(assets, world, scene) {
         }
 
         for (const q of hQuads) {
-          emitInto(buf, q.u0, vBot, q.u1, vTop, q.ax, q.az, q.bx, q.bz, BASE_Y, region.heightM);
+          emitInto(buf, q.u0, q.v0 ?? vBot, q.u1, q.v1 ?? vTop, q.ax, q.az, q.bx, q.bz, BASE_Y, region.heightM);
           quadCount++;
         }
 
@@ -336,7 +345,17 @@ export function buildShopfronts(assets, world, scene) {
     p.loaded = true;
     const texture = new THREE.TextureLoader().load(p.url);
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
+    // D5: no gutter padding exists between packed atlas regions (D4 defect
+    // register), so trilinear/mipmap filtering samples a wide-enough texel
+    // footprint at distance to bleed a neighbour's pixels across a region's
+    // exact edge — the D5 blind eval caught this as a "blown-out white seam"
+    // wherever W1's edge-bay tiles repeatedly touch that exact boundary.
+    // Mipmaps off + linear-only filtering keeps every sample within a small,
+    // fixed texel footprint around the requested UV, safely inside the
+    // existing half-texel inset.
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.anisotropy = 1;
     p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide, fog: true }));
     p.mesh.name = 'shopfronts-page';
     scene.add(p.mesh);
