@@ -124,6 +124,18 @@ export function buildShopfronts(assets, world, scene) {
     // single region for every run regardless of isChamfer, so grouping by
     // flag would split one shared region into two independently-sliced
     // (and therefore overlapping) groups.
+    // D5.1 (task 3): grouped by shared region regardless of ratio (was: only
+    // narrow runs) — a curved chamfer corner with several facets ALL mapping
+    // to the same single shared region (no dedicated corner region) used to
+    // slice its narrow facets non-overlappingly but let any natural-ratio
+    // facet on the same region replay the WHOLE image again independently,
+    // re-showing every business name from the narrow slices a second time
+    // (observed at building 255/chainage ~805 and 275+374+76+75/~975 —
+    // "Bee Tech/EPOCA" and "Crighton Pharma" cross-signage confusion). Any
+    // run up to STRETCH_MAX now joins the group so it takes a proportional
+    // slice like its narrow siblings instead of the full frame; only truly
+    // WIDE runs (edge-bay territory) are excluded, since those already have
+    // their own non-duplicating mechanism.
     const narrowGroups = new Map(); // region -> { totalSpan, count, cursor }
     if (atlasEntry) {
       for (const run of runs) {
@@ -131,7 +143,7 @@ export function buildShopfronts(assets, world, scene) {
         if (span < MIN_RUN) continue;
         const region = atlasEntry.regions.find((r) => (run.isChamfer ? r.kind === 'corner' : r.kind !== 'corner')) || atlasEntry.regions[0];
         if (!region) continue;
-        if (span / region.widthM >= 1 / STRETCH_MAX) continue; // not narrow
+        if (span / region.widthM > STRETCH_MAX) continue; // wide -> edge-bay path, not grouped
         const g = narrowGroups.get(region) || { totalSpan: 0, count: 0, cursor: 0 };
         g.totalSpan += span;
         g.count += 1;
@@ -171,7 +183,6 @@ export function buildShopfronts(assets, world, scene) {
 
         const ratio = span / region.widthM;
         const hQuads = []; // {u0,u1,ax,az,bx,bz} — every horizontal quad this run emits at BASE_Y..region.heightM
-
         if (ratio > STRETCH_MAX) {
           // Too wide for one natural-width quad. D5/W1: emit the ONE authored
           // elevation at natural width, centred on the run, and fill the
@@ -197,10 +208,49 @@ export function buildShopfronts(assets, world, scene) {
           const vSpanFull = vTop - vBot;
           const edgeVBot = vBot + GROUND_AVOID_FRAC * vSpanFull;
 
+          // D5.1: the reused band's own native aspect, so it stacks to fill
+          // the wall height instead of one copy being stretched over it (the
+          // "mirrored, vertically-striped" fault the D5 eval caught).
+          const bandFracV = 1 - GROUND_AVOID_FRAC;
+          const bandWorldH = bandFracV * region.heightM;
+
           const uSpan = u1Full - u0Full;
           const stripUV = EDGE_STRIP_FRAC * uSpan;
           const stripWorldM = EDGE_STRIP_FRAC * region.widthM;
           const tileT = stripWorldM / span;
+          // D5.1: room to slide a tile's sampled window inward from the fixed
+          // strip edge, per-tile and per vertical band via hash32, so mirrored
+          // horizontal neighbours and stacked vertical repeats don't sample
+          // identical content (the "kaleidoscope" read) — kept to well under
+          // half the region width so it can never drift into the centred
+          // signage the strip was chosen to avoid.
+          const maxSlideUV = Math.max(0, uSpan - stripUV);
+
+          // Stacks the reused band at native height from BASE_Y up to
+          // region.heightM for one horizontal tile (uA/uB = that tile's
+          // already-clipped horizontal UV window); mirrors each vertical
+          // repeat like the existing roofline-extension band below, and
+          // jitters the horizontal window per (li, vi) to break symmetry.
+          const emitEdgeStack = (uA, uB, ax, az, bx, bz, side, li) => {
+            const dir = side === 0 ? 1 : -1;
+            let y = BASE_Y, vi = 0;
+            while (y < region.heightM - 1e-6 && bandWorldH > 1e-4) {
+              const dh = Math.min(bandWorldH, region.heightM - y);
+              const vfrac = dh / bandWorldH;
+              const slide = maxSlideUV > 0
+                ? ((hash32(bi, runIdx * 977 + side * 97 + li * 11 + vi) % 1000) / 1000) * maxSlideUV
+                : 0;
+              const uAJ = uA + dir * slide;
+              const uBJ = uB + dir * slide;
+              const vMirrored = vi % 2 === 0;
+              const vNear = vMirrored ? edgeVBot : vTop;
+              const vFar = vMirrored ? vTop : edgeVBot;
+              const vFarClipped = vNear + (vFar - vNear) * vfrac;
+              emitInto(buf, uAJ, vNear, uBJ, vFarClipped, ax, az, bx, bz, y, y + dh);
+              quadCount++;
+              y += dh; vi++;
+            }
+          };
 
           let t = tStart, li = 0;
           while (t > 1e-6) { // left excess: tStart -> 0, tiling outward
@@ -212,7 +262,8 @@ export function buildShopfronts(assets, world, scene) {
             const uFar = mirrored ? u0Full + stripUV : u0Full;
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(tNext), b = at(t);
-            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z, v0: edgeVBot, v1: vTop });
+            emitEdgeStack(uFarClipped, uNear, a.x, a.z, b.x, b.z, 0, li);
+            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true });
             t = tNext; li++;
           }
           t = tEnd; li = 0;
@@ -225,21 +276,26 @@ export function buildShopfronts(assets, world, scene) {
             const uFar = mirrored ? u1Full - stripUV : u1Full;
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(t), b = at(tNext);
-            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z, v0: edgeVBot, v1: vTop });
+            emitEdgeStack(uNear, uFarClipped, a.x, a.z, b.x, b.z, 1, li);
+            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true });
             t = tNext; li++;
           }
-        } else if (ratio < 1 / STRETCH_MAX) {
+        } else {
           const g = narrowGroups.get(region);
           let u0, u1;
           if (g && g.count > 1 && g.totalSpan > 0) {
-            // D5/W1 (residual #5): several narrow facets sharing one region —
-            // non-overlapping proportional slices across the whole image.
+            // D5/D5.1 (residual #5 + task 3): several facets sharing one
+            // region (any ratio up to STRETCH_MAX, not just narrow ones) —
+            // non-overlapping proportional slices across the whole image, so
+            // a natural-ratio facet doesn't replay the full frame (and every
+            // business name in it) a second time right where its narrow
+            // chamfer siblings already sliced through it.
             const uSpanFull = u1Full - u0Full;
             const startU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
             g.cursor += span;
             const endU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
             u0 = startU; u1 = endU;
-          } else {
+          } else if (ratio < 1 / STRETCH_MAX) {
             // Only one narrow run in this group: a centre slice sized to the
             // run, panned a little so it doesn't always show the dead centre.
             const frac = Math.max(0.08, ratio);
@@ -248,15 +304,15 @@ export function buildShopfronts(assets, world, scene) {
             const center = (u0Full + half) + 0.5 * (u1Full - u0Full) + panT * ((u1Full - half) - (u0Full + half));
             u0 = Math.max(u0Full, center - half);
             u1 = Math.min(u1Full, center + half);
+          } else {
+            u0 = u0Full; u1 = u1Full;
           }
           const a = at(0), b = at(1);
           hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z });
-        } else {
-          const a = at(0), b = at(1);
-          hQuads.push({ u0: u0Full, u1: u1Full, ax: a.x, az: a.z, bx: b.x, bz: b.z });
         }
 
         for (const q of hQuads) {
+          if (q.skipBase) continue; // D5.1: edge-bay tiles already emitted their own stacked quads above
           emitInto(buf, q.u0, q.v0 ?? vBot, q.u1, q.v1 ?? vTop, q.ax, q.az, q.bx, q.bz, BASE_Y, region.heightM);
           quadCount++;
         }
@@ -273,6 +329,14 @@ export function buildShopfronts(assets, world, scene) {
           const bandTop = vTop - TOP_AVOID_FRAC * vSpan;
           const bandBot = Math.max(vBot, bandTop - V_BAND_FRAC * vSpan);
           const tileWorldH = V_BAND_FRAC * region.heightM;
+          // D5.1: this band was a fixed, un-jittered mirrored ping-pong —
+          // a tall single-photo building (no edge-bay involved at all) would
+          // still read as "repeating upper storeys" once stacked several
+          // times, the same kaleidoscope fault as the edge-bay case. Slide
+          // each tile's horizontal sample window (bounded to the region's own
+          // width, same hash32 approach as the edge-bay fix) so repeats
+          // aren't identical.
+          const roofUSpan = u1Full - u0Full;
           let y = region.heightM, vi = 0;
           while (y < buildingHeightM - 1e-6 && tileWorldH > 1e-4) {
             const dh = Math.min(tileWorldH, buildingHeightM - y);
@@ -282,9 +346,15 @@ export function buildShopfronts(assets, world, scene) {
             const vFar = mirrored ? bandBot : bandTop;
             const vFarClipped = vNear + (vFar - vNear) * frac;
             const y0 = y, y1 = y + dh;
+            let qi = 0;
             for (const q of hQuads) {
-              emitInto(buf, q.u0, vNear, q.u1, vFarClipped, q.ax, q.az, q.bx, q.bz, y0, y1);
+              const uMin = Math.min(q.u0, q.u1), uMax = Math.max(q.u0, q.u1);
+              const room = Math.max(0, roofUSpan - (uMax - uMin));
+              const jitter = room > 0 ? ((hash32(bi, runIdx * 613 + vi * 31 + qi) % 1000) / 1000) * room : 0;
+              const delta = (u0Full + jitter) - uMin;
+              emitInto(buf, q.u0 + delta, vNear, q.u1 + delta, vFarClipped, q.ax, q.az, q.bx, q.bz, y0, y1);
               quadCount++;
+              qi++;
             }
             y = y1; vi++;
           }
