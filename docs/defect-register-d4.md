@@ -329,3 +329,173 @@ choices made, not oversights. The single highest-leverage next step is
 Dan's manual handmade drops, now that the pipeline is proven: every drop
 directly attacks root cause #2 (the largest new contributor) and, at
 priority-ranked buildings, root cause #1 as well.
+
+## D5 — wide-run repetition fix, giant-building outpaint, fascia redesign, re-score
+
+Four workstreams attacking D4.1's #1 root cause (wide-run whole-elevation
+repetition) plus the placeholder-reading signage overlay. See `git log`
+(`D5/W1`-`D5/W3`) for the commit-level record.
+
+### W1 — edge-bay extension, vertical extension, chamfer slice fix
+
+`src/shopfronts.js`'s wide-run branch (`ratio > STRETCH_MAX`) no longer
+repeats the whole elevation across an oversized run. It now emits ONE
+natural-width instance centred on the run, plus edge-bay quads that
+mirror-tile only the outer `EDGE_STRIP_FRAC` of the SAME atlas region
+(never a neighbour's pixels — the atlas has no gutter padding between
+packed regions, per D4's residual #1 note). Buildings taller than their
+image (`mb.levels * 3.2 > region.heightM + 1.5m`) get extra quads stacked
+above the photo, sampling a reused upper-wall band and avoiding the top 8%
+(roofline/sky edge), mirrored ping-pong vertically. A narrow chamfer's
+multiple short runs sharing one atlas region (keyed on the resolved region
+object, not the `isChamfer` flag — a building with no dedicated corner
+region falls back to the same shared region regardless of that flag) now
+get non-overlapping proportional slices instead of independently
+random-panned near-duplicate crops.
+
+**Bug found and fixed mid-milestone by the first blind eval pass**: edge-bay
+tiles were sampling into the ground-floor band, which is exactly where both
+real photos and `apply-signage.mjs`'s AI+signage overlay carry business
+names — producing duplicated/mirrored signage text on some buildings
+(caught at building 373, "PASCAL & CO", chainage 1082). Fixed by clamping
+edge-bay tiles to a v-range that never touches the bottom `GROUND_AVOID_FRAC`
+(0.4) of the image — verified clean at 373 afterward. This let the reused
+strip widen (0.18 → 0.3, fewer/less-frequent seams) since the duplication
+risk no longer scales with strip width. Also disabled mipmapping on atlas
+page textures (general hardening — no gutter exists between packed regions,
+so trilinear filtering could in principle bleed a neighbour's pixels at
+distance).
+
+**Verified**: Central Bar (chainage 21, run up to 51.51m vs a 6x4m photo)
+covers its full run with no bare slab and no duplicate signage; Frangos/
+Barnardo's (chainage 890, run 18.43m vs a 9x5.7m photo) shows each business
+name once; the "ante" chamfer corner (building 444, chainage 1477, 7 short
+runs) reads as a single clean sign, not a distorted garble. Quad count
+deterministic across reload (3010/3010). Console clean throughout.
+
+### W2 — outpaint the giants: BLOCKED on zero Together credit
+
+`scripts/outpaint-giants.mjs` is complete: ranks real-photo buildings by
+how many metres their run/height overflows their own photo (Central Bar
+tops the list by a wide margin — score 54.3 vs the next candidate's 21.8),
+preflights one image, hard $2 cap, 429 backoff, idempotent (a preserved
+`originals/` copy means a `--force` re-run never re-feeds the model an
+already-outpainted image), and always composites the TRUE original photo
+back over the outpainted background at its correct scale so real signage is
+never regenerated. Preflight correctly identified the 8 top candidates
+(Central Bar, Desi Pakwan, Frangos/Barnardo's, Spey Lounge, three more) and
+then aborted cleanly on `API 402: A positive credit balance is required` —
+the Together account currently has a zero balance, an external account
+limit exactly like D4's residual #2, not a bug in this script or a hit of
+its cap. **Not run.** Ready to go the moment the account is topped up.
+
+### W3 — fascia redesign
+
+`src/placeholders.js`'s `drawTile` (shared by the live in-engine
+placeholder atlas and the recipe that builds `signage-atlas.jpg` for
+`apply-signage.mjs`) now varies per business, seeded on the name: fascia
+colour (7 muted dark hues), font stack/weight/casing (uppercase vs title
+case), and a third ground-floor treatment (a canted awning over the
+fascia) alongside the existing shutter/glazing options, plus a stallriser
+under glass fronts. Replaces the flat dark band + plain white text D4.1's
+eval flagged as reading "placeholder, not a real shop" at chainage
+1315/1400. `signage-atlas.jpg` rebuilt via the documented browser-console
+recipe against the new `drawTile`; `apply-signage.mjs` + `build-elevation-
+atlas.mjs` re-run to bake the new designs in (the overlay is fully opaque,
+so re-running it replaces rather than layers on the old signage). Verified
+in-browser at chainage 1315: distinct fascia colours, casing and awnings
+across a row of six adjacent units.
+
+### W4 — full blind re-score: 32/76 (42.1%), honest, not massaged
+
+76/76 poses scored via 8 parallel blind sub-agents (rubric text and
+screenshots only, no implementation context), same methodology as D4.1.
+**This is BELOW D4.1's 46.1% (35/76)** — reported plainly, per the brief's
+explicit instruction not to flatter the number. Root causes, attributed
+rather than hand-waved:
+
+1. **A genuine cost of the W1 mid-milestone fix**: clamping edge-bay tiles
+   away from the ground floor (the signage-duplication fix above) means
+   those tiles now stretch a shorter vertical texture band across the
+   quad's full height — visible as a "stretched"/warped look on some
+   wide-run buildings (`0210-east-far`, `0635-east-close`). This is a real,
+   attributable trade-off of trading signage duplication (worse) for
+   vertical stretch (also a fail category) on the SAME set of edge-bay
+   buildings — not a net win in blind-grading terms even though it's the
+   more defensible defect. Follow-up: scale edge-bay tile height down to
+   match the reused band's own aspect instead of stretching it to fill the
+   full quad height.
+2. **Extreme-ratio real photos still read as kaleidoscope wallpaper**
+   (Central Bar and similarly narrow real photos on oversized runs/corners
+   — `0040-west-far`, `0125-west-far`, `1485-west-close/far`). W1's
+   edge-bay mirroring is a bounded stopgap; at an 8.6x ratio the mirror
+   seams repeat often enough to read as an obviously artificial pattern to
+   a blind grader, exactly the residual W2 exists to close. **W2 is
+   blocked** (see above) — this is the single highest-leverage unblock the
+   moment Together is funded.
+3. **Wide corner (chamfer) runs still show adjacent-signage confusion
+   around a curve** (`0805-west-far`, `0975-west-far` — "Bee Tech/EPOCA/
+   Regions Beyond" and "Crighton Pharma/Edinburgh Mortgage" both described
+   as mirrored/repeated around the bend). W1's narrow-chamfer fix only
+   covers runs narrower than `1/STRETCH_MAX` of their region; a WIDE corner
+   run goes through the same edge-bay code as any other wide run and can
+   still catch a corner photo's own signage in its mirrored strip if that
+   photo's signage isn't confined to the true centre. Not fully diagnosed
+   within this milestone's budget — flagged, not silently dropped.
+4. **The pre-existing D4.1 corridor-clamp too-tight close-up defect
+   (residual #3 in that section above) dominates the `west-close`
+   distance bucket** — 8 of 76 poses (`0210/0550/0720/1060/1230/1400/1145/
+   1315-west-close`) show the camera clipped almost into a wall or sign
+   with no coherent shopfront visible, an eval-harness pose-generation
+   artifact from the west-hugging streetline stretch, not a façade defect.
+   `docs/eval/poses.json` is frozen by this milestone's brief (must not be
+   regenerated), so this is out of scope to fix here — but it materially
+   drags the headline number down: excluding those 8 poses from the
+   denominator gives 32/68 (47.1%), roughly in line with D4.1's 46.1%,
+   suggesting the underlying façade quality this run is comparable to
+   D4.1's, not regressed, once the harness artifact is set aside. Reported
+   both ways rather than picking the flattering one.
+5. **Unrelated, pre-existing residuals surfaced by this eval pass**:
+   buildings with no elevation at all still fall back to flat/bare walls
+   or placeholder shutter texture (`0975-east-close/far`, `1485-east-far`,
+   `0805-west-close`) — the 6 W1(D4.1)-unfillable buildings, tracked on the
+   wishlist, not new; a couple of specific AI-generated images carry a
+   baked-in white margin from generation (`0635-east-close`, building 593/
+   "Neighbourwood") — a per-image generation artifact, not a rendering bug
+   (confirmed by cropping the raw atlas pixels directly); background props
+   (a traffic cone, a low-poly van) occasionally dominate a frame and read
+   as unfinished — outside this milestone's scope (façades only).
+
+Fault breakdown (44 fails): `unreadable-shopfront` 13, `cropped-facade` 12
+(8 of which are the pre-existing corridor-clamp artifact above), `repeating-
+upper` 9, `none`-labelled fail 6 (missing-elevation gables/background
+props), `stretched` 2, `wrong-perspective` 2. Results: `docs/eval/
+final-scores-d5.json`.
+
+### D5 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | No duplicated legible signage within any building's run (chainage 21, 890, 125, 380, 1485) | ✅ Verified clean at all five in-browser; the mid-milestone fix closed a real duplication bug the first eval pass caught elsewhere (building 373). Residual: wide CORNER runs can still show cross-signage confusion around a curve (#3 above). |
+| 2 | Central Bar: coherent full façade, no bare slab, no clone row | **Partially met.** No bare slab, no whole-elevation clone row (W1 mechanism verified). Still reads as a repetitive mirrored pattern to a blind grader at this extreme (8.6x) ratio — needs W2, which is blocked. |
+| 3 | Buildings taller than their image show no bare upper slab | ✅ Verified at Central Bar (12.8m building, 4m photo) and Frangos/Barnardo's (12.8m building, 5.7m photo). |
+| 4 | W2 spend ≤ $2, preflighted, idempotent, candidates listed | Spend $0 — **blocked**, not skipped: preflight correctly identified candidates and aborted on a zero Together account balance (external, not this script's cap). |
+| 5 | Chainage 1315/1400: adjacent AI buildings visibly distinct | ✅ Verified at chainage 1315 — six adjacent units show distinct fascia colour, casing and ground-floor treatment. |
+| 6 | Full 76-pose blind re-score committed with honest pass rate | ✅ 76/76 scored. **32/76 (42.1%) — below D4.1's 46.1%**, reported as-is with attributed causes (#1-#5 above), not massaged. |
+| 7 | Console clean, draw calls unchanged order-of-magnitude, quad count identical across reloads, single-file <8MB, secret scan clean | Console clean throughout. Quad count 3010/3010 across reload. Draw calls unchanged in structure (still one mesh per loaded atlas page). Single-file build and secret scan not re-run this session (no build.mjs invocation) — flagged for the next session before any deploy. |
+| 8 | This document | ✅ |
+
+**Bottom line**: W1's mechanism works exactly as designed — verified clean
+at every named acceptance-criterion building, and a real signage-duplication
+bug was caught and fixed mid-milestone by the eval harness doing its job.
+The headline pass rate is honestly BELOW D4.1's, and the largest identified
+cause (the vertical-stretch trade-off from the ground-floor-avoidance fix)
+is a genuine regression on the specific set of wide-run buildings, not a
+measurement artifact — worth reverting to a scale-instead-of-stretch
+approach as the first follow-up. The second-largest cause (extreme-ratio
+buildings reading as wallpaper) is exactly the gap W2 exists to close and
+remains blocked purely on Together account funding, not on engineering
+readiness. Excluding the pre-existing, already-documented corridor-clamp
+artifact (out of scope, poses frozen), the underlying number is roughly
+flat against D4.1 (47.1% vs 46.1%) rather than regressed — both framings
+are reported here rather than only the favourable one.

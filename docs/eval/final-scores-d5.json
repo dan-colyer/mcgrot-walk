@@ -1,0 +1,686 @@
+[
+  {
+    "id": "0040-east-close",
+    "chainage": 40,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Two coherent tenement fronts read as plausible real buildings."
+  },
+  {
+    "id": "0210-east-close",
+    "chainage": 210,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Maroon shopfront with classical pilasters and legible VAS MOTORS sign."
+  },
+  {
+    "id": "0380-east-close",
+    "chainage": 380,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Same Easy Tan fascia duplicated across three adjacent bays."
+  },
+  {
+    "id": "0550-east-close",
+    "chainage": 550,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Three distinct legible shopfronts under consistent weathered stone facade."
+  },
+  {
+    "id": "0720-east-close",
+    "chainage": 720,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Cake Box and a clean cream building read as plausible varied buildings."
+  },
+  {
+    "id": "0890-east-close",
+    "chainage": 890,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible Starlight and Scotmid shopfronts under clean stone upper facade."
+  },
+  {
+    "id": "1060-east-close",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Uniform small-tile pattern above Grace Church Leith signage, no windows."
+  },
+  {
+    "id": "1230-east-close",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Uniform tiled texture above shopfronts across full width, no windows."
+  },
+  {
+    "id": "1400-east-close",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Bright white vertical seam/gap exposing sky through geometry."
+  },
+  {
+    "id": "1570-east-close",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Same white vertical seam glitch at building corner near Fitshop sign."
+  },
+  {
+    "id": "0040-east-far",
+    "chainage": 40,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of varied tenement shopfronts reads coherent, no faults."
+  },
+  {
+    "id": "0210-east-far",
+    "chainage": 210,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Corner building shows mirrored, vertically-striped stone texture."
+  },
+  {
+    "id": "0380-east-far",
+    "chainage": 380,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Burnt tenements with readable shopfront signs form plausible block."
+  },
+  {
+    "id": "0550-east-far",
+    "chainage": 550,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Weathered stone tenement reads as coherent real building front."
+  },
+  {
+    "id": "0720-east-far",
+    "chainage": 720,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Shopfronts and blind gable wall sit convincingly among tenements."
+  },
+  {
+    "id": "0890-east-far",
+    "chainage": 890,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Grace Church Leith and chip-shop unit under plausible blind wall."
+  },
+  {
+    "id": "1060-east-far",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Shopfront run under blank wall, textures correctly proportioned."
+  },
+  {
+    "id": "1230-east-far",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Zest Skin Spa and neighbours coherent, correctly scaled windows."
+  },
+  {
+    "id": "1400-east-far",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Bright white vertical sliver/gap between two dark building volumes."
+  },
+  {
+    "id": "1570-east-far",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Adjacent shop signs overlap, leaving garbled fragment shop."
+  },
+  {
+    "id": "0040-west-close",
+    "chainage": 40,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Pub fascia below stone tenement reads as coherent street corner."
+  },
+  {
+    "id": "0210-west-close",
+    "chainage": 210,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Camera clipped extremely close to a sign, no building context (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "0380-west-close",
+    "chainage": 380,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Thin isolated building with blank grey panel where shopfront should be."
+  },
+  {
+    "id": "0550-west-close",
+    "chainage": 550,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Extreme close-up of Sea Breeze Cafe sign, camera clipped into geometry (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "0720-west-close",
+    "chainage": 720,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Extreme close-up of partial sign, no readable shopfront (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "0890-west-close",
+    "chainage": 890,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Furniture-shop window with legible Barnardo's furniture text."
+  },
+  {
+    "id": "1060-west-close",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Extreme close-up of partial sign ORLD (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "1230-west-close",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Extreme close-up of two partial signs (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "1400-west-close",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Extreme close-up of Phone Spot sign, camera clipped in (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "1570-west-close",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Mirrored kaleidoscope duplication of window-bay texture above Ladbrokes."
+  },
+  {
+    "id": "0040-west-far",
+    "chainage": 40,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Entire upper facade a flat diamond-lozenge pattern tiled edge to edge (Central Bar, extreme-ratio real photo)."
+  },
+  {
+    "id": "0210-west-far",
+    "chainage": 210,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of distinct legible shopfronts under varied stone and brick storeys."
+  },
+  {
+    "id": "0380-west-far",
+    "chainage": 380,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Flat untextured white vertical bars cut through building fronts at module boundaries."
+  },
+  {
+    "id": "0550-west-far",
+    "chainage": 550,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Readable shopfronts under distinct weathered stone and brick storeys."
+  },
+  {
+    "id": "0720-west-far",
+    "chainage": 720,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Central building shows mirrored/tiled window-bay texture with warped signage."
+  },
+  {
+    "id": "0890-west-far",
+    "chainage": 890,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Ground floor shows mirrored, garbled duplicate signage text."
+  },
+  {
+    "id": "1060-west-far",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible varied shopfronts beneath distinct stone facades."
+  },
+  {
+    "id": "1230-west-far",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Flat white untextured vertical bars at module boundaries despite legible shopfronts."
+  },
+  {
+    "id": "1400-west-far",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-facade",
+    "note": "Same flat white untextured vertical seams as 1230."
+  },
+  {
+    "id": "1570-west-far",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Angled photo pasted flat producing warped verticals; leftmost building tiled diamond pattern."
+  },
+  {
+    "id": "0125-east-close",
+    "chainage": 125,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Flat dark-plank wall blocks frame; signage reads only as illegible fragment."
+  },
+  {
+    "id": "0295-east-close",
+    "chainage": 295,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Three legible shopfronts under varied, non-repeating upper storeys."
+  },
+  {
+    "id": "0465-east-close",
+    "chainage": 465,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Burnt derelict upper floors above two clearly readable shopfronts."
+  },
+  {
+    "id": "0635-east-close",
+    "chainage": 635,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "stretched",
+    "note": "Flat blown-out white patch on upper floor (pre-existing AI-generation white-margin artifact, building 593/Neighbourwood)."
+  },
+  {
+    "id": "0805-east-close",
+    "chainage": 805,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Alterations and Kukina shopfronts read clearly beneath weathered storey."
+  },
+  {
+    "id": "0975-east-close",
+    "chainage": 975,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Flat undetailed dark wood-plank upper storey with no windows above Sainsbury's (missing-elevation fallback)."
+  },
+  {
+    "id": "1145-east-close",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Left shopfront sign reads only as truncated fragment MADEB."
+  },
+  {
+    "id": "1315-east-close",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Long run of shopfronts all legible beneath varied period upper floors."
+  },
+  {
+    "id": "1485-east-close",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Curved corner building with legible Christadelphian signage reads coherently."
+  },
+  {
+    "id": "0125-east-far",
+    "chainage": 125,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Large flat olive-green gable-end wall with zero texture beside detailed buildings (missing-elevation background gable)."
+  },
+  {
+    "id": "0295-east-far",
+    "chainage": 295,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Believable row of derelict tenements with distinct legible shopfronts."
+  },
+  {
+    "id": "0465-east-far",
+    "chainage": 465,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of burnt and intact tenements with clearly readable shopfronts."
+  },
+  {
+    "id": "0635-east-far",
+    "chainage": 635,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Roadworks scene in front of legible shopfronts, coherent streetscape."
+  },
+  {
+    "id": "0805-east-far",
+    "chainage": 805,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Flat untextured orange cylindrical prop reads as unfinished placeholder (background prop, unrelated to facades)."
+  },
+  {
+    "id": "0975-east-far",
+    "chainage": 975,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Upper storey above Pret/Starbucks/Sainsbury's is flat featureless dark surface (missing-elevation fallback)."
+  },
+  {
+    "id": "1145-east-far",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean row of tenements with legible shopfronts and detailed windows."
+  },
+  {
+    "id": "1315-east-far",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Shopfront signage overlaps itself in two places, illegible units."
+  },
+  {
+    "id": "1485-east-far",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Tall flat dark-brown gable-end wall with no texture (missing-elevation background gable)."
+  },
+  {
+    "id": "0125-west-close",
+    "chainage": 125,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Mirrored kaleidoscopic diamond-and-chevron pattern dominates frontage."
+  },
+  {
+    "id": "0295-west-close",
+    "chainage": 295,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Building covered in mirrored kaleidoscope diamond pattern ground to roofline."
+  },
+  {
+    "id": "0465-west-close",
+    "chainage": 465,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Low-poly flat-shaded van and crate prop dominates foreground (background prop, unrelated to facades)."
+  },
+  {
+    "id": "0635-west-close",
+    "chainage": 635,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of distinct legible shopfronts beneath coherent sandstone facade."
+  },
+  {
+    "id": "0805-west-close",
+    "chainage": 805,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "none",
+    "note": "Mid-distance buildings are flat untextured slab shapes with no windows (missing-elevation fallback)."
+  },
+  {
+    "id": "0975-west-close",
+    "chainage": 975,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Word of Mouth fascia text appears warped into a wave/curve."
+  },
+  {
+    "id": "1145-west-close",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera positioned almost inside a wall, extreme blurred close-up (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "1315-west-close",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme blurred close-up of shutter and partial sign text (corridor-clamp too-tight close-up, pre-existing D4.1 residual)."
+  },
+  {
+    "id": "1485-west-close",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper",
+    "note": "Multiple buildings show mirrored kaleidoscope masonry pattern duplicating window bays."
+  },
+  {
+    "id": "0125-west-far",
+    "chainage": 125,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Entire facade covered in mirrored kaleidoscope diamond wallpaper pattern (extreme-ratio real photo)."
+  },
+  {
+    "id": "0295-west-far",
+    "chainage": 295,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Van obscures ground floor but tenement and adjacent building read coherently."
+  },
+  {
+    "id": "0465-west-far",
+    "chainage": 465,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of legible shopfronts under weathered but coherent sandstone facade."
+  },
+  {
+    "id": "0635-west-far",
+    "chainage": 635,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Readable shop signage under consistent burnt sandstone tenement facade."
+  },
+  {
+    "id": "0805-west-far",
+    "chainage": 805,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Curved corner building's signage mirrored and repeated around the curve."
+  },
+  {
+    "id": "0975-west-far",
+    "chainage": 975,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Curved corner building repeats signage mirrored around the curve."
+  },
+  {
+    "id": "1145-west-far",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "roof-or-pavement",
+    "note": "Shopfronts read fine; only issue is flat windowless upper wall (out of scope)."
+  },
+  {
+    "id": "1315-west-far",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Long run of legible shopfronts beneath coherent weathered tenement facade."
+  },
+  {
+    "id": "1485-west-far",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Both buildings wrapped in same mirrored kaleidoscope diamond-pattern texture."
+  }
+]
