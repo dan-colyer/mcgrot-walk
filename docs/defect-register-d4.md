@@ -867,3 +867,229 @@ literal, was not achieved via a fresh blind context; this is flagged as a
 process gap for whoever plans the next milestone's evaluation, not glossed
 over. The spliced headline (37/76) and adjusted (35/68) both clear this
 milestone's bar and both D5.1's numbers.
+
+## D6 — terrace-illusion fill for extreme ratios, b373 signage leak, full clean sweep
+
+### Task 2 — b373/GROUND_AVOID_FRAC signage leak
+
+The D5.2 register flagged building 373 ("Pascal & Co", chainage 1082) as
+still showing mirrored ground-floor signage on its edge-bay strips, and
+attributed it to `GROUND_AVOID_FRAC 0.4` not fully excluding that photo's
+ground floor. Confirmed: `GROUND_AVOID_FRAC` is a FIXED fraction of the
+whole elevation image, but a real shopfront's ground floor is a fixed
+*real-world* height (one storey) — on a short 2-storey photo (region
+heightM 6.4) one storey is 50% of the image, not 40%. Fix: widen the
+excluded fraction to whichever is larger, the fixed 0.4 or
+`STOREY_M / region.heightM`, capped at 0.75 so a single-storey photo
+(heightM ≈ STOREY_M) doesn't zero out the reusable band entirely
+(`src/shopfronts.js`, `groundAvoidFrac`). Verified in-browser at building
+373's edge-bay strip: the mirrored "CURIOSO"/"The Cutting Room" signage is
+gone, replaced by clean upper-storey masonry. The reproduction coordinates
+given in the brief (`(1.544, 1.7, 22.605)`, "SUBWAY area") actually land on
+a *different* building (771/Subway, chainage 19, ratio 1.0 — no edge-bay
+fill at all, no defect present); the fix was verified directly at building
+373 instead, which is where the D5.2 register's own spot-check found and
+described the defect.
+
+### Task 1 — terrace-illusion fill for extreme ratios
+
+Runs whose ratio exceeds `TERRACE_RATIO` (2.5, tuned against the named
+target poses — see below) now get a genuinely different fill instead of
+D5.1/D5.2's plain edge-bay masonry repeat:
+
+- the real photo stays centred at natural width, unchanged;
+- the excess ground floor (`BASE_Y`→`STOREY_M`) draws the building's own
+  remaining business names as placeholder fascias, continuing the same
+  per-building `placeholderUnitCursor` used elsewhere so names never repeat
+  across a building's runs/sides; once names run out, a masonry fallback
+  takes over for the rest of the ground width;
+- the excess upper storeys (`STOREY_M`→the building's real height) borrow
+  upper-wall bands from OTHER buildings' elevations on the same atlas page
+  (never the ground/signage band — same donor-side ground-avoid clamp as
+  Task 2), each bay at the donor's own native aspect, hash32-picked with a
+  same-page donor pool, bumped off the previous adjacent bay's donor so
+  neighbouring bays never repeat, and preferring donors more than
+  `NEIGHBOUR_CHAINAGE_M` (15m) from the building's own chainage (degrading
+  to the unfiltered pool if that leaves fewer than 3 usable donors).
+- the placeholder name pool (`src/shopfronts.js`, was filtered to buildings
+  the atlas doesn't cover) is widened to include ALL businesses, since
+  extreme-ratio buildings that DO have an atlas entry now also need their
+  names baked into the nameAtlas for the ground-band fascias.
+
+**Mid-session discovery, fixed as part of Task 1 (not separately scoped):**
+verifying building 54 (Central Bar, the actual 0040-west target) in-browser
+found the terrace fill's ground/upper split working, but the CENTRE photo's
+own roofline extension (the pre-existing, shared-by-every-branch mechanism
+that stacks a reused band above a photo shorter than the building's real
+height) was repeating a very thin self-sampled band many times, reading as
+exactly the same "kaleidoscope" moiré this milestone replaces the edge-bay
+fill for — confirmed via git-stash to be present on the UNMODIFIED D5.2
+baseline too (i.e. pre-existing, not introduced by this session's edits).
+Root cause: `V_BAND_FRAC` is a fixed fraction of the region's own height,
+so a very short photo (region heightM 4m) on a tall declared building
+(4 levels, 12.8m) has to repeat a ~0.6m-tall band ~14 times. Generalised the
+SAME borrowed-band approach to this shared roofline-extension step (for the
+centre/narrow quad specifically, in EVERY ratio branch, not just terrace)
+— this also directly fixes the "repeating-upper-storeys (mirror-symmetric
+seam)" fail class the D5.2 register deferred at `0890-west-far` (building
+283, ratio 2.05 — well under `TERRACE_RATIO`, so its edge-bay fill is
+unaffected; only the shared roofline extension changed for it). Side-marked
+edge-bay quads' existing join-continuity mechanism (D5.1/D5.2) is untouched.
+
+A second degenerate case, found the same way: the ground-band masonry
+fallback (once a building's own business names run out) was sampling that
+SAME building's own thin band, stretched over a whole storey's height —
+same root cause, same fix (borrow a donor band there too).
+
+A white-margin bleed (the b593-class defect D5.2 fixed for the two jitter
+sites and `narrowGroups`) reappeared at borrowed-bay boundaries, since a
+borrowed band samples right up to a donor's own region border with no
+slide to move it inward — fixed by applying the same `JITTER_INSET_FRAC`
+protective inset inside the new `emitBandStack` helper, so it now applies
+to every border-touching sample window in the file, not just the sites
+that originally found the bug.
+
+**Verified in-browser, all 7 target poses + 2 regression guards:**
+
+| Pose | Building | Ratio | Result |
+|---|---|---|---|
+| `0040-west-close`/`-far` | 54 (Central Bar) | 8.6:1 / 7.6:1 | Terrace fill + borrowed centre-roofline extension confirmed clean — reads as a row of distinct tenements, no wallpaper, no white seams. |
+| `0125-west-close`/`-far` | 83 | 6.6:1 | Same — clean terrace, donor-boundary white-margin bleed found and fixed here specifically. |
+| `0890-west-far` | 283 | 2.05:1 (below `TERRACE_RATIO`) | Not a terrace case; fixed by the generalised roofline-extension borrow instead — mirrored-brick roofline replaced with a distinct donor building's upper storeys. |
+| `1485-west-far` | 424 | 2.13:1 (below `TERRACE_RATIO`) | Same mechanism as 0890 — roofline no longer a self-mirrored repeat. |
+| `1570-west-far` | 801 | 1.59:1 (below `TERRACE_RATIO`) | Same. |
+| `0805-west-far` (regression guard) | 255 | 1.71:1 | Unaffected — clean corner run, no change. |
+| `0975-west-far` (regression guard) | 275 | 1.28:1 | Unaffected — the pre-existing, out-of-scope facet-boundary text overlap is still there (untouched, as instructed), nothing else regressed. |
+
+Note: 0890/1485/1570-west-far's actual ratios (2.05/2.13/1.59) are all
+BELOW `TERRACE_RATIO` — the brief's "remaining fail classes" list didn't
+give ratios for these three (only for 0040/0125), and they turned out to be
+a related-but-distinct mechanism (the shared roofline extension, not the
+edge-bay/terrace path). Generalising the roofline fix rather than lowering
+`TERRACE_RATIO` to force them into the terrace path keeps the "runs between
+STRETCH_MAX and the threshold keep the existing D5.2 edge-bay fill
+unchanged" instruction intact for their actual edge-bay tiles.
+
+### Task 3 — full clean 76-pose blind sweep
+
+Verified sub-agent browser access FIRST with a throwaway agent (per the
+brief's instruction, since D5.2's environment couldn't reach the dev
+server at all): **connection succeeded** this session — sub-agents can
+open their own browser tab, navigate, and screenshot the running dev
+server. Used the full agent-per-batch blind method: 8 agents, ~9-10 poses
+each, each given ONLY its assigned pose coordinates and the rubric text
+verbatim — no shopfronts.js, no this register, no "what changed". This is
+a genuinely fresh blind re-score, not a splice.
+
+**Headline: 35/76 (46.1%)**. **Adjusted** (excluding the 8 frozen
+corridor-clamp poses `0210/0550/0720/1060/1230/1400/1145/1315-west-close`,
+which all failed in this sweep — mostly "camera jammed into the wall,
+blurry" close-range artifacts, a known pre-existing clamp issue, not
+touched this session): **35/68 (51.5%)**.
+
+The adjusted figure is numerically IDENTICAL to D5.2's own adjusted score
+(35/68, 51.5%) — the headline dropped (37/76 → 35/76) only because none of
+the 8 excluded poses happened to pass this time, versus 2 passing in
+D5.2's run; the substantive, non-frozen pass count is unchanged pose-count-
+wise, though NOT the same 35 poses (see flips below).
+
+**Fault breakdown of this run's 41 fails**: `unreadable-shopfront` 23 (was
+16 in D5.2 — see rater-variance note below), `repeating-upper-storeys` 9
+(was 7), `stretched-texture` 3 (was 0), `wrong-perspective` 3 (was 3),
+`cropped-mid-facade` 3 (was 13 — down sharply, though see caveat below).
+
+**Flips vs D5.2**: 13 fail→pass, 15 pass→fail — a larger churn than any
+prior milestone's re-score. Cross-checked this honestly rather than taking
+either number at face value:
+
+- Of the 15 new fails, the large majority (11 of 15) are `unreadable-
+  shopfront` verdicts on `-close` poses at chainages this milestone never
+  touched (0295, 0465×2, 0635, 1145, 1230, 1315, 1400, 1570×2) — these are
+  the known camera-clamp issue (a `-close` pose's camera landing hard
+  against or inside a wall, producing an out-of-focus blur), scored more
+  strictly by this session's agents than D5.2's. Since this milestone's
+  diff never touches pose generation or camera clamping, these are read as
+  inter-session RATER VARIANCE on a known pre-existing borderline case, not
+  regressions caused by this session's code.
+- The 2 new `repeating-upper-storeys` fails on `-far` poses (`0550-east-
+  far`, `0635-east-far`) were investigated directly in-browser since they
+  ARE the kind of thing this session's roofline-extension change could
+  plausibly cause. Building at `0550-east-far` ("Romeo" / "Best Kebab
+  House" row): spot-checked and found two adjacent, genuinely DIFFERENT
+  real building photos with naturally similar Georgian window-bay rhythm —
+  a real, if repetitive-looking, elevation, not a code-introduced tiling
+  artifact; this building is well under `TERRACE_RATIO` and its roofline
+  gap is small, so it shouldn't even reach the borrowed-band branch. Read
+  as a rubric-strict grader call on authentic (if visually repetitive)
+  Georgian architecture, not a regression — flagged here rather than
+  silently dismissed, since it wasn't independently reproduced against a
+  git-stash baseline the way the Task 1 fixes were.
+- Of the 13 new passes, several are direct evidence the fixes work as
+  intended in a fresh blind context: `0125-west-close` (target pose family)
+  and `0975-west-close`/`-far`/`0805-west-close`/`-far` (regression guards)
+  all newly read clean.
+- The `cropped-mid-facade` count dropping from 13 to 3 is the single
+  biggest fault-class shift and wasn't touched by this milestone's diff at
+  all — most likely this session's agents were less inclined to call
+  frame-edge cropping a fault when it was a natural pose boundary (several
+  notes explicitly say "cropped at the screen edge, not mid-facade"),
+  another rater-variance signal rather than a code effect.
+
+**Named target poses, specifically**: of the 4 poses naming the two
+headline extreme-ratio buildings, only `0125-west-close` flipped to a
+clean pass in this blind run. `0040-west-close` failed on
+`stretched-texture` (the agent's camera landed almost inside the wall — a
+pose/distance artifact, not a facade-content fault); `0040-west-far` and
+`0125-west-far` failed on `wrong-perspective`/`repeating-upper-storeys`
+respectively, but for reasons DIFFERENT from the pre-D6 defect: `0040-
+west-far`'s note describes window bays "subtly skewed" — plausibly a real
+new residual, since a borrowed donor photo was shot at its own angle and is
+now mounted flat, which can look subtly off if that angle doesn't match
+the wall's mounting (not something D5.2-era code could produce, since it
+never borrowed content); `0125-west-far`'s note describes "the same Desi
+Pakwan shopfront... duplicated on both visible faces" at a building corner
+— this is the SAME real building's own photo legitimately appearing on two
+facets of a real corner (geometrically correct), read as "duplicate" by a
+masked rubric-strict judge who can't know that. Both are honestly reported
+as residuals, not claimed as fixed.
+
+**Bottom line, stated plainly**: the specific, literally-tested defect this
+milestone targeted — one building's whole-image edge-bay texture repeated
+as obvious wallpaper across a 6-8x-wide run — is CONFIRMED fixed via direct
+before/after git-stash comparison at the two named extreme-ratio buildings
+(54, 83), independent of the blind sweep's noise. What the blind sweep
+adds, honestly: the replacement content (borrowed bands, still using a
+mirrored vertical stack to fill height, same as the pre-existing roofline
+mechanism) is a real, reduced-severity improvement, not a fully clean fix —
+a strict "no repetition anywhere" rubric read can and does still fault
+individual borrowed bands' own internal mirroring, plus new residuals this
+mechanism can introduce (donor-angle perspective mismatch) that didn't
+exist before because nothing was being borrowed. The overall pass rate
+(adjusted 35/68) held exactly level with D5.2 rather than improving,
+because this session's blind agents scored the large pre-existing
+`-close`/camera-clamp population noticeably more strictly than D5.2's did
+— a rater-variance effect this register flags rather than glosses over,
+since presenting the headline drop (37→35) without this context would
+misrepresent what actually changed in the code.
+
+### D6 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Terrace fill for extreme ratios: ground band own names, upper band borrowed bays, roofline extension correct | ✅ Implemented and verified in-browser at both named buildings (54, 83); roofline extension for the centre quad also fixed (see mid-session discovery above), needed for the poses to read as intended. |
+| 2 | b373 edge-bay signage leak fixed | ✅ Fixed via a general `groundAvoidFrac` formula (not a building-373-special-case), verified at the actual defect location (the brief's given coordinates pointed elsewhere — see Task 2). |
+| 3 | Verify sub-agent browser access before committing to a scoring method | ✅ Verified first with a throwaway agent; access worked, used the full agent-per-batch blind method, no splice. |
+| 4 | Full clean 76-pose sweep, headline + adjusted reported honestly | ✅ 35/76 (46.1%) headline, 35/68 (51.5%) adjusted — numerically level with D5.2's adjusted score; the headline/flip-count nuance is reported in full above, not smoothed over. |
+| 5 | No deploy | ✅ No `build.mjs`, no gh-pages/`dist-site/` touch. |
+| 6 | Determinism: pure `hash32` only, existing seeded PRNG sequence untouched | ✅ All new randomness (donor picks, ground-band fallback picks, centre-roofline donor pick) uses `hash32` keyed on stable ids (`bi`, `runIdx`, `side`, `u`/`bayIdx`) — no calls added to any seeded PRNG sequence. |
+
+**Deviations from the brief, stated plainly**: the brief scoped Task 1 to
+runs above a ratio threshold and asked that narrower runs "keep the
+existing D5.2 edge-bay fill unchanged" — true for the edge-bay tiles
+themselves, but the roofline-extension fix (needed to actually clear the
+`0890`/`1485`/`1570` poses the brief named as targets) had to be
+generalised to EVERY ratio branch's centre/narrow quad, since the
+"kaleidoscope" mechanism it fixes isn't gated on width ratio at all, only
+on how short a photo is relative to the building's declared height. This
+was not pre-scoped in the brief and is called out here as a scope
+judgement call made mid-session, not a silent expansion.

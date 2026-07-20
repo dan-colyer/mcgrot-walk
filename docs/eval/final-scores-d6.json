@@ -1,0 +1,686 @@
+[
+  {
+    "id": "0040-east-close",
+    "chainage": 40,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A red sandstone tenement with a coherent row of shopfronts below (signs reading '...Of Leith Walk' and 'Adams Whyte Cri...' cut only by the frame edge, not the geometry), consistent windows and no stretching visible."
+  },
+  {
+    "id": "0040-east-far",
+    "chainage": 40,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Same red-brick tenement block with a legible 'Shug McGubbin' NPC dialogue over it; the facade behind reads as a real, intact building with no distortion or repetition."
+  },
+  {
+    "id": "0040-west-close",
+    "chainage": 40,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "stretched-texture",
+    "note": "Camera sits almost inside the wall, so the brick/window texture is blown up into a blurry, low-resolution smear that no longer reads as any real material or shopfront."
+  },
+  {
+    "id": "0040-west-far",
+    "chainage": 40,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The cream building's window bays look subtly skewed/warped relative to one another, as if a photo taken at an angle was pasted flat onto the wall rather than aligned to the geometry."
+  },
+  {
+    "id": "0125-east-close",
+    "chainage": 125,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "The ground-floor shop signage is sliced mid-word ('ED...' / '...RER...') by a plain dark filler panel, and the same weathered facade texture repeats identically on both sides of that panel."
+  },
+  {
+    "id": "0125-east-far",
+    "chainage": 125,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Wider view confirms the identical grimy tenement texture is mirrored on both sides of a blank dark divider wall, with shop text still cropped mid-word beneath it."
+  },
+  {
+    "id": "0125-west-close",
+    "chainage": 125,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A coherent fire-damaged/burnt tenement facade with consistent window bays; the ground-floor sign is largely obscured by the NPC dialogue box but the building itself reads as real and derelict."
+  },
+  {
+    "id": "0125-west-far",
+    "chainage": 125,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "At a building corner, the same 'Desi Pakwan' shopfront (including the window bays above it) is duplicated on both visible faces, reading as a mirrored copy rather than distinct sides of a real building."
+  },
+  {
+    "id": "0210-east-close",
+    "chainage": 210,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The view down this stretch shows mostly flat, blank, untextured wall faces with no shopfront or architectural detail at all, breaking the illusion well before roof/pavement quality matters."
+  },
+  {
+    "id": "0210-east-far",
+    "chainage": 210,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A cream sandstone building with red-trimmed windows and a ground-floor arcade reads convincingly, with legible neighbouring signage ('VAS MOTORS', '...D WORKS') consistent with a real derelict high street."
+  },
+  {
+    "id": "0210-west-close",
+    "chainage": 210,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is jammed extremely close to an illuminated sign, resolving only as huge blurry glowing letters ('M' and fragments) against a dark void, with no coherent shopfront or building visible."
+  },
+  {
+    "id": "0210-west-far",
+    "chainage": 210,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Readable ground-floor signage ('...RESSES', 'Leith Makers') sits under a derelict stone tenement, but a distinct blank white vertical seam cuts between the pale stone building and the adjacent red-brick building, cropping the frontage awkwardly rather than at a natural building edge."
+  },
+  {
+    "id": "0295-east-close",
+    "chainage": 295,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is pressed right up against a window/door frame, producing an out-of-focus close-up of wood trim and glass panes with no legible shopfront, signage, or building identity."
+  },
+  {
+    "id": "0295-east-far",
+    "chainage": 295,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of distinct, well-proportioned tenement buildings (partly obscured by a parked van) with straight verticals, plausible partial shop signage, and no visible stretching or repeating tiling."
+  },
+  {
+    "id": "0295-west-close",
+    "chainage": 295,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close-up on a dark red door/pillar frame, heavily blurred, with no readable signage or sense of what shop this is."
+  },
+  {
+    "id": "0295-west-far",
+    "chainage": 295,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A cream Georgian stone facade with well-formed, correctly proportioned windows and cornicing above a van and crate that block the ground floor; no stretching, wrong perspective, or repeated tiling visible in the parts shown."
+  },
+  {
+    "id": "0380-east-close",
+    "chainage": 380,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "A flat, completely blank untextured dark slab sits in the middle of the building row, visibly slicing through the ground-floor signage rather than aligning with a natural shop or building boundary."
+  },
+  {
+    "id": "0380-east-far",
+    "chainage": 380,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A convincing sooty, fire-damaged tenement facade with broken windows and scorch staining reads as a coherent derelict building; a thin bright vertical sliver at the extreme right frame edge is a minor, easy-to-miss artifact."
+  },
+  {
+    "id": "0380-west-close",
+    "chainage": 380,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The view shows plain, blank brick side-walls of an alley leading to a flat, featureless grey block with no windows or signage \u2014 it does not read as a real building frontage at all."
+  },
+  {
+    "id": "0380-west-far",
+    "chainage": 380,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Distant view shows a flat blank grey box and an isolated, seemingly disconnected thin building sliver with windows floating apart from any continuous street row, breaking the sense of a real street."
+  },
+  {
+    "id": "0465-east-close",
+    "chainage": 465,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close-up shows only blurred fragments of two shutter signs with no coherent shopfront visible in frame."
+  },
+  {
+    "id": "0465-east-far",
+    "chainage": 465,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Readable, distinct shopfronts (FRITES, Arkay Imaging, Volunteer Edinburgh, Ladbrokes) on varied period fa\u00e7ades read convincingly as a real derelict high street."
+  },
+  {
+    "id": "0465-west-close",
+    "chainage": 465,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The centre building is a flat, featureless dark box with no windows or shopfront detail, sitting incongruously between two normal buildings."
+  },
+  {
+    "id": "0465-west-far",
+    "chainage": 465,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Same flat textureless dark box building dominates the frame, and the building to its right has a blank white ground-floor front with no signage or shop identity."
+  },
+  {
+    "id": "0550-east-close",
+    "chainage": 550,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close-up of a burnt-out tenement above a legible pub sign, \"The Fairy Boy Of Leith\", reads as a plausible derelict building."
+  },
+  {
+    "id": "0550-east-far",
+    "chainage": 550,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "The upper floors show the same window-bay shape and scorch/damage pattern repeated identically across all five bays, reading as tiled wallpaper rather than a real fa\u00e7ade."
+  },
+  {
+    "id": "0550-west-close",
+    "chainage": 550,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close zoom on a shutter shows only the word \"Breezo\" against near-total darkness, with no shopfront context visible."
+  },
+  {
+    "id": "0550-west-far",
+    "chainage": 550,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Two adjacent building modules share an identical upper-storey window and cornice texture duplicated side by side with a visible seam."
+  },
+  {
+    "id": "0635-east-close",
+    "chainage": 635,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Above the legible \"Mo's Sharp Styl...\" barber sign, the corner turret shows a warped, angled paper-like texture that doesn't match the flat vertical stonework around it."
+  },
+  {
+    "id": "0635-east-far",
+    "chainage": 635,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Despite legible ground-floor shops (AMOR, Kukina, Taste of Poland), the central building's five upper-storey window bays repeat the identical tile and grime pattern like wallpaper."
+  },
+  {
+    "id": "0635-west-close",
+    "chainage": 635,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is jammed almost inside a shutter/signage at point-blank range, rendering as a blurry mipmap smear with only fragments of two shop signs faintly legible."
+  },
+  {
+    "id": "0635-west-far",
+    "chainage": 635,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of tenement fronts with legible shopfront signage (FRITES, Arkay Imaging, Volunteer Edinburgh, Ladbrokes) reads as a coherent, if grimy, derelict high street."
+  },
+  {
+    "id": "0720-east-close",
+    "chainage": 720,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A weathered tenement with a clear 'CAKE BOX' shutter sign sits beside a plain dark gable wall, reading as a believable derelict street corner."
+  },
+  {
+    "id": "0720-east-far",
+    "chainage": 720,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Same corner from further back, showing a blank dark side-elevation flanked by a sandstone tenement with a bright ground-floor unit, coherent as a building's side wall."
+  },
+  {
+    "id": "0720-west-close",
+    "chainage": 720,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is again pressed right up against a surface, producing an out-of-focus blur of a corrugated shutter and a partial window/sign shape that cannot be read as any specific shopfront."
+  },
+  {
+    "id": "0720-west-far",
+    "chainage": 720,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close-in view of a sandstone tenement with fire-damaged upper windows and a legible 'The Fairy Boy Of Leith' shopfront sign underneath, reads as a coherent derelict pub frontage."
+  },
+  {
+    "id": "0805-east-close",
+    "chainage": 805,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A tenement row with legible 'BEST KEBAB HOUSE' and 'The Fairy Boy Of Leith' signage, a parked car, and a lamp-post/NPC in the foreground reads as a plausible derelict street."
+  },
+  {
+    "id": "0805-east-far",
+    "chainage": 805,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of shopfronts (AMOR, alterations/dry cleaners, Kukina, Taste of Poland) beneath a narrow infill building and a wider sandstone tenement reads as coherent, legible street frontage."
+  },
+  {
+    "id": "0805-west-close",
+    "chainage": 805,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Same AMOR/Kukina/Taste of Poland row viewed from this camera spot, legible shopfronts and proportionate windows on the narrow red infill building between the two tenements."
+  },
+  {
+    "id": "0805-west-far",
+    "chainage": 805,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A narrow alley view with a plain dark side-wall on the left and a curved corner sandstone building on the right bearing a legible 'Mo's Sharp Styl[e]' barbershop sign, reads as a believable derelict lane."
+  },
+  {
+    "id": "0890-east-close",
+    "chainage": 890,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close-up of a shuttered ground-floor unit reading 'STARLIGHT' beside a 'Scotm[id]' frontage, with plain sash windows above \u2014 coherent, unstretched, no wrong-perspective cues."
+  },
+  {
+    "id": "0890-east-far",
+    "chainage": 890,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Whole tenement block reads clearly as Starlight and Scotmid shopfronts under regular symmetric sash windows, cropped at a natural building edge, no repeating or stretched textures visible."
+  },
+  {
+    "id": "0890-west-close",
+    "chainage": 890,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A furniture-shop window (partial signage reading '...nardo's furniture') with visible furniture silhouettes inside reads as a coherent, specific shop."
+  },
+  {
+    "id": "0890-west-far",
+    "chainage": 890,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "The recessed courtyard revealing Fransos/Barnardo's furniture is flanked by two narrow brick returns whose window-bay pattern is an obvious mirrored duplicate of each other, reading as the same tile cloned rather than distinct architecture."
+  },
+  {
+    "id": "0975-east-close",
+    "chainage": 975,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is pressed flush against a plain, featureless roller shutter filling the whole frame with no signage or identifying detail."
+  },
+  {
+    "id": "0975-east-far",
+    "chainage": 975,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "roof-or-pavement",
+    "note": "A distant, dimly-lit plain wall across the street with an NPC in the foreground \u2014 too dark to make out detail, but nothing legible is wrong either."
+  },
+  {
+    "id": "0975-west-close",
+    "chainage": 975,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Oblique grazing-angle view down a terrace showing a legible '...o's Sharp Style Bar' barbershop frontage with window verticals converging plausibly with the camera angle."
+  },
+  {
+    "id": "0975-west-far",
+    "chainage": 975,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Row of buildings including 'Sharp Style Bar' and a 'Word of ... Old...' shop reads as coherent adjoining frontages; no stretching or repeated tiling in the facades themselves."
+  },
+  {
+    "id": "1060-east-close",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close, dark crop on an illuminated sign reading 'Church Leith' (part of a longer name) \u2014 legible and coherent, though the shot is tight and low-lit."
+  },
+  {
+    "id": "1060-east-far",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Wider view clearly reads 'Grace Church Leith' as a specific, coherent building frontage; the plain brick wall above the sign is unadorned rather than showing any repeated window pattern."
+  },
+  {
+    "id": "1060-west-close",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is jammed almost inside the wall so only a heavily blurred fragment of a sign is visible against a featureless black void."
+  },
+  {
+    "id": "1060-west-far",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clear tenement row with legible shopfronts (AIRLINK TRAVEL, BODEGA LEITH, OTHERWORLD) and plausible weathered sandstone upper floors, reads convincingly as a real derelict street."
+  },
+  {
+    "id": "1145-east-close",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close-up blur shows only a partial sign fragment against a shutter, too close and out of focus to read as any specific shop."
+  },
+  {
+    "id": "1145-east-far",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage on a weathered tenement corner with a plant growing from the roofline, reads as a believable derelict building."
+  },
+  {
+    "id": "1145-west-close",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is essentially clipped into the facade producing a dark, heavily blurred smear of repeating rectangular shapes with no legible shopfront or detail."
+  },
+  {
+    "id": "1145-west-far",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean, legible shopfronts (JUST COFFEE, TESCO EXPRESS) beneath a plain plank-clad upper wall; no stretching, cropping, or repetition issues visible."
+  },
+  {
+    "id": "1230-east-close",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Very close and blurred, showing only a partial sign fragment on a shutter against a plain plank wall, not legible as a specific shop."
+  },
+  {
+    "id": "1230-east-far",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Shopfronts HADDINGTON... and INDI... read clearly (the latter cropped naturally at the screen edge, not mid-facade), building above is a plain flat wall."
+  },
+  {
+    "id": "1230-west-close",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is pressed up against a pole/wall with heavy blur, showing only an isolated letter fragment with no readable shopfront."
+  },
+  {
+    "id": "1230-west-far",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Good corner view of a cracked, weathered sandstone tenement with legible shopfronts (OH DEER, TWELVE TRIANGLE...) and varied non-repeating upper-floor windows."
+  },
+  {
+    "id": "1315-east-close",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A row of legible, distinct shopfronts sits below two adjoining tenement facades, one burnt/derelict and one intact cream sandstone, both reading as real buildings."
+  },
+  {
+    "id": "1315-east-far",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Wider view of the same corner shows a fire-damaged sandstone tenement next to a cleaner cream building, with varied broken windows and curtains."
+  },
+  {
+    "id": "1315-west-close",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Camera is pressed right up against a shop sign showing only the blurry, oversized letters \"END\", which does not read as any coherent shopfront."
+  },
+  {
+    "id": "1315-west-far",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "stretched-texture",
+    "note": "A glaring blank white vertical strip/seam runs down the boundary between two buildings where a texture appears to be missing or blown out, breaking the illusion immediately."
+  },
+  {
+    "id": "1400-east-close",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A distant tenement corner with a partly visible shopfront and a shadowed blank gable end wall reads as a plausible side-street view."
+  },
+  {
+    "id": "1400-east-far",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "stretched-texture",
+    "note": "The building's brick/window texture ends abruptly at a rounded corner into a blank grey curved wall, with the same bright white seam artifact visible as in the west-far pose."
+  },
+  {
+    "id": "1400-west-close",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Extreme close-up blur on a sign showing only fragments of letters, unreadable and not identifiable as any specific shop."
+  },
+  {
+    "id": "1400-west-far",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A damaged sandstone tenement row with legible signage (Phone Spot, Digital Image, partially cropped Hair and Jajira at frame edges) reads convincingly as a derelict street."
+  },
+  {
+    "id": "1485-east-close",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "A narrow reddish infill building between two wider tenements, with clear shop names, reads as a believable mixed streetscape."
+  },
+  {
+    "id": "1485-east-far",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "A rounded corner building displays a garbled sign that does not resolve into any coherent shop name, even though the neighbouring sign is legible."
+  },
+  {
+    "id": "1485-west-close",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "The central sandstone tenement's facade is mirrored/duplicated across a vertical seam, so the shopfront text, flags, and window bays appear twice as a symmetric reflection rather than a continuous real frontage."
+  },
+  {
+    "id": "1485-west-far",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Same mirrored-facade artifact is visible from further back \u2014 the stone building's windows and ground-floor signage repeat symmetrically around a centre line instead of reading as one coherent building."
+  },
+  {
+    "id": "1570-east-close",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "The frame is dominated by a flat, untextured dark gable/side wall with no shopfront or window detail at all, save a sliver of a textured facade cut off at the left edge."
+  },
+  {
+    "id": "1570-east-far",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Again mostly blank dark side walls stretching into the distance, with only a fragment of a shop sign legible at the left edge \u2014 no coherent frontage to read."
+  },
+  {
+    "id": "1570-west-close",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "The central handsome arched-doorway sandstone building reads well, but the buildings flanking it on both left and right edges show the same dark window-bay texture tiled repeatedly like wallpaper."
+  },
+  {
+    "id": "1570-west-far",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "The central beige building's windows and stonework are visibly slanted/skewed rather than vertical, and the adjoining Ladbrokes unit is cropped awkwardly mid-facade, indicating an angled source photo pasted flat onto the geometry."
+  }
+]
