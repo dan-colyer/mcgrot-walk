@@ -49,6 +49,21 @@ const GROUND_AVOID_FRAC = 0.4; // D5/W1: edge-bay tiles never sample this bottom
 const TOP_AVOID_FRAC = 0.08;   // avoid the top ~8% of an elevation (baked roofline/sky edge)
 const V_BAND_FRAC = 0.16;      // height of the reused upper-wall band, as a fraction of region height
 const VERT_EXT_MIN = 1.5;      // metres a building must exceed its image by before extending upward
+const PLACEHOLDER_UNIT_M = 6.4; // nominal shopfront-unit width for name-placeholder cadence
+// D6/task1: past STRETCH_MAX, D5's edge-bay masonry fill (above) is a
+// deliberately plain repeat of the SAME photo's own edge strip — safe, but
+// at extreme ratios (a photo covering under ~1/3 of the run) it still reads
+// as one building's wallpaper stretched implausibly wide. Past THIS
+// threshold, buildShopfronts instead builds a "terrace" illusion: the real
+// photo stays centred, the excess ground floor gets the building's own
+// remaining business names as placeholder fascias, and the excess upper
+// storeys borrow OTHER buildings' upper-wall bands from the same atlas page
+// — so a very wide run reads as a row of distinct tenements. Tuned by eye
+// against the D6 target poses (0040/0125-west, ratios 6.6-8.6:1); must stay
+// above STRETCH_MAX and clear of narrower currently-passing runs (checked
+// at 0805/0975-west-far, both ~1.3-1.7:1).
+const TERRACE_RATIO = 2.5;
+const NEIGHBOUR_CHAINAGE_M = 15; // donor exclusion radius: roughly one building's own frontage width
 // D5.2: at the extremes of their slide range, D5.1's jittered sample windows
 // could reach exactly to a region's u0Full/u1Full border — where thin baked-in
 // white photo margins live (the b593-class artifact: measured ~5-6% of region
@@ -77,13 +92,14 @@ export function buildShopfronts(assets, world, scene) {
   const uInset = 0.5; // half-texel inset, in PIXELS (converted per-page below)
   const vInset = 0.5;
 
-  // --- placeholder pool: buildings the manifest has but the atlas doesn't
-  // (elevation missing — a generation failure, or not yet run) that DO have
-  // real business names. Same canvas-drawn fascia as the old whole-building
-  // placeholder, now used only as this narrower fallback. ---
+  // --- placeholder pool: every business name in the manifest, atlas or no
+  // atlas. D5.2 only needed buildings the atlas doesn't cover (elevation
+  // missing) as a narrower fallback; D6/task1 also draws these fascias for
+  // the ground-band fill of extreme-ratio runs on buildings that DO have an
+  // atlas entry, so the pool can no longer exclude them. Same canvas-drawn
+  // fascia as the old whole-building placeholder. ---
   const placeholderNames = [];
   for (const mb of manifest.buildings) {
-    if (atlasByIndex[mb.buildingIndex]) continue;
     for (const biz of mb.businesses || []) placeholderNames.push(biz.name);
   }
   const nameAtlas = placeholderNames.length ? buildNameAtlas(placeholderNames) : null;
@@ -93,6 +109,33 @@ export function buildShopfronts(assets, world, scene) {
   // --- per-page geometry buffers (texture loaded lazily; geometry is cheap
   // and built up front so a page can appear the instant its texture lands) ---
   const pageBuf = atlas.pages.map(() => ({ positions: [], uvs: [], indices: [], quadCount: 0 }));
+
+  // --- D6/task1: donor pool for borrowed upper-wall bands, grouped by atlas
+  // page (a borrowed band must come from the SAME page as the building
+  // using it — pages are lazy-loaded independently, so a cross-page borrow
+  // could sample a texture that isn't resident). One representative
+  // (non-corner) region per donor building; its own u/v full-region bounds
+  // precomputed once here rather than per borrowing run. ---
+  const donorsByPage = new Map();
+  for (const mb of manifest.buildings) {
+    const entry = atlasByIndex[mb.buildingIndex];
+    if (!entry) continue;
+    const region = entry.regions.find((r) => r.kind !== 'corner') || entry.regions[0];
+    if (!region) continue;
+    const page = atlas.pages[entry.page];
+    const pxU = 1 / page.width, pxV = 1 / page.height;
+    const list = donorsByPage.get(entry.page) || [];
+    list.push({
+      bi: mb.buildingIndex,
+      chainage: mb.chainage,
+      region,
+      u0Full: (region.x + uInset) * pxU,
+      u1Full: (region.x + region.w - uInset) * pxU,
+      vTop: 1 - (region.y + vInset) * pxV,
+      vBot: 1 - (region.y + region.h - vInset) * pxV,
+    });
+    donorsByPage.set(entry.page, list);
+  }
 
   function emitInto(buf, u0, v0, u1, v1, ax, az, bx, bz, y0, y1) {
     const base = buf.quadCount * 4;
@@ -205,8 +248,169 @@ export function buildShopfronts(assets, world, scene) {
         const vBot = 1 - (region.y + region.h - vInset) * pxV;
 
         const ratio = span / region.widthM;
+        // Hoisted so the terrace branch below can use it too (was previously
+        // computed only after hQuads emission, for the roofline-extension
+        // step shared by every ratio branch).
+        const buildingHeightM = Math.max(2, mb.levels || 2) * STOREY_M;
+
+        // This building's own safe upper band (never the ground floor) —
+        // shared by every ratio branch as the degrade path when a page has
+        // too few donors.
+        const ownGroundAvoidFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / region.heightM));
+        const ownVSpan = vTop - vBot;
+
+        // Stacks a safe upper band (v-range above its ground floor, below
+        // its roofline) at native aspect from yStart to yEnd, mirrored
+        // ping-pong — the one stacking recipe shared by the ground-band
+        // masonry fallback, the too-few-donors degrade, the borrowed bays,
+        // and (D6/task1) the generic roofline extension below, for every
+        // ratio branch.
+        const emitBandStack = (u0Raw, u1Raw, vTop_, vBot_, groundFrac, heightM_, ax, az, bx, bz, yStart, yEnd) => {
+          // D5.2 lesson (see JITTER_INSET_FRAC above): ANY border-touching
+          // sample window on a packed atlas page risks the baked-in white
+          // photo-margin bleed, not just the two sites that originally
+          // found it. A borrowed band always samples right up to a
+          // donor's OWN u0Full/u1Full border (never slid inward like the
+          // edge-bay strips), so inset it the same protective fraction.
+          const uInsetHere = JITTER_INSET_FRAC * (u1Raw - u0Raw);
+          const u0 = u0Raw + uInsetHere, u1 = u1Raw - uInsetHere;
+          const vSpan_ = vTop_ - vBot_;
+          const edgeBot = vSpan_ > 0 ? vBot_ + groundFrac * vSpan_ : vBot_;
+          const bandTop_ = vTop_ - TOP_AVOID_FRAC * vSpan_;
+          const bandWorldH = Math.max(0.1, ((bandTop_ - edgeBot) / (vSpan_ || 1)) * heightM_);
+          let y = yStart, vi = 0;
+          while (y < yEnd - 1e-6 && bandWorldH > 1e-4) {
+            const dh = Math.min(bandWorldH, yEnd - y);
+            const frac = dh / bandWorldH;
+            const mirrored = vi % 2 === 0;
+            const vNear = mirrored ? bandTop_ : edgeBot;
+            const vFar = mirrored ? edgeBot : bandTop_;
+            const vFarClipped = vNear + (vFar - vNear) * frac;
+            emitInto(buf, u0, vNear, u1, vFarClipped, ax, az, bx, bz, y, y + dh);
+            quadCount++;
+            y += dh; vi++;
+          }
+        };
+
+        // D6/task1: donor pool for borrowed bands (excess sides AND, below,
+        // the generic roofline extension) — computed once per run, for
+        // every ratio branch that has an atlas region at all.
+        const donorsAll = (donorsByPage.get(atlasEntry.page) || []).filter((d) => d.bi !== bi);
+        const donorsFar = donorsAll.filter((d) => Math.abs(d.chainage - mb.chainage) >= NEIGHBOUR_CHAINAGE_M);
+        // Excluding immediate street neighbours is only safe if it still
+        // leaves a usable pool — degrade to the unfiltered pool otherwise
+        // (see the <3-donor degrade below for the "too thin" case itself).
+        const donors = donorsFar.length >= 3 ? donorsFar : donorsAll;
+
         const hQuads = []; // {u0,u1,ax,az,bx,bz} — every horizontal quad this run emits at BASE_Y..region.heightM
-        if (ratio > STRETCH_MAX) {
+        if (ratio > TERRACE_RATIO) {
+          // D6/task1: terrace illusion — see TERRACE_RATIO comment. Real
+          // photo centred at natural width, same as the STRETCH_MAX branch.
+          const centerSpanT = Math.min(1, region.widthM / span);
+          const tStart = Math.max(0, 0.5 - centerSpanT / 2);
+          const tEnd = Math.min(1, 0.5 + centerSpanT / 2);
+          const ca = at(tStart), cb = at(tEnd);
+          hQuads.push({ u0: u0Full, u1: u1Full, ax: ca.x, az: ca.z, bx: cb.x, bz: cb.z });
+
+          const sides = [
+            { side: 0, innerT: tStart, dirSign: -1 }, // left excess: tStart -> 0, outward
+            { side: 1, innerT: tEnd, dirSign: 1 },     // right excess: tEnd -> 1, outward
+          ];
+
+          for (const { side, innerT, dirSign } of sides) {
+            const excessT = side === 0 ? tStart : (1 - tEnd);
+            const excessWorldLen = excessT * span;
+            if (excessWorldLen < MIN_RUN) continue;
+
+            // --- ground band (BASE_Y..STOREY_M): this building's OWN
+            // remaining business names as placeholder fascias, inner-to-
+            // outer (i.e. continuing naturally from the real photo edge);
+            // once names run out, masonry fallback for the rest. Cursor is
+            // shared with the plain no-atlas placeholder path below so a
+            // building touched by both never repeats a name. ---
+            const nUnits = Math.max(1, Math.round(excessWorldLen / PLACEHOLDER_UNIT_M));
+            const unitT = excessT / nUnits;
+            const remaining = mb.businesses ? mb.businesses.length - placeholderUnitCursor : 0;
+            const namedUnits = nameAtlas ? Math.max(0, Math.min(remaining, nUnits)) : 0;
+
+            for (let u = 0; u < nUnits; u++) {
+              const t0 = innerT + dirSign * u * unitT;
+              const t1 = innerT + dirSign * (u + 1) * unitT;
+              const a = at(Math.min(t0, t1)), b = at(Math.max(t0, t1));
+
+              if (u < namedUnits) {
+                const biz = mb.businesses[placeholderUnitCursor];
+                placeholderUnitCursor++;
+                const uv = nameAtlas.uvFor.get(biz.name);
+                if (uv) {
+                  const base = pQuadCount * 4;
+                  pPos.push(a.x, BASE_Y, a.z, b.x, BASE_Y, b.z, b.x, STOREY_M, b.z, a.x, STOREY_M, a.z);
+                  pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
+                  pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+                  pQuadCount++;
+                  quadCount++;
+                }
+                continue;
+              }
+
+              // D6/task1: this building's own safe band is often thin (a
+              // short photo relative to a tall declared building — the same
+              // problem the centre-quad roofline extension has above), and
+              // stretching that thin slice over a whole storey's height is
+              // its own source of the moiré/kaleidoscope read (confirmed
+              // in-browser on building 54, right-side ground fallback).
+              // Borrow a donor's safe band here too, same as the upper
+              // bays, rather than reuse this building's own.
+              if (donors.length >= 3) {
+                const fallbackDonorIdx = hash32(bi, runIdx * 6151 + side * 331 + u) % donors.length;
+                const fallbackDonor = donors[fallbackDonorIdx];
+                const fGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / fallbackDonor.region.heightM));
+                emitBandStack(fallbackDonor.u0Full, fallbackDonor.u1Full, fallbackDonor.vTop, fallbackDonor.vBot, fGroundFrac, fallbackDonor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+              } else if (ownVSpan > 0) {
+                emitBandStack(u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+              }
+            }
+
+            // --- upper band (STOREY_M..buildingHeightM): borrowed bays from
+            // OTHER buildings' elevations on the same atlas page. ---
+            if (buildingHeightM > STOREY_M + 1e-6) {
+              const outerT = side === 0 ? 0 : 1;
+              const farA = at(Math.min(innerT, outerT)), farB = at(Math.max(innerT, outerT));
+
+              if (donors.length < 3) {
+                // Too few usable donors on this page to avoid one donor
+                // visibly repeating — degrade to this building's own safe
+                // upper band across the whole excess width instead.
+                if (ownVSpan > 0) {
+                  emitBandStack(u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, farA.x, farA.z, farB.x, farB.z, STOREY_M, buildingHeightM);
+                }
+              } else {
+                // Bay-by-bay: each bay is one donor's native widthM, drawn
+                // at its own aspect; hash32-picked per (bi, runIdx, side,
+                // bayIdx), bumped off the previous adjacent bay's donor so
+                // neighbouring bays never repeat.
+                let t = innerT, bayIdx = 0, prevDonorIdx = -1;
+                let guard = 0;
+                while (Math.abs(t - innerT) < excessT - 1e-6 && guard++ < 64) {
+                  let donorPick = hash32(bi, runIdx * 4111 + side * 211 + bayIdx) % donors.length;
+                  if (donorPick === prevDonorIdx) donorPick = (donorPick + 1) % donors.length;
+                  const donor = donors[donorPick];
+                  prevDonorIdx = donorPick;
+
+                  const remainT = excessT - Math.abs(t - innerT);
+                  const donorSpanT = Math.min(remainT, Math.max(donor.region.widthM / span, 1e-4));
+                  const tNext = t + dirSign * donorSpanT;
+                  const a = at(Math.min(t, tNext)), b = at(Math.max(t, tNext));
+
+                  const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
+                  emitBandStack(donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM);
+
+                  t = tNext; bayIdx++;
+                }
+              }
+            }
+          }
+        } else if (ratio > STRETCH_MAX) {
           // Too wide for one natural-width quad. D5/W1: emit the ONE authored
           // elevation at natural width, centred on the run, and fill the
           // excess on each side with edge-bay quads that resample only the
@@ -375,14 +579,41 @@ export function buildShopfronts(assets, world, scene) {
           quadCount++;
         }
 
+        // D6/task1: the centre/narrow quad's (side undefined) own roofline
+        // extension used to reuse THIS building's own region band, mirrored
+        // ping-pong — fine when the photo is close to the building's real
+        // height, but a photo that's short relative to a much taller
+        // declared building (levels-derived) needs many repeats of a thin
+        // band, which reads as a mirror-symmetric "kaleidoscope" seam
+        // (confirmed in-browser: buildings 54/283/424/801 — poses 0040,
+        // 0890, 1485, 1570-west). Borrow a donor's band instead, same as the
+        // excess-side bays, whenever the page has enough donors; degrade to
+        // the old own-band approach otherwise. Side-marked (edge-bay) quads
+        // are UNCHANGED below — their own join-continuity mechanism (D5.1/
+        // D5.2) is untouched.
+        if (buildingHeightM - region.heightM > VERT_EXT_MIN) {
+          for (const q of hQuads) {
+            if (q.side !== undefined) continue;
+            if (donors.length >= 3) {
+              const donorIdx = hash32(bi, runIdx * 8231 + 17) % donors.length;
+              const donor = donors[donorIdx];
+              const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
+              emitBandStack(donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+            } else if (ownVSpan > 0) {
+              emitBandStack(q.u0, q.u1, vTop, vBot, ownGroundAvoidFrac, region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+            }
+          }
+        }
+
         // D5/W1: buildings taller than their authored elevation (e.g. a
         // 2-storey photo on a 4-storey OSM footprint) used to leave a bare
         // procedural-stone slab above the image. Stack extra quads sampling a
         // reused upper-wall band (avoiding the top TOP_AVOID_FRAC where a
         // baked roofline/sky edge may sit), mirrored ping-pong vertically, up
         // to the building's real height — same hQuads footprint as the base.
-        const buildingHeightM = Math.max(2, mb.levels || 2) * STOREY_M;
-        if (buildingHeightM - region.heightM > VERT_EXT_MIN) {
+        // D6/task1: side-marked (edge-bay) quads ONLY now — the centre/
+        // narrow quad's extension is handled above.
+        if (buildingHeightM - region.heightM > VERT_EXT_MIN && hQuads.some((q) => q.side !== undefined)) {
           const vSpan = vTop - vBot;
           const bandTop = vTop - TOP_AVOID_FRAC * vSpan;
           const bandBot = Math.max(vBot, bandTop - V_BAND_FRAC * vSpan);
@@ -432,8 +663,9 @@ export function buildShopfronts(assets, world, scene) {
                 : 0;
             }
             for (const q of hQuads) {
-              const dir = q.side === 0 ? 1 : (q.side === 1 ? -1 : 0);
-              const delta = q.side !== undefined ? dir * (sideShift[q.side] || 0) : 0;
+              if (q.side === undefined) continue; // D6/task1: handled by the borrowed-band pass above
+              const dir = q.side === 0 ? 1 : -1;
+              const delta = dir * (sideShift[q.side] || 0);
               emitInto(buf, q.u0 + delta, vNear, q.u1 + delta, vFarClipped, q.ax, q.az, q.bx, q.bz, y0, y1);
               quadCount++;
             }
@@ -450,14 +682,14 @@ export function buildShopfronts(assets, world, scene) {
         // back to index 0 via modulo. Once a building's businesses are all
         // used, later runs draw nothing rather than replaying a name.
         const remaining = mb.businesses.length - placeholderUnitCursor;
-        const units = remaining > 0 ? Math.min(remaining, Math.max(1, Math.round(span / 6.4))) : 0;
+        const units = remaining > 0 ? Math.min(remaining, Math.max(1, Math.round(span / PLACEHOLDER_UNIT_M))) : 0;
         for (let u = 0; u < units; u++) {
           const biz = mb.businesses[placeholderUnitCursor + u];
           const uv = nameAtlas.uvFor.get(biz.name);
           if (!uv) continue;
           const a = at(u / units), b = at((u + 1) / units);
           const base = pQuadCount * 4;
-          pPos.push(a.x, BASE_Y, a.z, b.x, BASE_Y, b.z, b.x, 3.2, b.z, a.x, 3.2, a.z);
+          pPos.push(a.x, BASE_Y, a.z, b.x, BASE_Y, b.z, b.x, STOREY_M, b.z, a.x, STOREY_M, a.z);
           pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
           pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
           pQuadCount++;
