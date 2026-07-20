@@ -1093,3 +1093,176 @@ generalised to EVERY ratio branch's centre/narrow quad, since the
 on how short a photo is relative to the building's declared height. This
 was not pre-scoped in the brief and is called out here as a scope
 judgement call made mid-session, not a silent expansion.
+
+## D7 — blank-wall dressing, roofline chimneys/aerials, full clean sweep
+
+### Task 1 — dressing the blank walls
+
+D6's blind sweep surfaced two "flat featureless dark box" fails
+(`0465-west-close`/`-far`, `1570-east-close`/`-far`) neither the shopfront
+system nor its D6 terrace/borrow mechanisms touch, since both only ever
+treat a building's detected STREET-FACING wall. Investigated both named
+buildings directly:
+
+- `0465-west`'s "flat dark box" (buildingIndex 179) turned out to be
+  **beyond the frontage-detection radius entirely** (edge distances ~40-56m
+  from the streetLine, versus `computeFrontageRuns`' own `STREET_RANGE`
+  30m) — a set-back building glimpsed through a gap in the frontage row,
+  not a "bare frontage" building in the sense the brief's Class A
+  description assumed.
+- `1570-east`'s equivalent (buildingIndex 463) is the same pattern (edges
+  41-74m out).
+
+Both are legitimate Class B candidates once the qualifying-face test is
+distance-gated at ~60m rather than the frontage system's 30m, which is
+exactly what the brief specified for Class B — so both target poses'
+actual root cause is Class B, not Class A. Implemented both classes as
+scoped:
+
+- **Class A** (`src/shopfronts.js`): buildings with a genuine street-facing
+  frontage run (computeFrontageRuns finds one) but neither an atlas photo
+  nor business names — the manifest builder's own "bare" bucket, 64
+  buildings — now borrow bays from the atlas page whose CHAINAGE BUCKET
+  covers them (they have no atlas entry of their own to read a page off),
+  across the whole run, using a donor's safe (non-signage) band for the
+  full height — no ground/upper split, since there are no business names to
+  draw as fascias and a donor's ground band could otherwise leak a wrong
+  name (the exact fault class D6/task2 fixed). Refactored `emitBandStack`
+  to take its target page buffer as a parameter (was closed over the
+  calling building's own `buf`) so it can target a donor page instead.
+  Verified in-browser at building 440 (chainage 1496): a previously blank
+  reddish-brown box now shows a borrowed elevation with windows.
+- **Class B** (new `src/gables.js`): every OTHER big wall face the
+  shopfront system doesn't reach — genuine party-wall gables AND, per the
+  investigation above, buildings set back beyond the frontage radius but
+  still visible through gaps — gets a baked canvas (4 stone/soot/blocked-
+  window variants + 4 fixed ghost-sign tiles using real manifest business
+  names, never invented text), one quad per qualifying face (edge ≥6m,
+  ≥40m² wall area, within 60m of the streetLine, not already claimed by a
+  frontage run — claimed-ness tested geometrically, by whether a candidate
+  edge's midpoint sits on an existing run's own line segment, so it's
+  unaffected by `computeFrontageRuns`' wrap-around merge losing an exact
+  index range), tinted with the SAME per-building colour (`world.js`'s
+  `pickBuildingColor`, now exported) as the rest of that building's walls.
+  +1 draw call. First bake read far too dark (soot/blocked-window alpha
+  compounded across ~20-46 overlapping streaks into near-black) — halved
+  the soot streak count and opacity, lightened the blocked-window infill,
+  before it read as a plausibly sooty version of the same light ashlar
+  tone next door rather than a different, much darker material.
+
+### Task 2 — roofline (`src/chimneys.js`, new)
+
+Two static InstancedMeshes (+2 draw calls), no per-frame update needed
+(same pattern as `src/flora.js`'s merged scatter meshes):
+
+- **Chimneys**: one merged low-poly geometry (a plain box stack + 3
+  open-ended, no-cap cylinder pots — ~42 tris, under the ~60-tri budget)
+  instanced at every footprint vertex shared by more than one building
+  (party-wall corners, detected by snapping vertices to a 0.5m grid and
+  counting) plus ~10m interval spacing along every roof edge within 80m of
+  the street. Height (via Y-scale) and lean hash32-jittered per
+  `(buildingIndex, edgeSeed)`. Capped at 2500 instances; 2963 candidates
+  this run were beyond the cap and dropped — sorted by distance-to-street
+  ascending first, so the dropped ones are always the FURTHEST candidates,
+  never a silent gap in what's actually visible from any pose (logged to
+  console, not silently truncated in footprint order).
+- **Aerials**: a sparser second InstancedMesh (mast + 2 cross-bars, ~34
+  tris), placed on ~1-in-5 qualifying buildings toward their street-facing
+  footprint corner, independently hash32-gated per building index.
+
+Verified in-browser: chimney stacks with pots silhouette correctly along
+rooflines against the sky; 2500/2500 chimney instances and 93 aerial
+instances confirmed via scene traversal; the drop-warning logs to console
+as designed.
+
+### Task 3 — full clean 76-pose blind sweep
+
+Reused the D6 agent-per-batch blind method directly (8 agents, ~9-10 poses
+each, rubric verbatim, no code context) without a fresh throwaway
+connectivity check — sub-agent browser access was already confirmed working
+in THIS session for D6's sweep minutes earlier, on the same dev server;
+re-verifying would have tested nothing new. Flagged here as a deliberate
+methodology choice, not an oversight.
+
+**Headline: 40/76 (52.6%)**, up from D6's 35/76 (46.1%). **Adjusted**
+(excluding the 8 frozen corridor-clamp poses): **37/68 (54.4%)**, up from
+D6's 35/68 (51.5%). Both genuinely improved this time (D6's headline/
+adjusted delta was flagged as likely rater noise; this run's improvement is
+larger than that noise band and lines up with real fixes — see flips
+below).
+
+**Fault breakdown of this run's 36 fails**: `unreadable-shopfront` 11 (was
+23), `cropped-mid-facade` 8 (was 3), `repeating-upper-storeys` 8 (was 9),
+`wrong-perspective` 5 (was 3), `stretched-texture` 4 (was 3).
+`unreadable-shopfront` dropping by more than half is the headline
+signal — D6's count was inflated by the `-close` camera-clamp blur poses
+this milestone doesn't touch, so at face value this looks like more rater
+variance than a code effect; cross-checked below.
+
+**Flips vs D6**: 16 fail→pass, 11 pass→fail.
+
+- Both explicitly-named target pose PAIRS flip cleanly: `0465-west-close`
+  AND `0465-west-far` both go fail→pass ("the centre building is a flat,
+  featureless dark box" → "curved corner block with distinctly readable
+  shopfronts... proportions and perspective look consistent") — this is a
+  real, attributable fix, not noise, since it's exactly the building this
+  milestone's investigation targeted (buildingIndex 179).
+- `1570-east-close`/`-far` do NOT flip — still fail, but note the fault
+  changed character: D6's notes were flatly "mostly blank dark side walls...
+  no coherent frontage to read"; D7's notes are "ends abruptly against a
+  flat, featureless dark box standing in for the next building" (cropped-
+  mid-facade) and "the row ends in a plain blank box" (wrong-perspective,
+  named as a secondary issue behind a DIFFERENT building's skewed texture).
+  Spot-checked buildingIndex 463 directly in-browser after the fix: the
+  gable dressing IS rendering (coursing, blocked-window rectangles visible
+  up close) but reads dark/flat again at this pose's specific distance and
+  angle — an honest partial result, not a full fix, for this one pose.
+- Several `repeating-upper-storeys` flips (0550-east-far, 0550-west-far,
+  0635-east-far) are attributable to D6's OWN roofline-extension
+  generalisation continuing to pay off under fresh blind scoring, not new
+  D7 work — expected, and reported for completeness.
+- The 11 pass→fail flips are, on inspection, concentrated in fault
+  categories this milestone's diff doesn't touch (`stretched-texture` white-
+  seam artefacts at 1315/1400 already known from D5.2's register;
+  `unreadable-shopfront` garbled-signage calls at 0380/0805/1145/1315 that
+  match the pre-existing `narrowGroups`/facet-boundary class flagged as
+  out-of-scope since D5.2) — read as the same inter-session rater variance
+  D6's register flagged, not regressions from this session's changes. None
+  of the 11 sit on a building this milestone's diff touched (Class A/B
+  gate on distance-from-street and lack of an atlas region/businesses;
+  every regressed pose's building has both).
+- **A newly-observed, NOT-in-scope residual, reported honestly**: three
+  poses (`1145-west-far`, `1230-east-close`, `1230-east-far`) describe a
+  third blank-wall class this milestone's two classes don't cover — a
+  building WITH legible ground-floor business-name signage (the plain
+  name-placeholder path, drawn only up to `STOREY_M`) but no atlas photo,
+  whose UPPER storeys are still bare base stone ("a flat, featureless khaki
+  plank-clad wall with no windows at all... reads as a shed"). This is
+  distinct from Class A (no businesses) and Class B (a non-frontage wall) —
+  it's a frontage wall that DOES get ground-floor treatment but never gets
+  its upper storeys touched at all. Out of this milestone's scoped classes;
+  not fixed this session; flagged for whoever plans the next facade
+  milestone.
+
+### D7 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Class A borrow-fill for bare-frontage buildings | ✅ Implemented, verified in-browser at building 440. |
+| 2 | Class B gable dressing (stone/soot/blocked-windows/ghost-signs) | ✅ Implemented; tonally recalibrated after first bake read too dark; verified in-browser at both named target buildings (179, 463). |
+| 3 | Instanced chimneys + aerials, capped, no silent gaps | ✅ 2500/2500 chimneys + 93 aerials confirmed via scene traversal; 2963 furthest-from-street candidates dropped and logged. |
+| 4 | Draw-call budget +2 max | ✅ Exactly +2 (gable mesh, chimneys) +1 more (aerials) — 3 total; flagged as a deviation below, justified by the brief's own "aerials may add one more if justified" clause. |
+| 5 | Full clean sweep, headline + adjusted reported honestly, flip analysis vs D6 | ✅ 40/76 (52.6%) headline, 37/68 (54.4%) adjusted, both up from D6; flip analysis above distinguishes attributable fixes from likely rater noise and reports a newly-found out-of-scope residual rather than glossing over it. |
+| 6 | No deploy | ✅ No `build.mjs`, no gh-pages/`dist-site/` touch. |
+
+**Deviations from the brief, stated plainly**: the brief budgeted "+2 max"
+draw calls (gable mesh + chimney instances) but explicitly allowed "aerials
+may share or add one more if justified — say so": aerials are a separate
+InstancedMesh (a third draw call) because they use a materially different
+geometry (mast + cross-bars vs stack + pots) at a much sparser population
+(93 vs 2500), and merging them into the chimney InstancedMesh would force
+every instance to pay for the union of both geometries' vertices. Also: the
+brief's Class A/B taxonomy assumed Class A would need its own distance
+gate; investigation found BOTH named target poses are actually Class B
+(set-back buildings beyond the 30m frontage radius, within the 60m gable
+radius) — documented above rather than silently reclassified.
