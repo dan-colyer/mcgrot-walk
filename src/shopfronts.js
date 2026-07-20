@@ -154,6 +154,57 @@ export function buildShopfronts(assets, world, scene) {
 
   let quadCount = 0;
 
+  // Stacks a safe upper band (v-range above its ground floor, below its
+  // roofline) at native aspect from yStart to yEnd, mirrored ping-pong —
+  // the one stacking recipe shared by the ground-band masonry fallback, the
+  // too-few-donors degrade, the borrowed bays, the roofline extension (D6),
+  // and (D7/task1a) the bare-frontage borrow-fill below. Takes `buf` as a
+  // param (not closed over) so it can target ANY page's buffer, not just
+  // the calling building's own — needed once D7 borrows for buildings with
+  // no atlas entry of their own.
+  const emitBandStack = (buf, u0Raw, u1Raw, vTop_, vBot_, groundFrac, heightM_, ax, az, bx, bz, yStart, yEnd) => {
+    // D5.2 lesson (see JITTER_INSET_FRAC above): ANY border-touching
+    // sample window on a packed atlas page risks the baked-in white
+    // photo-margin bleed, not just the two sites that originally
+    // found it. A borrowed band always samples right up to a
+    // donor's OWN u0Full/u1Full border (never slid inward like the
+    // edge-bay strips), so inset it the same protective fraction.
+    const uInsetHere = JITTER_INSET_FRAC * (u1Raw - u0Raw);
+    const u0 = u0Raw + uInsetHere, u1 = u1Raw - uInsetHere;
+    const vSpan_ = vTop_ - vBot_;
+    const edgeBot = vSpan_ > 0 ? vBot_ + groundFrac * vSpan_ : vBot_;
+    const bandTop_ = vTop_ - TOP_AVOID_FRAC * vSpan_;
+    const bandWorldH = Math.max(0.1, ((bandTop_ - edgeBot) / (vSpan_ || 1)) * heightM_);
+    let y = yStart, vi = 0;
+    while (y < yEnd - 1e-6 && bandWorldH > 1e-4) {
+      const dh = Math.min(bandWorldH, yEnd - y);
+      const frac = dh / bandWorldH;
+      const mirrored = vi % 2 === 0;
+      const vNear = mirrored ? bandTop_ : edgeBot;
+      const vFar = mirrored ? edgeBot : bandTop_;
+      const vFarClipped = vNear + (vFar - vNear) * frac;
+      emitInto(buf, u0, vNear, u1, vFarClipped, ax, az, bx, bz, y, y + dh);
+      quadCount++;
+      y += dh; vi++;
+    }
+  };
+
+  // D7/task1a: which atlas page's chainage bucket a bare building (no atlas
+  // entry of its own) falls into, so its borrowed bays can target a page
+  // that's actually resident when the player is close enough to see the
+  // wall (same lazy-load bucketing as every other page).
+  function pageForChainage(chainage) {
+    let best = -1, bestDist = Infinity;
+    atlas.pages.forEach((pg, i) => {
+      if (chainage >= pg.chainageMin && chainage <= pg.chainageMax) { best = i; bestDist = 0; }
+      else if (best === -1 || bestDist > 0) {
+        const d = chainage < pg.chainageMin ? pg.chainageMin - chainage : chainage - pg.chainageMax;
+        if (d < bestDist) { bestDist = d; best = i; }
+      }
+    });
+    return best;
+  }
+
   for (const mb of manifest.buildings) {
     const bi = mb.buildingIndex;
     const building = buildings[bi];
@@ -259,39 +310,6 @@ export function buildShopfronts(assets, world, scene) {
         const ownGroundAvoidFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / region.heightM));
         const ownVSpan = vTop - vBot;
 
-        // Stacks a safe upper band (v-range above its ground floor, below
-        // its roofline) at native aspect from yStart to yEnd, mirrored
-        // ping-pong — the one stacking recipe shared by the ground-band
-        // masonry fallback, the too-few-donors degrade, the borrowed bays,
-        // and (D6/task1) the generic roofline extension below, for every
-        // ratio branch.
-        const emitBandStack = (u0Raw, u1Raw, vTop_, vBot_, groundFrac, heightM_, ax, az, bx, bz, yStart, yEnd) => {
-          // D5.2 lesson (see JITTER_INSET_FRAC above): ANY border-touching
-          // sample window on a packed atlas page risks the baked-in white
-          // photo-margin bleed, not just the two sites that originally
-          // found it. A borrowed band always samples right up to a
-          // donor's OWN u0Full/u1Full border (never slid inward like the
-          // edge-bay strips), so inset it the same protective fraction.
-          const uInsetHere = JITTER_INSET_FRAC * (u1Raw - u0Raw);
-          const u0 = u0Raw + uInsetHere, u1 = u1Raw - uInsetHere;
-          const vSpan_ = vTop_ - vBot_;
-          const edgeBot = vSpan_ > 0 ? vBot_ + groundFrac * vSpan_ : vBot_;
-          const bandTop_ = vTop_ - TOP_AVOID_FRAC * vSpan_;
-          const bandWorldH = Math.max(0.1, ((bandTop_ - edgeBot) / (vSpan_ || 1)) * heightM_);
-          let y = yStart, vi = 0;
-          while (y < yEnd - 1e-6 && bandWorldH > 1e-4) {
-            const dh = Math.min(bandWorldH, yEnd - y);
-            const frac = dh / bandWorldH;
-            const mirrored = vi % 2 === 0;
-            const vNear = mirrored ? bandTop_ : edgeBot;
-            const vFar = mirrored ? edgeBot : bandTop_;
-            const vFarClipped = vNear + (vFar - vNear) * frac;
-            emitInto(buf, u0, vNear, u1, vFarClipped, ax, az, bx, bz, y, y + dh);
-            quadCount++;
-            y += dh; vi++;
-          }
-        };
-
         // D6/task1: donor pool for borrowed bands (excess sides AND, below,
         // the generic roofline extension) — computed once per run, for
         // every ratio branch that has an atlas region at all.
@@ -365,9 +383,9 @@ export function buildShopfronts(assets, world, scene) {
                 const fallbackDonorIdx = hash32(bi, runIdx * 6151 + side * 331 + u) % donors.length;
                 const fallbackDonor = donors[fallbackDonorIdx];
                 const fGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / fallbackDonor.region.heightM));
-                emitBandStack(fallbackDonor.u0Full, fallbackDonor.u1Full, fallbackDonor.vTop, fallbackDonor.vBot, fGroundFrac, fallbackDonor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+                emitBandStack(buf, fallbackDonor.u0Full, fallbackDonor.u1Full, fallbackDonor.vTop, fallbackDonor.vBot, fGroundFrac, fallbackDonor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
               } else if (ownVSpan > 0) {
-                emitBandStack(u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+                emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
               }
             }
 
@@ -382,7 +400,7 @@ export function buildShopfronts(assets, world, scene) {
                 // visibly repeating — degrade to this building's own safe
                 // upper band across the whole excess width instead.
                 if (ownVSpan > 0) {
-                  emitBandStack(u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, farA.x, farA.z, farB.x, farB.z, STOREY_M, buildingHeightM);
+                  emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, farA.x, farA.z, farB.x, farB.z, STOREY_M, buildingHeightM);
                 }
               } else {
                 // Bay-by-bay: each bay is one donor's native widthM, drawn
@@ -403,7 +421,7 @@ export function buildShopfronts(assets, world, scene) {
                   const a = at(Math.min(t, tNext)), b = at(Math.max(t, tNext));
 
                   const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
-                  emitBandStack(donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM);
+                  emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM);
 
                   t = tNext; bayIdx++;
                 }
@@ -598,9 +616,9 @@ export function buildShopfronts(assets, world, scene) {
               const donorIdx = hash32(bi, runIdx * 8231 + 17) % donors.length;
               const donor = donors[donorIdx];
               const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
-              emitBandStack(donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+              emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
             } else if (ownVSpan > 0) {
-              emitBandStack(q.u0, q.u1, vTop, vBot, ownGroundAvoidFrac, region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+              emitBandStack(buf, q.u0, q.u1, vTop, vBot, ownGroundAvoidFrac, region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
             }
           }
         }
@@ -696,9 +714,44 @@ export function buildShopfronts(assets, world, scene) {
         }
         placeholderUnitCursor += units;
         quadCount += units;
+      } else if (!mb.businesses || !mb.businesses.length) {
+        // D7/task1a: a genuinely bare frontage building — computeFrontageRuns
+        // found a street-facing wall, but the offline pipeline never got a
+        // photo OR any business names for it (the manifest builder's own
+        // "bare" bucket, ~64 buildings) — this used to fall all the way
+        // through to raw base stone, one of the two blank-wall classes named
+        // in the D7 brief. Borrow bays across the WHOLE run (there's no real
+        // photo to centre, unlike D6's terrace fill) from the atlas page
+        // whose CHAINAGE BUCKET covers this building (it has no atlas entry
+        // of its own to read a page off), so the borrowed texture is
+        // actually resident whenever the player is close enough to see this
+        // wall. No ground/upper split and no name-fascia layer — there are
+        // no business names to draw, and a donor's safe (non-signage) band
+        // is used for the WHOLE height so this can never borrow a legible
+        // wrong name (the exact fault class D6/task2 fixed for GROUND_AVOID_FRAC).
+        const page = pageForChainage(mb.chainage);
+        const donors = page >= 0 ? (donorsByPage.get(page) || []).filter((d) => d.bi !== bi) : [];
+        if (donors.length) {
+          const buf2 = pageBuf[page];
+          const bareHeightM = Math.max(2, mb.levels || 2) * STOREY_M;
+          let t = 0, bayIdx = 0, prevDonorIdx = -1, guard = 0;
+          while (t < 1 - 1e-6 && guard++ < 64) {
+            let donorPick = hash32(bi, runIdx * 3457 + bayIdx) % donors.length;
+            if (donorPick === prevDonorIdx) donorPick = (donorPick + 1) % donors.length;
+            const donor = donors[donorPick];
+            prevDonorIdx = donorPick;
+            const bayT = Math.min(1 - t, Math.max(donor.region.widthM / span, 1e-4));
+            const a = at(t), b = at(t + bayT);
+            const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
+            emitBandStack(buf2, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, bareHeightM);
+            t += bayT; bayIdx++;
+          }
+        }
+        // else: no usable donor page/pool — falls through to raw base stone,
+        // same as before this milestone (degrade, not a crash or a gap).
       }
-      // else: no region, no business names — base building stone shows, as
-      // it always does underneath (untouched by this module).
+      // else: no region, no business names, no donor page — base building
+      // stone shows, as it always does underneath (untouched by this module).
     });
   }
 

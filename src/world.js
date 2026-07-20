@@ -281,7 +281,11 @@ function extrudeBuilding(building, idx) {
 }
 
 // Deterministic hash so re-loading gives stable per-building colours.
-function pickBuildingColor(idx, building) {
+// Exported for src/gables.js (D7): the gable dressing mesh is a SEPARATE
+// mesh/material from the buildings mesh, but tints its baked canvas with
+// the SAME per-building colour so a gable reads as more of the same wall,
+// not a different building glued on.
+export function pickBuildingColor(idx, building) {
   const seed = Math.abs(hashCode(`${idx}:${building.footprint[0][0]}:${building.footprint[0][1]}`));
   const base = new THREE.Color(BUILDING_PALETTE[seed % BUILDING_PALETTE.length]);
   const hsl = { h: 0, s: 0, l: 0 };
