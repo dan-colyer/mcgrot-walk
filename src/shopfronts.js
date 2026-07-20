@@ -228,13 +228,27 @@ export function buildShopfronts(assets, world, scene) {
           // signage buildings alike carry their business names — this is what
           // guarantees an edge bay can never duplicate legible signage,
           // regardless of how wide the reused strip is horizontally.
+          // D6/task2: GROUND_AVOID_FRAC 0.4 assumes the ground floor is a
+          // fixed fraction of the WHOLE elevation, but the ground floor is
+          // actually a fixed real-world height (one storey, same STOREY_M
+          // used everywhere else) — on a short 2-storey photo (region 373,
+          // "Pascal & Co", heightM 6.4) one storey is HALF the image, not
+          // 40% of it, so the fixed fraction left a sliver of ground-floor
+          // signage exposed at the top of the "avoided" band, which the
+          // edge-bay strip then mirrored into legible duplicate signage
+          // ("CURIOSO"/"The Cutting Room" mirrored, spot-checked in-browser).
+          // Widen the avoided fraction to whichever is larger — the fixed
+          // 0.4 (taller buildings, unaffected) or one real storey's actual
+          // share of this region's height — capped so a single-storey photo
+          // (heightM == STOREY_M) doesn't zero out the reusable band entirely.
+          const groundAvoidFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / region.heightM));
           const vSpanFull = vTop - vBot;
-          const edgeVBot = vBot + GROUND_AVOID_FRAC * vSpanFull;
+          const edgeVBot = vBot + groundAvoidFrac * vSpanFull;
 
           // D5.1: the reused band's own native aspect, so it stacks to fill
           // the wall height instead of one copy being stretched over it (the
           // "mirrored, vertically-striped" fault the D5 eval caught).
-          const bandFracV = 1 - GROUND_AVOID_FRAC;
+          const bandFracV = 1 - groundAvoidFrac;
           const bandWorldH = bandFracV * region.heightM;
 
           const uSpan = u1Full - u0Full;
