@@ -49,6 +49,19 @@ const GROUND_AVOID_FRAC = 0.4; // D5/W1: edge-bay tiles never sample this bottom
 const TOP_AVOID_FRAC = 0.08;   // avoid the top ~8% of an elevation (baked roofline/sky edge)
 const V_BAND_FRAC = 0.16;      // height of the reused upper-wall band, as a fraction of region height
 const VERT_EXT_MIN = 1.5;      // metres a building must exceed its image by before extending upward
+// D5.2: at the extremes of their slide range, D5.1's jittered sample windows
+// could reach exactly to a region's u0Full/u1Full border — where thin baked-in
+// white photo margins live (the b593-class artifact: measured ~5-6% of region
+// width on building 686's "Romeo" elevation, not a one-off) and, with mipmaps
+// off but no inter-region atlas gutter, bilinear sampling right at the border
+// can still bleed a neighbour region's pixels. Both jitter sites, PLUS the
+// narrowGroups proportional-slice mapping (a multi-run building's non-jittered
+// edge slices land exactly on u0Full/u1Full for its first/last run — the actual
+// cause of the 0550-east-far "ROMEO" white strip, a border-touching mechanism
+// the brief didn't name but this measurement makes clear needs the same
+// treatment), keep their sampled range inset from the border by this fraction
+// of the region's own u-span.
+const JITTER_INSET_FRAC = 0.06;
 
 export function buildShopfronts(assets, world, scene) {
   const manifest = assets && assets.facadeManifest;
@@ -137,6 +150,16 @@ export function buildShopfronts(assets, world, scene) {
     // WIDE runs (edge-bay territory) are excluded, since those already have
     // their own non-duplicating mechanism.
     const narrowGroups = new Map(); // region -> { totalSpan, count, cursor }
+    // D5.2 (task 3): buildings with NO atlas region fall back to the plain
+    // name-placeholder path below, drawing `units` of mb.businesses per RUN.
+    // A multi-run building (e.g. a jagged OSM footprint merging several real
+    // shopfronts into one way, each its own frontage run) used to restart
+    // that cycle at businesses[0] on every run, replaying the same business
+    // name once per run — the "WEX PHOTO VIDEO" doubling at buildingIndex 150
+    // (2 runs, 3 businesses, no atlas entry). This cursor carries the
+    // business-name index across all of one building's runs so each run
+    // continues where the previous one left off instead of restarting.
+    let placeholderUnitCursor = 0;
     if (atlasEntry) {
       for (const run of runs) {
         const span = Math.hypot(run.bx - run.ax, run.bz - run.az);
@@ -225,20 +248,35 @@ export function buildShopfronts(assets, world, scene) {
           // half the region width so it can never drift into the centred
           // signage the strip was chosen to avoid.
           const maxSlideUV = Math.max(0, uSpan - stripUV);
+          const edgeInsetUV = JITTER_INSET_FRAC * uSpan;
+          const edgeSlideRange = Math.max(0, maxSlideUV - 2 * edgeInsetUV);
 
           // Stacks the reused band at native height from BASE_Y up to
           // region.heightM for one horizontal tile (uA/uB = that tile's
           // already-clipped horizontal UV window); mirrors each vertical
-          // repeat like the existing roofline-extension band below, and
-          // jitters the horizontal window per (li, vi) to break symmetry.
+          // repeat like the existing roofline-extension band below. D5.2:
+          // the slide is keyed on (bi, runIdx, side, vi) only — NOT li (the
+          // horizontal tile index) — so every horizontal tile in the same
+          // vertical band slides by the identical amount. Combined with the
+          // per-tile mirror ping-pong (li%2), consecutive horizontal tiles
+          // stay reflection-continuous at their shared join (same sampled
+          // window, alternating flip) while successive vertical bands still
+          // sample different windows, breaking up the vertical-stack repeat.
+          // li===0 (the tile immediately flush against the centred natural-
+          // width instance) is exempted from the slide entirely — D5's
+          // original un-jittered edge-bay had this join sampling the exact
+          // same UV as the centre quad's own edge (pixel-continuous); D5.1's
+          // jitter slid even this tile, breaking the highest-value seam
+          // right next to real photo content (the "discontinuous cornice"
+          // fail at 0040-west-close, a D5 pass). Tiles li>=1 still slide.
           const emitEdgeStack = (uA, uB, ax, az, bx, bz, side, li) => {
             const dir = side === 0 ? 1 : -1;
             let y = BASE_Y, vi = 0;
             while (y < region.heightM - 1e-6 && bandWorldH > 1e-4) {
               const dh = Math.min(bandWorldH, region.heightM - y);
               const vfrac = dh / bandWorldH;
-              const slide = maxSlideUV > 0
-                ? ((hash32(bi, runIdx * 977 + side * 97 + li * 11 + vi) % 1000) / 1000) * maxSlideUV
+              const slide = (maxSlideUV > 0 && li > 0)
+                ? Math.min(edgeInsetUV + ((hash32(bi, runIdx * 977 + side * 97 + vi) % 1000) / 1000) * edgeSlideRange, maxSlideUV)
                 : 0;
               const uAJ = uA + dir * slide;
               const uBJ = uB + dir * slide;
@@ -263,7 +301,7 @@ export function buildShopfronts(assets, world, scene) {
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(tNext), b = at(t);
             emitEdgeStack(uFarClipped, uNear, a.x, a.z, b.x, b.z, 0, li);
-            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true });
+            hQuads.push({ u0: uFarClipped, u1: uNear, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true, side: 0 });
             t = tNext; li++;
           }
           t = tEnd; li = 0;
@@ -277,7 +315,7 @@ export function buildShopfronts(assets, world, scene) {
             const uFarClipped = uNear + (uFar - uNear) * frac;
             const a = at(t), b = at(tNext);
             emitEdgeStack(uNear, uFarClipped, a.x, a.z, b.x, b.z, 1, li);
-            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true });
+            hQuads.push({ u0: uNear, u1: uFarClipped, ax: a.x, az: a.z, bx: b.x, bz: b.z, skipBase: true, side: 1 });
             t = tNext; li++;
           }
         } else {
@@ -289,11 +327,17 @@ export function buildShopfronts(assets, world, scene) {
             // non-overlapping proportional slices across the whole image, so
             // a natural-ratio facet doesn't replay the full frame (and every
             // business name in it) a second time right where its narrow
-            // chamfer siblings already sliced through it.
-            const uSpanFull = u1Full - u0Full;
-            const startU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
+            // chamfer siblings already sliced through it. D5.2: the mapped
+            // range is inset from u0Full/u1Full (same JITTER_INSET_FRAC as
+            // the two jitter sites) so the group's outermost slice — the
+            // first and last runs, which land exactly on the border with no
+            // jitter to save them — doesn't sample the baked-in white margin.
+            const groupInsetUV = JITTER_INSET_FRAC * (u1Full - u0Full);
+            const uLo = u0Full + groupInsetUV, uHi = u1Full - groupInsetUV;
+            const uSpanFull = Math.max(0, uHi - uLo);
+            const startU = uLo + uSpanFull * (g.cursor / g.totalSpan);
             g.cursor += span;
-            const endU = u0Full + uSpanFull * (g.cursor / g.totalSpan);
+            const endU = uLo + uSpanFull * (g.cursor / g.totalSpan);
             u0 = startU; u1 = endU;
           } else if (ratio < 1 / STRETCH_MAX) {
             // Only one narrow run in this group: a centre slice sized to the
@@ -332,11 +376,29 @@ export function buildShopfronts(assets, world, scene) {
           // D5.1: this band was a fixed, un-jittered mirrored ping-pong —
           // a tall single-photo building (no edge-bay involved at all) would
           // still read as "repeating upper storeys" once stacked several
-          // times, the same kaleidoscope fault as the edge-bay case. Slide
-          // each tile's horizontal sample window (bounded to the region's own
-          // width, same hash32 approach as the edge-bay fix) so repeats
-          // aren't identical.
+          // times, the same kaleidoscope fault as the edge-bay case. D5.2:
+          // the original per-quad jitter (keyed on qi, the index within
+          // hQuads) independently repositioned EVERY quad's sample window to
+          // the same absolute start point regardless of its own width or
+          // world position — discarding whatever left-right continuity the
+          // base band (below) already had between adjacent edge-bay tiles,
+          // which is what produced the "discontinuous cornice" read at
+          // 0040-west-close. Fixed the same way as the edge-bay slide: ONE
+          // shared shift per (side, vi) — side-0 and side-1 edge-bay tiles
+          // all reuse the identical unslid strip already (see hQuads' u0/u1
+          // for skipBase entries), so applying the SAME shift to all of a
+          // side's quads at a given vi keeps them matching each other, only
+          // varying row-to-row. The centred/narrowGroups quad (side
+          // undefined) is left unshifted, consistent with it never being
+          // inset either.
           const roofUSpan = u1Full - u0Full;
+          const roofInsetUV = JITTER_INSET_FRAC * roofUSpan;
+          const sideMinRoom = {};
+          for (const q of hQuads) {
+            if (q.side === undefined) continue;
+            const room = Math.max(0, roofUSpan - Math.abs(q.u1 - q.u0));
+            if (sideMinRoom[q.side] === undefined || room < sideMinRoom[q.side]) sideMinRoom[q.side] = room;
+          }
           let y = region.heightM, vi = 0;
           while (y < buildingHeightM - 1e-6 && tileWorldH > 1e-4) {
             const dh = Math.min(tileWorldH, buildingHeightM - y);
@@ -346,23 +408,37 @@ export function buildShopfronts(assets, world, scene) {
             const vFar = mirrored ? bandBot : bandTop;
             const vFarClipped = vNear + (vFar - vNear) * frac;
             const y0 = y, y1 = y + dh;
-            let qi = 0;
+            const sideShift = {};
+            for (const side of [0, 1]) {
+              const room = sideMinRoom[side];
+              if (room === undefined) continue;
+              const shiftRange = Math.max(0, room - 2 * roofInsetUV);
+              sideShift[side] = room > 0
+                ? Math.min(roofInsetUV + ((hash32(bi, runIdx * 613 + vi * 31 + side) % 1000) / 1000) * shiftRange, room)
+                : 0;
+            }
             for (const q of hQuads) {
-              const uMin = Math.min(q.u0, q.u1), uMax = Math.max(q.u0, q.u1);
-              const room = Math.max(0, roofUSpan - (uMax - uMin));
-              const jitter = room > 0 ? ((hash32(bi, runIdx * 613 + vi * 31 + qi) % 1000) / 1000) * room : 0;
-              const delta = (u0Full + jitter) - uMin;
+              const dir = q.side === 0 ? 1 : (q.side === 1 ? -1 : 0);
+              const delta = q.side !== undefined ? dir * (sideShift[q.side] || 0) : 0;
               emitInto(buf, q.u0 + delta, vNear, q.u1 + delta, vFarClipped, q.ax, q.az, q.bx, q.bz, y0, y1);
               quadCount++;
-              qi++;
             }
             y = y1; vi++;
           }
         }
       } else if (nameAtlas && mb.businesses && mb.businesses.length && span >= SLIVER_MAX) {
-        const units = Math.min(mb.businesses.length, Math.max(1, Math.round(span / 6.4)));
+        // D5.2: capped to the businesses NOT yet used by an earlier run of
+        // this same building, with no wraparound — a building with more
+        // runs than businesses (e.g. buildingIndex 150, "Wex Photo Video" x
+        // 2 runs x 3 names) used to have every run restart at businesses[0],
+        // and even after the cursor carries forward (above), a run whose
+        // span alone already exceeds the total business count still wraps
+        // back to index 0 via modulo. Once a building's businesses are all
+        // used, later runs draw nothing rather than replaying a name.
+        const remaining = mb.businesses.length - placeholderUnitCursor;
+        const units = remaining > 0 ? Math.min(remaining, Math.max(1, Math.round(span / 6.4))) : 0;
         for (let u = 0; u < units; u++) {
-          const biz = mb.businesses[u % mb.businesses.length];
+          const biz = mb.businesses[placeholderUnitCursor + u];
           const uv = nameAtlas.uvFor.get(biz.name);
           if (!uv) continue;
           const a = at(u / units), b = at((u + 1) / units);
@@ -372,6 +448,7 @@ export function buildShopfronts(assets, world, scene) {
           pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
           pQuadCount++;
         }
+        placeholderUnitCursor += units;
         quadCount += units;
       }
       // else: no region, no business names — base building stone shows, as
