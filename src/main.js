@@ -8,6 +8,7 @@ import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
 import { buildGables } from './gables.js';
+import { buildChimneys } from './chimneys.js';
 import { createSky } from './sky.js';
 import { buildRoadDressing } from './road.js';
 import { buildRoadworks } from './roadworks.js';
@@ -70,6 +71,7 @@ async function main() {
   const vermin = buildVermin(world, scene);             // rats darting in the gutters
   buildFlora(world, assets.leith, scene);               // buddleia, Buckfast, bins, a trolley
   buildGables(assets, world, scene);     // baked soot/blocked-window/ghost-sign dressing on blank gable walls
+  buildChimneys(assets, world, scene);   // instanced chimney stacks + TV aerials along rooflines
   buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
   const scenery = buildScenery(world, scene);
 
