@@ -121,7 +121,10 @@ export function buildShopfronts(assets, world, scene) {
 
   // --- per-page geometry buffers (texture loaded lazily; geometry is cheap
   // and built up front so a page can appear the instant its texture lands) ---
-  const pageBuf = atlas.pages.map(() => ({ positions: [], uvs: [], indices: [], quadCount: 0 }));
+  // D9/task2: `colors` is a per-vertex multiply tint, defaulted to white by
+  // emitInto (below) so every existing call site is untouched; only the new
+  // ground-band edge fade (emitGroundBandFaded) writes non-white vertices.
+  const pageBuf = atlas.pages.map(() => ({ positions: [], uvs: [], colors: [], indices: [], quadCount: 0 }));
 
   // --- D6/task1: donor pool for borrowed upper-wall bands, grouped by atlas
   // page (a borrowed band must come from the SAME page as the building
@@ -154,8 +157,76 @@ export function buildShopfronts(assets, world, scene) {
     const base = buf.quadCount * 4;
     buf.positions.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y1, az);
     buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
+    buf.colors.push(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
     buf.quadCount++;
+  }
+
+  // D9/task2: pushes one quad with an explicit per-corner colour instead of
+  // emitInto's implicit white — corners in the same order as emitInto's
+  // positions ((ax,y0,az), (bx,y0,bz), (bx,y1,bz), (ax,y1,az)).
+  function emitIntoTinted(buf, u0, v0, u1, v1, ax, az, bx, bz, y0, y1, c0, c1, c2, c3) {
+    const base = buf.quadCount * 4;
+    buf.positions.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y1, az);
+    buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
+    buf.colors.push(...c0, ...c1, ...c2, ...c3);
+    buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    buf.quadCount++;
+  }
+
+  // D9/task2: signage truncated mid-word at a run's true edges — root-caused
+  // to two mechanisms that both leave content flush against the last visible
+  // pixel column: (1) apply-signage.mjs's baked name tiles ellipsise a name
+  // too long for their fixed 128x64 budget with no margin, and (2) even a
+  // FULLY legible baked name can get its last character(s) cropped at
+  // runtime, because the near-1:1-ratio branch below maps u0Full+inset..
+  // u1Full-inset onto the run's FULL world width — the protected
+  // JITTER_INSET_FRAC margin (must stay; see its own comment) is exactly
+  // where an edge-flush sign's final letters live. Neither is fixable
+  // without either regenerating baked elevation JPGs (no clean pre-signage
+  // source exists on disk — assets/shopfronts/elevations/ is gitignored,
+  // and Together AI is parked) or shrinking the protected inset (banned).
+  // So: fade the ground band's own two outer edges to black, deep enough to
+  // swallow whatever partial glyph or "…" sits right at the crop boundary,
+  // so it reads as a shadowed party-wall recess (consistent with the
+  // grime/decay language used everywhere else) rather than a glitched crop.
+  // Ground band only (BASE_Y..STOREY_M) — upper storeys carry no signage and
+  // are left as a single plain quad, unchanged.
+  const GROUND_FADE_FRAC = 0.1; // fraction of the RUN's own world width, each side
+  // D9/task3: a fixed 10% fraction is plenty for a run whose signage fills
+  // the whole width (Task 2's confirmed case), but for a narrowGroups run
+  // carrying only a PROPORTIONAL SLICE of its region — e.g. buildingIndex
+  // 536's main run showing 3 of its 4 baked names in the last ~70% of its
+  // width — the final name can occupy a much wider share of the run than
+  // 10%, so the fade never reaches it and two adjacent buildings' full
+  // names still run together with no visible seam (confirmed in-browser:
+  // "Bandits"+"Tip Top Tresses" at 0210-west-far, "Aslam Jewellers"+"Cherry
+  // Bay Cafe" at 0720-west-far — both READ as one fused name, not a crop).
+  // Floor the fade at a fixed world distance so it always reaches deep
+  // enough into a packed name to read as a deliberate shadowed recess.
+  const GROUND_FADE_MIN_M = 1.1; // metres, each side — roughly one letter-run of a small fascia name
+  // Returns the number of quads emitted (for the caller's quadCount tally).
+  function emitGroundBandFaded(buf, u0, u1, vTop_, vBot_, heightM_, ax, az, bx, bz) {
+    const vSpan = vTop_ - vBot_;
+    const vAtStorey = vBot_ + vSpan * Math.min(1, STOREY_M / (heightM_ || STOREY_M));
+    const dx = bx - ax, dz = bz - az;
+    const runLen = Math.hypot(dx, dz) || 1;
+    const at = (t) => [ax + dx * t, az + dz * t];
+    const uAt = (t) => u0 + (u1 - u0) * t;
+    const WHITE = [1, 1, 1], BLACK = [0, 0, 0];
+    const ef = Math.min(0.4, Math.max(GROUND_FADE_FRAC, GROUND_FADE_MIN_M / runLen));
+    if (1 - 2 * ef <= 1e-3) {
+      // run too narrow for a 3-way split — leave the ground band plain
+      // rather than fading it entirely to black.
+      emitInto(buf, u0, vBot_, u1, vAtStorey, ax, az, bx, bz, BASE_Y, STOREY_M);
+      return 1;
+    }
+    const segs = [[0, ef, BLACK, WHITE], [ef, 1 - ef, WHITE, WHITE], [1 - ef, 1, WHITE, BLACK]];
+    for (const [t0, t1, cLeft, cRight] of segs) {
+      const [sx, sz] = at(t0), [ex, ez] = at(t1);
+      emitIntoTinted(buf, uAt(t0), vBot_, uAt(t1), vAtStorey, sx, sz, ex, ez, BASE_Y, STOREY_M, cLeft, cRight, cRight, cLeft);
+    }
+    return segs.length;
   }
 
   function hash32(a, b) {
@@ -637,12 +708,26 @@ export function buildShopfronts(assets, world, scene) {
             const skipFrac = Math.min(0.9, STOREY_M / region.heightM);
             hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z, y0: STOREY_M, v0: vBot + (vTop - vBot) * skipFrac });
           } else {
-            hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+            // D9/task2: this quad spans the run edge-to-edge (a=at(0),
+            // b=at(1)) with the region's ground-floor signage band intact —
+            // exactly the case the edge fade below targets. The narrow/
+            // skip-signage branch above already omits the ground band
+            // entirely, so it needs no fade.
+            hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z, groundFade: true });
           }
         }
 
         for (const q of hQuads) {
           if (q.skipBase) continue; // D5.1: edge-bay tiles already emitted their own stacked quads above
+          if (q.groundFade) {
+            quadCount += emitGroundBandFaded(buf, q.u0, q.u1, vTop, vBot, region.heightM, q.ax, q.az, q.bx, q.bz);
+            if (region.heightM > STOREY_M + 1e-6) {
+              const vAtStorey = vBot + (vTop - vBot) * Math.min(1, STOREY_M / (region.heightM || STOREY_M));
+              emitInto(buf, q.u0, vAtStorey, q.u1, vTop, q.ax, q.az, q.bx, q.bz, STOREY_M, region.heightM);
+              quadCount++;
+            }
+            continue;
+          }
           emitInto(buf, q.u0, q.v0 ?? vBot, q.u1, q.v1 ?? vTop, q.ax, q.az, q.bx, q.bz, q.y0 ?? BASE_Y, region.heightM);
           quadCount++;
         }
@@ -857,6 +942,7 @@ export function buildShopfronts(assets, world, scene) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(buf.positions, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(buf.uvs, 2));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(buf.colors, 3));
     geo.setIndex(buf.indices);
     geo.computeBoundingSphere();
     let url = assetUrl(assets, pg.file);
@@ -880,7 +966,11 @@ export function buildShopfronts(assets, world, scene) {
     texture.generateMipmaps = false;
     texture.minFilter = THREE.LinearFilter;
     texture.anisotropy = 1;
-    p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide, fog: true }));
+    // D9/task2: vertexColors multiply-tints the ground-band edge fade
+    // (emitGroundBandFaded) black-to-white — every other vertex is white
+    // (1,1,1), a no-op multiply, so this only darkens the specific fade
+    // triangles and leaves everything else exactly as before.
+    p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, vertexColors: true, side: THREE.FrontSide, fog: true }));
     p.mesh.name = 'shopfronts-page';
     scene.add(p.mesh);
   }

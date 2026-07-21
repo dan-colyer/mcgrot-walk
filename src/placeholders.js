@@ -160,10 +160,23 @@ function drawTile(ctx, x, y, w, h, name, seed) {
 }
 
 // Shrink-to-fit, wrapping to at most two lines; ellipsise anything still too long.
+// D9/task2: the loop's floor was 8px, and two-line wrap only fires once
+// `size*1.05*2 <= maxH` — on the small 128x64 signage-atlas.jpg tiles
+// (scripts/apply-signage.mjs) maxH is a fixed fraction of a 64px-tall tile
+// (~7-14px), which 8px never clears (2*8*1.05=16.8 > 14.48 in the best
+// case). Long real business names ("AR Alterations & Dry Cleaning",
+// "Edinburgh Carers' Hub", "Ella Taste of Greece") never got a two-line
+// chance and fell straight to the single-line ellipsis fallback — baked
+// into the committed elevation JPGs as a literal "…". Lowering the floor to
+// 4px gives two-line wrap room to clear that height budget (2*6*1.05=12.6),
+// so a name that doesn't fit at readable size wraps small instead of
+// truncating; ellipsis is now a true last resort for names too long for
+// even a tiny two-line wrap (typically only the tightest awning-band tiles).
 function fitSignText(ctx, text, cx, cy, maxW, maxH, fontStack, weight) {
   fontStack = fontStack || '"Arial Narrow", "Helvetica Neue", Arial, sans-serif';
   weight = weight || 'bold';
-  for (let size = 22; size >= 8; size--) {
+  const FLOOR = 4;
+  for (let size = 22; size >= FLOOR; size--) {
     ctx.font = `${weight} ${size}px ${fontStack}`;
     if (ctx.measureText(text).width <= maxW) { ctx.fillText(text, cx, cy); return; }
     // try two lines
@@ -178,7 +191,7 @@ function fitSignText(ctx, text, cx, cy, maxW, maxH, fontStack, weight) {
     }
   }
   // last resort: ellipsise on one small line
-  ctx.font = `bold 8px ${fontStack}`;
+  ctx.font = `bold ${FLOOR}px ${fontStack}`;
   let t = text;
   while (t.length > 3 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
   ctx.fillText(t + (t.length < text.length ? '…' : ''), cx, cy);

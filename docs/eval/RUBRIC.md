@@ -85,6 +85,15 @@ Results are written to `docs/eval/baseline-scores.json` (pre-D4) and
 > 5. **Repeating upper storeys** — the same window-bay/masonry tile visibly
 >    repeated as wallpaper up or along a building's upper floors.
 >
+> A featureless, untextured, or flat-blank wall occupying a significant part
+> of the frame is ALWAYS a fail, regardless of how well the rest of the
+> scene reads — score it as fault 4 (cropped-mid-façade) if it interrupts a
+> terrace, or fault 1 (unreadable shopfront) otherwise. A wall that carries
+> real texture but has a visible defect (repetition, mirroring, a seam) is a
+> less severe outcome than a blank wall — both still fail, but do not let a
+> textured-with-a-defect wall read as worse than the blank wall it would
+> replace.
+>
 > Then answer: **could this frame pass as a photograph of a real (if
 > derelict, post-apocalyptic) Edinburgh street? What is the single thing
 > that breaks the illusion first, if anything?**
