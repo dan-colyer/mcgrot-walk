@@ -1492,6 +1492,16 @@ an honest gap in this session's rigour, not asserted as settled.
 
 ## D8.1 — recover the D8 tone regression, settle the gable coverage question
 
+> **D8.2 note:** the score file for this milestone was renamed
+> `final-scores-d8-1.json` → `final-scores-d8-1-selfscored.json`. It is
+> **self-scored and non-blind** (Task 5 below — the main session scored all
+> 76 poses directly after implementing the changes, with full knowledge of
+> what had just been changed, following an account spend limit that
+> prevented the planned parallel blind-agent batch). Its **62/76 must not
+> be used in the trajectory** or compared against D6/D7's blind numbers.
+> See the D8.2 section below for the genuinely blind re-sweep of this same
+> commit (`0138fa8`).
+
 ### What shipped
 
 **Task 1 — reverted `src/gables.js` tone to D7 wholesale.** D8's regression
@@ -1645,3 +1655,183 @@ headline, 58/68 (85.3%) adjusted — but reported as a splice, not a clean
 blind sweep, and with two known-unresolved defect classes (1570-east gable,
 building-962 mirror-repeat, chimney spacing) carried forward honestly rather
 than hidden by the improved headline number.
+
+## D8.2 — genuine blind re-sweep of `0138fa8` (no code changes)
+
+D8.1's 62/76 was self-scored (splice), not blind, and cannot be compared to
+D6/D7's numbers. This milestone re-scores the exact same committed code
+(`0138fa8`, unmodified — `git diff --stat 0138fa8..HEAD -- src/` is empty)
+with a genuinely blind method, to get one trustworthy number. No source file
+was changed as part of this milestone.
+
+### Method
+
+8 parallel sub-agents, each in its own isolated context and its own browser
+tab against the shared dev server, ~9-10 poses per batch. Each grader agent
+received **only**: the pose coordinates (raw camera/lookAt numbers, not
+descriptions) and the verbatim rubric text from `docs/eval/RUBRIC.md`. Agents
+did **not** receive: this brief, the D6/D7/D8/D8.1 score files, git log,
+CLAUDE.md, source code, or any statement about what had changed or what any
+other evaluation found. One test agent confirmed dev-server/screenshot access
+before the real batches launched. One batch (poses covering chainage
+125-1485, east-close) returned only 8 of its assigned 9 poses on the first
+pass, silently dropping `0805-east-close`; this was caught by an explicit
+id-set diff against `poses.json` and backfilled with one additional isolated
+single-pose grader agent using the identical blind protocol. All 76 poses
+verified present with unique ids before compiling
+`docs/eval/final-scores-d8-2-blind.json`.
+
+**Shape note**: the brief describing this milestone stated the D7 score file
+is "an object keyed by numeric index." Checked directly —
+`final-scores-d7.json` and `final-scores-d8-1-selfscored.json` are both flat
+JSON arrays. `final-scores-d8-2-blind.json` matches the actual precedent
+(flat array), not the brief's description of it.
+
+**Grader note quality**: instructed explicitly against terse one-liners (the
+signature of D8.1's non-blind scoring) and to write specific, defect-located
+descriptions. Spot-checked across all 8 batches — notes name the exact
+signage text, the exact building position in frame, and the exact visual
+symptom (e.g. "the same window-and-railing bay repeated identically five
+times down its height" rather than "repeating windows"). No batch needed a
+re-run for vagueness.
+
+### Score summary (`final-scores-d8-2-blind.json`)
+
+| Build | Headline (/76) | Adjusted (/68) |
+|---|---|---|
+| D7 | 40 (52.6%) | 37 (54.4%) |
+| D8 | 34 (44.7%) | 34 (50.0%) |
+| D8.1 (self-scored, non-blind — not comparable) | 62 (81.6%) | 58 (85.3%) |
+| **D8.2 (blind, same code as D8.1)** | **30 (39.5%)** | **30 (44.1%)** |
+
+**This is the correct, trustworthy trajectory point for `0138fa8`.** All 8
+permanently-excluded corridor-clamp poses (the `*-west-close` set at
+chainage 0210/0550/0720/1060/1230/1400/1145/1315) failed under blind
+scoring — none passed, so adjusted-pass count equals headline-pass count
+(30). This is itself a useful confirmation that the exclusion criterion is
+doing its job: every excluded pose failed for exactly the camera-jammed-in-
+a-wall reason the exclusion exists for (`stretched-texture` /
+`unreadable-shopfront` on an extreme, unintended close-up), not for a
+content defect.
+
+### Gap against the self-scored 62/76
+
+**32 points, or 42.1 percentage points, headline; 28 points / 41.2pp
+adjusted.** This is a large gap, and it lands almost exactly where the brief
+predicted: D8.1's own diff analysis said the code delta from D7 (one
+constant plus a handful of verified small fixes) "cannot plausibly move 22
+poses" — the actual blind result (30/76) is *below* D7 (40/76), not above
+it. The self-scored number was not a mild optimistic bias; it was scoring a
+fundamentally different, more lenient rubric application by an agent that
+knew what it had just built and fixed.
+
+### Flip analysis vs D7 (last trustworthy blind sweep)
+
+D7: 40/76 pass. D8.2: 30/76 pass. Per-pose comparison: **11 fail→pass, 21
+pass→fail** (32 total flips; 29 once the 3 flips that fall inside the
+8-pose excluded set are dropped — those don't count against either
+headline). This churn is well above the 11-15 poses the brief anticipated
+from rater variance alone, and the flips are lopsided (nearly 2:1
+pass→fail), which is itself a signal worth taking seriously rather than
+waving away as noise.
+
+**fail→pass (11):** `0040-west-close`, `0380-west-far`, `0635-west-far`,
+`0805-west-far`, `1145-east-close`, `1230-east-close`, `1230-east-far`,
+`1315-west-far`, `1400-east-close`, `1570-east-close`, `1570-east-far`.
+
+**pass→fail (21, 18 adjusted after dropping `0550-west-close`,
+`1315-west-close`, `1400-west-close`):** `0210-west-far`, `0295-east-far`,
+`0295-west-close`, `0465-east-far`, `0635-east-far`, `0720-east-close`,
+`0720-east-far`, `0805-east-close`, `0805-east-far`, `0805-west-close`,
+`0975-east-close`, `0975-east-far`, `0975-west-close`, `1060-east-close`,
+`1060-east-far`, `1060-west-far`, `1315-east-close`, `1400-west-far`.
+
+### Proving the flips: source A/B (per the brief's method)
+
+Given the scale (18 adjusted pass→fail flips), a full A/B of every flip
+wasn't attempted; four representative samples were tested using
+`git checkout c01b251 -- src/shopfronts.js src/gables.js src/chimneys.js`
+(the three files that differ from D7), `npm run bundle`, hard-navigate,
+re-pose, screenshot, compare against the same pose under `HEAD`, then
+`git checkout HEAD -- <files>` and rebundle to restore (confirmed restored:
+`git diff --stat 0138fa8..HEAD -- src/` empty throughout and at the end).
+
+| Pose | D8.2 fault | D7-code render | HEAD-code render | Verdict |
+|---|---|---|---|---|
+| `0295-east-far` | cropped-mid-facade | Identical mid-word crop on "DEPOT VENU..." and "...ELL TASTE OF GRE..." already present | Same | **Variance** — D7's own grader passed an identically-cropped frame; the defect predates this milestone's code entirely. |
+| `0720-east-close` | unreadable-shopfront | Same flat, dark, windowless gable slab beside the "CAKE BOX" shopfront, pixel-comparable | Same | **Variance** — pre-existing flat gable, D7's grader focused on the legible shopfront and didn't flag the slab above it. |
+| `0975-east-far` | repeating-upper-storeys | Wall is **flat, dark, untextured** — no windows, no pattern (matches D7's own note: "the dark wall is a blank gable end") | Wall now carries a **cream tenement texture with an obvious repeated window-bay row** | **Confirmed regression** — the D7→0138fa8 diff (most likely the borrowed-upper texture/mirror-decorrelation change in `shopfronts.js`) has painted texture onto a wall that was previously blank, and that texture repeats. This is a real, code-caused defect, not rater noise. |
+| `1485-west-far` | repeating-upper-storeys | Same diagonal chevron repeat visible, pixel-comparable | Same | Not actually a flip (D7 already failed this pose for the same reason) — sanity-check only, confirms the defect is pre-existing and already covered by D8.1's building-962 write-up below. |
+
+**Read on the remaining, un-A/B'd flips:** the `unreadable-shopfront` and
+`cropped-mid-facade` flips cluster heavily around signage-truncation-at-
+tile-seam complaints (the `0295`/`0465`/`0635`/`0805` east-far run, all
+scored by the same grader batch, which was uniformly strict — 9/9 fails).
+Given the one directly-tested case from that exact cluster (`0295-east-far`)
+proved to be pre-existing variance, and the tile-seam cropping mechanism
+those notes describe is a longstanding, structural property of the
+donor/bay system (not something in this diff), **these are marked
+suspected-variance, not proven** — the honest position per the brief's
+instruction is that they remain unproven rather than asserted. The
+`repeating-upper-storeys` cluster at `0975`/`1060` is different: one member
+(`0975-east-far`) is a **proven regression**, and `1060-east-close`/
+`-far` was already independently root-caused in D8.1 to a real, distinct,
+unfixed defect (building 962's vertical band repeat — see below), so that
+whole cluster should be read as genuinely worse, not noise.
+
+### Fault histogram (surviving fails, adjusted /68)
+
+| Fault | Count |
+|---|---|
+| `unreadable-shopfront` | 16 |
+| `repeating-upper-storeys` | 9 |
+| `cropped-mid-facade` | 8 |
+| `stretched-texture` | 3 |
+| `wrong-perspective` | 2 |
+
+`unreadable-shopfront` is the largest bucket by a wide margin and the
+biggest target for the next milestone — the A/B work above suggests a
+meaningful share of it is long-standing (present since D7, just under-
+scored by D7's grader), not something introduced by D8/D8.1's changes, but
+`repeating-upper-storeys` has at least one proven newly-introduced instance
+(`0975-east-far`) worth root-causing directly.
+
+### Known-open items carried forward from D8.1 (still open, unchanged)
+
+- **1570-east gable tone** — measured, unsolved. Building 463's own computed
+  tint lightness (0.271) is already comfortably above `pickBuildingColor`'s
+  0.08 floor, so raising the floor is a no-op for this specific building.
+  Not attempted again this milestone (no code changes).
+- **Building-962 vertical mirror-repeat** — a distinct mechanism from the
+  horizontal `emitBandStack` mirror D8 fixed; still visible at
+  `1060-east-close`/`-far` in this blind sweep, consistent with D8.1's
+  finding.
+- **Chimney spacing** — D8.1 measured 2.08m mean nearest-neighbour across
+  2500 chimney placements against an 8-12m brief target (this milestone's
+  brief cited 2.49m; not re-measured here since no code changed). The 2500
+  instance cap binds and packs survivors near the street — that cap is the
+  mechanism, if ever worth attacking.
+
+### D8.2 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | `final-scores-d8-1.json` renamed, register annotated, data preserved | ✅ Renamed to `-selfscored.json`, header note added, file content untouched. |
+| 2 | Blind sweep with isolation described | ✅ 8 parallel isolated batch agents + 1 backfill agent, each given only pose coordinates + rubric; no brief, no prior scores, no git log, no source. |
+| 3 | Grader notes specific, comparable to D7 | ✅ Spot-checked across all batches; no vague one-liners; no re-run needed. |
+| 4 | `final-scores-d8-2-blind.json`, 76 entries | ✅ 76/76, all ids verified unique and complete against `poses.json`. |
+| 5 | D8.2 register section: trajectory, flip analysis, fault histogram, gap vs self-scored | ✅ All present above. |
+| 6 | Pass→fail flips proven or marked unproven | ✅ 4 representative A/B tests run (source-swap + rebuild + re-render); 1 confirmed regression, 2 confirmed variance, 1 sanity-check; remaining 17 flips explicitly marked unproven/suspected-variance rather than asserted. |
+| 7 | Zero changes under `src/` | ✅ `git diff --stat 0138fa8..HEAD -- src/` empty (A/B testing used checkout+restore, verified clean before and after). |
+| 8 | No deploy | ✅ Not touched. |
+
+**Result: 30/76 (39.5%) headline, 30/68 (44.1%) adjusted for `0138fa8`,
+blind.** This is below D7 (40/76) and below D8 (34/76) — the milestone's own
+brief predicted this outcome from the code-delta analysis, and it is
+reported flatly, not softened. At least one proven code-caused regression
+(`0975-east-far`, and by extension the related `0975`/`1060`
+repeating-upper-storeys cluster) exists in the current code; the larger
+`unreadable-shopfront`/`cropped-mid-facade` share of the drop is most
+plausibly D7 being under-scored by a more lenient grader rather than new
+damage, based on the samples tested, but this is not proven for every
+individual pose and should not be treated as settled.
