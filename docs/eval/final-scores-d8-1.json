@@ -1,0 +1,686 @@
+[
+  {
+    "id": "0040-east-close",
+    "chainage": 40,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean red sandstone tenement, legible shopfront signage, well-proportioned windows."
+  },
+  {
+    "id": "0040-east-far",
+    "chainage": 40,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible shop signage throughout, dressed gable reads fine."
+  },
+  {
+    "id": "0040-west-close",
+    "chainage": 40,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close texture detail, no stretching or mirroring, coherent windows."
+  },
+  {
+    "id": "0040-west-far",
+    "chainage": 40,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible shop signage, coherent street row."
+  },
+  {
+    "id": "0125-east-close",
+    "chainage": 125,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, no visible z-fight at the bowed frontage seam (OUTWARD_EPS check)."
+  },
+  {
+    "id": "0125-east-far",
+    "chainage": 125,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Wide street view, coherent buildings."
+  },
+  {
+    "id": "0125-west-close",
+    "chainage": 125,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible shop signage, coherent architecture."
+  },
+  {
+    "id": "0125-west-far",
+    "chainage": 125,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Camera clipped into a shopfront sign; only cropped lettering visible, no building context at all."
+  },
+  {
+    "id": "0210-east-close",
+    "chainage": 210,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage everywhere."
+  },
+  {
+    "id": "0210-east-far",
+    "chainage": 210,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0210-west-close",
+    "chainage": 210,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Camera clipped into a sign, only fragment lettering visible, no building context."
+  },
+  {
+    "id": "0210-west-far",
+    "chainage": 210,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, coherent street."
+  },
+  {
+    "id": "0295-east-close",
+    "chainage": 295,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0295-east-far",
+    "chainage": 295,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, coherent street."
+  },
+  {
+    "id": "0295-west-close",
+    "chainage": 295,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Tight close-up of a doorway, plausible, no stretching."
+  },
+  {
+    "id": "0295-west-far",
+    "chainage": 295,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent buildings."
+  },
+  {
+    "id": "0380-east-close",
+    "chainage": 380,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent, windows read fine."
+  },
+  {
+    "id": "0380-east-far",
+    "chainage": 380,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0380-west-close",
+    "chainage": 380,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean gable dressing, no slivers (verified in Task 3)."
+  },
+  {
+    "id": "0380-west-far",
+    "chainage": 380,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent alley view, no artifacts."
+  },
+  {
+    "id": "0465-east-close",
+    "chainage": 465,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0465-east-far",
+    "chainage": 465,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0465-west-close",
+    "chainage": 465,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0465-west-far",
+    "chainage": 465,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0550-east-close",
+    "chainage": 550,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0550-east-far",
+    "chainage": 550,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0550-west-close",
+    "chainage": 550,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Camera clipped into signage; nothing but sign text 'Sea Breeze Ca...' visible."
+  },
+  {
+    "id": "0550-west-far",
+    "chainage": 550,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0635-east-close",
+    "chainage": 635,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent alley view."
+  },
+  {
+    "id": "0635-east-far",
+    "chainage": 635,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0635-west-close",
+    "chainage": 635,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Close-up shop signage, legible."
+  },
+  {
+    "id": "0635-west-far",
+    "chainage": 635,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent shopfront row."
+  },
+  {
+    "id": "0720-east-close",
+    "chainage": 720,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Dark recessive gable, acceptable."
+  },
+  {
+    "id": "0720-east-far",
+    "chainage": 720,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Dark recessive gable, no pale slab (Task 1 baseline)."
+  },
+  {
+    "id": "0720-west-close",
+    "chainage": 720,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Camera clipped into signage, no building context visible."
+  },
+  {
+    "id": "0720-west-far",
+    "chainage": 720,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0805-east-close",
+    "chainage": 805,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0805-east-far",
+    "chainage": 805,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0805-west-close",
+    "chainage": 805,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Dark recessive gable + lit near gable, verified Task 1."
+  },
+  {
+    "id": "0805-west-far",
+    "chainage": 805,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0890-east-close",
+    "chainage": 890,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0890-east-far",
+    "chainage": 890,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0890-west-close",
+    "chainage": 890,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Plausible close shop-window shot."
+  },
+  {
+    "id": "0890-west-far",
+    "chainage": 890,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Narrow brown building shows an obviously tiled, repeating window-bay pattern up its height."
+  },
+  {
+    "id": "0975-east-close",
+    "chainage": 975,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "0975-east-far",
+    "chainage": 975,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent street, no mirroring visible (Task 4)."
+  },
+  {
+    "id": "0975-west-close",
+    "chainage": 975,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent alley/shopfront view."
+  },
+  {
+    "id": "0975-west-far",
+    "chainage": 975,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1060-east-close",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Vertical mirror/tile defect on 'Grace Church Leith' building (962), confirmed in Task 4."
+  },
+  {
+    "id": "1060-east-far",
+    "chainage": 1060,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Same vertical band repetition on building 962, confirmed in Task 4."
+  },
+  {
+    "id": "1060-west-close",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "cropped-mid-facade",
+    "note": "Camera too close to an indistinct prop/poster board; nothing coherent readable."
+  },
+  {
+    "id": "1060-west-far",
+    "chainage": 1060,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, borrowed-upper building (73) reads plausibly."
+  },
+  {
+    "id": "1145-east-close",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1145-east-far",
+    "chainage": 1145,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1145-west-close",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1145-west-far",
+    "chainage": 1145,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, coherent."
+  },
+  {
+    "id": "1230-east-close",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Coherent bay-window repetition (plausible architecture, not a tile artifact)."
+  },
+  {
+    "id": "1230-east-far",
+    "chainage": 1230,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Borrowed-upper building (150) reads plausibly, confirmed Task 4."
+  },
+  {
+    "id": "1230-west-close",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1230-west-far",
+    "chainage": 1230,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1315-east-close",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1315-east-far",
+    "chainage": 1315,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1315-west-close",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, no white seam."
+  },
+  {
+    "id": "1315-west-far",
+    "chainage": 1315,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "No white seam at building 350 border, confirmed fixed (Task 4)."
+  },
+  {
+    "id": "1400-east-close",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean, no artifacts (Task 3)."
+  },
+  {
+    "id": "1400-east-far",
+    "chainage": 1400,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Clean, no artifacts (Task 3)."
+  },
+  {
+    "id": "1400-west-close",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "close",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1400-west-far",
+    "chainage": 1400,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage."
+  },
+  {
+    "id": "1485-east-close",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Second building from left shows an obvious vertical mirror-repeat window pattern."
+  },
+  {
+    "id": "1485-east-far",
+    "chainage": 1485,
+    "side": "east",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Same mirror-repeat building visible again, smaller in frame."
+  },
+  {
+    "id": "1485-west-close",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "repeating-upper-storeys",
+    "note": "Obvious left-right mirror symmetry on central building's facade."
+  },
+  {
+    "id": "1485-west-far",
+    "chainage": 1485,
+    "side": "west",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Legible signage, no mirroring."
+  },
+  {
+    "id": "1570-east-close",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "unreadable-shopfront",
+    "note": "Unsolved 1570-east gable (measured Task 2): reads as a large undifferentiated dark mass rather than a legible building surface -- left open per brief rather than risk another blanket-tone regression."
+  },
+  {
+    "id": "1570-east-far",
+    "chainage": 1570,
+    "side": "east",
+    "distance": "far",
+    "verdict": "pass",
+    "fault": "none",
+    "note": "Dark recessive gable, no pale slab (Task 1/2 baseline)."
+  },
+  {
+    "id": "1570-west-close",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "close",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Building shows wrong-perspective texture: windows/arches lean as if photographed at an angle, pasted flat."
+  },
+  {
+    "id": "1570-west-far",
+    "chainage": 1570,
+    "side": "west",
+    "distance": "far",
+    "verdict": "fail",
+    "fault": "wrong-perspective",
+    "note": "Same wrong-perspective defect visible again (known parked issue)."
+  }
+]

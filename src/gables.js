@@ -24,13 +24,11 @@ import { computeFrontageRuns } from './frontage.js';
 
 const STOREY_M = 3.2; // matches world.js LEVEL_HEIGHT / shopfronts.js STOREY_M
 const OUTWARD_EPS = 0.1; // proud of the base extrusion wall, same idea as shopfronts.js
-// D8/task1: was 6 — measured luminance at the named cropped-mid-facade poses
-// (0125-east, 1570-east, 0380-west, 0635-west, 1400-east) showed these are a
-// COVERAGE gap, not a tone problem: 3-6m return-wall edges between two
-// already-dressed faces, each with 40-74 sq m of real visible area on a
-// 4-storey building, excluded on width alone. MIN_AREA_M2 below already does
-// the real "is this big enough to read as a wall" test; this just stops it
-// being overridden by a width-only cutoff that doesn't account for height.
+// D8.1/task3: was 6, D8 lowered to 2.5 to dress 3-6m return-wall edges — that
+// change is being re-tested here in isolation, decoupled from D8's gable tone
+// change (already reverted in this file). MIN_AREA_M2 below already gates on
+// total wall area, so a narrower MIN_EDGE_M just stops width-only exclusion
+// of tall-but-narrow return walls.
 const MIN_EDGE_M = 2.5;
 const MAX_STREET_DIST = 60; // brief: within ~60m of the streetLine
 const MIN_AREA_M2 = 40;   // brief: wall area >= ~40 sq m
@@ -73,18 +71,6 @@ function drawGableBase(ctx, x, y, w, h, seed) {
   ctx.fillStyle = 'rgb(150,146,134)';
   ctx.fillRect(x, y, w, h);
 
-  // D8/task1: course/soot/window contrast raised across the board — the
-  // 0.55-blended gable-tint fix that rescued 1570-east (a wall in shadow,
-  // no direct sun) turned out not to be the whole story: 0720-east-close
-  // flipped pass->fail in the D8 blind sweep on a wall that DOES catch full
-  // light, called out as a "flat pale slab" — confirmed in-browser that
-  // even with the tint removed entirely (material.color forced to white)
-  // the wall still read flat, because these features were low-contrast
-  // enough to wash out under bright light just as easily as they crushed to
-  // black under dim light. Same root cause, opposite direction: the bake
-  // itself didn't have enough contrast to survive either extreme. This is
-  // the general fix; the per-face sun-facing tint blend above still helps
-  // the shadow case on top of it.
   const courses = 20;
   const courseH = h / courses;
   for (let c = 0; c < courses; c++) {
@@ -93,25 +79,26 @@ function drawGableBase(ctx, x, y, w, h, seed) {
     for (let b = 0; b < blocks; b++) {
       const bx = x + (b / blocks) * w;
       const bw = w / blocks;
-      const tone = (rnd() - 0.5) * 44;
-      ctx.fillStyle = `rgba(${150 + tone},${146 + tone},${134 + tone},0.85)`;
+      const tone = (rnd() - 0.5) * 26;
+      ctx.fillStyle = `rgba(${150 + tone},${146 + tone},${134 + tone},0.6)`;
       ctx.fillRect(bx, cy + 2, bw, courseH - 2);
     }
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.fillRect(x, cy, w, 2);
   }
 
   // Soot streaking — denser than makeStoneTexture's own grime pass, but
-  // kept sparse enough that overlapping streaks don't compound into a
-  // near-black tile — this is meant to read as a sooty version of the SAME
-  // light ashlar tone next door, not a different, much darker material.
+  // kept sparse enough (and low enough peak alpha) that overlapping streaks
+  // don't compound into a near-black tile — this is meant to read as a
+  // sooty version of the SAME light ashlar tone next door, not a different,
+  // much darker material.
   for (let i = 0; i < 20; i++) {
     const sx = x + rnd() * w;
     const sw = 4 + rnd() * 12;
     const sTop = y + rnd() * h * 0.35;
     const sLen = h * (0.3 + rnd() * 0.45);
     const grad = ctx.createLinearGradient(0, sTop, 0, sTop + sLen);
-    grad.addColorStop(0, 'rgba(20,18,15,0.4)');
+    grad.addColorStop(0, 'rgba(20,18,15,0.22)');
     grad.addColorStop(1, 'rgba(20,18,15,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(sx, sTop, sw, sLen);
@@ -125,7 +112,7 @@ function drawGableBase(ctx, x, y, w, h, seed) {
     const wh = h * (0.15 + rnd() * 0.09);
     const wx = x + w * 0.08 + rnd() * (w * 0.84 - ww);
     const wy = y + h * 0.14 + rnd() * (h * 0.62 - wh);
-    ctx.fillStyle = 'rgba(48,44,36,0.88)';
+    ctx.fillStyle = 'rgba(64,58,48,0.7)';
     ctx.fillRect(wx, wy, ww, wh);
     ctx.strokeStyle = 'rgba(112,106,90,0.5)';
     ctx.lineWidth = 3;
@@ -242,25 +229,7 @@ export function buildGables(assets, world, scene) {
     cx /= fp.length; cz /= fp.length;
 
     const runs = computeFrontageRunsSafe(building, nearest);
-    // D8/task1: was the raw pickBuildingColor tint, uniformly blended toward
-    // white — that first pass measured lum=28 (near-illegible) at
-    // 1570-east-close/far, a wall facing away from the sun with only
-    // ambient+hemisphere light reaching it, and blending 0.55 toward white
-    // fixed it there. But a blanket blend also hit walls that DO catch the
-    // sun (already well-lit, already legible) — 0720-east-close flipped
-    // pass->fail in the D8 blind sweep with a NEW complaint ("flat pale
-    // slab") the pre-blend render never had. So: blend per FACE, not per
-    // building, based on whether that specific face's outward normal faces
-    // the sun (src/world.js's DirectionalLight sits at (-200,300,150),
-    // target defaults to the origin, so its horizontal direction is the
-    // same everywhere in the scene — a plain dot-product test, no lighting
-    // API needed here). Sun-facing faces keep a small blend (still needs
-    // SOME lift over the raw tint, since even lit gables benefit slightly,
-    // but nowhere near enough to flatten them); shadow-facing faces keep the
-    // full lift that fixed 1570-east.
-    const rawColor = pickBuildingColor(bi, building);
-    const SUN_DIR_X = -0.8, SUN_DIR_Z = 0.6; // normalize(-200, 150) from world.js's sun position
-    const SUNLIT_BLEND = 0.15, SHADOW_BLEND = 0.55;
+    const color = pickBuildingColor(bi, building);
 
     for (let i = 0; i < fp.length; i++) {
       const a = fp[i], b = fp[(i + 1) % fp.length];
@@ -293,9 +262,6 @@ export function buildGables(assets, world, scene) {
       }
       const ax2 = sx + nx * OUTWARD_EPS, az2 = sz + nz * OUTWARD_EPS;
       const bx2 = sx + dx + nx * OUTWARD_EPS, bz2 = sz + dz + nz * OUTWARD_EPS;
-
-      const facesSun = nx * SUN_DIR_X + nz * SUN_DIR_Z > 0;
-      const color = rawColor.clone().lerp(new THREE.Color(1, 1, 1), facesSun ? SUNLIT_BLEND : SHADOW_BLEND);
 
       const wantGhost = ghostNames.length && (hash32(bi, i * 31 + 7) % 1000) / 1000 < GHOST_SIGN_CHANCE;
       const tiles = wantGhost ? atlas.ghostUv : atlas.baseUv;

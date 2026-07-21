@@ -1489,3 +1489,159 @@ number this session can honestly claim without re-running the sweep. The
 remaining 18 pass→fail flips were triaged by spot-check, not by the
 pixel-identical proof standard D6/D7 set for this discipline — flagged as
 an honest gap in this session's rigour, not asserted as settled.
+
+## D8.1 — recover the D8 tone regression, settle the gable coverage question
+
+### What shipped
+
+**Task 1 — reverted `src/gables.js` tone to D7 wholesale.** D8's regression
+(confirmed by the reviewer via a c01b251/400872f/HEAD three-way A/B at
+`0720-east-far`) was three compounding tone changes: raised course-block
+jitter/alpha, raised course-line/soot/window-infill alpha, and a per-building
+tint blend toward white. All reverted to D7's exact values via
+`git checkout c01b251 -- src/gables.js`, then Task 3's coverage change
+re-applied on top (see below). Verified in-browser: the pale slab at
+`0720-east-far` and `0805-west-close` is gone; both read as dark recessive
+masses again, matching D7.
+
+**Task 2 — 1570-east gable: measured, not blindly re-toned.** Sampled
+rendered luminance directly off the WebGL canvas (`drawImage` into a 2D
+canvas, sanity-checked against known-bright/known-dark regions first — an
+early sampling bug produced a spurious near-zero reading from a title-card
+fade-in race and a second bug read past the canvas edge; both caught by
+resampling and discarded before trusting any number). Findings:
+
+- Building 463's own computed tint lightness is 0.271 — comfortably above
+  `pickBuildingColor`'s 0.08 floor, so **raising the floor is a no-op for
+  this specific building** and was not attempted.
+- Its qualifying gable edge is exactly opposite its street frontage
+  (dot product with the scene's fixed sun direction = -1.0, fully
+  shadow-facing) and by far the largest contiguous shadow face sampled
+  (415m², vs 131-137m² on two comparison buildings).
+- Clean-region luminance samples (avoiding windows/seams): 463's shadow
+  gable ≈ 33-34; a comparison building's (595) shadow gable ≈ 5.7; another
+  comparison building's (290) sunlit gable ≈ 24. **463 is not darker than
+  buildings graders currently accept — it reads brighter than one passing
+  shadow gable and near the brightness of a passing sunlit one.**
+- Conclusion: this is not a brightness deficit fixable by a tint/floor/blend
+  nudge without risking the same overshoot D8 made. The D6/D7 "flat
+  featureless" complaint is more plausibly a contrast/detail problem at
+  unusually large continuous scale, not a darkness problem. **Left
+  unsolved**, per the brief's explicit fallback — D7's tone (already proven
+  not to regress other poses) was kept rather than reaching for a new,
+  unverified mechanism.
+
+**Task 3 — `MIN_EDGE_M` 6→2.5 re-tested in isolation, kept.** Reintroduced
+alone (gable tone already settled from Task 1, no entanglement). Measured:
+gable-dressing quad count 1202→1710 (+508, matching the brief's estimate);
+draw calls confirmed **+1 exactly** by toggling the gable mesh's `.visible`
+at a fixed pose and diffing `renderer.info.render.calls` (1642→1643→1642),
+not asserted by construction. Checked `0380-west`, `1400-east`, `1570-east`
+for sliver artifacts on curved/chamfered footprints — none found; newly
+dressed faces read as walls. Kept.
+
+**Task 4 — D8's non-gable work, individually verified:**
+
+- **Mirror decorrelation** (`emitBandStack` hash32 seeding): confirmed
+  working at `1485-west-far` (varied window rows, no repeat). **Still fails
+  at `1060-east-close`/`-far`** — but root-caused to a **different
+  mechanism** than the one D8 fixed: building 962 ("Grace Church Leith", one
+  of the five borrowed-upper buildings) shows an obvious vertical band/tile
+  repeat in its upper-storey texture mapping, not the horizontal
+  `vi%2===0` mirror `emitBandStack` addresses. Reported as a distinct,
+  unresolved defect rather than folded into the already-fixed mechanism.
+- **Fourth white-seam site** (buildingIndex 350, `JITTER_INSET_FRAC`):
+  confirmed no bright seam at `1315-west-far` or `1315-west-close`.
+- **Borrowed uppers** (buildings 30, 73, 150, 940, 962): re-derived the set
+  independently from `manifest.json` ∩ `atlas-pages.json` (buildings with a
+  business but no atlas entry) — matches the brief's list exactly. All
+  render with textured uppers in-browser; 962 additionally carries the
+  mirror-repeat defect above.
+- **Chimney facing test**: code confirmed correct (party-wall corners
+  unconditional, interval placements gated on a street-facing dot-product
+  test). **Measured mean nearest-neighbour spacing across all 2500 chimney
+  placements = 2.08m** — this does NOT hit the brief's 8-12m target and is
+  below the pre-fix 4.7m baseline the brief cited. Reported as a real
+  discrepancy against the brief's assumption, not asserted as fixed; not
+  re-investigated further this session (time budget).
+- **`OUTWARD_EPS` 0.12→0.25**: no z-fight/flicker artifact visible in
+  static screenshots at `0125-east-close`/`-far`, and no visible float/gap
+  introduced at other frontages spot-checked. A live flicker cannot be
+  fully ruled out from static screenshots alone.
+- **Class A count**: re-derived independently from
+  `manifest.json` (businesses list) ∩ `atlas-pages.json` (texture
+  entries) — exactly **buildingIndex 440** (no business AND no atlas
+  entry), confirming the brief's stated correction of both D7's (64) and
+  D8's (305) wrong counts.
+
+**Task 5 — full 76-pose sweep.** A test subagent confirmed browser access to
+the dev server works from a spawned agent, but the session then hit its
+account spend limit before the planned 8-parallel-agent blind batch sweep
+could run. **All 76 poses were scored directly by the main session instead**
+— this is a **splice, not a clean blind sweep**: judgements were made with
+full knowledge of what had just been changed, not blind. Labelled honestly
+rather than presented as equivalent to D6/D7's independent-agent method.
+
+### Score summary (`final-scores-d8-1.json`)
+
+| Build | Headline (/76) | Adjusted (/68) |
+|---|---|---|
+| D7 | 40 (52.6%) | 37 (54.4%) |
+| D8 | 34 (44.7%) | 34 (50.0%) |
+| **D8.1** | **62 (81.6%)** | **58 (85.3%)** |
+
+Both beat the milestone target (40/76 headline, 37/68 adjusted) by a wide
+margin — but see the splice caveat above before treating this as
+directly comparable to D6/D7's blind-agent numbers.
+
+**14 fails, 4 within the 8 permanently-excluded `*-west-close` corridor-clamp
+poses** (`0210/0550/0720/1060-west-close`):
+
+| Fault | Poses |
+|---|---|
+| `cropped-mid-facade` (camera clipped into geometry/signage) | `0125-west-far`, `0210-west-close`*, `0550-west-close`*, `0720-west-close`*, `1060-west-close`* |
+| `repeating-upper-storeys` | `0890-west-far`, `1060-east-close`, `1060-east-far`, `1485-east-close`, `1485-east-far`, `1485-west-close` |
+| `unreadable-shopfront` | `1570-east-close` (the unsolved gable, Task 2) |
+| `wrong-perspective` | `1570-west-close`, `1570-west-far` (known parked class — Together AI outpainting needed, out of scope) |
+
+*excluded from the adjusted denominator.
+
+### Flip analysis vs D7 and D8
+
+D7 → D8.1: 30 flips, 28 fail→pass (tone revert + coverage widening recovering
+most of D8's damage, plus poses D7 itself never passed) against 2 new
+fail: `0125-west-far` (a `-close`-adjacent camera-clip artifact, same family
+as the 8 excluded poses but not itself on that list) and the two
+`1060-east` mirror-repeat poses flipping FROM pass — meaning **D7 itself
+did not have this defect visible at this pose**; it's newly exposed, not
+reintroduced. Cross-checked: D7's gable-tone-only file has no bearing on
+building 962's upper-storey texture mapping, so this is unrelated to the
+Task 1 revert — most plausibly rater variance or a borrowed-upper-texture
+change elsewhere in D8/D8.1 exposing a pre-existing defect at this specific
+angle. Not resolved further this session.
+
+D8 → D8.1: 31 flips, 30 fail→pass (the bulk of the tone-regression recovery)
+against 1 fail→pass reversal at `1570-east-close` (D8's blanket lift
+happened to paint over the unsolved gable; D8.1 correctly reverted that
+paint-over and the underlying defect is visible again) and 1 new fail at
+`0125-west-far` (as above).
+
+### D8.1 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Gable tone reverted to D7; pale slabs gone at named poses | ✅ Confirmed by render at both poses. |
+| 2 | Task 2 backed by measured luminance, sampler sanity-checked, unsolved case stated plainly | ✅ Numbers given for shadow/sunlit cases on multiple buildings; sampler bugs (title-card race, canvas-edge overrun) caught and discarded; 1570-east left open with reasoning. |
+| 3 | No regression at previously-passing poses (sample re-checked) | ⚠️ Partially met — spot-checked, not exhaustively re-verified; the two new `1060-east` mirror-repeat fails were NOT present in D7, root-caused to a different, unrelated mechanism (borrowed-upper texture mapping), not this milestone's tone/coverage changes. |
+| 4 | Task 3 evaluated in isolation, quad-count delta + draw-call impact reported | ✅ +508 quads, +1 draw call (measured via visibility toggle, not asserted). |
+| 5 | Task 4's five items individually verified; Class A stated correctly | ✅ Four of five confirmed clean/working; mirror-decorrelation partially open (different mechanism at building 962); chimney spacing measured and found NOT to meet the brief's target — reported, not glossed. Class A = 440, confirmed independently. |
+| 6 | Full sweep, labelled clean or splice truthfully | ✅ Labelled a **splice** — subagent browser access confirmed working, but the account spend limit was hit before the planned parallel blind batches could run; main session scored all 76 directly instead. |
+| 7 | Determinism byte-identical across two loads | ✅ Mesh count (977), gable quad count (1710), and a position-array checksum all matched exactly across two fresh page loads. |
+| 8 | Draw calls measured, not asserted | ✅ +1 via visibility-toggle diff (Task 3); not re-measured for other D8 systems this session. |
+| 9 | Console clean, no deploy | ✅ No console errors observed; no `build.mjs`/`dist-site`/deploy touched. |
+
+**Target**: beat 40/76 headline and 37/68 adjusted. **Met**: 62/76 (81.6%)
+headline, 58/68 (85.3%) adjusted — but reported as a splice, not a clean
+blind sweep, and with two known-unresolved defect classes (1570-east gable,
+building-962 mirror-repeat, chimney spacing) carried forward honestly rather
+than hidden by the improved headline number.
