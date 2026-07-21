@@ -29,7 +29,16 @@ import { buildNameAtlas } from './placeholders.js';
 import { computeFrontageRuns, chainageOfPoint } from './frontage.js';
 
 const BASE_Y = 0.05;       // sit just above the street ribbon (STREET_Y = 0.03)
-const OUTWARD_EPS = 0.12;  // nudge proud of the building's own wall, toward the street
+// D8/task1: was 0.12. A frontage RUN is a straight line between two merged-edge
+// endpoints, but the underlying OSM footprint it's drawn over isn't always
+// perfectly straight between them (e.g. buildingIndex 729/chainage 125: the
+// real footprint bows up to 0.25m off the idealised straight run at its
+// midpoint). Where the bow exceeds this nudge, the base wall's own coursed-
+// stone extrusion (src/world.js, always present underneath) physically pokes
+// through the flat shopfront quad — a raycast confirmed the base mesh winning
+// the depth test ~0.08m in front of the quad at 0125-east-far's "flat dark
+// panel" — a z-fight/occlusion bug, not a texture or tone problem.
+const OUTWARD_EPS = 0.25;  // nudge proud of the building's own wall, toward the street
 const MIN_RUN = 0.3;       // a run this short is geometric noise, not a wall
 const SLIVER_MAX = 3;      // below this a NAME-PLACEHOLDER run isn't worth a unit (matches old policy)
 // "Never stretch past ~1.2x" (brief). Outside that band the quad keeps the
@@ -77,6 +86,10 @@ const NEIGHBOUR_CHAINAGE_M = 15; // donor exclusion radius: roughly one building
 // treatment), keep their sampled range inset from the border by this fraction
 // of the region's own u-span.
 const JITTER_INSET_FRAC = 0.06;
+// D8/task2: below this width, a narrowGroups facet's slice of the region's
+// own ground-floor signage band is too thin to read as anything but a
+// garbled fragment — see the emitInto call below for the full mechanism.
+const NARROW_SIGNAGE_MIN_M = 2.2;
 
 export function buildShopfronts(assets, world, scene) {
   const manifest = assets && assets.facadeManifest;
@@ -162,7 +175,7 @@ export function buildShopfronts(assets, world, scene) {
   // param (not closed over) so it can target ANY page's buffer, not just
   // the calling building's own — needed once D7 borrows for buildings with
   // no atlas entry of their own.
-  const emitBandStack = (buf, u0Raw, u1Raw, vTop_, vBot_, groundFrac, heightM_, ax, az, bx, bz, yStart, yEnd) => {
+  const emitBandStack = (buf, u0Raw, u1Raw, vTop_, vBot_, groundFrac, heightM_, ax, az, bx, bz, yStart, yEnd, mirrorSeed = 0) => {
     // D5.2 lesson (see JITTER_INSET_FRAC above): ANY border-touching
     // sample window on a packed atlas page risks the baked-in white
     // photo-margin bleed, not just the two sites that originally
@@ -179,7 +192,16 @@ export function buildShopfronts(assets, world, scene) {
     while (y < yEnd - 1e-6 && bandWorldH > 1e-4) {
       const dh = Math.min(bandWorldH, yEnd - y);
       const frac = dh / bandWorldH;
-      const mirrored = vi % 2 === 0;
+      // D8/task3: was `vi % 2 === 0` — every stack in the scene alternated
+      // in lockstep (row 0 always mirrored, row 1 never, ...), so any two
+      // stacks with a similar band height (donor-borrowed bays especially)
+      // read as identical mirror-symmetric wallpaper — worst right at a
+      // recessed close, where the two flanking returns sit side by side in
+      // one eyeful. Salting per call site (building/run/side/bay — see each
+      // emitBandStack call) decorrelates the ping-pong sequence between
+      // stacks while keeping it deterministic and reproducing identically
+      // across reloads (hash32 only, no PRNG state).
+      const mirrored = (hash32(mirrorSeed, vi) & 1) === 0;
       const vNear = mirrored ? bandTop_ : edgeBot;
       const vFar = mirrored ? edgeBot : bandTop_;
       const vFarClipped = vNear + (vFar - vNear) * frac;
@@ -383,9 +405,9 @@ export function buildShopfronts(assets, world, scene) {
                 const fallbackDonorIdx = hash32(bi, runIdx * 6151 + side * 331 + u) % donors.length;
                 const fallbackDonor = donors[fallbackDonorIdx];
                 const fGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / fallbackDonor.region.heightM));
-                emitBandStack(buf, fallbackDonor.u0Full, fallbackDonor.u1Full, fallbackDonor.vTop, fallbackDonor.vBot, fGroundFrac, fallbackDonor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+                emitBandStack(buf, fallbackDonor.u0Full, fallbackDonor.u1Full, fallbackDonor.vTop, fallbackDonor.vBot, fGroundFrac, fallbackDonor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M, hash32(bi, runIdx * 6151 + side * 331 + u + 1));
               } else if (ownVSpan > 0) {
-                emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M);
+                emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, a.x, a.z, b.x, b.z, BASE_Y, STOREY_M, hash32(bi, runIdx * 6151 + side * 331 + u + 1));
               }
             }
 
@@ -400,7 +422,7 @@ export function buildShopfronts(assets, world, scene) {
                 // visibly repeating — degrade to this building's own safe
                 // upper band across the whole excess width instead.
                 if (ownVSpan > 0) {
-                  emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, farA.x, farA.z, farB.x, farB.z, STOREY_M, buildingHeightM);
+                  emitBandStack(buf, u0Full, u1Full, vTop, vBot, ownGroundAvoidFrac, region.heightM, farA.x, farA.z, farB.x, farB.z, STOREY_M, buildingHeightM, hash32(bi, runIdx * 4111 + side * 211 + 2));
                 }
               } else {
                 // Bay-by-bay: each bay is one donor's native widthM, drawn
@@ -421,7 +443,7 @@ export function buildShopfronts(assets, world, scene) {
                   const a = at(Math.min(t, tNext)), b = at(Math.max(t, tNext));
 
                   const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
-                  emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM);
+                  emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM, hash32(bi, runIdx * 4111 + side * 211 + bayIdx));
 
                   t = tNext; bayIdx++;
                 }
@@ -585,15 +607,43 @@ export function buildShopfronts(assets, world, scene) {
             u0 = Math.max(u0Full, center - half);
             u1 = Math.min(u1Full, center + half);
           } else {
-            u0 = u0Full; u1 = u1Full;
+            // D8/task4: was the raw u0Full/u1Full with no inset beyond the
+            // half-texel uInset baked into those bounds — the 4th
+            // border-touching site (JITTER_INSET_FRAC's own comment above
+            // predicted a 4th would turn up). A single run at a near-1:1
+            // ratio (e.g. buildingIndex 350/chainage 1319, ratio 1.065) has
+            // no jitter and no narrowGroups slicing to save it, so it always
+            // sampled right up to the region border — confirmed in-browser
+            // as the "bright glowing white vertical band" at 1315-west-far,
+            // both edges of building 350's photo.
+            const insetUV = JITTER_INSET_FRAC * (u1Full - u0Full);
+            u0 = u0Full + insetUV; u1 = u1Full - insetUV;
           }
           const a = at(0), b = at(1);
-          hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+          // D8/task2: a run this narrow (a tight chamfer facet on a curved
+          // corner, e.g. buildingIndex 255's 1.1-1.76m facets) can't show a
+          // legible fragment of the region's own ground-floor signage band —
+          // measured in-browser at 0805-west-far: the narrowGroups slices
+          // ARE correctly non-overlapping in UV (confirmed by reading the
+          // emitted quads' u-ranges directly), but several adjacent slivers
+          // each carrying a different sliver of baked business-name text
+          // read, together, as the garbled overlapping mess graders reported
+          // ("Beyond ...ns Beygio") — not a geometry bug, a legibility one.
+          // Skip the ground floor's signage band on these and let the base
+          // wall (or, above STOREY_M, the gable dressing) show through
+          // instead; the run still gets the region's upper (window/masonry,
+          // no text) band like any other facet.
+          if (g && g.count > 1 && span < NARROW_SIGNAGE_MIN_M) {
+            const skipFrac = Math.min(0.9, STOREY_M / region.heightM);
+            hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z, y0: STOREY_M, v0: vBot + (vTop - vBot) * skipFrac });
+          } else {
+            hQuads.push({ u0, u1, ax: a.x, az: a.z, bx: b.x, bz: b.z });
+          }
         }
 
         for (const q of hQuads) {
           if (q.skipBase) continue; // D5.1: edge-bay tiles already emitted their own stacked quads above
-          emitInto(buf, q.u0, q.v0 ?? vBot, q.u1, q.v1 ?? vTop, q.ax, q.az, q.bx, q.bz, BASE_Y, region.heightM);
+          emitInto(buf, q.u0, q.v0 ?? vBot, q.u1, q.v1 ?? vTop, q.ax, q.az, q.bx, q.bz, q.y0 ?? BASE_Y, region.heightM);
           quadCount++;
         }
 
@@ -616,9 +666,9 @@ export function buildShopfronts(assets, world, scene) {
               const donorIdx = hash32(bi, runIdx * 8231 + 17) % donors.length;
               const donor = donors[donorIdx];
               const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
-              emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+              emitBandStack(buf, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM, hash32(bi, runIdx * 8231 + 18));
             } else if (ownVSpan > 0) {
-              emitBandStack(buf, q.u0, q.u1, vTop, vBot, ownGroundAvoidFrac, region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM);
+              emitBandStack(buf, q.u0, q.u1, vTop, vBot, ownGroundAvoidFrac, region.heightM, q.ax, q.az, q.bx, q.bz, region.heightM, buildingHeightM, hash32(bi, runIdx * 8231 + 18));
             }
           }
         }
@@ -714,6 +764,34 @@ export function buildShopfronts(assets, world, scene) {
         }
         placeholderUnitCursor += units;
         quadCount += units;
+
+        // D8/task5a: exactly 5 buildings (940, 962, 73, 150, 30 — verified
+        // against the manifest+atlas: businesses but no atlas entry) used to
+        // stop here, leaving every storey above the ground-floor name fascia
+        // as raw base stone — the other bare-wall class the D7 brief named.
+        // Same bay-by-bay chainage-bucket donor borrow as the fully-bare
+        // branch just below, but only for the storeys above the fascia this
+        // branch already drew.
+        const buildingHeightM5a = Math.max(2, mb.levels || 2) * STOREY_M;
+        if (buildingHeightM5a > STOREY_M + 1e-6) {
+          const page5a = pageForChainage(mb.chainage);
+          const donors5a = page5a >= 0 ? (donorsByPage.get(page5a) || []).filter((d) => d.bi !== bi) : [];
+          if (donors5a.length) {
+            const buf5a = pageBuf[page5a];
+            let t = 0, bayIdx = 0, prevDonorIdx = -1, guard = 0;
+            while (t < 1 - 1e-6 && guard++ < 64) {
+              let donorPick = hash32(bi, runIdx * 5813 + bayIdx) % donors5a.length;
+              if (donorPick === prevDonorIdx) donorPick = (donorPick + 1) % donors5a.length;
+              const donor = donors5a[donorPick];
+              prevDonorIdx = donorPick;
+              const bayT = Math.min(1 - t, Math.max(donor.region.widthM / span, 1e-4));
+              const a = at(t), b = at(t + bayT);
+              const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
+              emitBandStack(buf5a, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, STOREY_M, buildingHeightM5a, hash32(bi, runIdx * 5813 + bayIdx + 1));
+              t += bayT; bayIdx++;
+            }
+          }
+        }
       } else if (!mb.businesses || !mb.businesses.length) {
         // D7/task1a: a genuinely bare frontage building — computeFrontageRuns
         // found a street-facing wall, but the offline pipeline never got a
@@ -743,7 +821,7 @@ export function buildShopfronts(assets, world, scene) {
             const bayT = Math.min(1 - t, Math.max(donor.region.widthM / span, 1e-4));
             const a = at(t), b = at(t + bayT);
             const dGroundFrac = Math.min(0.75, Math.max(GROUND_AVOID_FRAC, STOREY_M / donor.region.heightM));
-            emitBandStack(buf2, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, bareHeightM);
+            emitBandStack(buf2, donor.u0Full, donor.u1Full, donor.vTop, donor.vBot, dGroundFrac, donor.region.heightM, a.x, a.z, b.x, b.z, BASE_Y, bareHeightM, hash32(bi, runIdx * 3457 + bayIdx + 1));
             t += bayT; bayIdx++;
           }
         }

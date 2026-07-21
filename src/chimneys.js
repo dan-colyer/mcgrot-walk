@@ -100,7 +100,9 @@ export function buildChimneys(assets, world, scene) {
     for (let i = 0; i < fp.length; i++) {
       const a = fp[i], b = fp[(i + 1) % fp.length];
 
-      // Shared party-wall corner: place exactly at the vertex, once.
+      // Shared party-wall corner: place exactly at the vertex, once. Kept
+      // unconditional regardless of facing — a real party-wall stack sits on
+      // the shared gable whichever way it happens to face.
       const k = vertexKey(a[0], a[1]);
       if (vertexCount.get(k) > 1 && !seen.has(k)) {
         seen.add(k);
@@ -112,6 +114,30 @@ export function buildChimneys(assets, world, scene) {
       const dx = b[0] - a[0], dz = b[1] - a[1];
       const len = Math.hypot(dx, dz);
       if (len < 3) continue;
+
+      // D8/task5b: this used to run on EVERY edge — front and rear eaves
+      // both got interval stacks, measured at a 4.7m mean nearest-neighbour
+      // spacing against the brief's 8-12m intent (27% within 2m of another).
+      // Only cosmetic at eye level (all eval poses are y=1.7 — a rear stack
+      // is rarely actually visible), but real. Same outward-normal/facing
+      // test frontage.js uses for shopfronts: skip interval placements on an
+      // edge that faces away from the street at all — a true rear wall —
+      // while still letting side-return edges (which a player CAN see down
+      // a close or from an angled approach) keep theirs.
+      const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
+      const edgeNear = nearest(mx, mz);
+      let facingOk = true;
+      if (edgeNear && edgeNear.point) {
+        const inv = 1 / len;
+        let nx = -dz * inv, nz = dx * inv;
+        if (nx * (mx - cx) + nz * (mz - cz) < 0) { nx = -nx; nz = -nz; }
+        const dsx = edgeNear.point[0] - mx, dsz = edgeNear.point[1] - mz;
+        const dl = Math.hypot(dsx, dsz) || 1;
+        const facing = (nx * dsx + nz * dsz) / dl;
+        facingOk = facing >= 0;
+      }
+      if (!facingOk) continue;
+
       const n = Math.max(1, Math.round(len / EDGE_SPACING_M));
       for (let s = 0; s < n; s++) {
         const t = (s + 0.5) / n;
