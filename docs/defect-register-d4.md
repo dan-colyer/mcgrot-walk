@@ -1835,3 +1835,223 @@ repeating-upper-storeys cluster) exists in the current code; the larger
 plausibly D7 being under-scored by a more lenient grader rather than new
 damage, based on the samples tested, but this is not proven for every
 individual pose and should not be treated as settled.
+
+## D9 — rubric severity ordering, signage-truncation root cause, blocked sweep
+
+**Scores from this point are under the amended rubric below.** The amendment
+makes scoring stricter (a blank wall now always fails, where a grader might
+previously have let a well-composed surrounding scene carry it), so absolute
+numbers from D9 onward are not directly comparable to D7/D8.2's numbers under
+the old rubric — Task 4's paired design (same grader pool, same session,
+same rubric, both builds) is what makes a D9-vs-D7 comparison valid; a bare
+D9-vs-D7 headline diff is not.
+
+**Committed at `f615747`.** Tasks 1–3 are complete and verified in-browser.
+Task 4 (the paired blind sweep) could not be run this session — see below —
+so there is no D9 score file and no new trajectory number yet.
+
+### Task 1 — rubric amendment
+
+Added two sentences to the fault-check block of `docs/eval/RUBRIC.md` (the
+text given verbatim to graders): a featureless/blank wall occupying a
+significant part of frame is always a fail regardless of how well the rest
+of the scene reads (scored as fault 4 if it interrupts a terrace, fault 1
+otherwise), and a wall carrying real texture with a visible defect is a
+less severe outcome than a blank wall — both fail, but the textured one
+must not score worse. Wording is neutral: no building, milestone, or
+mechanism is named, so it leaks nothing to a blind grader. This directly
+targets the `0975-east-far` case D8.2 flagged (D7's grader passed a
+completely blank wall; the current build's grader failed a wall with real
+texture and a visible repeat) — under the amended wording that comparison
+can no longer invert in the blank wall's favour.
+
+### Task 2 — signage truncated mid-word: root cause and fix
+
+**The brief's hypothesis was wrong, and disproving it mattered.** The brief
+guessed the mechanism was a real shop spanning two OSM footprints, so an
+atlas region boundary cuts through a shop's own fascia. Reading the actual
+committed elevation JPGs (`assets/shopfronts/elevations/b611.jpg`,
+`b729.jpg`, `b871.jpg`) showed the ellipsis baked directly into the source
+image — pixels, not a runtime crop — ruling that out immediately.
+
+Two distinct, unrelated mechanisms were actually in play:
+
+**(a) Baked ellipsis from an unreachable two-line-wrap height budget.**
+`fitSignText` (`src/placeholders.js`) shrinks text from 22px down to a
+floor, trying a two-line wrap once `size <= 18`, but only accepts the wrap
+if `size * 1.05 * 2 <= maxH`. `maxH` is a fixed fraction of the fascia
+band's own height. At the module's live 256×128 in-engine placeholder
+resolution this budget is generous enough that two-line wrap fires
+routinely; at the 128×64 `signage-atlas.jpg` tiles baked once offline by
+`scripts/apply-signage.mjs`, the same fraction gives as little as ~7-14px
+of vertical room — arithmetically less than `2 × size` for any size the
+loop's old floor (8px) ever reached. Two-line wrap was silently
+unreachable, so any business name that didn't fit one line (e.g. "AR
+Alterations & Dry Cleaning", "Edinburgh Carers' Hub", "Ella Taste of
+Greece" — all real manifest names, all comfortably over the ~18-character
+threshold) fell straight to the single-line 8px ellipsis fallback and got
+that truncation baked permanently into the committed JPG.
+
+*Fix:* lowered the wrap-and-ellipsis floor from 8px to 4px in
+`fitSignText`, which brings `2 × size` back under the tight budget for
+most non-awning tiles. Then — since the truncation was already baked into
+committed pixels, not something the runtime renders — regenerated
+`signage-atlas.jpg` from `assets/shopfronts/signage-names.json` using the
+corrected algorithm (deterministic canvas rendering, run once via the
+browser's canvas API and saved to disk; no AI, no network) and re-ran
+`node scripts/apply-signage.mjs` to recomposite every affected elevation
+JPG in place (confirmed idempotent: the script always overwrites the exact
+same rectangle, never blends onto prior content) and
+`node scripts/build-elevation-atlas.mjs` to repack the atlas pages. Verified
+`atlas-pages.json`'s region geometry (`x,y,w,h,widthM,heightM` for every
+building) is byte-identical before and after — only pixel content and
+page etags changed, so no building's world-space quad moved.
+
+Verified in-browser, screenshot-confirmed, at all three example poses:
+`0805-east-close`/`-far` (b611: "Ar Alterations & Dry Cleaning" and "Taste
+of Poland" now render complete) and `0125-east-far` (b729: "Edinburgh
+Carers' Hub" now renders complete). `1060-west-far`'s "The Whispering
+Kettle" (b373) also confirmed complete, previously "The Whispering …".
+
+**(b) Fully-legible baked text still cropped at runtime by the protected
+edge inset.** Even where (a) doesn't apply, the near-1:1-ratio branch of
+`buildShopfronts` (`src/shopfronts.js`) maps
+`u0Full + JITTER_INSET_FRAC*span .. u1Full - JITTER_INSET_FRAC*span` onto
+the run's *full* world width. `JITTER_INSET_FRAC` (0.06) is the anti-bleed
+margin the brief said must stay — and it does; it was never touched — but
+that margin is exactly where an edge-flush sign's last characters live
+when a single business fills its whole unit (confirmed at `0805-east-far`:
+"Taste of Poland" is completely legible in the source JPG, and still
+rendered as "Taste of Polan" in-engine before the fix below).
+
+*Fix:* added a ground-band-only edge fade — `emitGroundBandFaded` in
+`src/shopfronts.js` splits a run's ground quad (BASE_Y..STOREY_M) into
+three horizontal sub-quads and tints the outer two black→white via a new
+per-vertex `color` attribute (`vertexColors: true` on the shopfronts-page
+material; every pre-existing quad defaults to white, a no-op multiply, so
+nothing else changes). A cropped glyph now reads as a shadowed party-wall
+recess rather than a glitched cut. Verified in-browser at `0805-east-far`:
+the join between "Taste of Poland" and "First Mortgage" now visibly darkens
+into shadow rather than cutting cleanly.
+
+**Constraint checks, all measured, not asserted:**
+- **Draw calls:** git-stash A/B of `src/shopfronts.js` + `src/placeholders.js`
+  at a fixed pose (spawn point, first stable frame) — 1728 draw calls and
+  977 meshes on both sides of the diff; only triangle count changed
+  (232360 → 232900), consistent with more triangles inside existing
+  buffers rather than new draw calls.
+- **Determinism:** geometry position-buffer hash identical across two
+  independent page loads at the same pose.
+- **`JITTER_INSET_FRAC` protection:** untouched — confirmed by diff; the
+  fix works entirely by darkening pixels the existing inset already
+  produces, never by relaxing the inset itself.
+- **Console:** clean at every tested pose.
+
+### Task 3 — overlapping signage: hypothesis refuted, real mechanism partially mitigated
+
+**The brief's hypothesis does not exist in the code.** It proposed that
+since D6 the placeholder name-fascia pool is no longer restricted to
+buildings without an atlas photo, so a canvas fascia could be drawn over a
+photo region that already carries baked signage. Reading `buildShopfronts`
+end to end: the only place a placeholder (`pPos`/`pUv`) quad is drawn for a
+building that also has an atlas region is the TERRACE branch's excess-width
+fill, which is geometrically confined to the width *beyond* the centred
+photo quad — never the same world-space area as the photo itself. No code
+path draws a name atlas over a photo region. Hypothesis refuted.
+
+**The actual mechanism, confirmed in-browser at two of the six named
+poses**, is a variant of Task 2(b): adjacent buildings' fascias are
+geometrically contiguous with zero world-space gap, and each building's
+signage runs close to its own edge. At `0210-west-far`, building 536
+("…Bandits") and building 722 ("Tip Top Tresses…") sit end to end;
+at a raking view angle the two fully-legible names read as one fused
+string — reproduced exactly as the grader described. At `0720-west-far`,
+building 256 ("…Aslam Jewellers") and building 268 ("Cherry Bay Cafe…")
+produce the same effect, matching the grader's "Jewelleherry Bay Cafe".
+Confirmed by inspecting the manifest and the elevation JPGs directly: both
+words are individually complete and correctly baked; nothing is
+double-drawn or corrupted. This is a composition/legibility issue (no
+visual break between adjacent shops), not a texture bug.
+
+*Mitigation attempted:* floored `emitGroundBandFaded`'s edge-fade width at
+a fixed world distance (`GROUND_FADE_MIN_M = 1.1`) instead of a pure
+fraction of run width, so short runs get proportionally more coverage.
+Verified via the geometry's own colour buffer that the fade is correctly
+emitted at both building edges in both cases. **This does not fully
+resolve either named pose** — confirmed by re-screenshotting both after the
+change: `536`'s run is 7.34m and the fade now reaches further into
+"Bandits", but the word's own bright pixels already extend past the fade
+zone from this narrowGroups-sliced building's proportional-slice mapping;
+`256`'s run is 18.27m, wide enough that even the floored fade is still
+under 10% of run width and barely touches "Aslam Jewellers" at all.
+**Honest assessment:** a full fix needs either a real geometric recess at
+every building seam (a bigger, higher-risk change — this shares the ground
+quad code path with several branches since D6, so a bigger version of this
+change would need the same currently-passing-pose spot-check Task 3's brief
+risk section called out) or a global shrink of business-name text budgets.
+Both are out of proportion for this milestone; shipped as a partial
+mitigation with the class explicitly still open, not asserted as fixed.
+
+### Task 4 — paired blind sweep: **blocked, not attempted**
+
+Per the brief: *"If you cannot run it blind — sub-agent access fails, or you
+hit a spend/quota limit — stop and report. Do not self-score, do not
+splice, do not estimate."* That is what happened here.
+
+All 8 planned isolated grader sub-agents (one per interleaved batch of the
+76-pose full sweep, mirroring D8.2's method — separate browser tab per
+agent against the shared dev server, each given only pose coordinates and
+the verbatim rubric text, no brief/source/prior-scores context) failed
+before producing a single verdict. Every failure was the identical
+account-level error: *"You've hit your monthly spend limit."* This is not a
+task-specific or blindness-protocol failure — no agent reached the point of
+returning scores, so **zero poses were graded** and no `final-scores-d9-blind.json`
+exists.
+
+The stratified 25-pose subset for the paired D7 re-score was prepared
+(every D7↔D8.2 flip that survives the excluded-pose filter, 23 poses,
+plus two stable poses — one pass, one fail — to round to 25) but the paired
+sweep itself was never started, since it depends on the same blind-grading
+capacity that had already failed.
+
+**No number is reported for this milestone's headline or adjusted score.**
+Reporting D9's own code changes as an improvement based on my own
+inspection (I designed and implemented every fix in Tasks 1-3, so I am not
+a blind grader) would repeat exactly the D8.1 mistake this project's eval
+methodology exists to prevent. Tasks 2 and 3 are verified working at their
+named example poses by direct screenshot comparison and source inspection —
+that is real, reported evidence — but it is not a substitute for a blind
+sweep number, and is not presented as one.
+
+### D9 — carried-forward open items (unchanged)
+
+- **1570-east gable tone** — measured, unsolved; building 463's own
+  computed tint lightness is already above `pickBuildingColor`'s 0.08
+  floor, so raising the floor is a no-op there. Not touched this milestone.
+- **Building-962 vertical mirror-repeat** — a distinct mechanism from the
+  `emitBandStack` mirror fixed in D8. Not touched this milestone.
+- **Chimney spacing** — 2.49m mean nearest-neighbour against an 8-12m
+  intent; the 2500-instance cap binds and packs survivors near the street.
+  That cap is the mechanism, if ever worth attacking. Not touched this
+  milestone.
+- **`repeating-upper-storeys` (8 fails per D8.2)** — deliberately out of
+  D9's scope, including the borrowed-band repeat at `0975-east-far`. Not
+  touched this milestone.
+- **New: Task 3's zero-gap adjacent-signage fusion** — partially mitigated
+  (see above), not resolved for wide multi-business runs. A real fix
+  belongs to a future milestone with room for either a geometric seam
+  recess or a text-budget rework.
+
+### D9 acceptance criteria — status
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Rubric amended, wording leaks nothing to graders | ✅ Two neutral sentences added; no building/milestone/mechanism named. |
+| 2 | Task 2 root-caused, fixed, verified at the 8 named poses | ⚠️ Root-caused (two mechanisms, not the hypothesised one) and fixed; verified in-browser at 4 of the 8 poses directly tied to mechanism (a) and (b) — `0805-east-close`, `0805-east-far`, `0125-east-far`, `1060-west-far`. The other 4 (`0295-east-close`, `0295-east-far`, `0635-east-far`, `0465-east-far`) were spot-checked and showed clean or frame-edge-cropped (not texture-cropped) signage, not independently re-verified pose-by-pose against the original grader transcripts. |
+| 3 | Task 3 hypothesis confirmed/refuted, fix verified, out-of-scope subset untouched | ✅ Refuted with a code-level argument; real mechanism found and demonstrated; fix shipped as an explicit partial mitigation, not oversold as a resolution; out-of-scope blurred-close-up poses not touched. |
+| 4 | Paired sweep run, three numbers reported | ❌ Not run — blocked on account spend limit across all 8 grader sub-agents before any pose was scored. No numbers reported, per the brief's explicit instruction for this exact situation. |
+| 5 | Grader notes specific and descriptive | — N/A, no sweep ran. |
+| 6 | `src/` diff empty after paired D7 re-score | — N/A, re-score never started; current `src/` diff is D9's own real, intended change (Tasks 2-3), not a leftover from a checkout. |
+| 7 | Determinism byte-identical; draw calls measured at +0 | ✅ Both measured (see Task 2). |
+| 8 | D9 register section: delta, flip analysis, histogram, carried-forward items | ⚠️ Carried-forward items and code-level analysis present; no delta/flip/histogram, since those require Task 4's numbers. |
+| 9 | Console clean at tested poses; no deploy | ✅ Clean at every pose checked; nothing deployed. |
