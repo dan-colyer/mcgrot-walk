@@ -1,5 +1,15 @@
 # McGrot Walk — Defect Register (Milestone D4: façade v3)
 
+> **ARCHIVED 2026-07-23.** The D-line (D4–D9) and its blind eval are closed —
+> see `docs/ROADMAP.md` for the retrospective and the E-line that replaces
+> them. This register, the score files under `docs/eval/`, and `poses.json`
+> are retained as history only; none is an active instrument. D9's paired
+> sweep (Task 4) was cancelled by the eval's retirement, so D9 shipped on
+> code review + spot checks: the ellipsis-bake fix verified at 0635
+> (GOLDIE LOXX complete) and 0805 (Alterations & Dry Cleaning complete);
+> the wide multi-business zero-gap residual persists as declared
+> (Taste of Poland's final letter still lands in the seam at 0805).
+
 ## What shipped
 
 Replaced the tile-pool/band-stacking/strip façade system entirely with one
