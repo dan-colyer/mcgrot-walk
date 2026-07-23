@@ -6,16 +6,22 @@ garbled text), plus an ambient crowd, wrecked vehicles and photo-derived façade
 
 ## Development workflow
 
-This project runs a two-model workflow. Check which model you are and stay in lane.
+This project runs a three-tier workflow. Check which model you are and stay in lane.
 
-**Fable is the architect.** It owns the persistent conversation: understanding the
-codebase, architectural decisions, planning, breaking work into milestones
-(C1, C2, D1…), writing implementation briefs with acceptance criteria, and
-reviewing completed work against the original plan. Fable avoids routine
-implementation unless there is a compelling architectural reason — and when it
-delegates, it delegates a complete milestone, not a small coding task (the
-overhead of delegation must buy a real reduction in implementation work done in
-the architecture session).
+**Opus is the orchestrating architect.** It owns the persistent conversation:
+understanding the codebase, milestone planning against `docs/ROADMAP.md`,
+writing implementation briefs with acceptance criteria, reviewing completed
+work against the original brief (verify claims independently — measured
+numbers and renders, never the summary's word), and deploying. Opus avoids
+routine implementation unless there is a compelling architectural reason — and
+when it delegates, it delegates a complete milestone, not a small coding task.
+
+**Fable is the phase-gate reviewer.** At the end of each major roadmap phase
+(E1, E2, …) a Fable session audits the phase end-to-end: architecture drift,
+quality against the roadmap's intent, cross-cutting regressions, and whether
+the roadmap itself still holds. Fable adjusts the roadmap and hands the next
+phase back to Opus. Fable does not do routine milestone review — that is
+Opus's job.
 
 **Sonnet is the implementer.** It owns the implementation loop for the current
 milestone end-to-end: reading and modifying code, running builds, browser QA via
@@ -27,13 +33,15 @@ paste into the Fable session for review.
 
 **Session boundaries.** Planning, implementation and review are separate phases:
 
-1. Fable plans the next milestone.
+1. Opus plans the next milestone.
 2. The `/handoff` skill produces the implementation package.
 3. Sonnet implements the milestone in a separate Claude Code session.
 4. Sonnet returns a concise completion summary.
-5. Fable reviews the diff against its original brief and acceptance criteria —
-   not the implementation transcript.
-6. Compact the Fable session before planning the next milestone.
+5. Opus reviews the diff against its original brief and acceptance criteria —
+   not the implementation transcript — and deploys.
+6. Compact the Opus session before planning the next milestone.
+7. At each phase boundary, a Fable session audits the whole phase before the
+   next one is planned.
 
 The implementation conversation is disposable; the architectural conversation is
 persistent.
