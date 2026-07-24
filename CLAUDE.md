@@ -71,6 +71,7 @@ npm run dev      # bundle + static server on :5174 (preview via workspace launch
 npm run bundle   # esbuild src/main.js → src/dev-bundle.js (stamps index.html with the bundle hash)
 node build.mjs   # single-file dist/mcgrot-walk.html, all assets inlined (the shareable artifact)
 node build.mjs --site   # dist-site/ for GitHub Pages (secret-scan before pushing)
+npm run smoke     # validation rig — the pre-deploy gate; see docs/VALIDATION.md
 ```
 
 ## Architecture
