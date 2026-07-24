@@ -995,5 +995,5 @@ export function buildShopfronts(assets, world, scene) {
 
   update({ x: streetLine[0][0], z: streetLine[0][1] }); // load whatever's near the spawn point up front
 
-  return { group: null, placeholders: placeholderMesh, count: quadCount, placeholderCount: pQuadCount, update };
+  return { group: null, placeholders: placeholderMesh, count: quadCount, placeholderCount: pQuadCount, update, pages };
 }

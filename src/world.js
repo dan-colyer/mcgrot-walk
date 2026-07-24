@@ -241,7 +241,9 @@ function buildBuildings(buildings) {
     flatShading: true,
     map: makeStoneTexture(),
   });
-  return new THREE.Mesh(merged, material);
+  const mesh = new THREE.Mesh(merged, material);
+  mesh.name = 'buildings'; // debug.js's geomHash looks this mesh up by name
+  return mesh;
 }
 
 function extrudeBuilding(building, idx) {

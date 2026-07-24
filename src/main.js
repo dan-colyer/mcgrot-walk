@@ -20,6 +20,7 @@ import { buildLeithers } from './leithers.js';
 import { buildLitter } from './litter.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
+import { createDebugApi } from './debug.js';
 
 async function main() {
   const canvas = document.getElementById('scene');
@@ -141,17 +142,12 @@ async function main() {
     renderer.render(scene, camera);
   }
 
-  // Dev-only probe (localhost only). stepFrame lets tests drive frames
-  // manually — rAF is paused whenever the preview pane is hidden.
-  if (['localhost', '127.0.0.1'].includes(location.hostname)) window.__mcgrotDebug = {
-    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer,
-    stepFrame: runFrame,
-  };
-
   // THREE.Clock is deprecated in r185 and its getDelta() yields 0 here,
   // freezing all dt-driven motion — plain performance.now() bookkeeping instead.
   let lastFrame = performance.now();
+  let autoAnimate = true;
   function animate() {
+    if (!autoAnimate) return;
     requestAnimationFrame(animate);
     const now = performance.now();
     const dt = Math.min((now - lastFrame) / 1000, 0.1);
@@ -159,6 +155,24 @@ async function main() {
     runFrame(dt, now / 1000);
   }
   animate();
+
+  // Dev-only test API (localhost only). stepFrame lets tests drive frames
+  // manually — rAF is paused whenever the preview pane is hidden. pauseAuto()
+  // additionally stops the live rAF loop entirely so the validation rig
+  // (scripts/smoke.mjs) can advance the world ONLY via stepFrame — required
+  // for the determinism invariant, since animate()'s real-time dt would
+  // otherwise make every reload's leither/bird/vermin positions diverge.
+  if (['localhost', '127.0.0.1'].includes(location.hostname)) {
+    window.__mcgrotDebug = createDebugApi({
+      camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
+      stepFrame: runFrame,
+      updaters,
+      setAutoAnimate(v) {
+        autoAnimate = v;
+        if (v) { lastFrame = performance.now(); requestAnimationFrame(animate); }
+      },
+    });
+  }
 }
 
 main().catch((err) => {

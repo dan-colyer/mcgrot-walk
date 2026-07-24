@@ -151,6 +151,33 @@ export function chainageOfPoint(px, pz, streetLine) {
   return bestChain;
 }
 
+// Inverse of chainageOfPoint: given a chainage (metres from the north end),
+// returns the point on streetLine at that arc length plus the local tangent
+// (unit vector, north -> south). Clamps to [0, total length]. Mirrors the
+// pointAtChainage logic in scripts/eval-poses.mjs (kept separate there since
+// that script also needs a plain-array cumulative-lengths pass over a JSON
+// snapshot; this copy is the one the live engine/debug API uses).
+export function pointAtChainage(streetLine, chainage) {
+  let acc = 0;
+  let prevAcc = 0;
+  for (let i = 0; i < streetLine.length - 1; i++) {
+    const [ax, az] = streetLine[i];
+    const [bx, bz] = streetLine[i + 1];
+    const segLen = Math.hypot(bx - ax, bz - az);
+    prevAcc = acc;
+    acc += segLen;
+    if (chainage <= acc || i === streetLine.length - 2) {
+      const t = segLen > 0 ? Math.max(0, Math.min(1, (chainage - prevAcc) / segLen)) : 0;
+      const x = ax + (bx - ax) * t;
+      const z = az + (bz - az) * t;
+      const tangent = segLen > 0 ? [(bx - ax) / segLen, (bz - az) / segLen] : [0, 1];
+      return { point: [x, z], tangent };
+    }
+  }
+  const [x, z] = streetLine[0] || [0, 0];
+  return { point: [x, z], tangent: [0, 1] };
+}
+
 // Cumulative chainage (arc length from the north end) of every building, keyed
 // by centroid, plus the building index order sorted north -> south. Used both
 // for the engine's anti-repeat spacing and the manifest's chainage field.
