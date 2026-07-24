@@ -7,6 +7,14 @@ alternative: a documented in-game test API (`src/debug.js`,
 so any AI session — or human — can verify the game in minutes. **Run it
 before every deploy and after every milestone.**
 
+**E1 (terrain incline):** the camera now follows ground elevation every
+frame — `src/controls.js`'s `update()` and every `src/debug.js` pose
+(`goto`/`gotoBookmark`/the `skyline` custom pose) set camera Y from
+`world.groundHeight(x, z) + EYE_HEIGHT`, not a flat constant. `src/terrain.js`
+is the sole height authority (pure function of chainage, no PRNG — see its
+header comment) and every subsystem that places geometry on the ground
+threads `world.groundHeight` through.
+
 ```bash
 npm run smoke                  # run the gate
 npm run smoke -- --update-goldens   # recapture goldens + draw-call baseline
@@ -51,6 +59,10 @@ dbg.bookmarks;                          // the curated ~8-pose golden set
 dbg.setTime(14); dbg.setWeather('rain'); // STUBS — console.info + no-op until E2
 dbg.pauseAuto(); dbg.resumeAuto();      // stop/restart the live rAF loop (see "Determinism")
 dbg.stepFrame(1/60, t);                 // manually advance one frame (back-compat, pre-E0.2 probe)
+
+dbg.world.groundHeight(x, z);           // E1: metres of elevation at a world XZ point
+dbg.world.setExaggeration(k);           // E1: live vertical multiplier on the terrain profile (default 1.0)
+dbg.world.getExaggeration();
 ```
 
 `goto`/`gotoBookmark` are **async** — they settle the camera (~150 stepped
@@ -137,9 +149,17 @@ differ between two fresh loads of the same code.
   (0.5% changed pixels, per-pixel threshold 0.1) is sized to absorb
   antialiasing/compression jitter, not to wave through a real regression.
   Pull both PNGs up side by side before deciding which one is right.
-- Goldens will be **recaptured wholesale** when E1 (terrain incline) lands —
-  camera heights and horizons shift street-wide. Until then the tolerance
-  protects against accidental drift, not intentional change.
+- Goldens were **recaptured wholesale for E1** (terrain incline) — camera
+  heights and horizons shifted street-wide, exactly as anticipated here.
+  Every bookmark was eyeballed post-recapture: buildings terrace onto the
+  slope without floating or sinking, entities (NPCs, litter, bins, cars,
+  bushes) sit on the ground at every chainage checked, and shopfronts stay
+  flush with the pavement. The `skyline` pose (hand-picked absolute camera
+  Y — see its `custom: true` def in `src/debug.js`) was checked separately
+  since terrain doesn't auto-correct a hardcoded Y; it still reads correctly
+  at its chainage (~700m, ground height there is modest). From this point on
+  the tolerance again protects against accidental drift, not intentional
+  change.
 
 ## Draw-call budget: measured, not assumed
 

@@ -10,6 +10,7 @@ import { buildScenery } from './scenery.js';
 import { buildGables } from './gables.js';
 import { buildChimneys } from './chimneys.js';
 import { createSky } from './sky.js';
+import { buildForth } from './forth.js';
 import { buildRoadDressing } from './road.js';
 import { buildRoadworks } from './roadworks.js';
 import { buildBirds } from './birds.js';
@@ -46,6 +47,7 @@ async function main() {
   // so its horizon can never drift out of step with the fog it meets. See sky.js.
   const sky = createSky(world.fog.color, world.streetLine);
   camera.add(sky.mesh);
+  buildForth(world, scene); // the Forth: water + far shore, north of the Foot
 
   const torch = createPlayerTorch(camera);
 
@@ -59,6 +61,7 @@ async function main() {
   const controls = createControls(camera, canvas, {
     nearestStreetPoint: world.nearestStreetPoint,
     spawn,
+    groundHeight: world.groundHeight,
   });
   controls.setEnabled(false); // gated until the title card is dismissed
 

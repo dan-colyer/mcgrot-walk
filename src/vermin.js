@@ -64,9 +64,10 @@ export function buildVermin(world, scene) {
   }), rats.length);
   group.add(mesh);
 
+  const groundHeight = world.groundHeight || (() => 0);
   return {
     group,
-    update(dt, time) { updateRats(mesh, rats, time); },
+    update(dt, time) { updateRats(mesh, rats, time, groundHeight); },
   };
 }
 
@@ -88,7 +89,7 @@ function smooth(e0, e1, x) {
   return t * t * (3 - 2 * t);
 }
 
-function updateRats(mesh, rats, time) {
+function updateRats(mesh, rats, time, groundHeight) {
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const e = new THREE.Euler();
@@ -115,7 +116,7 @@ function updateRats(mesh, rats, time) {
 
     e.set(0, yaw, 0, 'YXZ');
     q.setFromEuler(e);
-    pos.set(x, RAT_Y + bob, z);
+    pos.set(x, groundHeight(x, z) + RAT_Y + bob, z);
     scl.setScalar(r.scale);
     m.compose(pos, q, scl);
     mesh.setMatrixAt(i, m);

@@ -183,6 +183,7 @@ export function buildGables(assets, world, scene) {
   const buildings = (assets && assets.leith && assets.leith.buildings) || [];
   const manifest = assets && assets.facadeManifest;
   const nearest = world && world.nearestStreetPoint;
+  const groundHeight = world && world.groundHeight;
   if (!buildings.length || !nearest) return { mesh: null, count: 0 };
 
   // A small, fixed pool of ghost-sign names, deterministically chosen from
@@ -227,6 +228,7 @@ export function buildGables(assets, world, scene) {
     let cx = 0, cz = 0;
     for (const p of fp) { cx += p[0]; cz += p[1]; }
     cx /= fp.length; cz /= fp.length;
+    const baseY = groundHeight ? groundHeight(cx, cz) : 0;
 
     const runs = computeFrontageRunsSafe(building, nearest);
     const color = pickBuildingColor(bi, building);
@@ -271,7 +273,7 @@ export function buildGables(assets, world, scene) {
       const u0 = mirror ? tile.u1 : tile.u0;
       const u1 = mirror ? tile.u0 : tile.u1;
 
-      emit(u0, tile.v0, u1, tile.v1, ax2, az2, bx2, bz2, 0, buildingHeightM, color);
+      emit(u0, tile.v0, u1, tile.v1, ax2, az2, bx2, bz2, baseY, baseY + buildingHeightM, color);
     }
   });
 

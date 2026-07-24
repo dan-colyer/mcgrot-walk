@@ -62,7 +62,7 @@ export function buildCars(assets, world, scene) {
       if (prepped[i]) (byKind[MODELS[i].kind] ??= []).push(prepped[i]);
     }
     if (!byKind.car && !byKind.van && !byKind.bus) return; // assets absent (single-file artifact)
-    placeAll(byKind, line, group);
+    placeAll(byKind, line, group, world.groundHeight);
   });
 
   return { group };
@@ -104,7 +104,7 @@ function wreckify(root, burned) {
   });
 }
 
-function placeAll(byKind, line, group) {
+function placeAll(byKind, line, group, groundHeight) {
   const carPool = [...(byKind.car || []), ...(byKind.van || [])];
 
   if (carPool.length) {
@@ -117,11 +117,9 @@ function placeAll(byKind, line, group) {
       const [tx, tz] = s.tangent;
       const clone = carPool[Math.floor(rand() * carPool.length)].clone(true);
       wreckify(clone, rand() < 0.12); // the odd one burned out
-      clone.position.set(
-        s.point[0] + -tz * side * (PARK_OFFSET + rand() * 0.7),
-        0,
-        s.point[1] + tx * side * (PARK_OFFSET + rand() * 0.7)
-      );
+      const px = s.point[0] + -tz * side * (PARK_OFFSET + rand() * 0.7);
+      const pz = s.point[1] + tx * side * (PARK_OFFSET + rand() * 0.7);
+      clone.position.set(px, groundHeight ? groundHeight(px, pz) : 0, pz);
       // Nose along the street, either way; a couple abandoned mid-manoeuvre.
       let yaw = Math.atan2(tx, tz) + (rand() < 0.5 ? Math.PI : 0);
       if (rand() < 0.15) yaw += (rand() - 0.5) * 1.2;
@@ -138,7 +136,8 @@ function placeAll(byKind, line, group) {
     if (s) {
       const b = bus.clone(true);
       wreckify(b, true);
-      b.position.set(s.point[0], 0, s.point[1]);
+      const by = groundHeight ? groundHeight(s.point[0], s.point[1]) : 0;
+      b.position.set(s.point[0], by, s.point[1]);
       b.rotation.y = Math.atan2(s.tangent[0], s.tangent[1]) + 0.06;
       b.rotation.z = 0.07;
       group.add(b);

@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES, hash2, fbmP, finishTexture } from './road.js';
 import { buildStreetChain, makeNearestStreetPoint } from './frontage.js';
+import { createTerrain } from './terrain.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
@@ -106,20 +107,33 @@ function makeStoneTexture() {
 export function buildWorld(leith) {
   const group = new THREE.Group();
 
-  const streetMesh = buildStreetMeshes(leith.streetPaths);
+  // streetLine (and the groundHeight it drives) must exist before anything
+  // that samples elevation — every ground surface and building base below.
+  const streetLine = buildStreetChain(leith.streetPaths);
+  const terrain = createTerrain(streetLine);
+  const groundHeight = terrain.groundHeight;
+
+  const streetMesh = buildStreetMeshes(leith.streetPaths, groundHeight);
   if (streetMesh) group.add(streetMesh);
 
-  const buildingsMesh = buildBuildings(leith.buildings);
+  const buildingsMesh = buildBuildings(leith.buildings, groundHeight);
   if (buildingsMesh) group.add(buildingsMesh);
 
-  group.add(buildGround(leith));
-  group.add(buildGardenIsland());
+  group.add(buildGround(leith, groundHeight));
+  group.add(buildGardenIsland(groundHeight));
   addLighting(group);
 
-  const streetLine = buildStreetChain(leith.streetPaths);
   const fog = new THREE.FogExp2(FOG_COLOR, 0.0095);
 
-  return { group, streetLine, nearestStreetPoint: makeNearestStreetPoint(streetLine), fog };
+  return {
+    group,
+    streetLine,
+    nearestStreetPoint: makeNearestStreetPoint(streetLine),
+    fog,
+    groundHeight,
+    setExaggeration: terrain.setExaggeration,
+    getExaggeration: terrain.getExaggeration,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -129,13 +143,13 @@ export function buildWorld(leith) {
 // Carriageway and pavement are split into two meshes because they need two
 // different tiling textures, and a mesh has one material. Two draw calls; the
 // vertex-colour ribbon this replaces was one flat grey slab and read as lino.
-function buildStreetMeshes(streetPaths) {
+function buildStreetMeshes(streetPaths, groundHeight) {
   const road = [];
   const paving = [];
 
   for (const path of streetPaths) {
     if (path.length < 2) continue;
-    const built = buildRibbonGeometry(path);
+    const built = buildRibbonGeometry(path, groundHeight);
     if (!built) continue;
     road.push(built.road);
     paving.push(built.paving);
@@ -162,7 +176,7 @@ function buildStreetMeshes(streetPaths) {
 // DISTANCE IN METRES along the path, not by vertex index — index-based UVs
 // would stretch the tarmac across long straights and crush it round the bends,
 // smearing one texture over the full 1,617m of the Walk.
-function buildRibbonGeometry(path) {
+function buildRibbonGeometry(path, groundHeight) {
   const n = path.length;
   const normals = [];
   const dists = [];
@@ -190,8 +204,10 @@ function buildRibbonGeometry(path) {
       const [x, z] = path[i];
       const [nx, nz] = normals[i];
       const v = dists[i] / metres;
-      verts.push(x + nx * offA, 0, z + nz * offA);
-      verts.push(x + nx * offB, 0, z + nz * offB);
+      const xa = x + nx * offA, za = z + nz * offA;
+      const xb = x + nx * offB, zb = z + nz * offB;
+      verts.push(xa, groundHeight ? groundHeight(xa, za) : 0, za);
+      verts.push(xb, groundHeight ? groundHeight(xb, zb) : 0, zb);
       uvs.push(0, v, width / metres, v);
     }
     for (let i = 0; i < n - 1; i++) {
@@ -220,12 +236,12 @@ function buildRibbonGeometry(path) {
 // Buildings: extrude footprints, merge into a single geometry
 // ---------------------------------------------------------------------------
 
-function buildBuildings(buildings) {
+function buildBuildings(buildings, groundHeight) {
   const geometries = [];
   let skipped = 0;
 
   buildings.forEach((building, idx) => {
-    const geo = extrudeBuilding(building, idx);
+    const geo = extrudeBuilding(building, idx, groundHeight);
     if (geo) geometries.push(geo);
     else skipped++;
   });
@@ -246,7 +262,14 @@ function buildBuildings(buildings) {
   return mesh;
 }
 
-function extrudeBuilding(building, idx) {
+// Downward skirt on every building base: it terraces down the slope (one
+// baseY per building -> steps fall out for free at party walls) without a
+// visible gap on the downhill side, where the footprint's far corner would
+// otherwise sit above lower ground. Buried, never seen — bigger than any
+// plausible cross-footprint slope + neighbour step.
+const BUILDING_SKIRT = 3;
+
+function extrudeBuilding(building, idx, groundHeight) {
   const { footprint, levels } = building;
   if (!footprint || footprint.length < 3) return null;
 
@@ -262,8 +285,17 @@ function extrudeBuilding(building, idx) {
     }
     shape.closePath();
 
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false, curveSegments: 1 });
+    const skirt = groundHeight ? BUILDING_SKIRT : 0;
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: height + skirt, bevelEnabled: false, curveSegments: 1 });
     geo.rotateX(-Math.PI / 2);
+
+    if (groundHeight) {
+      let cx = 0, cz = 0;
+      for (const [x, z] of footprint) { cx += x; cz += z; }
+      cx /= footprint.length; cz /= footprint.length;
+      const baseY = groundHeight(cx, cz);
+      geo.translate(0, baseY - skirt, 0);
+    }
 
     const color = pickBuildingColor(idx, building);
     const count = geo.attributes.position.count;
@@ -311,7 +343,7 @@ function hashCode(str) {
 // Ground, lighting
 // ---------------------------------------------------------------------------
 
-function buildGround(leith) {
+function buildGround(leith, groundHeight) {
   let minX = Infinity;
   let maxX = -Infinity;
   let minZ = Infinity;
@@ -330,8 +362,23 @@ function buildGround(leith) {
   const cx = (minX + maxX) / 2;
   const cz = (minZ + maxZ) / 2;
 
-  const geo = new THREE.PlaneGeometry(width, depth);
+  // Subdivided so it can follow the slope — one segment roughly every 10m.
+  const segX = Math.max(1, Math.round(width / 10));
+  const segZ = Math.max(1, Math.round(depth / 10));
+  const geo = new THREE.PlaneGeometry(width, depth, segX, segZ);
   geo.rotateX(-Math.PI / 2);
+  if (groundHeight) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const wx = pos.getX(i) + cx;
+      const wz = pos.getZ(i) + cz;
+      // GROUND_Y stays a small fixed offset below the street ribbon at every
+      // point, same margin that killed z-fighting on the old flat plane.
+      pos.setY(i, groundHeight(wx, wz) + GROUND_Y);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+  }
   // Mottled earth/scrub texture in the same palette as the old flat colour —
   // the flat plane read as a smooth mud dune wherever it showed between the
   // road ribbons and the buildings.
@@ -339,7 +386,7 @@ function buildGround(leith) {
   tex.repeat.set(width / EARTH_METRES, depth / EARTH_METRES);
   const material = new THREE.MeshLambertMaterial({ map: tex });
   const mesh = new THREE.Mesh(geo, material);
-  mesh.position.set(cx, GROUND_Y, cz);
+  mesh.position.set(cx, groundHeight ? 0 : GROUND_Y, cz);
   return mesh;
 }
 
@@ -348,17 +395,34 @@ function buildGround(leith) {
 // Coordinates hand-derived from the terrace footprints (b805 → b433); the
 // strip half-fills every hero shot of that terrace, so it gets a bespoke
 // overgrown-gardens decal rather than bare earth.
-function buildGardenIsland() {
-  const geo = new THREE.PlaneGeometry(80, 14);
+const GARDEN_CX = -719, GARDEN_CZ = 1303;
+
+function buildGardenIsland(groundHeight) {
+  // Subdivided along its 80m length so it can follow the slope (~1.4m of
+  // drop end-to-end at 1x exaggeration) rather than tilting as one rigid
+  // plane, which would either float or bury one end on a curved profile.
+  const geo = new THREE.PlaneGeometry(80, 14, 20, 2);
   geo.rotateX(-Math.PI / 2);
   const dirx = -0.483, dirz = 0.876; // Elm Row's street heading
   geo.rotateY(Math.atan2(-dirz, dirx));
+  if (groundHeight) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const wx = pos.getX(i) + GARDEN_CX;
+      const wz = pos.getZ(i) + GARDEN_CZ;
+      pos.setY(i, groundHeight(wx, wz) + 0.02);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+  }
   const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
     map: makeGardenTexture(),
     transparent: true,
     depthWrite: false,
   }));
-  mesh.position.set(-719, 0.02, 1303); // above ground (-0.06), below street (0.03)
+  // above ground (-0.06), below street (0.03); y baked per-vertex when
+  // groundHeight is available (E1), so position.y stays the flat fallback.
+  mesh.position.set(GARDEN_CX, groundHeight ? 0 : 0.02, GARDEN_CZ);
   mesh.name = 'elm-row-gardens';
 
   // A flat decal at a grazing angle reads as painted lawn no matter what's in
@@ -379,10 +443,13 @@ function buildGardenIsland() {
     const h = 0.5 + rand() * 1.3;
     g.scale(0.9 + rand() * 1.6, h, 0.9 + rand() * 1.6);
     g.rotateY(rand() * Math.PI);
+    const bx = GARDEN_CX + dirx * along - dirz * across;
+    const bz = GARDEN_CZ + dirz * along + dirx * across;
+    const base = groundHeight ? groundHeight(bx, bz) : 0;
     g.translate(
-      -719 + dirx * along - dirz * across,
-      h * 0.55, // partly buried so the silhouette is a mound, not a ball
-      1303 + dirz * along + dirx * across
+      bx,
+      base + h * 0.55, // partly buried so the silhouette is a mound, not a ball
+      bz
     );
     bushGeos.push(g);
   }

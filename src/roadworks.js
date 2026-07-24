@@ -51,6 +51,7 @@ const DECAL_Y = 0.042;
 export function buildRoadworks(world, scene) {
   const line = world.streetLine || [];
   if (line.length < 2) return { group: new THREE.Group() };
+  const groundHeight = world.groundHeight;
 
   const group = new THREE.Group();
   scene.add(group);
@@ -60,9 +61,9 @@ export function buildRoadworks(world, scene) {
   const fencePanels = [];
   const spoil = [];
 
-  buildTrench(line, group, spoil, cones, fencePosts, fencePanels);
-  scatterCones(line, cones);
-  buildHoarding(line, group);
+  buildTrench(line, group, spoil, cones, fencePosts, fencePanels, groundHeight);
+  scatterCones(line, cones, groundHeight);
+  buildHoarding(line, group, groundHeight);
 
   emitCones(cones, group);
   emitFence(fencePosts, fencePanels, group);
@@ -105,14 +106,16 @@ function chainLength(line) {
 }
 
 // Point at `dist` along the street, `off` metres to the side (+ is left).
-function place(line, dist, off) {
+function place(line, dist, off, groundHeight) {
   const s = sampleAt(line, dist);
   if (!s) return null;
   const [tx, tz] = s.tangent;
   const px = -tz, pz = tx;
+  const x = s.point[0] + px * off;
+  const z = s.point[1] + pz * off;
   return {
-    x: s.point[0] + px * off,
-    z: s.point[1] + pz * off,
+    x, z,
+    y: groundHeight ? groundHeight(x, z) : 0,
     yaw: Math.atan2(tx, tz),
     tangent: s.tangent,
   };
@@ -122,7 +125,7 @@ function place(line, dist, off) {
 // The trench: painted floor, real spoil, real lip, real fence
 // ---------------------------------------------------------------------------
 
-function buildTrench(line, group, spoil, cones, posts, panels) {
+function buildTrench(line, group, spoil, cones, posts, panels, groundHeight) {
   const trenchTex = makeTrenchTexture();
   const decals = [];
   const HALF_W = 1.5; // the trench straddles where the rails would have continued
@@ -130,12 +133,12 @@ function buildTrench(line, group, spoil, cones, posts, panels) {
   // The excavation itself, laid as a run of quads along the street so it bends
   // with it. Starts where the rails die and runs on into nothing.
   for (let dist = RAIL_END - 6; dist < WORKS_END; dist += 5) {
-    const p = place(line, dist + 2.5, (rand() - 0.5) * 0.8);
+    const p = place(line, dist + 2.5, (rand() - 0.5) * 0.8, groundHeight);
     if (!p) break;
     const g = new THREE.PlaneGeometry(HALF_W * 2, 5.4);
     g.rotateX(-Math.PI / 2);
     g.rotateY(p.yaw);
-    g.translate(p.x, DECAL_Y, p.z);
+    g.translate(p.x, p.y + DECAL_Y, p.z);
     decals.push(g);
   }
   if (decals.length) {
@@ -153,7 +156,7 @@ function buildTrench(line, group, spoil, cones, posts, panels) {
   // — is what makes the brain read "hole".
   for (let dist = RAIL_END - 8; dist < WORKS_END + 4; dist += 3.2) {
     for (const side of [-1, 1]) {
-      const p = place(line, dist + rand() * 2, side * (HALF_W + 0.7 + rand() * 0.9));
+      const p = place(line, dist + rand() * 2, side * (HALF_W + 0.7 + rand() * 0.9), groundHeight);
       if (!p) continue;
 
       // Heaped earth. Spoil SLUMPS — it sits at its angle of repose, wide and
@@ -166,7 +169,7 @@ function buildTrench(line, group, spoil, cones, posts, panels) {
       heap.translate(0, h / 2, 0);
       heap.scale(1, 1, 0.7 + rand() * 0.5);
       heap.rotateY(rand() * Math.PI);
-      heap.translate(p.x, ROAD_Y, p.z);
+      heap.translate(p.x, p.y + ROAD_Y, p.z);
       colorGeo(heap, [0x5c4c39, 0x6a5843, 0x4a3d2e][Math.floor(rand() * 3)]);
       spoil.push(heap);
 
@@ -175,7 +178,7 @@ function buildTrench(line, group, spoil, cones, posts, panels) {
         const b = new THREE.BoxGeometry(0.4 + rand() * 0.5, 0.09, 0.35 + rand() * 0.4);
         b.rotateZ((rand() - 0.5) * 0.9);
         b.rotateY(rand() * Math.PI);
-        b.translate(p.x + (rand() - 0.5) * 1.4, ROAD_Y + 0.12, p.z + (rand() - 0.5) * 1.4);
+        b.translate(p.x + (rand() - 0.5) * 1.4, p.y + ROAD_Y + 0.12, p.z + (rand() - 0.5) * 1.4);
         colorGeo(b, 0x2b2c28);
         spoil.push(b);
       }
@@ -185,41 +188,41 @@ function buildTrench(line, group, spoil, cones, posts, panels) {
   // Cones line the trench the whole way, one every couple of metres.
   for (let dist = RAIL_END - 10; dist < WORKS_END + 6; dist += 2.3) {
     for (const side of [-1, 1]) {
-      const p = place(line, dist, side * (HALF_W + 1.9 + rand() * 0.4));
+      const p = place(line, dist, side * (HALF_W + 1.9 + rand() * 0.4), groundHeight);
       if (p) cones.push({ ...p, tipped: rand() < 0.16 });
     }
   }
 
   // Heras panels: a corridor down both sides of the works, and a run thrown
   // across the carriageway at the far end where the job was simply abandoned.
-  fenceRun(line, WORKS_START, WORKS_END, 4.4, posts, panels);
-  fenceRun(line, WORKS_START, WORKS_END, -4.4, posts, panels);
-  fenceAcross(line, WORKS_END + 2, posts, panels);
+  fenceRun(line, WORKS_START, WORKS_END, 4.4, posts, panels, groundHeight);
+  fenceRun(line, WORKS_START, WORKS_END, -4.4, posts, panels, groundHeight);
+  fenceAcross(line, WORKS_END + 2, posts, panels, groundHeight);
 }
 
 // A run of panels down one side of the works, parallel to the street.
-function fenceRun(line, from, to, off, posts, panels) {
+function fenceRun(line, from, to, off, posts, panels, groundHeight) {
   for (let dist = from; dist < to; dist += FENCE_PANEL_W + 0.1) {
-    const p = place(line, dist + FENCE_PANEL_W / 2, off);
+    const p = place(line, dist + FENCE_PANEL_W / 2, off, groundHeight);
     if (!p) break;
     if (rand() < 0.12) continue; // panels missing — someone's had them away
-    addPanel(p.x, p.z, p.yaw, posts, panels, rand() < 0.18);
+    addPanel(p.x, p.z, p.y, p.yaw, posts, panels, rand() < 0.18);
   }
 }
 
 // A run of panels thrown ACROSS the street: the point where the job stopped.
-function fenceAcross(line, dist, posts, panels) {
+function fenceAcross(line, dist, posts, panels, groundHeight) {
   for (let off = -6; off <= 6; off += FENCE_PANEL_W + 0.1) {
-    const p = place(line, dist, off + FENCE_PANEL_W / 2);
+    const p = place(line, dist, off + FENCE_PANEL_W / 2, groundHeight);
     if (!p) continue;
-    addPanel(p.x, p.z, p.yaw + Math.PI / 2, posts, panels, rand() < 0.25);
+    addPanel(p.x, p.z, p.y, p.yaw + Math.PI / 2, posts, panels, rand() < 0.25);
   }
 }
 
 // One Heras panel: a frame of thin bars (real geometry) plus a single quad
 // carrying the wire mesh as an alpha texture. Modelling the actual mesh would be
 // thousands of triangles per panel for something you can barely see.
-function addPanel(x, z, yaw, posts, panels, leaning) {
+function addPanel(x, z, groundY, yaw, posts, panels, leaning) {
   const lean = leaning ? (rand() - 0.5) * 0.5 : (rand() - 0.5) * 0.06;
 
   const frame = [];
@@ -242,14 +245,14 @@ function addPanel(x, z, yaw, posts, panels, leaning) {
   const merged = mergeGeometries(frame, false);
   merged.rotateZ(lean);
   merged.rotateY(yaw);
-  merged.translate(x, ROAD_Y, z);
+  merged.translate(x, groundY + ROAD_Y, z);
   posts.push(merged);
 
   const panel = new THREE.PlaneGeometry(FENCE_PANEL_W - 0.1, FENCE_H - 0.1);
   panel.translate(0, FENCE_H / 2, 0);
   panel.rotateZ(lean);
   panel.rotateY(yaw);
-  panel.translate(x, ROAD_Y, z);
+  panel.translate(x, groundY + ROAD_Y, z);
   panels.push(panel);
 }
 
@@ -275,13 +278,13 @@ function emitFence(posts, panels, group) {
 // Cones
 // ---------------------------------------------------------------------------
 
-function scatterCones(line, cones) {
+function scatterCones(line, cones, groundHeight) {
   const len = chainLength(line);
   for (let d = 40; d < len - 20; d += CONE_CLUSTER_SPACING) {
     if (d > WORKS_START - 40 && d < WORKS_END + 40) continue; // the works has its own
     const n = 3 + Math.floor(rand() * 6);
     for (let i = 0; i < n; i++) {
-      const p = place(line, d + (rand() - 0.5) * 14, (rand() - 0.5) * 12);
+      const p = place(line, d + (rand() - 0.5) * 14, (rand() - 0.5) * 12, groundHeight);
       if (p) cones.push({ ...p, tipped: rand() < 0.35 });
     }
   }
@@ -325,7 +328,7 @@ function emitCones(cones, group) {
     e.set(c.tipped ? Math.PI / 2 * (0.75 + rand() * 0.3) : (rand() - 0.5) * 0.08,
           rand() * Math.PI * 2, 0, 'YXZ');
     q.setFromEuler(e);
-    pos.set(c.x, ROAD_Y + (c.tipped ? 0.2 : 0), c.z);
+    pos.set(c.x, (c.y || 0) + ROAD_Y + (c.tipped ? 0.2 : 0), c.z);
     m.compose(pos, q, scl);
     mesh.setMatrixAt(i, m);
   });
@@ -337,8 +340,8 @@ function emitCones(cones, group) {
 // The hoarding
 // ---------------------------------------------------------------------------
 
-function buildHoarding(line, group) {
-  const p = place(line, HOARDING_AT, HOARDING_OFF);
+function buildHoarding(line, group, groundHeight) {
+  const p = place(line, HOARDING_AT, HOARDING_OFF, groundHeight);
   if (!p) return;
 
   const W = 4.2, H = 2.5, BASE = 0.45;
@@ -349,7 +352,7 @@ function buildHoarding(line, group) {
   const [tx, tz] = p.tangent;
   const facing = Math.atan2(-tx, -tz);
   board.rotateY(facing);
-  board.translate(p.x, ROAD_Y, p.z);
+  board.translate(p.x, p.y + ROAD_Y, p.z);
 
   group.add(new THREE.Mesh(board, new THREE.MeshLambertMaterial({
     map: makeHoardingTexture(),
@@ -364,7 +367,7 @@ function buildHoarding(line, group) {
   }
   const merged = mergeGeometries(legs, false);
   merged.rotateY(facing);
-  merged.translate(p.x, ROAD_Y, p.z);
+  merged.translate(p.x, p.y + ROAD_Y, p.z);
   group.add(new THREE.Mesh(merged, new THREE.MeshLambertMaterial({ color: 0x4a4438 })));
 }
 

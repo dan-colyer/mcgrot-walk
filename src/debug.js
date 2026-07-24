@@ -158,13 +158,15 @@ export function createDebugApi(ctx) {
   // lazily-loaded shopfront atlas page(s) near the new position have
   // finished decoding.
   async function settleAt(px, pz, lookX, lookZ) {
-    camera.position.set(px, EYE_HEIGHT, pz);
-    camera.lookAt(lookX, EYE_HEIGHT, lookZ);
+    const eyeY = world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT;
+    const lookY = world.groundHeight ? world.groundHeight(lookX, lookZ) + EYE_HEIGHT : EYE_HEIGHT;
+    camera.position.set(px, eyeY, pz);
+    camera.lookAt(lookX, lookY, lookZ);
     for (let i = 0; i < SETTLE_FRAMES; i++) {
       try { stepFrame(SETTLE_DT, i * SETTLE_DT); } catch { /* non-finite audio ramp on teleport, documented above */ }
     }
-    camera.position.set(px, EYE_HEIGHT, pz);
-    camera.lookAt(lookX, EYE_HEIGHT, lookZ);
+    camera.position.set(px, eyeY, pz);
+    camera.lookAt(lookX, lookY, lookZ);
     stepFrame(SETTLE_DT, SETTLE_FRAMES * SETTLE_DT);
     await waitForPagesLoaded(shopfronts, TEXTURE_WAIT_TIMEOUT_MS);
   }
@@ -182,7 +184,8 @@ export function createDebugApi(ctx) {
     const lookX = px + nx * sign * LOOK_AHEAD;
     const lookZ = pz + nz * sign * LOOK_AHEAD;
     await settleAt(px, pz, lookX, lookZ);
-    return { chainage, side, distance, position: { x: px, y: EYE_HEIGHT, z: pz } };
+    const eyeY = world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT;
+    return { chainage, side, distance, position: { x: px, y: eyeY, z: pz } };
   }
 
   async function gotoBookmark(id) {

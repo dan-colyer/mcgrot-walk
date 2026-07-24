@@ -48,6 +48,7 @@ const rand = (() => {
 
 export function buildLeithers(assets, world, scene, readers) {
   const streetLine = world.streetLine || [];
+  const groundHeight = world.groundHeight || (() => 0);
   if (streetLine.length < 2) return { update() {} };
   const lines = assets.comicLines || {};
   const streetLen = chainLength(streetLine);
@@ -103,10 +104,12 @@ export function buildLeithers(assets, world, scene, readers) {
         const it = w.fetchItem;
         const t = w.approachT;
         const tx = it.x + 0.75, tz = it.z; // stand just off the page
+        const ax = w.approachFrom.x + (tx - w.approachFrom.x) * t;
+        const az = w.approachFrom.z + (tz - w.approachFrom.z) * t;
         w.group.position.set(
-          w.approachFrom.x + (tx - w.approachFrom.x) * t,
-          Math.abs(Math.sin((w.s + t * 8) * 2)) * 0.03,
-          w.approachFrom.z + (tz - w.approachFrom.z) * t
+          ax,
+          groundHeight(ax, az) + Math.abs(Math.sin((w.s + t * 8) * 2)) * 0.03,
+          az
         );
         w.group.rotation.y = Math.atan2(it.x - w.group.position.x, it.z - w.group.position.z);
         if (t >= 1) {
@@ -168,7 +171,8 @@ export function buildLeithers(assets, world, scene, readers) {
         const [tx, tz] = sm.tangent;
         const px = sm.point[0] + -tz * w.side * w.offset;
         const pz = sm.point[1] + tx * w.side * w.offset;
-        w.group.position.set(px, 0, pz);
+        const groundY = groundHeight(px, pz);
+        w.group.position.set(px, groundY, pz);
         if (w.state === 'listen' && w.target) {
           const t = w.target.group.position;
           w.group.rotation.y = Math.atan2(t.x - px, t.z - pz);
@@ -176,7 +180,7 @@ export function buildLeithers(assets, world, scene, readers) {
           w.group.rotation.y = Math.atan2(tx * w.dir, tz * w.dir);
           // Walk bob: a little bounce and sway, enough to read as walking.
           const ws = time * (4.6 * w.speed) + w.phase;
-          w.group.position.y = Math.abs(Math.sin(ws)) * 0.045;
+          w.group.position.y = groundY + Math.abs(Math.sin(ws)) * 0.045;
           w.group.rotation.z = Math.sin(ws) * 0.03;
         }
       }

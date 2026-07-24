@@ -435,12 +435,13 @@ export function makeGardenTexture() {
 export function buildRoadDressing(world, scene) {
   const line = world.streetLine || [];
   if (line.length < 2) return { group: new THREE.Group() };
+  const groundHeight = world.groundHeight || (() => 0);
 
   const group = new THREE.Group();
   scene.add(group);
 
-  buildRails(line, group);
-  buildDecals(line, group);
+  buildRails(line, group, groundHeight);
+  buildDecals(line, group, groundHeight);
 
   return { group };
 }
@@ -479,7 +480,7 @@ function chainLength(line) {
 // so the rail catches a highlight along its head and goes dark down its sides.
 // The first attempt was a flat quad at y=0.045 and it read, unmistakably, as an
 // orange line painted down the middle of the road.
-function buildRails(line, group) {
+function buildRails(line, group, groundHeight) {
   const total = Math.min(RAIL_END, chainLength(line));
   const STEP = 3;
   const geos = [];
@@ -503,8 +504,9 @@ function buildRails(line, group) {
       const px = -tz, pz = tx;
       const cx = s.point[0] + px * side * (RAIL_GAUGE / 2);
       const cz = s.point[1] + pz * side * (RAIL_GAUGE / 2);
+      const cy = groundHeight(cx, cz);
       for (const [across, up] of PROFILE) {
-        verts.push(cx + px * across, up, cz + pz * across);
+        verts.push(cx + px * across, cy + up, cz + pz * across);
       }
       rings++;
     }
@@ -541,7 +543,7 @@ function buildRails(line, group) {
 
 // Potholes and standing water, scattered over the carriageway only. Separate
 // quads rather than paint in the tarmac texture, so they don't repeat every 8m.
-function buildDecals(line, group) {
+function buildDecals(line, group, groundHeight) {
   const len = chainLength(line);
   const potholeTex = makePotholeTexture();
   const puddleTex = makePuddleTexture();
@@ -562,7 +564,7 @@ function buildDecals(line, group) {
       const g = new THREE.PlaneGeometry(size, size * (0.6 + rand() * 0.7));
       g.rotateX(-Math.PI / 2);
       g.rotateY(rand() * Math.PI * 2);
-      g.translate(x, DECAL_Y, z);
+      g.translate(x, groundHeight(x, z) + DECAL_Y, z);
       geos.push(g);
     }
     if (!geos.length) return;

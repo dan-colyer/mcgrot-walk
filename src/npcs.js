@@ -191,7 +191,8 @@ export function buildNpcs(assets, world, scene, camera) {
     const baseY = Math.atan2(dirX, dirZ);
 
     const npc = buildNpc(assets, comic, COAT_COLORS[i % COAT_COLORS.length], registerFace);
-    npc.group.position.set(px, 0, pz);
+    const py = world.groundHeight ? world.groundHeight(px, pz) : 0;
+    npc.group.position.set(px, py, pz);
     npc.group.rotation.y = baseY;
     npc.baseY = baseY;
     npc.phase = i * 2.1;

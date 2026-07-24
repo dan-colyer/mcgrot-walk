@@ -67,6 +67,7 @@ function makeAerialGeometry() {
 export function buildChimneys(assets, world, scene) {
   const buildings = (assets && assets.leith && assets.leith.buildings) || [];
   const nearest = world && world.nearestStreetPoint;
+  const groundHeight = world && world.groundHeight;
   if (!buildings.length || !nearest) return { chimneys: null, aerials: null, count: 0 };
 
   // Party-wall corners: any footprint vertex (rounded to a coarse grid so
@@ -107,7 +108,8 @@ export function buildChimneys(assets, world, scene) {
       if (vertexCount.get(k) > 1 && !seen.has(k)) {
         seen.add(k);
         const d = nearest(a[0], a[1]);
-        candidates.push({ x: a[0], z: a[1], y: buildingHeightM, dist: d ? d.distance : centroidNear.distance, bi, edgeSeed: i });
+        const y = buildingHeightM + (groundHeight ? groundHeight(a[0], a[1]) : 0);
+        candidates.push({ x: a[0], z: a[1], y, dist: d ? d.distance : centroidNear.distance, bi, edgeSeed: i });
       }
 
       // Interval spacing along the edge itself.
@@ -142,7 +144,8 @@ export function buildChimneys(assets, world, scene) {
       for (let s = 0; s < n; s++) {
         const t = (s + 0.5) / n;
         const px = a[0] + dx * t, pz = a[1] + dz * t;
-        candidates.push({ x: px, z: pz, y: buildingHeightM, dist: (nearest(px, pz) || centroidNear).distance, bi, edgeSeed: i * 97 + s });
+        const py = buildingHeightM + (groundHeight ? groundHeight(px, pz) : 0);
+        candidates.push({ x: px, z: pz, y: py, dist: (nearest(px, pz) || centroidNear).distance, bi, edgeSeed: i * 97 + s });
       }
     }
   });
@@ -205,7 +208,8 @@ export function buildChimneys(assets, world, scene) {
       const d = near.point ? Math.hypot(p[0] - near.point[0], p[1] - near.point[1]) : 0;
       if (d < bestD) { bestD = d; best = p; }
     }
-    aerialCandidates.push({ x: best[0], z: best[1], y: buildingHeightM, bi });
+    const aerialY = buildingHeightM + (groundHeight ? groundHeight(best[0], best[1]) : 0);
+    aerialCandidates.push({ x: best[0], z: best[1], y: aerialY, bi });
   });
 
   const aerialGeo = makeAerialGeometry();

@@ -41,13 +41,14 @@ const ARC_LIGHT_PEAK = 55; // tuned without a browser preview — likely needs a
 
 export function buildScenery(world, scene) {
   const streetLine = world.streetLine || [];
+  const groundHeight = world.groundHeight || (() => 0);
   const group = new THREE.Group();
   scene.add(group);
 
-  const poles = buildCatenaryPoles(streetLine, group);
-  buildTram(streetLine, group);
-  buildDebris(streetLine, group);
-  const smoke = buildSmoke(streetLine, group);
+  const poles = buildCatenaryPoles(streetLine, group, groundHeight);
+  buildTram(streetLine, group, groundHeight);
+  buildDebris(streetLine, group, groundHeight);
+  const smoke = buildSmoke(streetLine, group, groundHeight);
   const arcSites = buildArcFlashes(poles, group);
 
   const api = { group, onArcFlash: null };
@@ -115,7 +116,7 @@ function colorGeometry(geo, hex) {
 // light + spark per chosen site)
 // ---------------------------------------------------------------------------
 
-function buildCatenaryPoles(streetLine, group) {
+function buildCatenaryPoles(streetLine, group, groundHeight) {
   const len = streetLength(streetLine);
   const poleGeos = [];
   const wireGeos = [];
@@ -127,16 +128,25 @@ function buildCatenaryPoles(streetLine, group) {
     const [tx, tz] = sample.tangent;
     const perpX = -tz;
     const perpZ = tx;
-    const leftPos = new THREE.Vector3(sample.point[0] + perpX * POLE_OFFSET, 0, sample.point[1] + perpZ * POLE_OFFSET);
-    const rightPos = new THREE.Vector3(sample.point[0] - perpX * POLE_OFFSET, 0, sample.point[1] - perpZ * POLE_OFFSET);
+    const leftX = sample.point[0] + perpX * POLE_OFFSET, leftZ = sample.point[1] + perpZ * POLE_OFFSET;
+    const rightX = sample.point[0] - perpX * POLE_OFFSET, rightZ = sample.point[1] - perpZ * POLE_OFFSET;
+    const leftBase = groundHeight(leftX, leftZ);
+    const rightBase = groundHeight(rightX, rightZ);
+    const leftPos = new THREE.Vector3(leftX, leftBase, leftZ);
+    const rightPos = new THREE.Vector3(rightX, rightBase, rightZ);
     const poleHeight = 7.5 + rand() * 0.6;
-    const wireY = poleHeight - 0.4;
 
     poleGeos.push(makePoleGeometry(leftPos, poleHeight));
     poleGeos.push(makePoleGeometry(rightPos, poleHeight));
-    wireGeos.push(makeSaggingWireGeometry(leftPos, rightPos, wireY));
+    wireGeos.push(makeSaggingWireGeometry(
+      leftPos.clone().setY(leftBase + poleHeight - 0.4),
+      rightPos.clone().setY(rightBase + poleHeight - 0.4),
+    ));
 
-    poles.push({ position: leftPos.clone().setY(wireY) }, { position: rightPos.clone().setY(wireY) });
+    poles.push(
+      { position: leftPos.clone().setY(leftBase + poleHeight - 0.4) },
+      { position: rightPos.clone().setY(rightBase + poleHeight - 0.4) },
+    );
   }
 
   if (poleGeos.length) {
@@ -156,17 +166,18 @@ function buildCatenaryPoles(streetLine, group) {
 
 function makePoleGeometry(pos, height) {
   const geo = new THREE.CylinderGeometry(0.09, 0.13, height, 6);
-  geo.translate(pos.x, height / 2, pos.z);
+  geo.translate(pos.x, pos.y + height / 2, pos.z);
   return geo;
 }
 
-function makeSaggingWireGeometry(a, b, y) {
+function makeSaggingWireGeometry(a, b) {
   const SEGMENTS = 8;
   const points = [];
   for (let i = 0; i <= SEGMENTS; i++) {
     const t = i / SEGMENTS;
     const x = THREE.MathUtils.lerp(a.x, b.x, t);
     const z = THREE.MathUtils.lerp(a.z, b.z, t);
+    const y = THREE.MathUtils.lerp(a.y, b.y, t);
     const sag = 4 * t * (1 - t) * WIRE_SAG; // parabolic droop, 0 at the ends
     points.push(x, y - sag, z);
   }
@@ -255,7 +266,7 @@ function updateArcFlashes(sites, time, onFlash) {
 // Derelict tram hulk — boxy rusted body, slight tilt, smashed-window quads
 // ---------------------------------------------------------------------------
 
-function buildTram(streetLine, group) {
+function buildTram(streetLine, group, groundHeight) {
   const sample = sampleStreet(streetLine, TRAM_DIST);
   if (!sample) return;
 
@@ -265,6 +276,7 @@ function buildTram(streetLine, group) {
   const offset = 5.5; // sits half into the carriageway — an abandoned wreck, not tidied to the kerb
   const cx = sample.point[0] + perpX * offset;
   const cz = sample.point[1] + perpZ * offset;
+  const groundY = groundHeight(cx, cz);
   const yaw = Math.atan2(tx, tz); // same convention as npcs.js: local +Z -> tangent direction
 
   const geos = [];
@@ -292,7 +304,7 @@ function buildTram(streetLine, group) {
   const merged = mergeGeometries(geos, false);
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
   const mesh = new THREE.Mesh(merged, mat);
-  mesh.position.set(cx, 1.85, cz);
+  mesh.position.set(cx, groundY + 1.85, cz);
   mesh.rotation.y = yaw;
   mesh.rotation.z = 0.09; // slight tilt — derailed, not parked
   group.add(mesh);
@@ -302,7 +314,7 @@ function buildTram(streetLine, group) {
 // Scattered debris — tumbled boxes/barrels along the pavements
 // ---------------------------------------------------------------------------
 
-function buildDebris(streetLine, group) {
+function buildDebris(streetLine, group, groundHeight) {
   const len = streetLength(streetLine);
   if (len < 4) return;
   const geos = [];
@@ -327,7 +339,7 @@ function buildDebris(streetLine, group) {
     geo.translate(0, h, 0);
     geo.rotateY(rand() * Math.PI);
     if (rand() < 0.3) geo.rotateZ((rand() - 0.5) * 0.5); // tipped over
-    geo.translate(x, 0, z);
+    geo.translate(x, groundHeight(x, z), z);
     colorGeometry(geo, RUST_PALETTE[i % RUST_PALETTE.length]);
     geos.push(geo);
   }
@@ -342,7 +354,7 @@ function buildDebris(streetLine, group) {
 // Drifting smoke — soft dark sprite planes, canvas radial-gradient texture
 // ---------------------------------------------------------------------------
 
-function buildSmoke(streetLine, group) {
+function buildSmoke(streetLine, group, groundHeight) {
   const len = streetLength(streetLine);
   if (len < 4) return [];
   const texture = makeSmokeTexture();
@@ -365,11 +377,13 @@ function buildSmoke(streetLine, group) {
     sprite.scale.set(scale, scale, 1);
     group.add(sprite);
 
+    const baseX = sample.point[0] + (rand() - 0.5) * 14;
+    const baseZ = sample.point[1] + (rand() - 0.5) * 14;
     sprites.push({
       sprite,
-      baseX: sample.point[0] + (rand() - 0.5) * 14,
-      baseZ: sample.point[1] + (rand() - 0.5) * 14,
-      baseY: 6 + rand() * 3,
+      baseX,
+      baseZ,
+      baseY: groundHeight(baseX, baseZ) + 6 + rand() * 3,
       phase: rand() * Math.PI * 2,
       riseSpeed: 0.25 + rand() * 0.15,
       riseRange: 9 + rand() * 3,

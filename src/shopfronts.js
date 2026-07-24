@@ -97,9 +97,17 @@ export function buildShopfronts(assets, world, scene) {
   const buildings = (assets && assets.leith && assets.leith.buildings) || [];
   const streetLine = (world && world.streetLine) || [];
   const nearest = world && world.nearestStreetPoint;
+  const groundHeight = world && world.groundHeight;
   if (!manifest || !atlas || !buildings.length || !nearest || streetLine.length < 2) {
     return { group: null, count: 0, update() {} };
   }
+
+  // Resolved to this run's ground height inside runs.forEach below, then
+  // added by emitInto/emitIntoTinted to every Y they emit — one height per
+  // frontage RUN (not per quad-column), so a long run doesn't shear against
+  // its own building. See docs/ROADMAP.md E1: "resolve one ground height
+  // per frontage run from its chainage".
+  let currentGroundY = 0;
 
   const atlasByIndex = atlas.buildings || {};
   const uInset = 0.5; // half-texel inset, in PIXELS (converted per-page below)
@@ -155,7 +163,8 @@ export function buildShopfronts(assets, world, scene) {
 
   function emitInto(buf, u0, v0, u1, v1, ax, az, bx, bz, y0, y1) {
     const base = buf.quadCount * 4;
-    buf.positions.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y1, az);
+    const gy0 = y0 + currentGroundY, gy1 = y1 + currentGroundY;
+    buf.positions.push(ax, gy0, az, bx, gy0, bz, bx, gy1, bz, ax, gy1, az);
     buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
     buf.colors.push(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
@@ -167,7 +176,8 @@ export function buildShopfronts(assets, world, scene) {
   // positions ((ax,y0,az), (bx,y0,bz), (bx,y1,bz), (ax,y1,az)).
   function emitIntoTinted(buf, u0, v0, u1, v1, ax, az, bx, bz, y0, y1, c0, c1, c2, c3) {
     const base = buf.quadCount * 4;
-    buf.positions.push(ax, y0, az, bx, y0, bz, bx, y1, bz, ax, y1, az);
+    const gy0 = y0 + currentGroundY, gy1 = y1 + currentGroundY;
+    buf.positions.push(ax, gy0, az, bx, gy0, bz, bx, gy1, bz, ax, gy1, az);
     buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
     buf.colors.push(...c0, ...c1, ...c2, ...c3);
     buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
@@ -377,6 +387,7 @@ export function buildShopfronts(assets, world, scene) {
         nx = -nx; nz = -nz; sx = run.bx; sz = run.bz; dx = -rdx; dz = -rdz;
       }
       const at = (t) => ({ x: sx + dx * t + nx * OUTWARD_EPS, z: sz + dz * t + nz * OUTWARD_EPS });
+      currentGroundY = groundHeight ? groundHeight(mx, mz) : 0;
 
       const region = atlasEntry
         ? (atlasEntry.regions.find((r) => (run.isChamfer ? r.kind === 'corner' : r.kind !== 'corner')) || atlasEntry.regions[0])
@@ -455,7 +466,7 @@ export function buildShopfronts(assets, world, scene) {
                 const uv = nameAtlas.uvFor.get(biz.name);
                 if (uv) {
                   const base = pQuadCount * 4;
-                  pPos.push(a.x, BASE_Y, a.z, b.x, BASE_Y, b.z, b.x, STOREY_M, b.z, a.x, STOREY_M, a.z);
+                  pPos.push(a.x, BASE_Y + currentGroundY, a.z, b.x, BASE_Y + currentGroundY, b.z, b.x, STOREY_M + currentGroundY, b.z, a.x, STOREY_M + currentGroundY, a.z);
                   pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
                   pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
                   pQuadCount++;
@@ -842,7 +853,7 @@ export function buildShopfronts(assets, world, scene) {
           if (!uv) continue;
           const a = at(u / units), b = at((u + 1) / units);
           const base = pQuadCount * 4;
-          pPos.push(a.x, BASE_Y, a.z, b.x, BASE_Y, b.z, b.x, STOREY_M, b.z, a.x, STOREY_M, a.z);
+          pPos.push(a.x, BASE_Y + currentGroundY, a.z, b.x, BASE_Y + currentGroundY, b.z, b.x, STOREY_M + currentGroundY, b.z, a.x, STOREY_M + currentGroundY, a.z);
           pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
           pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
           pQuadCount++;

@@ -31,14 +31,15 @@ const BIN_COUNT = 22;
 export function buildFlora(world, leith, scene) {
   const line = world.streetLine || [];
   if (line.length < 2) return { group: new THREE.Group() };
+  const groundHeight = world.groundHeight || (() => 0);
 
   const group = new THREE.Group();
   scene.add(group);
 
   buildBuddleia(world, leith, line, group);
-  buildLitter(line, group);
-  buildBins(line, group);
-  buildTrolley(line, group);
+  buildLitter(line, group, groundHeight);
+  buildBins(line, group, groundHeight);
+  buildTrolley(line, group, groundHeight);
 
   return { group };
 }
@@ -82,6 +83,7 @@ function buildBuddleia(world, leith, line, group) {
     return !np || np.distance <= 28;
   });
 
+  const groundHeight = world.groundHeight || (() => 0);
   const perBuilding = eligible.length ? ROOF_BUDDLEIA / eligible.length : 0;
   for (const b of eligible) {
     const fp = b.footprint;
@@ -92,10 +94,12 @@ function buildBuddleia(world, leith, line, group) {
       const i = Math.floor(rand() * fp.length);
       const j = (i + 1) % fp.length;
       const t = 0.1 + rand() * 0.8;
+      const bx = fp[i][0] + (fp[j][0] - fp[i][0]) * t;
+      const bz = fp[i][1] + (fp[j][1] - fp[i][1]) * t;
       bush(
-        fp[i][0] + (fp[j][0] - fp[i][0]) * t,
-        height - 0.25,
-        fp[i][1] + (fp[j][1] - fp[i][1]) * t,
+        bx,
+        groundHeight(bx, bz) + height - 0.25,
+        bz,
         1.1 + rand() * 1.5,
         (rand() - 0.5) * 0.5 // it leans out over the street, as it always does
       );
@@ -110,7 +114,7 @@ function buildBuddleia(world, leith, line, group) {
     const side = rand() < 0.5 ? 1 : -1;
     const off = side * (7.2 + rand() * 2.6); // pavement, against the walls
     const p = offsetPoint(s, off);
-    bush(p[0], 0.03, p[1], 0.8 + rand() * 1.1, (rand() - 0.5) * 0.3);
+    bush(p[0], groundHeight(p[0], p[1]) + 0.03, p[1], 0.8 + rand() * 1.1, (rand() - 0.5) * 0.3);
   }
 
   if (!quads.length) return;
@@ -181,7 +185,7 @@ function makeBuddleiaTexture() {
 // Litter
 // ---------------------------------------------------------------------------
 
-function buildLitter(line, group) {
+function buildLitter(line, group, groundHeight) {
   const len = chainLength(line);
   const geos = [];
 
@@ -193,6 +197,7 @@ function buildLitter(line, group) {
     // the road — that's where the wind and the traffic put it.
     const off = side * (rand() < 0.65 ? 6.3 + rand() * 0.7 : 7.5 + rand() * 2.2);
     const p = offsetPoint(s, off);
+    const groundY = groundHeight(p[0], p[1]);
     const roll = rand();
 
     let g, hex;
@@ -226,7 +231,7 @@ function buildLitter(line, group) {
       hex = 0x6d6a5c;
     }
 
-    g.translate(p[0], 0.03, p[1]);
+    g.translate(p[0], groundY + 0.03, p[1]);
     colorGeo(g, hex);
     geos.push(g);
   }
@@ -242,7 +247,7 @@ function buildLitter(line, group) {
 // Wheelie bins, mostly on their sides
 // ---------------------------------------------------------------------------
 
-function buildBins(line, group) {
+function buildBins(line, group, groundHeight) {
   const len = chainLength(line);
   const geos = [];
 
@@ -251,6 +256,7 @@ function buildBins(line, group) {
     if (!s) continue;
     const side = rand() < 0.5 ? 1 : -1;
     const p = offsetPoint(s, side * (7.6 + rand() * 1.8));
+    const groundY = groundHeight(p[0], p[1]);
     const tipped = rand() < 0.6;
 
     const parts = [];
@@ -271,7 +277,7 @@ function buildBins(line, group) {
     const bin = mergeGeometries(parts, false);
     bin.rotateY(rand() * Math.PI * 2);
     if (tipped) bin.rotateZ(Math.PI / 2 + (rand() - 0.5) * 0.3);
-    bin.translate(p[0], tipped ? 0.34 : 0.03, p[1]);
+    bin.translate(p[0], groundY + (tipped ? 0.34 : 0.03), p[1]);
     geos.push(bin);
   }
 
@@ -286,10 +292,11 @@ function buildBins(line, group) {
 // One shopping trolley, on its side in the road. There is always exactly one.
 // ---------------------------------------------------------------------------
 
-function buildTrolley(line, group) {
+function buildTrolley(line, group, groundHeight) {
   const s = sampleAt(line, 415);
   if (!s) return;
   const p = offsetPoint(s, -3.4);
+  const groundY = groundHeight(p[0], p[1]);
   const parts = [];
 
   const bar = (w, h, d, ox, oy, oz) => {
@@ -319,7 +326,7 @@ function buildTrolley(line, group) {
   colorGeo(trolley, 0x6a6d66);
   trolley.rotateZ(Math.PI / 2 * 0.92);     // dumped on its side
   trolley.rotateY(rand() * Math.PI * 2);
-  trolley.translate(p[0], 0.30, p[1]);
+  trolley.translate(p[0], groundY + 0.30, p[1]);
 
   group.add(new THREE.Mesh(
     trolley,

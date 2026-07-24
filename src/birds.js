@@ -53,18 +53,19 @@ const GULL_SPAN = 1.35; // a real herring gull. They are enormous.
 export function buildBirds(world, leith, scene) {
   const line = world.streetLine || [];
   if (line.length < 2) return { group: new THREE.Group(), update() {} };
+  const groundHeight = world.groundHeight || (() => 0);
 
   const group = new THREE.Group();
   scene.add(group);
 
   const wheeling = buildWheeling(line, group);
   buildPerched(world, leith, group);
-  buildPigeons(line, group);
+  buildPigeons(line, group, groundHeight);
 
   return {
     group,
     update(dt, time) {
-      updateWheeling(wheeling, time);
+      updateWheeling(wheeling, time, groundHeight);
     },
   };
 }
@@ -189,7 +190,7 @@ function buildWheeling(line, group) {
   return { mesh, birds };
 }
 
-function updateWheeling({ mesh, birds }, time) {
+function updateWheeling({ mesh, birds }, time, groundHeight) {
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const e = new THREE.Euler();
@@ -205,7 +206,7 @@ function updateWheeling({ mesh, birds }, time) {
     const acrossOff = sa * b.rAcross;
     const x = b.ox + b.ax * alongOff + b.px * acrossOff;
     const z = b.oz + b.az * alongOff + b.pz * acrossOff;
-    const y = b.y + Math.sin(time * b.bobFreq + b.phase) * b.bobAmp;
+    const y = groundHeight(x, z) + b.y + Math.sin(time * b.bobFreq + b.phase) * b.bobAmp;
 
     // Velocity is the derivative of that loop — what the bird points along.
     const vx = (-sa * b.rAlong * b.ax + ca * b.rAcross * b.px) * b.speed;
@@ -240,6 +241,7 @@ function updateWheeling({ mesh, birds }, time) {
 function buildPerched(world, leith, group) {
   const buildings = (leith && leith.buildings) || [];
   const near = world.nearestStreetPoint;
+  const groundHeight = world.groundHeight || (() => 0);
   const spots = [];
 
   // Only buildings actually on the street — a gull on a roofline half a mile away
@@ -263,10 +265,12 @@ function buildPerched(world, leith, group) {
       const i = Math.floor(rand() * fp.length);
       const j = (i + 1) % fp.length;
       const t = 0.15 + rand() * 0.7;
+      const px = fp[i][0] + (fp[j][0] - fp[i][0]) * t;
+      const pz = fp[i][1] + (fp[j][1] - fp[i][1]) * t;
       spots.push({
-        x: fp[i][0] + (fp[j][0] - fp[i][0]) * t,
-        z: fp[i][1] + (fp[j][1] - fp[i][1]) * t,
-        y: height + 0.12,
+        x: px,
+        z: pz,
+        y: groundHeight(px, pz) + height + 0.12,
         yaw: rand() * Math.PI * 2,
       });
     }
@@ -296,7 +300,7 @@ function buildPerched(world, leith, group) {
 // where the NPCs stand and nothing may get between the player and a comic.
 // ---------------------------------------------------------------------------
 
-function buildPigeons(line, group) {
+function buildPigeons(line, group, groundHeight) {
   const len = chainLength(line);
   const spots = [];
 
@@ -306,11 +310,9 @@ function buildPigeons(line, group) {
     const [tx, tz] = s.tangent;
     const px = -tz, pz = tx;
     const off = (rand() * 2 - 1) * 5.5; // carriageway only
-    spots.push({
-      x: s.point[0] + px * off,
-      z: s.point[1] + pz * off,
-      yaw: rand() * Math.PI * 2,
-    });
+    const x = s.point[0] + px * off;
+    const z = s.point[1] + pz * off;
+    spots.push({ x, z, yaw: rand() * Math.PI * 2 });
   }
   if (!spots.length) return;
 
@@ -323,7 +325,7 @@ function buildPigeons(line, group) {
   spots.forEach((s, i) => {
     e.set(0, s.yaw, 0, 'YXZ');
     q.setFromEuler(e);
-    m.compose(new THREE.Vector3(s.x, 0.10, s.z), q, new THREE.Vector3(1, 1, 1));
+    m.compose(new THREE.Vector3(s.x, groundHeight(s.x, s.z) + 0.10, s.z), q, new THREE.Vector3(1, 1, 1));
     mesh.setMatrixAt(i, m);
   });
   mesh.instanceMatrix.needsUpdate = true;

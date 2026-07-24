@@ -68,7 +68,8 @@ export function buildLitter(assets, world, scene) {
     mesh.rotation.z = rand() * Math.PI * 2;
     // A few lie crumpled-tilted rather than dead flat.
     if (rand() < 0.3) mesh.rotation.y = (rand() - 0.5) * 0.5;
-    mesh.position.set(x, 0.055 + rand() * 0.01, z);
+    const groundY = world.groundHeight ? world.groundHeight(x, z) : 0;
+    mesh.position.set(x, groundY + 0.055 + rand() * 0.01, z);
     group.add(mesh);
 
     return {

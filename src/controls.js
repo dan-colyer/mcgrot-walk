@@ -27,11 +27,12 @@ const MOVE_KEYS = {
   ArrowRight: 'right',
 };
 
-export function createControls(camera, domElement, { nearestStreetPoint, spawn }) {
+export function createControls(camera, domElement, { nearestStreetPoint, spawn, groundHeight }) {
   let yaw = spawn.yaw || 0;
   let pitch = 0;
 
-  camera.position.set(spawn.x, EYE_HEIGHT, spawn.z);
+  const spawnGround = groundHeight ? groundHeight(spawn.x, spawn.z) : 0;
+  camera.position.set(spawn.x, spawnGround + EYE_HEIGHT, spawn.z);
   camera.rotation.order = 'YXZ';
   applyLook();
 
@@ -170,6 +171,10 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn }
 
       camera.position.x = nx;
       camera.position.z = nz;
+    }
+
+    if (groundHeight) {
+      camera.position.y = groundHeight(camera.position.x, camera.position.z) + EYE_HEIGHT;
     }
   }
 

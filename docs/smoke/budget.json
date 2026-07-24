@@ -2,28 +2,28 @@
   "tolerancePct": 10,
   "perBookmark": {
     "north-150-close": {
-      "drawCalls": 25
+      "drawCalls": 27
     },
     "north-250-far": {
-      "drawCalls": 77
+      "drawCalls": 79
     },
     "elm-row-hero": {
       "drawCalls": 48
     },
     "mid-550-close": {
-      "drawCalls": 26
+      "drawCalls": 27
     },
     "mid-805-far": {
       "drawCalls": 46
     },
     "fascia-close": {
-      "drawCalls": 25
+      "drawCalls": 26
     },
     "foot-1500-far": {
       "drawCalls": 67
     },
     "skyline": {
-      "drawCalls": 931
+      "drawCalls": 953
     }
   }
 }
