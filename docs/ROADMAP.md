@@ -93,20 +93,61 @@ Residuals carried forward (audit findings, none blocking):
 *The largest beauty-per-effort win, and the engine behind half the delight
 layer. Good light flatters simple geometry.*
 
-- Time-of-day cycle (accelerated; phase seeded from the real date so each visit
-  starts differently). Sun/hemisphere/fog colours keyframed through dawn /
-  day / gloaming / night. Lit windows after dark.
+Split into four milestones. The split changed after E2a shipped: the material
+conversion below was found to be a prerequisite for weather, not a follow-on.
+
+### E2a — The Light — SHIPPED + DEPLOYED (2026-07-25)
+
+Time-of-day cycle (accelerated; phase seeded from the real date so each visit
+starts differently). `src/atmosphere.js` is the sole authority, driving three
+channels — scene lights, `toneMappingExposure`, and a tint registry over the
+unlit materials — from a keyframe table authored as `paletteAt(hours, weather)`
+with only the `overcast` column populated. Lit windows after dark
+(`src/windows.js`). `setTime` is real. Commit `c199a68`, gh-pages `16ab787`.
+
+### E2b — The Lit Street
+
+*Brief: `~/.claude/plans/mcgrot-e2b-brief.md`.*
+
+E2a's review found that **the torch cannot light anything the player reads** —
+it is a `PointLight`, and façades, litter comics, NPC faces and the held comic
+are all `MeshBasicMaterial`, which ignores lights. "Point the torch at it to
+read" is structurally impossible for exactly those surfaces. Dan's call: convert
+the readable set to lit materials.
+
+This has to precede weather. A "genuinely sunny" state expressed only as a
+`material.color` tint is a flat brightness multiplier with no sun angle and no
+shadowed side of the street; once façades respond to lights, sunshine is a real
+directional effect for free.
+
+- Normals on the shopfront page + placeholder geometry (currently absent — a
+  Lambert material on them renders black).
+- Convert shopfront pages, the name-plate placeholder, the far shore, litter
+  comics, NPC faces and the held comic to `MeshLambertMaterial`. Arc sparks, lit
+  windows, the sky dome and every `SpriteMaterial` stay unlit by intent.
+- Rebalance the light rig so noon looks unchanged, then walk the other keyframes.
+- Prune the tint registry (it currently retains disposed page materials) and
+  clamp `setDarkness(0)`, which sets `light.distance = 0` — unbounded, not off.
+- New anti-regression: the torch must provably brighten a readable surface.
+
+### E2c — Weather
+
 - Weather state machine: clear / overcast / drizzle / rain / haar, with
   transitions. Rain = particle pass + wet-road material response + puddle
-  reflections. Haar rolls up from the Forth.
-- **The Forth reveal (inherited from E1):** clear-weather states must thin the
-  fog enough that the view down the Walk finally reaches E1's water and
-  far-shore geometry — the payoff E1 built but the standing fog forbids. The
-  fog/sky seam invariant (`sky.js`) must survive dynamic fog density.
-- Post-processing stack: AO, bloom, vignette, film grain, colour grade.
-  Budgeted and toggleable (mobile fallback).
-- Debug hooks land with the feature: `setTime` / `setWeather` are E0 API stubs
-  until this milestone makes them real.
+  reflections. Haar rolls up from the Forth. `setWeather` becomes real.
+- Adds weather columns to E2a's `paletteAt(hours, weather)` table.
+- **The Forth reveal (inherited from E1) — Foot-only.** Measured: the far shore
+  needs fog 3.1× thinner to read from the Foot, but 17× thinner from Picardy,
+  which would destroy the haze. The "water and Fife from the top of the brae"
+  framing is dropped; the reveal ships for the lower Walk and the descent.
+  Thinning fog also out-ranges the shopfront pager (`LOAD_RANGE = 250`), so it
+  lands with a pager widening (~67MB GPU per 4096² page) and a budget re-check.
+- The fog/sky seam invariant (`sky.js`) must survive dynamic fog density.
+
+### E2d — Post-processing
+
+- AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable
+  (mobile fallback).
 
 ## E3 — The Folk (character system v2)
 
