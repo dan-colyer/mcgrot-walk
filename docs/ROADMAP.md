@@ -60,23 +60,33 @@ the game itself in minutes.*
    - `docs/VALIDATION.md` — the playbook: how to pose, what each invariant
      means, when a visual diff needs human eyes, how to add a bookmark.
 
-## E1 — The Brae (the incline)
+## E1 — The Brae (the incline) — SHIPPED (phase-gate passed 2026-07-25)
 
-*Leith Walk drops ~25–30m from Picardy Place to the Foot. The payoff is the
-iconic view: standing at the top looking down the Walk to the Forth, water and
-Fife on the horizon.*
+*Leith Walk drops ~25–30m from Picardy Place to the Foot.*
 
-- Elevation profile `h(chainage)` along the street spline (hand-authored from
-  spot heights / OS open data; smooth, monotonic-ish).
-- Road and pavement ribbons follow the profile; buildings sit at their
-  frontage's ground height and terrace down (step at party walls, as the real
-  street does).
-- Camera/gravity follows ground height; NPCs, leithers, litter, cars, vermin
-  all re-based (everything currently assumes y=0 — this is cross-cutting and
-  gets full architect review).
-- Sky/backdrop gains the Forth: water plane + far shore silhouette north of the
-  Foot, visible down the slope.
-- Smoke goldens re-captured once, after the slope lands.
+Delivered (commits `8c081f0` + `f1f2927`): `src/terrain.js` as the sole height
+authority (pure, PRNG-free, Hermite over hand-authored control points, 0m Foot
+→ 27m Picardy), terraced buildings (per-building base + buried skirt), all
+ribbons/entities/camera re-based, `src/forth.js` water + far-shore north of
+the Foot. Phase-gate audit verdict: architecture sound for E2–E5.
+
+Residuals carried forward (audit findings, none blocking):
+
+- **The Forth reveal moved to E2.** The roadmap's original payoff ("water and
+  Fife on the horizon" from the top) is impossible under the standing FogExp2
+  (0.0095 caps view distance ~300m in every condition) — independent of the
+  accepted terminus-building occlusion at the Foot. The geometry is in place
+  and reads from elevated/clearing angles; E2's clear-weather states are what
+  can open the long view.
+- **Exaggeration is a reload decision, not a live dial.** `setExaggeration` is
+  live but geometry bakes the profile at build, so a live change desyncs the
+  camera and per-frame movers (rats/gulls/walkers) from the baked street
+  (~10m of camera float at Picardy with k=1.5). To tune: edit the default in
+  `src/terrain.js`, reload, judge on the move. Dan has not yet picked a
+  keeper; default stays 1.0 (true grade).
+- Per-frame `chainageOfPoint` is a linear scan over the 99-segment street
+  line — fine at ~30 walkers, needs a cached lookup before E3 scales to
+  hundreds.
 
 ## E2 — Atmosphere (dynamic time + weather)
 
@@ -89,6 +99,10 @@ layer. Good light flatters simple geometry.*
 - Weather state machine: clear / overcast / drizzle / rain / haar, with
   transitions. Rain = particle pass + wet-road material response + puddle
   reflections. Haar rolls up from the Forth.
+- **The Forth reveal (inherited from E1):** clear-weather states must thin the
+  fog enough that the view down the Walk finally reaches E1's water and
+  far-shore geometry — the payoff E1 built but the standing fog forbids. The
+  fog/sky seam invariant (`sky.js`) must survive dynamic fog density.
 - Post-processing stack: AO, bloom, vignette, film grain, colour grade.
   Budgeted and toggleable (mobile fallback).
 - Debug hooks land with the feature: `setTime` / `setWeather` are E0 API stubs
@@ -106,7 +120,10 @@ readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
 - Readers: seated/standing sculpted grotesques, comic held two-handed, idle +
   page-turn animation, lip-sync-adjacent head motion while speaking.
 - Leithers: walk/idle/turn cycles, silhouette variety (shopping bags, prams,
-  dogs), LOD/instancing strategy to keep hundreds cheap.
+  dogs), LOD/instancing strategy to keep hundreds cheap — including a cached
+  chainage lookup (per-frame `chainageOfPoint` is a linear scan; see E1
+  residuals) and the `skyline`-pose draw-call count (~950, mostly
+  individually-drawn NPCs).
 - The cast of Leith archetypes seeds E4: the preacher at the Foot, the gull
   feeder, dog walkers, the man outside the pub who kens everything.
 
