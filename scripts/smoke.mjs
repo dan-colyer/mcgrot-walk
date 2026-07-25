@@ -30,14 +30,19 @@ const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
 const DRAW_CALL_TOLERANCE_PCT = 10;
 const PIXEL_THRESHOLD = 0.1;       // pixelmatch per-pixel colour-diff sensitivity (0-1)
 const DIFF_PCT_TOLERANCE = 0.5;    // max % of pixels allowed to differ before a golden fails
+// E2a: atmosphere's date-seeded start hour would otherwise change the
+// goldens (and the facade-darkening pose below) every day. Pinned
+// immediately after pauseAuto(), before any capture.
+const SMOKE_HOUR = 13;
+const NIGHT_LUMINANCE_RATIO_MAX = 45; // % — the 6% dimming-test regression this milestone fixes
 
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
 // accident — a mismatch here means main.js's updaters list changed and this
 // script needs a conscious update, not a silent pass.
 const EXPECTED_UPDATERS = [
-  'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'birds',
-  'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
+  'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
+  'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
 ];
 
 function getFreePort() {
@@ -83,6 +88,8 @@ async function bootPage(browser, port) {
   });
   await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
   await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
+  // Pin the clock before any capture — see SMOKE_HOUR above.
+  await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
   return { context, page, consoleMessages };
 }
 
@@ -97,6 +104,24 @@ function summarizeConsole(pageConsole, debugConsoleErrors) {
 function pctDiff(actual, baseline) {
   if (baseline === 0) return actual === 0 ? 0 : Infinity;
   return Math.abs(actual - baseline) / baseline * 100;
+}
+
+// Mean perceptual luminance over the upper half of a captured frame — the
+// half dominated by façade and sky rather than road, which is what the E2a
+// brief's anti-regression measures (the finding: dimming lights alone left
+// every unlit façade pixel-identical to full daylight).
+function meanLuminanceUpperHalf(png) {
+  const { width, height, data } = png;
+  const halfH = Math.floor(height / 2);
+  let sum = 0;
+  const count = halfH * width;
+  for (let y = 0; y < halfH; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    }
+  }
+  return count ? sum / count : 0;
 }
 
 async function main() {
@@ -146,6 +171,7 @@ async function main() {
 
     let budget = existsSync(budgetPath) ? JSON.parse(readFileSync(budgetPath, 'utf8')) : { tolerancePct: DRAW_CALL_TOLERANCE_PCT, perBookmark: {} };
     const drawCallsByBookmark = {};
+    const shotsByBookmark = {}; // raw PNG buffers, for the facade-darkening check below
 
     for (const bm of bookmarks) {
       await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
@@ -177,6 +203,7 @@ async function main() {
       }
 
       const shot = await page1.screenshot();
+      shotsByBookmark[bm.id] = shot;
       const goldenPath = join(goldenDir, `${bm.id}.png`);
       if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
         writeFileSync(goldenPath, shot);
@@ -198,6 +225,36 @@ async function main() {
         pass: diffPct <= DIFF_PCT_TOLERANCE,
         detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
       });
+    }
+
+    // --- E2a: clock pinning + sky/fog seam + the facade-darkening regression ---
+    const invAfterBookmarks = await getInvariants(page1);
+    results.push({
+      name: 'time pinned',
+      pass: invAfterBookmarks.time === SMOKE_HOUR && invAfterBookmarks.rate === 0,
+      detail: `time=${invAfterBookmarks.time}, rate=${invAfterBookmarks.rate} (expected ${SMOKE_HOUR}, 0)`,
+    });
+    results.push({
+      name: 'sky/fog linked',
+      pass: !!invAfterBookmarks.skyFogLinked,
+      detail: invAfterBookmarks.skyFogLinked ? 'uFog uniform === scene.fog.color' : 'sky dome uFog uniform is NOT the same object as scene.fog.color — see "THE SEAM" in src/sky.js',
+    });
+
+    const dayShot = shotsByBookmark['mid-805-far'];
+    if (dayShot) {
+      await page1.evaluate(() => window.__mcgrotDebug.setTime(22));
+      await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
+      const nightShot = await page1.screenshot();
+      const dayLum = meanLuminanceUpperHalf(PNG.sync.read(dayShot));
+      const nightLum = meanLuminanceUpperHalf(PNG.sync.read(nightShot));
+      const ratio = dayLum > 0 ? (nightLum / dayLum) * 100 : 0;
+      results.push({
+        name: 'night darkens facades',
+        pass: ratio <= NIGHT_LUMINANCE_RATIO_MAX,
+        detail: `22:00 mean luminance is ${ratio.toFixed(1)}% of ${SMOKE_HOUR}:00's (${nightLum.toFixed(1)} vs ${dayLum.toFixed(1)}; must be <=${NIGHT_LUMINANCE_RATIO_MAX}%)`,
+      });
+    } else {
+      results.push({ name: 'night darkens facades', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
     }
 
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {

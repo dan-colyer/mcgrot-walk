@@ -21,6 +21,38 @@ street's north terminus** — as the real Foot of Leith Walk is; the water reads
 from the descent and from angles that clear that building. Accepted as
 faithful, not a bug (Dan's call, E1 review).
 
+**E2a (the light — time-of-day):** `src/atmosphere.js` is the sole authority
+for "what the light is like right now", the same role `src/terrain.js` plays
+for height. `dbg.setTime(h)` is now real (no longer a stub) and **freezes the
+day/night cycle** — it sets the atmosphere's own rate to 0, independently of
+`pauseAuto()`/`controls.setYFollow(false)` freezing the camera. Always call
+it when posing a frame. There is no `resumeTime()`: once frozen, the cycle
+stays pinned at whatever hour `setTime` last set until either you call
+`setTime` again or reload the page (which reseeds the start hour from the
+current date).
+
+The atmosphere drives three channels every frame (see the E2 brief for the
+full rationale): scene lights + fog colour, `renderer.toneMappingExposure`,
+and a **tint registry** over every unlit `MeshBasicMaterial` in the scene —
+façades, name-plates, litter comics, the Forth's far shore and NPC
+faces/comics all ignore the light rig entirely (`MeshLambertMaterial` doesn't),
+so dimming lights alone left them pixel-identical to full daylight even at
+6% brightness (the finding that motivated this milestone). The registry
+re-scans the scene every ~30 frames (materials created lazily, e.g.
+`shopfronts.js`'s per-page meshes, need picking up after the fact) and skips
+any material with `userData.unlit === false` (the arc-flash spark,
+`src/scenery.js`, and the lit-windows glow, `src/windows.js`, both opt out —
+they're meant to stay bright regardless of time of day).
+
+`src/windows.js` places small warm glow quads on upper-storey street-facing
+frontage, seeded via `hash32` (no PRNG — see Determinism below), and fades
+them in as darkness falls; `src/world.js`'s player torch scales its
+intensity/distance the same way (near-off at midday, full reach at night —
+"torchlight noir" per Dan's E2 call). Weather is still a stub
+(`dbg.setWeather` is a no-op) — the palette table is authored as a two-axis
+`paletteAt(hours, weather)` lookup with only the `overcast` column populated,
+so E2b can add columns without rewriting it.
+
 ```bash
 npm run smoke                  # run the gate
 npm run smoke -- --update-goldens   # recapture goldens + draw-call baseline
@@ -51,6 +83,21 @@ tells you which check and why.
 5. **Goldens** — a screenshot at each bookmark, pixel-diffed against
    `docs/smoke/goldens/<id>.png` (pixelmatch, 0.1 per-pixel threshold, 0.5%
    changed-pixel tolerance).
+6. **Time pinned** (E2a) — `invariants().time === SMOKE_HOUR` (13) and
+   `rate === 0` after the bookmark sweep. `bootPage()` pins the clock via
+   `setTime(SMOKE_HOUR)` immediately after `pauseAuto()`, before any capture
+   — without this, atmosphere's date-seeded start hour would change every
+   golden (and the facade-darkening pose below) once a day.
+7. **Sky/fog linked** (E2a) — `invariants().skyFogLinked` is `true`: an
+   identity check (`sky.uniforms.uFog.value === scene.fog.color`) that catches
+   "THE SEAM" failure mode in `src/sky.js` — a `scene.fog.color = new
+   THREE.Color(...)` reassignment anywhere would leave the sky dome pointing
+   at a stale object even if the colours still looked plausible.
+8. **Night darkens façades** (E2a) — the numeric anti-regression for the
+   finding that motivated this milestone. Captures `mid-805-far` at 13:00 and
+   again at 22:00, computes mean luminance of the upper half of each frame
+   (façade + sky, not road), and fails unless the 22:00 mean is ≤45% of the
+   13:00 mean.
 
 ## The debug API (`window.__mcgrotDebug`)
 
@@ -64,9 +111,11 @@ const dbg = window.__mcgrotDebug;
 await dbg.goto(550, 'east', 'close');   // chainage (m from north end), side, distance
 await dbg.gotoBookmark('elm-row-hero'); // one of dbg.bookmarks
 dbg.face(x, z);                         // look at a world XZ point, at current eye height
-dbg.invariants();                       // -> {drawCalls, triangles, geomHash, updaterCount, updaterNames, consoleErrors}
+dbg.invariants();                       // -> {drawCalls, triangles, geomHash, updaterCount, updaterNames,
+                                         //     consoleErrors, time, rate, skyFogLinked}
 dbg.bookmarks;                          // the curated ~8-pose golden set
-dbg.setTime(14); dbg.setWeather('rain'); // STUBS — console.info + no-op until E2
+dbg.setTime(14);                        // E2a: real — sets the hour AND freezes the day/night cycle (rate -> 0)
+dbg.setWeather('rain');                 // STUB — console.info + no-op until E2b
 dbg.pauseAuto(); dbg.resumeAuto();      // stop/restart the live rAF loop (see "Determinism")
 dbg.stepFrame(1/60, t);                 // manually advance one frame (back-compat, pre-E0.2 probe)
 
@@ -112,6 +161,8 @@ before committing.
 | `geomHash` | FNV-1a over: the merged buildings mesh's position array, every `InstancedMesh`'s `instanceMatrix` (chimneys, aerials, birds, vermin, roadwork cones — found by traversal, not a hardcoded list), and every NPC's placed position (NPCs are individual `Group`s in this codebase, not instanced, but their placement is just as seeded — see `src/debug.js`'s `computeGeomHash`) | **Determinism breach = a seeded PRNG call sequence got disturbed.** Treat as a blocker (see root `CLAUDE.md` / `docs/ROADMAP.md`: "seeded PRNG order is sacred; additions via hash32 only"). Bisect recent commits touching `hash32`/`hash2` call sites in `chimneys.js`, `gables.js`, `shopfronts.js`, `road.js`, `npcs.js`. |
 | `updaterCount`/`updaterNames` | `main.js`'s `updaters` array | A new subsystem wired into `animate()` but not `stepFrame` (or vice versa) — the exact D0 bug this exists to catch. Update `EXPECTED_UPDATERS` in `scripts/smoke.mjs` deliberately when you add one. |
 | `consoleErrors` | `console.error` calls + `window` `error`/`unhandledrejection` events, collected from page load | Any non-empty result is a bug, not noise — `console.warn` (chimney/building skip warnings) is expected and NOT counted. |
+| `time`/`rate` (E2a) | `src/atmosphere.js`'s current hour (0..24) and cycle rate (hours/real-minute; 0 when frozen) | A pose that should be stable (any `gotoBookmark` after `setTime`) but reports `rate !== 0` means something called `setRate`/resumed the cycle after your `setTime` — the frame will drift under repeat capture. |
+| `skyFogLinked` (E2a) | `sky.uniforms.uFog.value === scene.fog.color` (object identity, not colour equality) | `false` means "THE SEAM" in `src/sky.js` broke: something reassigned `scene.fog.color` to a new object instead of mutating the existing one in place. Bisect recent changes to `src/atmosphere.js`'s fog handling or anything touching `world.fog`. |
 
 ### Determinism: why `pauseAuto()` matters
 
@@ -133,6 +184,14 @@ thing to assert bit-for-bit sameness on. What IS hashed is placement
 established once at build time (buildings, chimneys/aerials/cones/rats'
 initial instance transforms, NPC spawn points) — nothing here should ever
 differ between two fresh loads of the same code.
+
+**E2a note:** `src/atmosphere.js` seeds its start hour from the real
+calendar date (`hash32` over `YYYY-MM-DD`, no PRNG), so it changes once a day
+but is otherwise deterministic and doesn't touch `geomHash` at all (lights,
+fog colour and material tints aren't part of the hash). `scripts/smoke.mjs`
+pins the clock to `SMOKE_HOUR` (13) immediately after `pauseAuto()` on both
+boots, so the date-seeded hour never reaches a golden or the determinism
+check.
 
 ## Adding a bookmark
 
@@ -174,6 +233,16 @@ differ between two fresh loads of the same code.
   survives `invariants()`/screenshot. Terrain-follow resumes with `resumeAuto()`
   / live play. From this point on the tolerance again protects against
   accidental drift, not intentional change.
+- Goldens were **recaptured wholesale for E2a** (time-of-day) — every pose
+  now renders at `SMOKE_HOUR` (13:00) rather than whatever hour a stub
+  `setTime` left it at previously, and the noon keyframe's palette differs
+  slightly from the old always-on lighting rig's fixed values, so every
+  bookmark shifted a little even though nothing else about the geometry
+  changed. Eyeballed post-recapture: façades/name-plates/litter read at full
+  daylight brightness at 13:00 (tint ≈ (1,1,1) at noon, fading toward the
+  17:00 keyframe by 13:00), the horizon seam is intact at every bookmark, and
+  no lit-window glow is visible in full daylight (`windowGlow` is 0 at the
+  noon keyframe).
 
 ## Draw-call budget: measured, not assumed
 

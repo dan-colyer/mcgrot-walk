@@ -10,6 +10,8 @@ import { buildScenery } from './scenery.js';
 import { buildGables } from './gables.js';
 import { buildChimneys } from './chimneys.js';
 import { createSky } from './sky.js';
+import { createAtmosphere } from './atmosphere.js';
+import { buildWindows } from './windows.js';
 import { buildForth } from './forth.js';
 import { buildRoadDressing } from './road.js';
 import { buildRoadworks } from './roadworks.js';
@@ -50,6 +52,12 @@ async function main() {
   buildForth(world, scene); // the Forth: water + far shore, north of the Foot
 
   const torch = createPlayerTorch(camera);
+  const windows = buildWindows(assets, world, scene); // lit windows after dark
+  // Sole authority for time-of-day (E2a): lights, exposure, fog/sky colour,
+  // the unlit-façade tint registry, torch reach and window glow all flow
+  // from here every frame. Created after createSky/torch/windows exist —
+  // it drives all three — and before the remaining subsystems below.
+  const atmosphere = createAtmosphere({ scene, renderer, world, sky, torch, windows });
 
   // streetLine is oriented north (index 0) -> south; spawn at the north end
   // (Foot of the Walk) facing along the street's actual bearing (Leith Walk
@@ -133,6 +141,7 @@ async function main() {
     { name: 'litter', update: () => litter.update(camera.position) },
     { name: 'shopfronts', update: () => shopfronts.update(camera.position) },
     { name: 'sky', update: (dt, t) => sky.update(t) },
+    { name: 'atmosphere', update: (dt, t) => atmosphere.update(dt, t) },
     { name: 'birds', update: (dt, t) => birds.update(dt, t) },
     { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
     { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
@@ -168,6 +177,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
+      sky, atmosphere,
       stepFrame: runFrame,
       updaters,
       setAutoAnimate(v) {

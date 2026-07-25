@@ -135,7 +135,7 @@ function waitForPagesLoaded(shopfronts, timeoutMs) {
 export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
-    renderer, scene, stepFrame, updaters, setAutoAnimate,
+    renderer, scene, sky, atmosphere, stepFrame, updaters, setAutoAnimate,
   } = ctx;
 
   const consoleErrors = [];
@@ -215,16 +215,17 @@ export function createDebugApi(ctx) {
   }
 
   function setTime(h) {
-    console.info('[debug] setTime not implemented until E2');
+    atmosphere.setTime(h); // also freezes the cycle — see docs/VALIDATION.md
   }
 
   function setWeather(state) {
-    console.info('[debug] setWeather not implemented until E2');
+    console.info('[debug] setWeather not implemented until E2b');
   }
 
   function invariants() {
     stepFrame(SETTLE_DT, 0);
     const info = renderer.info.render;
+    const atmo = atmosphere.state();
     return {
       drawCalls: info.calls,
       triangles: info.triangles,
@@ -232,6 +233,13 @@ export function createDebugApi(ctx) {
       updaterCount: updaters.length,
       updaterNames: updaters.map((u) => u.name),
       consoleErrors: consoleErrors.slice(),
+      time: atmo.hours,
+      rate: atmo.rate,
+      // Identity check, not an equality check: catches "THE SEAM" failure
+      // mode in sky.js — a `scene.fog.color = new THREE.Color(...)`
+      // reassignment anywhere would leave this uniform pointing at a stale
+      // object even though the colour values might still look right.
+      skyFogLinked: !!(sky && world.fog && sky.uniforms.uFog.value === world.fog.color),
     };
   }
 

@@ -121,7 +121,7 @@ export function buildWorld(leith) {
 
   group.add(buildGround(leith, groundHeight));
   group.add(buildGardenIsland(groundHeight));
-  addLighting(group);
+  const lights = addLighting(group);
 
   const fog = new THREE.FogExp2(FOG_COLOR, 0.0095);
 
@@ -133,6 +133,10 @@ export function buildWorld(leith) {
     groundHeight,
     setExaggeration: terrain.setExaggeration,
     getExaggeration: terrain.getExaggeration,
+    // Handed to src/atmosphere.js (E2a), which drives colour/intensity
+    // keyframes on all three — buildWorld's own values above are just the
+    // day-one baseline, now effectively the noon keyframe.
+    lights,
   };
 }
 
@@ -466,7 +470,9 @@ function buildGardenIsland(groundHeight) {
 function addLighting(group) {
   // Overcast hemisphere fill, raised from the Phase 2 level so the near
   // field (street/ground right around the player) reads instead of
-  // crushing to black — still grim, not daylight.
+  // crushing to black — still grim, not daylight. These starting values are
+  // the noon keyframe in src/atmosphere.js, which owns them frame-to-frame
+  // from here on.
   const hemi = new THREE.HemisphereLight(0x8b93a0, 0x3a3324, 3.9);
   group.add(hemi);
 
@@ -479,6 +485,8 @@ function addLighting(group) {
   // to black outside an NPC's spotlight pool or the player's torch.
   const ambient = new THREE.AmbientLight(0x4c4838, 1.4);
   group.add(ambient);
+
+  return { hemi, sun, ambient };
 }
 
 // ---------------------------------------------------------------------------
@@ -497,11 +505,22 @@ export function createPlayerTorch(camera) {
   light.position.set(0.15, -0.15, 0.1);
   camera.add(light);
 
+  // Atmosphere-driven darkness scale (E2a): 1 at deep night (full reach,
+  // same numbers this always had), near 0 at midday ("torchlight noir" is
+  // meaningless competing with daylight). Distance is scaled too — a torch
+  // that reaches 6.5m at night should barely glow a hand's-width by noon.
+  let scale = 1;
+
+  function setDarkness(k) {
+    scale = k;
+    light.distance = TORCH_DISTANCE * scale;
+  }
+
   function update(time) {
     // Cheap flicker from a few off-frequency sines — no per-frame allocations.
     const n = Math.sin(time * 11.3) * 0.5 + Math.sin(time * 27.1) * 0.3 + Math.sin(time * 4.7) * 0.2;
-    light.intensity = TORCH_BASE_INTENSITY + n * TORCH_FLICKER_AMOUNT * 0.3333;
+    light.intensity = (TORCH_BASE_INTENSITY + n * TORCH_FLICKER_AMOUNT * 0.3333) * scale;
   }
 
-  return { light, update };
+  return { light, update, setDarkness };
 }

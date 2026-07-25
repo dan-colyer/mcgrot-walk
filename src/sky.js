@@ -192,8 +192,24 @@ export function createSky(fogColor, streetLine) {
   // — the shader reads world direction, which is rotation-invariant.
   return {
     mesh,
+    // Exposed so debug.js's skyFogLinked invariant can assert
+    // uniforms.uFog.value === scene.fog.color by reference (the identity
+    // check for "THE SEAM" above) without this module needing to know
+    // anything about the debug API.
+    uniforms,
     update(time) {
       uniforms.uTime.value = time;
+    },
+    // Copies INTO the existing uniform Color objects rather than replacing
+    // them — uFog in particular must stay the same object as scene.fog.color
+    // (see "THE SEAM" above); the others are copied for consistency even
+    // though only uFog has an external identity to preserve.
+    setPalette({ band, zenith, cloudDark, cloudLit, glow }) {
+      if (band) uniforms.uBand.value.copy(band);
+      if (zenith) uniforms.uZenith.value.copy(zenith);
+      if (cloudDark) uniforms.uCloudDark.value.copy(cloudDark);
+      if (cloudLit) uniforms.uCloudLit.value.copy(cloudLit);
+      if (glow) uniforms.uGlow.value.copy(glow);
     },
   };
 }

@@ -216,6 +216,9 @@ function buildArcFlashes(poles, group) {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
+    // Opt out of atmosphere's unlit-material tint registry (src/atmosphere.js)
+    // — this is meant to stay bright regardless of time of day.
+    sparkMat.userData.unlit = false;
     const spark = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), sparkMat);
     spark.position.copy(p.position);
     group.add(spark);
