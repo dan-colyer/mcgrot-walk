@@ -13,7 +13,13 @@ frame — `src/controls.js`'s `update()` and every `src/debug.js` pose
 `world.groundHeight(x, z) + EYE_HEIGHT`, not a flat constant. `src/terrain.js`
 is the sole height authority (pure function of chainage, no PRNG — see its
 header comment) and every subsystem that places geometry on the ground
-threads `world.groundHeight` through.
+threads `world.groundHeight` through. The Forth (`src/forth.js`) is
+deliberately impressionistic — a water plane + far-shore silhouette north of
+the Foot, dissolved by the existing (untouched) fog. It is **occluded from the
+straight-ahead ground-level view at the Foot by a real OSM building at the
+street's north terminus** — as the real Foot of Leith Walk is; the water reads
+from the descent and from angles that clear that building. Accepted as
+faithful, not a bug (Dan's call, E1 review).
 
 ```bash
 npm run smoke                  # run the gate
@@ -34,7 +40,11 @@ tells you which check and why.
    must touch that constant deliberately — a silent mismatch here is exactly
    the bug class this check exists to catch.
 3. **Draw-call budget** — at each bookmark, `renderer.info.render.calls`
-   within ±10% of `docs/smoke/budget.json`'s baseline for that pose.
+   within ±10% of `docs/smoke/budget.json`'s baseline for that pose. A
+   bookmark that renders **0 draw calls** fails outright (a scene pose can
+   never legitimately be empty) and its golden/baseline is left untouched —
+   this stops a transient WebGL/GPU capture failure under `--update-goldens`
+   from silently baking a blank frame as the new golden.
 4. **Determinism** — `invariants().geomHash` identical across two independent
    fresh page loads. Non-negotiable: a mismatch means something that should
    be seeded/static changed between runs — see "Determinism" below.
@@ -155,11 +165,15 @@ differ between two fresh loads of the same code.
   slope without floating or sinking, entities (NPCs, litter, bins, cars,
   bushes) sit on the ground at every chainage checked, and shopfronts stay
   flush with the pavement. The `skyline` pose (hand-picked absolute camera
-  Y — see its `custom: true` def in `src/debug.js`) was checked separately
-  since terrain doesn't auto-correct a hardcoded Y; it still reads correctly
-  at its chainage (~700m, ground height there is modest). From this point on
-  the tolerance again protects against accidental drift, not intentional
-  change.
+  Y — see its `custom: true` def in `src/debug.js`) needs special handling:
+  E1's per-frame ground-follow clamp (`controls.js`) would otherwise pull its
+  Y=15 straight back down to ground+eye. That clamp is now suspended whenever
+  auto-animate is off — `pauseAuto()` calls `controls.setYFollow(false)`
+  (`main.js`), so while the harness (or a human debugging) drives the world by
+  `stepFrame`, the debug API fully owns the camera and a posed elevation
+  survives `invariants()`/screenshot. Terrain-follow resumes with `resumeAuto()`
+  / live play. From this point on the tolerance again protects against
+  accidental drift, not intentional change.
 
 ## Draw-call budget: measured, not assumed
 

@@ -172,6 +172,11 @@ async function main() {
       updaters,
       setAutoAnimate(v) {
         autoAnimate = v;
+        // While auto-animate is off the debug API/harness fully owns the
+        // camera: suspend the per-frame ground-follow clamp so a posed
+        // elevation (skyline) or a manual inspection fly-through survives
+        // stepFrame. Terrain-follow resumes when play does.
+        controls.setYFollow(v);
         if (v) { lastFrame = performance.now(); requestAnimationFrame(animate); }
       },
     });

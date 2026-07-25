@@ -150,6 +150,18 @@ async function main() {
     for (const bm of bookmarks) {
       await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
       const inv = await getInvariants(page1);
+
+      // A scene bookmark can NEVER legitimately render nothing. Zero draw calls
+      // means the frame came up empty — a transient WebGL/GPU capture failure
+      // (seen under GPU contention when another context is live). Fail loudly
+      // and do NOT let it overwrite a good golden/baseline: --update-goldens
+      // silently baking a blank frame is exactly the kind of silent corruption
+      // this rig exists to prevent. Leaving it out of drawCallsByBookmark keeps
+      // the 0 out of the rebuilt budget (the prior baseline is preserved below).
+      if (inv.drawCalls === 0) {
+        results.push({ name: `render:${bm.id}`, pass: false, detail: 'rendered 0 draw calls (empty frame — capture/GPU failure); golden NOT written' });
+        continue;
+      }
       drawCallsByBookmark[bm.id] = inv.drawCalls;
 
       const baseline = budget.perBookmark[bm.id];
@@ -189,9 +201,17 @@ async function main() {
     }
 
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {
+      const prev = budget.perBookmark || {};
       budget = {
         tolerancePct: DRAW_CALL_TOLERANCE_PCT,
-        perBookmark: Object.fromEntries(bookmarks.map((bm) => [bm.id, { drawCalls: drawCallsByBookmark[bm.id] }])),
+        // For a bookmark that rendered fine, use its fresh count; for one that
+        // failed the 0-draw-call guard above (absent from drawCallsByBookmark),
+        // keep its prior baseline rather than clobbering it with a bad capture.
+        perBookmark: Object.fromEntries(bookmarks
+          .map((bm) => [bm.id, drawCallsByBookmark[bm.id] !== undefined
+            ? { drawCalls: drawCallsByBookmark[bm.id] }
+            : prev[bm.id]])
+          .filter(([, v]) => v !== undefined)),
       };
       writeFileSync(budgetPath, JSON.stringify(budget, null, 2));
       console.log(`[smoke] wrote budget baseline to ${budgetPath}`);

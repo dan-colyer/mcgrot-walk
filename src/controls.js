@@ -42,6 +42,10 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
   let lastY = 0;
   let pointerLocked = false;
   let enabled = true; // gated off while the comic overlay is open
+  // Camera glues to the ground every frame (E1). Suspended only by the debug
+  // API when posing a custom elevated bookmark (skyline), whose absolute
+  // camera.y would otherwise be clamped straight back to ground+eye.
+  let yFollow = true;
 
   function applyLook() {
     camera.rotation.set(pitch, yaw, 0);
@@ -173,7 +177,7 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
       camera.position.z = nz;
     }
 
-    if (groundHeight) {
+    if (groundHeight && yFollow) {
       camera.position.y = groundHeight(camera.position.x, camera.position.z) + EYE_HEIGHT;
     }
   }
@@ -187,7 +191,7 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
     document.removeEventListener('pointerlockchange', onPointerLockChange);
   }
 
-  return { update, dispose, setEnabled, setForward };
+  return { update, dispose, setEnabled, setForward, setYFollow: (v) => { yFollow = !!v; } };
 }
 
 function clamp(v, min, max) {

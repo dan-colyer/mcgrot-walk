@@ -157,9 +157,15 @@ export function createDebugApi(ctx) {
   // single step so the last render is exactly on-target. Returns once the
   // lazily-loaded shopfront atlas page(s) near the new position have
   // finished decoding.
-  async function settleAt(px, pz, lookX, lookZ) {
-    const eyeY = world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT;
-    const lookY = world.groundHeight ? world.groundHeight(lookX, lookZ) + EYE_HEIGHT : EYE_HEIGHT;
+  // fixed.eyeY / fixed.lookY override the terrain-derived heights for custom
+  // bookmarks that pose the camera at an absolute elevation (skyline). The
+  // caller must suspend controls' yFollow around such a pose (see gotoBookmark)
+  // or the per-frame ground clamp pulls the camera straight back down.
+  async function settleAt(px, pz, lookX, lookZ, fixed = {}) {
+    const eyeY = fixed.eyeY != null ? fixed.eyeY
+      : (world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT);
+    const lookY = fixed.lookY != null ? fixed.lookY
+      : (world.groundHeight ? world.groundHeight(lookX, lookZ) + EYE_HEIGHT : EYE_HEIGHT);
     camera.position.set(px, eyeY, pz);
     camera.lookAt(lookX, lookY, lookZ);
     for (let i = 0; i < SETTLE_FRAMES; i++) {
@@ -192,10 +198,12 @@ export function createDebugApi(ctx) {
     const bm = BOOKMARK_DEFS.find((b) => b.id === id);
     if (!bm) throw new Error(`[debug] unknown bookmark: ${id}`);
     if (bm.custom) {
-      await settleAt(bm.camera.x, bm.camera.z, bm.lookAt.x, bm.lookAt.z);
-      camera.position.y = bm.camera.y;
-      camera.lookAt(bm.lookAt.x, bm.lookAt.y, bm.lookAt.z);
-      stepFrame(SETTLE_DT, 0);
+      // Absolute camera pose (elevated skyline shot). settleAt sets the fixed
+      // eye/look Y; the ground-follow clamp is already suspended because the
+      // harness has paused auto-animate (pauseAuto -> setYFollow(false), see
+      // main.js), so no stepFrame — including invariants()' — pulls it back.
+      await settleAt(bm.camera.x, bm.camera.z, bm.lookAt.x, bm.lookAt.z,
+        { eyeY: bm.camera.y, lookY: bm.lookAt.y });
       return bm;
     }
     await goto(bm.chainage, bm.side, bm.distance);
