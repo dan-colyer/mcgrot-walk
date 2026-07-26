@@ -105,9 +105,40 @@ unlit materials — from a keyframe table authored as `paletteAt(hours, weather)
 with only the `overcast` column populated. Lit windows after dark
 (`src/windows.js`). `setTime` is real. Commit `c199a68`, gh-pages `16ab787`.
 
-### E2b — The Lit Street
+### E2b — The Lit Street — SHIPPED + DEPLOYED (2026-07-26)
 
-*Brief: `~/.claude/plans/mcgrot-e2b-brief.md`.*
+*Briefs: `~/.claude/plans/mcgrot-e2b-brief.md`, plus an E2b.1 fix round.*
+
+Delivered. The readable set is `MeshLambertMaterial` and the torch pools real
+light on a frontage — measured 418× on/off at 2.5m, 03:00, against a frontage
+that sits 6.69m from a bookmark camera (just outside the torch's 6.5m reach,
+which is why no bookmark pose can show it). Commit `acd0f26`, gh-pages
+`a3333d5`.
+
+E2b's first pass compensated for Lambert's `1/π` by lifting the **global** light
+rig, which also hit the road, pavement, NPC coats, cars and flora — all already
+Lambert and tuned to the old rig — for +42% to +99% full-frame luminance and a
+roughly tripled road. E2b.1 reverted the rig and put the compensation on the six
+converted materials instead, via `LIT_ALBEDO_GAIN` (`src/lighting-constants.js`,
+4.7). Full-frame luminance is now within ±10% of the E2a goldens at all eight
+bookmarks; draw calls unchanged. Full account in `docs/VALIDATION.md`.
+
+Residuals carried forward:
+
+- **Night is much darker than E2a** (`night darkens facades` 2.9% vs 8.3%),
+  accepted as the torchlight noir the phase exists for. Beyond torch reach the
+  street reads on lit windows, sky glow and silhouette alone.
+- **Torch reach is deliberately undecided.** `TORCH_DISTANCE` stays 6.5m. It is
+  isolated from the daylight goldens (torch intensity scales to ~0 by noon), so
+  it can be changed at any time without re-reviewing the luminance table — and
+  it is held for E2c.3, since haar and dynamic fog are what decide how far you
+  should see at night. Judging it before they exist means judging it twice.
+- **The shared albedo gain overshoots on face-up surfaces.** Tuned on vertical
+  façades; litter comics lie flat and catch the strongest hemisphere irradiance,
+  measuring +32.8% against E2a at overcast noon (no clipping, still legible).
+  A per-surface gain would start here.
+- `CLAUDE.md`'s "exhibit spots 60" is stale — there are no NPC spotlights, only
+  the torch and three arc-flash `PointLight`s at intensity 0.
 
 E2a's review found that **the torch cannot light anything the player reads** —
 it is a `PointLight`, and façades, litter comics, NPC faces and the held comic
@@ -132,17 +163,62 @@ directional effect for free.
 
 ### E2c — Weather
 
-- Weather state machine: clear / overcast / drizzle / rain / haar, with
-  transitions. Rain = particle pass + wet-road material response + puddle
-  reflections. Haar rolls up from the Forth. `setWeather` becomes real.
-- Adds weather columns to E2a's `paletteAt(hours, weather)` table.
+Split into three. The original single bullet held a five-state machine, a
+particle system, a material response, a shader change, dynamic fog, the Forth
+reveal and a GPU budget re-check — four milestones of work and three unrelated
+risk clusters.
+
+#### E2c.1 — The Weather Axis
+
+*Brief: `~/.claude/plans/mcgrot-e2c1-brief.md`.*
+
+Makes `weather` real and proves it with one new state, `clear`, that reads as
+genuinely sunny with a shadowed side of the street — the payoff E2b's Lambert
+conversion bought, and the only part of E2c that collects it.
+
+- The engineering is a refactor, not the palette data: `update()` currently
+  lerps straight into the live light objects, which supports one blend axis
+  (hour within one weather). Weather transitions need two — split into
+  `samplePalette` → `blendPalette` → `applyPalette`, with the structs allocated
+  once at construction.
+- `src/sky.js` needs a `uCoverage` uniform. Cloud coverage is currently
+  hardcoded (`smoothstep(0.40, 0.70, f) * 0.88`, `CLOUD_DENSITY` compiled into
+  the shader string), so a clear state could only recolour the deck, not thin
+  it. Scaling `cover` keeps it zero at the horizon, so the seam invariant
+  survives by construction.
+- `sun.pos` must match across weather columns at the same hour, or a transition
+  slews the sun bodily across the sky.
+- Gate: the eight existing overcast goldens stay **pixel-identical**. Overcast
+  is unchanged data, so a behaviour-preserving refactor must not move a pixel.
+- Watch `LIT_ALBEDO_GAIN` under a strong clear sun — it was tuned against
+  overcast irradiance and the face-up litter comics clip first. Fix via the
+  clear column's exposure, never by lowering the shared gain.
+- Weather changes only on an explicit `setWeather`. Autonomous drift waits for
+  E2c.3, when there are five states worth scheduling between.
+
+#### E2c.2 — Rain
+
+- `drizzle` and `rain` columns; particle pass; wet-road material response.
+- Puddle **reflections are dropped from E2c** — they need a render pass, so they
+  belong with E2d's post-processing, either properly or as a screen-space fake.
+
+#### E2c.3 — Haar and the long view
+
+The one risk cluster that touches view distance, GPU budget and the seam
+invariant at once, which is why it is last.
+
+- Dynamic fog **density** (E2c.1 leaves it pinned at 0.0095). The fog/sky seam
+  invariant (`sky.js`) must survive it.
+- Haar rolling up from the Forth.
 - **The Forth reveal (inherited from E1) — Foot-only.** Measured: the far shore
   needs fog 3.1× thinner to read from the Foot, but 17× thinner from Picardy,
   which would destroy the haze. The "water and Fife from the top of the brae"
   framing is dropped; the reveal ships for the lower Walk and the descent.
   Thinning fog also out-ranges the shopfront pager (`LOAD_RANGE = 250`), so it
   lands with a pager widening (~67MB GPU per 4096² page) and a budget re-check.
-- The fog/sky seam invariant (`sky.js`) must survive dynamic fog density.
+- Decide `TORCH_DISTANCE` here, against haar and dynamic fog rather than in a
+  vacuum.
+- Autonomous weather scheduling, once all five states exist.
 
 ### E2d — Post-processing
 
