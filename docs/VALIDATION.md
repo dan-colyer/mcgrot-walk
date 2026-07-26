@@ -130,7 +130,7 @@ dbg.invariants();                       // -> {drawCalls, triangles, geomHash, u
                                          //     consoleErrors, time, rate, skyFogLinked}
 dbg.bookmarks;                          // the curated ~8-pose golden set
 dbg.setTime(14);                        // E2a: real — sets the hour AND freezes the day/night cycle (rate -> 0)
-dbg.setWeather('rain');                 // STUB — console.info + no-op until E2b
+dbg.setWeather('clear');                // E2c.1: real — starts a ~10s transition (falls back to 'overcast' for any other name)
 dbg.pauseAuto(); dbg.resumeAuto();      // stop/restart the live rAF loop (see "Determinism")
 dbg.stepFrame(1/60, t);                 // manually advance one frame (back-compat, pre-E0.2 probe)
 

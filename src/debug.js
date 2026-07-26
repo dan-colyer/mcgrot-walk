@@ -2,9 +2,9 @@
 // localhost by main.js; ships in the bundle but is inert everywhere else.
 //
 // goto()/face() pose the camera; invariants() reports scene health; bookmarks
-// is a curated golden-pose set. setTime/setWeather are stubs until E2 makes
-// them real (see docs/ROADMAP.md). scripts/smoke.mjs is the headless
-// consumer; docs/VALIDATION.md is the playbook.
+// is a curated golden-pose set. setTime (E2a) and setWeather (E2c.1) are both
+// real. scripts/smoke.mjs is the headless consumer; docs/VALIDATION.md is the
+// playbook.
 
 import { pointAtChainage } from './frontage.js';
 
@@ -235,8 +235,19 @@ export function createDebugApi(ctx) {
     atmosphere.setTime(h); // also freezes the cycle — see docs/VALIDATION.md
   }
 
-  function setWeather(state) {
-    console.info('[debug] setWeather not implemented until E2b');
+  function setWeather(name) {
+    atmosphere.setWeather(name); // starts (or no-ops) a transition — see atmosphere.js
+  }
+
+  // Test-only override of the atmosphere's own cycle rate, independent of
+  // setTime (which always freezes it to 0 — see docs/VALIDATION.md). Exists
+  // so the smoke harness can deterministically drive the clock across a
+  // midnight wraparound (hours 24->0) via stepFrame while a weather
+  // transition is in progress, without resuming the real rAF loop
+  // (resumeAuto) — which would advance on wall-clock time and break
+  // determinism.
+  function setRate(hoursPerRealMinute) {
+    atmosphere.setRate(hoursPerRealMinute);
   }
 
   function invariants() {
@@ -252,6 +263,9 @@ export function createDebugApi(ctx) {
       consoleErrors: consoleErrors.slice(),
       time: atmo.hours,
       rate: atmo.rate,
+      weather: atmo.weather,
+      weatherTransition: atmo.weatherTransition,
+      exposure: atmo.exposure,
       // Identity check, not an equality check: catches "THE SEAM" failure
       // mode in sky.js — a `scene.fog.color = new THREE.Color(...)`
       // reassignment anywhere would leave this uniform pointing at a stale
@@ -271,6 +285,7 @@ export function createDebugApi(ctx) {
     face,
     setTime,
     setWeather,
+    setRate,
     invariants,
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),

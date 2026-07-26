@@ -71,6 +71,7 @@ const FRAG = /* glsl */ `
   uniform vec3 uGlow;
   uniform vec2 uDock;
   uniform float uTime;
+  uniform float uCoverage;
   varying vec3 vDir;
 
   float hash(vec2 p) {
@@ -120,7 +121,10 @@ const FRAG = /* glsl */ `
     // The second factor holds the deck clear of the horizon: cloud reaching
     // d.y = 0 would break the fog match. It also masks off the low elevations
     // where the 1/h projection blows p up into a shimmering high-frequency mess.
-    float cover = smoothstep(0.40, 0.70, f) * smoothstep(0.06, 0.35, h);
+    // uCoverage (E2c.1) multiplies the whole term, so it stays exactly 0 at
+    // h = 0 regardless of its value — the fog/sky seam invariant survives by
+    // construction, the same way the h-term already guarantees it.
+    float cover = smoothstep(0.40, 0.70, f) * smoothstep(0.06, 0.35, h) * uCoverage;
     col = mix(col, cloud, cover * 0.88);
 
     // The docks are burning. What you see is the light thrown up onto the
@@ -169,6 +173,7 @@ export function createSky(fogColor, streetLine) {
     uGlow: { value: new THREE.Color(DOCK_GLOW) },
     uDock: { value: dock },
     uTime: { value: 0 },
+    uCoverage: { value: 1.0 },
   };
 
   const material = new THREE.ShaderMaterial({
@@ -210,6 +215,11 @@ export function createSky(fogColor, streetLine) {
       if (cloudDark) uniforms.uCloudDark.value.copy(cloudDark);
       if (cloudLit) uniforms.uCloudLit.value.copy(cloudLit);
       if (glow) uniforms.uGlow.value.copy(glow);
+    },
+    // Separate from setPalette (a scalar, not a Color) — see the E2c.1 brief:
+    // this is what lets 'clear' thin the deck instead of only recolouring it.
+    setCoverage(k) {
+      uniforms.uCoverage.value = k;
     },
   };
 }

@@ -40,6 +40,15 @@ const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
 const TORCH_STAND_OFF = 2; // metres from the litter comic — well inside the ~6.5m torch reach at night
 const TORCH_MIN_RATIO = 2.5; // E2b acceptance criterion 3
 
+// E2c.1: the weather axis.
+const CLEAR_MORNING_HOUR = 8; // low sun — the one bookmark that must show a shadowed street side
+const CLEAR_MORNING_BOOKMARK = 'mid-805-far'; // curved corner, both street sides in frame (see E2b notes)
+const CLIP_CHANNEL_THRESHOLD = 250; // out of 255 — "clipped" per the brief
+const CLIP_PCT_MAX = 0.1; // % of pixels allowed at/above the threshold on all 3 channels
+// >10s of stepped dt so a setWeather() transition is guaranteed complete
+// before a golden capture — see WEATHER_TRANSITION_SECONDS in atmosphere.js.
+const WEATHER_SETTLE_FRAMES = 700;
+
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
 // accident — a mismatch here means main.js's updaters list changed and this
@@ -94,6 +103,10 @@ async function bootPage(browser, port) {
   await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
   // Pin the clock before any capture — see SMOKE_HOUR above.
   await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+  // E2c.1: pin the weather explicitly too, the same reasoning as SMOKE_HOUR —
+  // a future default-weather change must not silently move these goldens.
+  // No-ops today (construction already defaults to 'overcast'), by design.
+  await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
   return { context, page, consoleMessages };
 }
 
@@ -130,6 +143,22 @@ function meanLuminanceCenterCrop(png, fracW, fracH) {
     }
   }
   return count ? sum / count : 0;
+}
+
+// % of pixels at/above CLIP_CHANNEL_THRESHOLD on all three channels — the
+// E2c.1 acceptance gate for the six Lambert-converted materials clipping
+// under a much stronger directional 'clear' sun (see LIT_ALBEDO_GAIN's note
+// in src/lighting-constants.js).
+function clippedHighlightPct(png) {
+  const { width, height, data } = png;
+  let clipped = 0;
+  const count = width * height;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] >= CLIP_CHANNEL_THRESHOLD && data[i + 1] >= CLIP_CHANNEL_THRESHOLD && data[i + 2] >= CLIP_CHANNEL_THRESHOLD) {
+      clipped++;
+    }
+  }
+  return count ? (clipped / count) * 100 : 0;
 }
 
 function meanLuminanceUpperHalf(png) {
@@ -246,6 +275,15 @@ async function main() {
         name: `golden:${bm.id}`,
         pass: diffPct <= DIFF_PCT_TOLERANCE,
         detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
+      });
+
+      // E2c.1 acceptance criterion 3's control figure — overcast should
+      // never clip; reported alongside the 'clear' figure below.
+      const controlClipPct = clippedHighlightPct(actual);
+      results.push({
+        name: `clip-control:${bm.id}`,
+        pass: controlClipPct < CLIP_PCT_MAX,
+        detail: `${controlClipPct.toFixed(3)}% pixels clipped (overcast control, must be <${CLIP_PCT_MAX}%)`,
       });
     }
 
@@ -366,6 +404,138 @@ async function main() {
     } else {
       results.push({ name: 'torch lights a readable surface', pass: false, detail: 'no litter comic available to pose the camera at' });
     }
+
+    // --- E2c.1: exact draw-call parity for this milestone ---
+    // The brief's own gate is stricter than the standing ±10% tolerance
+    // above: this refactor adds no geometry, so every bookmark's draw calls
+    // should match its baseline EXACTLY, not just within tolerance.
+    const drawCallDrift = Object.entries(drawCallsByBookmark)
+      .map(([id, calls]) => ({ id, calls, baseline: budget.perBookmark[id] && budget.perBookmark[id].drawCalls }))
+      .filter((r) => r.baseline !== undefined && r.calls !== r.baseline);
+    results.push({
+      name: 'draw calls +/-0 (E2c.1)',
+      pass: UPDATE_GOLDENS || drawCallDrift.length === 0,
+      detail: UPDATE_GOLDENS ? 'skipped: baseline just (re)captured this run'
+        : drawCallDrift.length === 0 ? 'every bookmark matches its baseline exactly'
+        : drawCallDrift.map((r) => `${r.id}: ${r.calls} vs ${r.baseline}`).join('; '),
+    });
+
+    // --- E2c.1: the clear weather column ---
+    // setWeather + a full WEATHER_SETTLE_FRAMES worth of stepped dt so the
+    // 10s transition (WEATHER_TRANSITION_SECONDS, atmosphere.js) is
+    // guaranteed complete before any golden capture below.
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('clear'));
+    await page1.evaluate((frames) => {
+      const dbg = window.__mcgrotDebug;
+      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* teleport audio ramp, harmless */ } }
+    }, WEATHER_SETTLE_FRAMES);
+
+    const clearSettledInv = await getInvariants(page1);
+    results.push({
+      name: 'weather reaches target (clear)',
+      pass: clearSettledInv.weather === 'clear' && clearSettledInv.weatherTransition === null,
+      detail: `weather=${clearSettledInv.weather}, transition=${JSON.stringify(clearSettledInv.weatherTransition)}`,
+    });
+
+    for (const bm of bookmarks) {
+      await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
+      const inv = await getInvariants(page1);
+      if (inv.drawCalls === 0) {
+        results.push({ name: `render-clear:${bm.id}`, pass: false, detail: 'rendered 0 draw calls (empty frame — capture/GPU failure); golden NOT written' });
+        continue;
+      }
+
+      // NOT compared against the overcast draw-call baseline here: by this
+      // point leithers/NPCs/vermin/birds (real-time simulated, not
+      // seeded-static — the same exclusion docs/VALIDATION.md's geomHash
+      // makes) have moved during the weather-transition tests above, so a
+      // bookmark's frustum can legitimately catch a different set of them
+      // than it did on the FIRST (fresh-boot) pass. That's not a weather
+      // effect; the milestone's actual draw-call gate is the ORIGINAL
+      // overcast loop above (see 'draw calls +/-0 (E2c.1)'), which never
+      // revisits a bookmark and so isn't exposed to this.
+      const shot = await page1.screenshot();
+      const goldenPath = join(goldenDir, `${bm.id}-clear.png`);
+      if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
+        writeFileSync(goldenPath, shot);
+        results.push({ name: `golden-clear:${bm.id}`, pass: true, detail: 'captured' });
+      }
+
+      const clipPct = clippedHighlightPct(PNG.sync.read(shot));
+      results.push({
+        name: `clip-clear:${bm.id}`,
+        pass: clipPct < CLIP_PCT_MAX,
+        detail: `${clipPct.toFixed(3)}% pixels clipped (clear, must be <${CLIP_PCT_MAX}%)`,
+      });
+    }
+
+    // Acceptance criterion 2's second capture: 08:00, low sun, shadowed
+    // street side. setTime freezes the clock; weather stays 'clear' (setTime
+    // doesn't touch it).
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), CLEAR_MORNING_HOUR);
+    await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), CLEAR_MORNING_BOOKMARK);
+    const morningShot = await page1.screenshot();
+    const morningGoldenPath = join(goldenDir, `${CLEAR_MORNING_BOOKMARK}-clear-08.png`);
+    writeFileSync(morningGoldenPath, morningShot);
+    const morningClipPct = clippedHighlightPct(PNG.sync.read(morningShot));
+    results.push({
+      name: `clip-clear:${CLEAR_MORNING_BOOKMARK}-08`,
+      pass: morningClipPct < CLIP_PCT_MAX,
+      detail: `${morningClipPct.toFixed(3)}% pixels clipped (clear, 08:00, must be <${CLIP_PCT_MAX}%)`,
+    });
+
+    // --- E2c.1: transition midpoint sits between the two endpoints ---
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    const clearExposure = (await getInvariants(page1)).exposure;
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+    await page1.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      for (let i = 0; i < 300; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+    });
+    const midInv = await getInvariants(page1);
+    await page1.evaluate((frames) => {
+      const dbg = window.__mcgrotDebug;
+      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+    }, WEATHER_SETTLE_FRAMES);
+    const finalInv = await getInvariants(page1);
+
+    const lo = Math.min(clearExposure, finalInv.exposure);
+    const hi = Math.max(clearExposure, finalInv.exposure);
+    results.push({
+      name: 'weather transition midpoint',
+      pass: !!midInv.weatherTransition && midInv.exposure > lo && midInv.exposure < hi,
+      detail: `mid-transition exposure ${midInv.exposure.toFixed(3)} between clear=${clearExposure.toFixed(3)} and overcast=${finalInv.exposure.toFixed(3)} (progress=${midInv.weatherTransition ? midInv.weatherTransition.progress.toFixed(2) : 'n/a'})`,
+    });
+    results.push({
+      name: 'weather reaches target (overcast)',
+      pass: finalInv.weather === 'overcast' && finalInv.weatherTransition === null,
+      detail: `weather=${finalInv.weather}, transition=${JSON.stringify(finalInv.weatherTransition)}`,
+    });
+
+    // --- E2c.1: midnight wraparound occurring mid-transition ---
+    // setRate is a test-only override (src/debug.js) so the clock advances
+    // deterministically via stepFrame — setTime always freezes rate to 0, so
+    // it has to be called first and overridden after.
+    await page1.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setTime(23.95);
+      dbg.setRate(60); // hours/frame = 60 * (1/60)/60 = 1/60 at dt=1/60 — crosses 24 in well under a second
+      dbg.setWeather('clear'); // a transition genuinely in flight across the wrap
+    });
+    await page1.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      for (let i = 0; i < 60; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+    });
+    const wrapInv = await getInvariants(page1);
+    await page1.evaluate(() => window.__mcgrotDebug.setRate(0)); // done stress-testing; refreeze before ctx1 closes
+    results.push({
+      name: 'midnight wraparound mid-transition',
+      pass: wrapInv.consoleErrors.length === 0 && Number.isFinite(wrapInv.time) && wrapInv.time >= 0 && wrapInv.time < 24,
+      detail: `time=${Number.isFinite(wrapInv.time) ? wrapInv.time.toFixed(2) : wrapInv.time} after wrap, ` +
+        `transition=${JSON.stringify(wrapInv.weatherTransition)}, consoleErrors=${wrapInv.consoleErrors.length}` +
+        (wrapInv.consoleErrors.length ? ` (${wrapInv.consoleErrors.join(' | ')})` : ''),
+    });
 
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {
       const prev = budget.perBookmark || {};
