@@ -161,6 +161,35 @@ function clippedHighlightPct(png) {
   return count ? (clipped / count) * 100 : 0;
 }
 
+// Capture-or-compare for one golden. Captures (and passes trivially) only when
+// --update-goldens is set or the file doesn't exist yet; otherwise pixel-diffs.
+// Shared so a golden can never be written unconditionally — an unguarded
+// writeFileSync makes the gate mutate a tracked file on every run AND makes
+// that golden incapable of ever failing, which is a screenshot, not a gate.
+// Returns the parsed PNG so callers can run further measurements on it.
+function checkGolden(results, name, shot, goldenPath) {
+  const actual = PNG.sync.read(shot);
+  if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
+    writeFileSync(goldenPath, shot);
+    results.push({ name, pass: true, detail: 'captured' });
+    return actual;
+  }
+  const expected = PNG.sync.read(readFileSync(goldenPath));
+  if (actual.width !== expected.width || actual.height !== expected.height) {
+    results.push({ name, pass: false, detail: `size mismatch ${actual.width}x${actual.height} vs ${expected.width}x${expected.height}` });
+    return actual;
+  }
+  const diffPng = new PNG({ width: actual.width, height: actual.height });
+  const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
+  const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
+  results.push({
+    name,
+    pass: diffPct <= DIFF_PCT_TOLERANCE,
+    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
+  });
+  return actual;
+}
+
 function meanLuminanceUpperHalf(png) {
   const { width, height, data } = png;
   const halfH = Math.floor(height / 2);
@@ -456,13 +485,9 @@ async function main() {
       // overcast loop above (see 'draw calls +/-0 (E2c.1)'), which never
       // revisits a bookmark and so isn't exposed to this.
       const shot = await page1.screenshot();
-      const goldenPath = join(goldenDir, `${bm.id}-clear.png`);
-      if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
-        writeFileSync(goldenPath, shot);
-        results.push({ name: `golden-clear:${bm.id}`, pass: true, detail: 'captured' });
-      }
+      const clearPng = checkGolden(results, `golden-clear:${bm.id}`, shot, join(goldenDir, `${bm.id}-clear.png`));
 
-      const clipPct = clippedHighlightPct(PNG.sync.read(shot));
+      const clipPct = clippedHighlightPct(clearPng);
       results.push({
         name: `clip-clear:${bm.id}`,
         pass: clipPct < CLIP_PCT_MAX,
@@ -476,9 +501,13 @@ async function main() {
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), CLEAR_MORNING_HOUR);
     await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), CLEAR_MORNING_BOOKMARK);
     const morningShot = await page1.screenshot();
-    const morningGoldenPath = join(goldenDir, `${CLEAR_MORNING_BOOKMARK}-clear-08.png`);
-    writeFileSync(morningGoldenPath, morningShot);
-    const morningClipPct = clippedHighlightPct(PNG.sync.read(morningShot));
+    const morningPng = checkGolden(
+      results,
+      `golden-clear:${CLEAR_MORNING_BOOKMARK}-08`,
+      morningShot,
+      join(goldenDir, `${CLEAR_MORNING_BOOKMARK}-clear-08.png`)
+    );
+    const morningClipPct = clippedHighlightPct(morningPng);
     results.push({
       name: `clip-clear:${CLEAR_MORNING_BOOKMARK}-08`,
       pass: morningClipPct < CLIP_PCT_MAX,

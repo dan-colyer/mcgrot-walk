@@ -113,6 +113,30 @@ tells you which check and why.
    can't be sensitive to the other five (the Forth shore or an NPC face, for
    instance, never appear in that crop). A check that can't fail is worse
    than no check, but the claim is scoped to what was measured.
+10. **Clipped highlights** (E2c.1) — `clip-clear:<bookmark>` and
+    `clip-control:<bookmark>`: the % of pixels at ≥250 on all three channels,
+    for `clear` and for the `overcast` control respectively, failing above
+    0.1%. This is the guard on `LIT_ALBEDO_GAIN` (`src/lighting-constants.js`),
+    which was tuned against *overcast* irradiance — a stronger directional sun
+    can blow the six converted materials out, and the face-up litter comics
+    clip first. If it ever fails, bring the offending weather column's
+    `exposure` down; do NOT lower the shared gain, which would drag overcast
+    back out of the ±10% band E2b.1 established.
+11. **Clear goldens** (E2c.1) — `golden-clear:<bookmark>` at 13:00 for all
+    eight, plus `golden-clear:mid-805-far-08` at 08:00 (low sun, so the
+    shadowed side of the street is visible). Same capture-or-compare path and
+    same 0.5% tolerance as the overcast goldens.
+12. **Weather transitions** (E2c.1) — `setWeather` reaches its target and
+    clears the transition; the midpoint's exposure sits strictly between the
+    two endpoints; and a midnight wraparound taken *mid*-transition leaves the
+    transition intact with no console errors (the bracket wrap and the
+    weather blend interacting is the sharp edge).
+13. **Draw calls ±0** (E2c.1) — `draw calls +/-0 (E2c.1)` restates the
+    per-bookmark budget check as exact equality rather than the ±10%
+    tolerance. Measured on the FIRST, fresh-boot pass only: revisiting a
+    bookmark later catches a different set of leithers/NPCs/vermin/birds,
+    which are real-time simulated rather than seeded-static (the same
+    exclusion the geomHash makes), so a second pass would false-fail.
 
 ## The debug API (`window.__mcgrotDebug`)
 
@@ -127,10 +151,13 @@ await dbg.goto(550, 'east', 'close');   // chainage (m from north end), side, di
 await dbg.gotoBookmark('elm-row-hero'); // one of dbg.bookmarks
 dbg.face(x, z);                         // look at a world XZ point, at current eye height
 dbg.invariants();                       // -> {drawCalls, triangles, geomHash, updaterCount, updaterNames,
-                                         //     consoleErrors, time, rate, skyFogLinked}
+                                         //     consoleErrors, time, rate, skyFogLinked,
+                                         //     weather, weatherTransition, exposure}
 dbg.bookmarks;                          // the curated ~8-pose golden set
 dbg.setTime(14);                        // E2a: real — sets the hour AND freezes the day/night cycle (rate -> 0)
 dbg.setWeather('clear');                // E2c.1: real — starts a ~10s transition (falls back to 'overcast' for any other name)
+dbg.setRate(1);                         // E2c.1, TEST-ONLY: un-freeze the clock without resumeAuto() — the only way to
+                                         //   drive a wraparound under stepFrame, since setTime() always freezes it
 dbg.pauseAuto(); dbg.resumeAuto();      // stop/restart the live rAF loop (see "Determinism")
 dbg.stepFrame(1/60, t);                 // manually advance one frame (back-compat, pre-E0.2 probe)
 
