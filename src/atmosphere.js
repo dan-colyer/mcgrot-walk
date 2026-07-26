@@ -214,14 +214,31 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
     registry.set(material, material.color.clone());
   }
 
+  // E2b: shopfronts.js's page materials are the case that motivated this —
+  // loadPage()/unloadPage() churn creates and disposes a material every time
+  // the player walks past a page boundary, and the registry never dropped
+  // the disposed ones, so it grew one entry per page load for the life of
+  // the session and applyTint() kept iterating dead materials forever
+  // (harmless per-tick cost, but unbounded memory). Since E2b converts every
+  // page material to MeshLambertMaterial, they're no longer even eligible
+  // for adoption (see the isMeshBasicMaterial check below) — but the prune
+  // is kept as a general correctness fix for whatever DOES end up in the
+  // registry (E2c's weather work may reintroduce unlit surfaces), not
+  // something currently load-bearing.
   function scanForUnlitMaterials() {
+    const reachable = new Set();
     scene.traverse((obj) => {
       if (!obj.isMesh || !obj.material) return;
       const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
       for (const mat of mats) {
-        if (mat && mat.isMeshBasicMaterial) adopt(mat);
+        if (!mat) continue;
+        reachable.add(mat);
+        if (mat.isMeshBasicMaterial) adopt(mat);
       }
     });
+    for (const material of registry.keys()) {
+      if (!reachable.has(material)) registry.delete(material);
+    }
   }
 
   function applyTint() {

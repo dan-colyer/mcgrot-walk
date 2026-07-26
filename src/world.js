@@ -513,7 +513,11 @@ export function createPlayerTorch(camera) {
 
   function setDarkness(k) {
     scale = k;
-    light.distance = TORCH_DISTANCE * scale;
+    // three.js reads light.distance === 0 as UNBOUNDED range, not "off" — a
+    // future sunny keyframe naturally written as `torch: 0` would silently
+    // light the entire street. Clamp above zero; at this floor the torch is
+    // already imperceptible against daylight exposure.
+    light.distance = Math.max(0.05, TORCH_DISTANCE * scale);
   }
 
   function update(time) {

@@ -98,6 +98,21 @@ tells you which check and why.
    again at 22:00, computes mean luminance of the upper half of each frame
    (façade + sky, not road), and fails unless the 22:00 mean is ≤45% of the
    13:00 mean.
+9. **Torch lights a readable surface** (E2b) — stands the camera 2m from
+   whichever litter comic is farthest from any NPC (avoiding the always-bright
+   NPC name-label sprite and the DOM interact prompt, neither of which respond
+   to scene light and would otherwise swamp the read) at 03:00, screenshots,
+   zeroes the torch's `PointLight.intensity` and forces a direct
+   `renderer.render()` (not `stepFrame` — the `torch`/`atmosphere` updaters
+   both recompute that intensity from time-of-day every frame and would
+   silently undo the override), and fails unless the torch-on mean luminance
+   of a centred crop is ≥2.5× the torch-off reading. Demonstrated to fail
+   (1.76×) with the litter conversion (`src/litter.js`) reverted back to
+   `MeshBasicMaterial` — the only one of E2b's six conversions actually
+   tested this way, since the check's centre-crop sits on a litter comic and
+   can't be sensitive to the other five (the Forth shore or an NPC face, for
+   instance, never appear in that crop). A check that can't fail is worse
+   than no check, but the claim is scoped to what was measured.
 
 ## The debug API (`window.__mcgrotDebug`)
 
@@ -243,6 +258,95 @@ check.
   17:00 keyframe by 13:00), the horizon seam is intact at every bookmark, and
   no lit-window glow is visible in full daylight (`windowGlow` is 0 at the
   noon keyframe).
+- Goldens were **recaptured wholesale for E2b** (the lit street) — every
+  bookmark shifted, expected: façades, name-plates, litter comics, NPC faces
+  and held comics, and the Forth's far shore all switched from
+  `MeshBasicMaterial` (fixed texture × exposure, ignoring scene lights) to
+  `MeshLambertMaterial` (texture × incoming light), so a daylight frame is no
+  longer flat — a wall facing the sun reads visibly brighter than one facing
+  away, which is the whole point of the milestone (see the E2b brief in
+  `docs/ROADMAP.md` for the "why"). Still unlit by design, and
+  correctly untouched: the arc-flash sparks (`src/scenery.js`) and lit-window
+  glow (`src/windows.js`), both `userData.unlit = false`; the sky dome; every
+  `SpriteMaterial` (NPC name labels, Leither speech bubbles). Eyeballed
+  post-recapture at every bookmark: no black façades, every fascia/name-plate
+  still legible, the curved corner at `mid-805-far` and the terrace at
+  `elm-row-hero` both show real directional shading without any surface
+  crushing to black. `fascia-close`'s close-up signage is within ~2% of its
+  E2a full-frame luminance (see the E2b.1 note below) — genuinely "the same
+  as before, just lit," not merely close in the upper-half metric.
+  - **The tint registry is now a no-op with the current material set.** Its
+    only remaining candidates (`isMeshBasicMaterial`) are the arc sparks and
+    window glow, and both opt out via `userData.unlit = false` — so the
+    registry adopts nothing and `applyTint()` iterates an empty map. Kept
+    anyway (not deleted) per the E2b brief: it's mechanism, not a specific
+    tinted surface, and E2c's weather work may reintroduce unlit surfaces
+    that want it. The prune-on-rescan fix (drop registry entries whose
+    material is no longer reachable in the scene) was verified with a
+    synthetic probe since no real in-game material currently exercises it:
+    clone an existing `MeshBasicMaterial`, opt it back into tinting, add it
+    to the scene, let a rescan adopt it (registry: 0→1, confirmed by
+    tinting toward a changed time), remove it from the scene, let another
+    rescan run, and confirm its colour stops changing on a further time
+    change (registry back to 0 — the disposed-material leak the brief
+    described no longer accumulates).
+  - **The torch distance is clamped above zero** (`src/world.js`,
+    `setDarkness`) — `THREE.PointLight.distance === 0` means *unbounded*
+    range, not off. Inert while every authored `torch` keyframe stays > 0,
+    but a future E2c "sunny" column written as `torch: 0` would otherwise
+    silently light the entire street.
+  - **A real render race was found and fixed along the way**
+    (`src/debug.js`'s `settleAt`): a shopfront page's texture can finish
+    decoding *after* the settle loop's last render, and — separately — a
+    completed decode doesn't reliably reach the GPU within one further
+    synchronous render call; the browser's own upload/decode bookkeeping
+    needs an actual macrotask boundary to catch up, which a tight
+    `for` loop of `stepFrame()` calls never yields. Fixed by re-rendering a
+    few times after the texture-wait with a real `await setTimeout(...,0)`
+    between each. Without this, `gotoBookmark`/`goto` could non-deterministically
+    return with a page's just-loaded texture rendered fully black — caught
+    while investigating a bookmark that looked black only when reached via a
+    multi-bookmark sequence, not in isolation.
+  - **A second, distinct bug turned up alongside it**: `shopfronts.js`'s
+    `loadPage()` used to construct a brand-new `MeshLambertMaterial` on every
+    single page load, discarding the old one via `.dispose()` in
+    `unloadPage()`. Under rapid load/unload churn (several pages swapping in
+    one bookmark jump), disposing one Lambert material could corrupt the
+    WebGL shader program shared by other, still-live Lambert materials with
+    an identical program signature — those materials would then render
+    fully black despite completely valid geometry, normals, texture and
+    light state (confirmed by direct inspection: none of those were at
+    fault). `MeshBasicMaterial` never hit this — its simpler, less varied
+    program signature was apparently not exercising whatever the underlying
+    sharing bug is. Fixed by giving each page ONE persistent material,
+    created once and reused across every load/unload cycle (`unloadPage` now
+    only clears `.map`, never disposes or recreates the material itself).
+- **E2b.1 correction — the daylight blowout.** E2b's first pass compensated
+  for Lambert's `1/π` falloff by lifting the *global* light rig (hemi
+  3.9→21.5, ambient 1.4→8.0) instead of the six converted materials. The
+  road, pavement, NPC coats, cars, flora and other pre-existing
+  `MeshLambertMaterial` surfaces were never part of the conversion and took
+  the full 5.5× lift with nothing to offset it — full-frame luminance rose
+  43–99% across all eight bookmarks, with the road roughly tripling. The
+  acceptance check at the time measured upper-half luminance only, which
+  hides the road; fixed by reverting every light-intensity change in
+  `src/world.js`/`src/atmosphere.js` back to their E2a values and instead
+  raising the six converted materials' own colour by a shared
+  `LIT_ALBEDO_GAIN` constant (`src/lighting-constants.js`), tuned to 4.7.
+  Full-frame luminance at all eight bookmarks is now within ±10% of the E2a
+  golden (see the table below); night is correspondingly darker than E2a
+  (accepted as intent — the torchlight-noir look this phase is for).
+
+| Bookmark | Full-frame | Upper-half | Lower-half (road) |
+|---|---|---|---|
+| elm-row-hero | +4.7% | +6.4% | +1.1% |
+| fascia-close | -1.7% | -1.9% | -1.3% |
+| foot-1500-far | +2.5% | +2.9% | +0.7% |
+| mid-550-close | -1.9% | -2.3% | -1.0% |
+| mid-805-far | +3.2% | +4.4% | +0.6% |
+| north-150-close | -1.7% | -2.3% | -0.9% |
+| north-250-far | +9.3% | +11.3% | +2.9% |
+| skyline | +4.1% | +4.3% | +3.5% |
 
 ## Draw-call budget: measured, not assumed
 

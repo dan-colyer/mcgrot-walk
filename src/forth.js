@@ -16,6 +16,7 @@
 
 import * as THREE from 'three';
 import { hash2, fbmP, finishTexture } from './road.js';
+import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 
 // Raw sRGB bytes, dark — same discipline as every other canvas bake in this
 // project (world.js/road.js gotchas): ACES at exposure 1.46 lifts a mid-tone
@@ -110,7 +111,7 @@ export function buildForth(world, scene) {
     waterY,
     foot[1] + dz * SHORE_DIST
   );
-  const shore = new THREE.Mesh(shoreGeo, new THREE.MeshBasicMaterial({ color: SHORE_COLOR }));
+  const shore = new THREE.Mesh(shoreGeo, new THREE.MeshLambertMaterial({ color: new THREE.Color(SHORE_COLOR).multiplyScalar(LIT_ALBEDO_GAIN) }));
   shore.name = 'forth-shore';
   group.add(shore);
 

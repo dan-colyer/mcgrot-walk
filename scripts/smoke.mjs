@@ -35,6 +35,10 @@ const DIFF_PCT_TOLERANCE = 0.5;    // max % of pixels allowed to differ before a
 // immediately after pauseAuto(), before any capture.
 const SMOKE_HOUR = 13;
 const NIGHT_LUMINANCE_RATIO_MAX = 45; // % — the 6% dimming-test regression this milestone fixes
+const TORCH_HOUR = 3; // deep night — daylight ambient/hemi/sun are all near-zero here
+const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
+const TORCH_STAND_OFF = 2; // metres from the litter comic — well inside the ~6.5m torch reach at night
+const TORCH_MIN_RATIO = 2.5; // E2b acceptance criterion 3
 
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
@@ -110,6 +114,24 @@ function pctDiff(actual, baseline) {
 // half dominated by façade and sky rather than road, which is what the E2a
 // brief's anti-regression measures (the finding: dimming lights alone left
 // every unlit façade pixel-identical to full daylight).
+// Mean luminance over a centred crop — used for the torch-pool check below,
+// where the surface of interest is whatever the camera is pointed straight
+// at (not the upper-half facade/sky split the day/night check cares about).
+function meanLuminanceCenterCrop(png, fracW, fracH) {
+  const { width, height, data } = png;
+  const x0 = Math.floor(width * (1 - fracW) / 2), x1 = Math.floor(width * (1 + fracW) / 2);
+  const y0 = Math.floor(height * (1 - fracH) / 2), y1 = Math.floor(height * (1 + fracH) / 2);
+  let sum = 0, count = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const i = (y * width + x) * 4;
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+      count++;
+    }
+  }
+  return count ? sum / count : 0;
+}
+
 function meanLuminanceUpperHalf(png) {
   const { width, height, data } = png;
   const halfH = Math.floor(height / 2);
@@ -255,6 +277,94 @@ async function main() {
       });
     } else {
       results.push({ name: 'night darkens facades', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
+    }
+
+    // --- E2b: the torch demonstrably lights a readable surface ---
+    // Stand close to a litter comic at deep night (daylight terms are all
+    // near-zero here, isolating the torch's own contribution), then compare
+    // against the identical pose with the torch light zeroed out. This is
+    // the one check in the suite that must be shown to fail if any of the
+    // six MeshLambertMaterial conversions is reverted — a lit comic close
+    // enough to read only if the torch is actually reaching it.
+    const torchPose = await page1.evaluate(({ hour, eyeHeight, standOff }) => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setTime(hour);
+      const items = dbg.litter.items;
+      if (!items.length) return null;
+      // Pick the comic farthest from any NPC — NPCs carry an always-bright
+      // world-space name/occupation sprite label plus a DOM interact prompt
+      // when the camera is close, neither of which respond to scene light;
+      // either one sitting in the crop would swamp this luminance read with
+      // brightness that has nothing to do with the torch.
+      const npcPositions = dbg.npcs.npcs.map((n) => ({ x: n.group.position.x, z: n.group.position.z }));
+      let best = items[0], bestDist = -1;
+      for (const it of items) {
+        let minD = Infinity;
+        for (const p of npcPositions) minD = Math.min(minD, Math.hypot(it.x - p.x, it.z - p.z));
+        if (minD > bestDist) { bestDist = minD; best = it; }
+      }
+      // Stand just south of the comic, facing north at it — direction doesn't
+      // matter here, only distance (well inside torch reach) and that the
+      // comic fills the centre of frame.
+      const px = best.x, pz = best.z + standOff;
+      const groundY = dbg.world.groundHeight ? dbg.world.groundHeight(px, pz) : 0;
+      dbg.camera.position.set(px, groundY + eyeHeight, pz);
+      // Look down at the comic's own near-ground height (src/litter.js sits
+      // it at groundY+0.055), not eye height — the earlier version aimed
+      // level-forward, so the comic (lying flat, barely visible edge-on from
+      // eye height anyway) ended up below the frame instead of centred.
+      dbg.camera.lookAt(best.x, groundY + 0.055, best.z);
+      return { x: best.x, z: best.z, nearestNpcDist: bestDist };
+    }, { hour: TORCH_HOUR, eyeHeight: TORCH_EYE_HEIGHT, standOff: TORCH_STAND_OFF });
+
+    if (torchPose) {
+      // Standing this close to a litter comic can also put the camera inside
+      // an NPC's proximity-prompt radius — interact.js's per-frame updater
+      // re-shows that DOM overlay every stepFrame while in range, so hiding
+      // it once before the settle loop doesn't stick; it has to be the very
+      // last thing done before each screenshot. It's a fixed-brightness DOM
+      // element on top of the canvas, untouched by any scene light, so left
+      // visible it would swamp a centre-crop luminance read.
+      const hidePrompt = () => page1.evaluate(() => {
+        const el = document.getElementById('npc-prompt');
+        if (el) el.style.display = 'none';
+      });
+      // Separate evaluate() round-trips so the browser actually gets a
+      // macrotask tick between frames — a tight synchronous stepFrame loop
+      // never lets the comic's lazily-loaded texture finish decoding/
+      // uploading (see settleAt's own note in src/debug.js for the same
+      // race, found and fixed during this milestone).
+      for (let i = 0; i < 40; i++) {
+        await page1.evaluate((i) => window.__mcgrotDebug.stepFrame(1 / 60, i / 60), i);
+      }
+      await hidePrompt();
+      const torchOnShot = await page1.screenshot();
+      const torchOnLum = meanLuminanceCenterCrop(PNG.sync.read(torchOnShot), 0.3, 0.3);
+
+      // Zero the torch and render directly (renderer.render, not stepFrame) —
+      // the 'torch' and 'atmosphere' updaters both recompute the light's
+      // intensity/distance from time-of-day every stepFrame call, so going
+      // through stepFrame here would just have them overwrite the override
+      // before the next frame ever reached the screen. That also means the
+      // 'interact' updater doesn't run either, so the prompt (hidden above)
+      // can't be re-shown before this screenshot.
+      await page1.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const torchLight = dbg.camera.children.find((c) => c.isPointLight);
+        if (torchLight) torchLight.intensity = 0;
+        dbg.renderer.render(dbg.camera.parent, dbg.camera);
+      });
+      const torchOffShot = await page1.screenshot();
+      const torchOffLum = meanLuminanceCenterCrop(PNG.sync.read(torchOffShot), 0.3, 0.3);
+
+      const torchRatio = torchOffLum > 0 ? torchOnLum / torchOffLum : (torchOnLum > 0 ? Infinity : 0);
+      results.push({
+        name: 'torch lights a readable surface',
+        pass: torchRatio >= TORCH_MIN_RATIO,
+        detail: `torch-on mean luminance ${torchOnLum.toFixed(1)} vs torch-off ${torchOffLum.toFixed(1)} (${torchRatio.toFixed(2)}x; must be >=${TORCH_MIN_RATIO}x)`,
+      });
+    } else {
+      results.push({ name: 'torch lights a readable surface', pass: false, detail: 'no litter comic available to pose the camera at' });
     }
 
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {

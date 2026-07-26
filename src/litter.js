@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
 import { paperPlaceholder } from './npcs.js';
+import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 
 const COUNT = 24;
 // Ground-level and small (0.42x0.58m, often viewed near edge-on), so it loses
@@ -62,7 +63,7 @@ export function buildLitter(assets, world, scene) {
     const x = sm.point[0] + -tz * side * off;
     const z = sm.point[1] + tx * side * off;
 
-    const mat = new THREE.MeshBasicMaterial({ map: paperPlaceholder(), side: THREE.DoubleSide });
+    const mat = new THREE.MeshLambertMaterial({ map: paperPlaceholder(), color: new THREE.Color(LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN), side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.58), mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.rotation.z = rand() * Math.PI * 2;
@@ -86,7 +87,7 @@ export function buildLitter(assets, world, scene) {
         texLoader.load(assetUrl(assets, comic.image), (tex) => {
           tex.colorSpace = THREE.SRGBColorSpace;
           mat.map = tex;
-          mat.color.set(0xffffff);
+          mat.color.setScalar(LIT_ALBEDO_GAIN);
           mat.needsUpdate = true;
         });
       },

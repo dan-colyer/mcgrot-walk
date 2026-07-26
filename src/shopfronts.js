@@ -27,6 +27,7 @@ import * as THREE from 'three';
 import { assetUrl } from './assets.js';
 import { buildNameAtlas } from './placeholders.js';
 import { computeFrontageRuns, chainageOfPoint } from './frontage.js';
+import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 
 const BASE_Y = 0.05;       // sit just above the street ribbon (STREET_Y = 0.03)
 // D8/task1: was 0.12. A frontage RUN is a straight line between two merged-edge
@@ -124,15 +125,26 @@ export function buildShopfronts(assets, world, scene) {
     for (const biz of mb.businesses || []) placeholderNames.push(biz.name);
   }
   const nameAtlas = placeholderNames.length ? buildNameAtlas(placeholderNames) : null;
-  const pPos = [], pUv = [], pIdx = [];
+  const pPos = [], pUv = [], pIdx = [], pNorm = [];
   let pQuadCount = 0;
+
+  // Every quad this module emits is a flat vertical plane running from
+  // (ax,az) to (bx,bz) — the outward normal is the walk direction rotated
+  // 90° in the XZ plane (see the run-flip derivation in the E2b brief: this
+  // matches the run's own nx/nz regardless of which side the flip landed
+  // on, since a->b is always built from the same post-flip dx/dz).
+  function quadNormal(ax, az, bx, bz) {
+    const dx = bx - ax, dz = bz - az;
+    const len = Math.hypot(dx, dz) || 1;
+    return [-dz / len, 0, dx / len];
+  }
 
   // --- per-page geometry buffers (texture loaded lazily; geometry is cheap
   // and built up front so a page can appear the instant its texture lands) ---
   // D9/task2: `colors` is a per-vertex multiply tint, defaulted to white by
   // emitInto (below) so every existing call site is untouched; only the new
   // ground-band edge fade (emitGroundBandFaded) writes non-white vertices.
-  const pageBuf = atlas.pages.map(() => ({ positions: [], uvs: [], colors: [], indices: [], quadCount: 0 }));
+  const pageBuf = atlas.pages.map(() => ({ positions: [], uvs: [], colors: [], normals: [], indices: [], quadCount: 0 }));
 
   // --- D6/task1: donor pool for borrowed upper-wall bands, grouped by atlas
   // page (a borrowed band must come from the SAME page as the building
@@ -167,6 +179,8 @@ export function buildShopfronts(assets, world, scene) {
     buf.positions.push(ax, gy0, az, bx, gy0, bz, bx, gy1, bz, ax, gy1, az);
     buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
     buf.colors.push(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+    const [nx, ny, nz] = quadNormal(ax, az, bx, bz);
+    buf.normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz, nx, ny, nz);
     buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
     buf.quadCount++;
   }
@@ -180,6 +194,8 @@ export function buildShopfronts(assets, world, scene) {
     buf.positions.push(ax, gy0, az, bx, gy0, bz, bx, gy1, bz, ax, gy1, az);
     buf.uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
     buf.colors.push(...c0, ...c1, ...c2, ...c3);
+    const [nx, ny, nz] = quadNormal(ax, az, bx, bz);
+    buf.normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz, nx, ny, nz);
     buf.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
     buf.quadCount++;
   }
@@ -468,6 +484,7 @@ export function buildShopfronts(assets, world, scene) {
                   const base = pQuadCount * 4;
                   pPos.push(a.x, BASE_Y + currentGroundY, a.z, b.x, BASE_Y + currentGroundY, b.z, b.x, STOREY_M + currentGroundY, b.z, a.x, STOREY_M + currentGroundY, a.z);
                   pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
+                  { const [nx, ny, nz] = quadNormal(a.x, a.z, b.x, b.z); pNorm.push(nx, ny, nz, nx, ny, nz, nx, ny, nz, nx, ny, nz); }
                   pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
                   pQuadCount++;
                   quadCount++;
@@ -855,6 +872,7 @@ export function buildShopfronts(assets, world, scene) {
           const base = pQuadCount * 4;
           pPos.push(a.x, BASE_Y + currentGroundY, a.z, b.x, BASE_Y + currentGroundY, b.z, b.x, STOREY_M + currentGroundY, b.z, a.x, STOREY_M + currentGroundY, a.z);
           pUv.push(uv.u0, uv.vBot, uv.u1, uv.vBot, uv.u1, uv.vTop, uv.u0, uv.vTop);
+          { const [nx, ny, nz] = quadNormal(a.x, a.z, b.x, b.z); pNorm.push(nx, ny, nz, nx, ny, nz, nx, ny, nz, nx, ny, nz); }
           pIdx.push(base, base + 1, base + 2, base, base + 2, base + 3);
           pQuadCount++;
         }
@@ -937,9 +955,10 @@ export function buildShopfronts(assets, world, scene) {
     const pGeo = new THREE.BufferGeometry();
     pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pPos, 3));
     pGeo.setAttribute('uv', new THREE.Float32BufferAttribute(pUv, 2));
+    pGeo.setAttribute('normal', new THREE.Float32BufferAttribute(pNorm, 3));
     pGeo.setIndex(pIdx);
     pGeo.computeBoundingSphere();
-    placeholderMesh = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ map: nameAtlas.texture, side: THREE.FrontSide, fog: true }));
+    placeholderMesh = new THREE.Mesh(pGeo, new THREE.MeshLambertMaterial({ map: nameAtlas.texture, color: new THREE.Color(LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN), side: THREE.FrontSide, fog: true }));
     placeholderMesh.name = 'shopfront-placeholders';
     scene.add(placeholderMesh);
   }
@@ -954,6 +973,7 @@ export function buildShopfronts(assets, world, scene) {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(buf.positions, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(buf.uvs, 2));
     geo.setAttribute('color', new THREE.Float32BufferAttribute(buf.colors, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(buf.normals, 3));
     geo.setIndex(buf.indices);
     geo.computeBoundingSphere();
     let url = assetUrl(assets, pg.file);
@@ -981,17 +1001,20 @@ export function buildShopfronts(assets, world, scene) {
     // (emitGroundBandFaded) black-to-white — every other vertex is white
     // (1,1,1), a no-op multiply, so this only darkens the specific fade
     // triangles and leaves everything else exactly as before.
-    p.mesh = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ map: texture, vertexColors: true, side: THREE.FrontSide, fog: true }));
-    p.mesh.name = 'shopfronts-page';
+    if (!p.material) {
+      p.material = new THREE.MeshLambertMaterial({ vertexColors: true, color: new THREE.Color(LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN), side: THREE.FrontSide, fog: true });
+      p.mesh = new THREE.Mesh(p.geo, p.material);
+      p.mesh.name = 'shopfronts-page';
+    }
+    p.material.map = texture;
     scene.add(p.mesh);
   }
   function unloadPage(p) {
     if (!p.loaded) return;
     p.loaded = false;
     scene.remove(p.mesh);
-    p.mesh.material.map.dispose();
-    p.mesh.material.dispose();
-    p.mesh = null;
+    p.material.map.dispose();
+    p.material.map = null;
   }
 
   function update(camPos) {

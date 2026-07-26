@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { assetUrl } from './assets.js';
+import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
@@ -204,7 +205,7 @@ export function buildNpcs(assets, world, scene, camera) {
   // Load each unique face once, apply to every material that registered it.
   for (const [path, mats] of faceMats) {
     loadSRGB(assetUrl(assets, path), (tex) => {
-      for (const m of mats) { m.map = tex; m.color.set(0xffffff); m.needsUpdate = true; }
+      for (const m of mats) { m.map = tex; m.color.setScalar(LIT_ALBEDO_GAIN); m.needsUpdate = true; }
     });
   }
 
@@ -288,7 +289,7 @@ function buildNpc(assets, comic, coatColor, registerFace) {
   // knitted hood (darker than the coat) instead of bare coat colour, so the
   // head reads as a hooded person rather than a coat-coloured block.
   const hoodMat = clothMat(new THREE.Color(coatColor).multiplyScalar(0.62).getHex(), true);
-  const faceMat = new THREE.MeshBasicMaterial({ color: 0x8a8472 });
+  const faceMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x8a8472).multiplyScalar(LIT_ALBEDO_GAIN) });
   registerFace(comic.npc.face, faceMat);
   // BoxGeometry material order: +X,-X,+Y,-Y,+Z,-Z — index 4 is the front.
   const headMats = [hoodMat, hoodMat, hoodMat, hoodMat, faceMat, hoodMat];
@@ -309,7 +310,7 @@ function buildNpc(assets, comic, coatColor, registerFace) {
 
   // Comic plane — unlit, grubby-newsprint placeholder until its texture loads.
   const comicH = bodyH * 0.55;
-  const comicMat = new THREE.MeshBasicMaterial({ map: paperPlaceholder(), side: THREE.DoubleSide });
+  const comicMat = new THREE.MeshLambertMaterial({ map: paperPlaceholder(), color: new THREE.Color(LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN), side: THREE.DoubleSide });
   const comicMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), comicMat);
   comicMesh.position.set(0, legTopY + bodyH * 0.55, bodyD * 0.5 + 0.17);
   comicMesh.scale.set(comicH * 0.7, comicH, 1);
@@ -344,7 +345,7 @@ function buildNpc(assets, comic, coatColor, registerFace) {
       npc.comicLoaded = true; // set first so we never double-load
       loadSRGB(assetUrl(assets, comic.image), (tex) => {
         comicMat.map = tex;
-        comicMat.color.set(0xffffff);
+        comicMat.color.setScalar(LIT_ALBEDO_GAIN);
         comicMat.needsUpdate = true;
         const img = tex.image;
         if (img && img.width && img.height) {

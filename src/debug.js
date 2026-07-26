@@ -11,6 +11,7 @@ import { pointAtChainage } from './frontage.js';
 const EYE_HEIGHT = 1.7;
 const SETTLE_FRAMES = 150;
 const SETTLE_DT = 1 / 60;
+const POST_LOAD_SETTLE_FRAMES = 5; // extra renders after texture-wait — see settleAt
 // Metres from the street centreline a bookmark camera stands — same value
 // and "close = target side, far = opposite side looking across" convention
 // as scripts/eval-poses.mjs (SIDE_OFFSET), so a bookmark's geometry reads
@@ -175,6 +176,22 @@ export function createDebugApi(ctx) {
     camera.lookAt(lookX, lookY, lookZ);
     stepFrame(SETTLE_DT, SETTLE_FRAMES * SETTLE_DT);
     await waitForPagesLoaded(shopfronts, TEXTURE_WAIT_TIMEOUT_MS);
+    // A page's texture can finish decoding (async, real wall-clock work)
+    // AFTER the last render above — waitForPagesLoaded only waits for that,
+    // it doesn't itself trigger a render, so the canvas can still show the
+    // pre-decode (black) frame even though the promise resolved. Re-render a
+    // few times to composite whatever just became ready — and actually YIELD
+    // to the event loop between each one (measured: a tight synchronous loop
+    // of stepFrame calls never gives the browser's texture-upload/decode
+    // machinery a real wall-clock tick to catch up, so it stays stale no
+    // matter how many synchronous frames run; a macrotask boundary between
+    // frames is what lets it resolve).
+    for (let i = 0; i < POST_LOAD_SETTLE_FRAMES; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      camera.position.set(px, eyeY, pz);
+      camera.lookAt(lookX, lookY, lookZ);
+      stepFrame(SETTLE_DT, (SETTLE_FRAMES + 1 + i) * SETTLE_DT);
+    }
   }
 
   async function goto(chainage, side, distance) {
