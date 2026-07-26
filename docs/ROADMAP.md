@@ -198,7 +198,29 @@ conversion bought, and the only part of E2c that collects it.
 
 #### E2c.2 — Rain
 
-- `drizzle` and `rain` columns; particle pass; wet-road material response.
+*Brief: `~/.claude/plans/mcgrot-e2c2-brief.md`.*
+
+- A `rain` palette column with two new keyframe fields, `rain` (particle
+  intensity) and `wetness`, both 0 throughout `overcast` and `clear` so their
+  goldens stay untouched.
+- **`drizzle` is derived, not authored** — a fixed blend of `overcast` and
+  `rain` via E2c.1's own `blendPalette`, with a lower particle rate. No
+  near-duplicate column to keep in sync, two goldens instead of eight, and the
+  five-state vocabulary survives.
+- **Nothing in this scene can be shiny.** Every material is
+  `MeshLambertMaterial`, which has no specular term, and `src/cars.js:72`
+  records `MeshStandardMaterial` being tried and rejected as "plasticky under
+  this scene's lights". So wet-road response here is a per-weather darkening
+  multiply on the existing road/pavement materials (their `color` defaults to
+  white over a map, so this is clean). **Real sheen is deferred to E2c.3**,
+  where the torch at night is what makes the case either way.
+- Rain is ONE camera-following `THREE.Points` system, unlit, wrapping, constant
+  particle count. Two traps recorded so they aren't rediscovered: every
+  `InstancedMesh` silently enters `computeGeomHash` (`src/debug.js:91`), so an
+  instanced rain system would join the determinism check; and `scenery.js`'s
+  smoke uses one `THREE.Sprite` per puff, which is the wrong idiom at rain
+  scale. Particle phase must be a pure function of the stepped `t`, or the
+  goldens flake permanently.
 - Puddle **reflections are dropped from E2c** — they need a render pass, so they
   belong with E2d's post-processing, either properly or as a screen-space fake.
 
