@@ -34,22 +34,29 @@ paste into the Fable session for review.
 **Session boundaries.** Planning, implementation and review are separate phases:
 
 1. Opus plans the next milestone.
-2. The `/handoff` skill produces the implementation package.
+2. Opus writes the brief to `~/.claude/plans/<project>-<milestone>-brief.md`,
+   updates and commits `docs/ROADMAP.md`, and copies the brief to the clipboard
+   — that is the implementation package.
 3. Sonnet implements the milestone in a separate Claude Code session.
 4. Sonnet returns a concise completion summary.
 5. Opus reviews the diff against its original brief and acceptance criteria —
    not the implementation transcript — and deploys.
-6. Compact the Opus session before planning the next milestone.
+6. Before compacting, Opus runs `/handoff` in DEFAULT mode — a post-compaction
+   nudge whose real payload is the "fragile assumptions" section — ending with a
+   heading and paste marker for Sonnet's report. Dan compacts, appends the
+   report, and pastes.
 7. At each phase boundary, a Fable session audits the whole phase before the
    next one is planned.
 
 The implementation conversation is disposable; the architectural conversation is
 persistent.
 
-**Handoff contract.** Every milestone ends with a `/handoff` brief containing at
-minimum: objective, scope, expected files to modify, constraints, acceptance
-criteria, risks, and notes for the implementer. It must be complete enough that
-Sonnet can execute largely autonomously without architectural clarification.
+**Brief contract.** Every milestone starts from a brief (step 2 above — not to be
+confused with the `/handoff` prompt of step 6, which carries the *architect*
+session across a compaction) containing at minimum: objective, scope, expected
+files to modify, constraints, acceptance criteria, risks, and notes for the
+implementer. It must be complete enough that Sonnet can execute largely
+autonomously without architectural clarification.
 
 **Reviews** prioritise correctness, architecture, maintainability, performance
 and unintended regressions — judged against the handoff, not the conversation.
