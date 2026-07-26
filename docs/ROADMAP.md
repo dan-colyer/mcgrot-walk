@@ -168,13 +168,46 @@ particle system, a material response, a shader change, dynamic fog, the Forth
 reveal and a GPU budget re-check — four milestones of work and three unrelated
 risk clusters.
 
-#### E2c.1 — The Weather Axis
+#### E2c.1 — The Weather Axis — SHIPPED + DEPLOYED (2026-07-26)
 
-*Brief: `~/.claude/plans/mcgrot-e2c1-brief.md`.*
+*Brief: `~/.claude/plans/mcgrot-e2c1-brief.md`. Commits `e1a54c7` (implementation)
++ `29f82f9` (harness fix), gh-pages `e90cf4b`.*
 
-Makes `weather` real and proves it with one new state, `clear`, that reads as
-genuinely sunny with a shadowed side of the street — the payoff E2b's Lambert
-conversion bought, and the only part of E2c that collects it.
+Delivered. `weather` is real: `setWeather` runs a ~10s transition, and a call
+arriving mid-transition freezes the current blended output as its new starting
+point. `clear` reads as genuinely sunny — at 08:00 one side of the street is in
+warm sun and the other in shade, which is the payoff E2b's Lambert conversion
+bought and the only part of E2c that collects it. `sky.js` gained a `uCoverage`
+uniform so `clear` thins the cloud deck rather than only recolouring it; it
+scales the existing `cover` term, so the fog/sky seam invariant holds by
+construction.
+
+Verified independently: `sun.pos` byte-identical across both columns at all
+seven hours, draw calls exactly ±0 against an untouched budget, `geomHash`
+stable, clipping 0.000% everywhere, `fogDensity` and `skyFogLinked` intact after
+all weather work, and a full 24h sweep with wraparound in both weathers with
+zero console errors.
+
+Two lessons recorded:
+
+- **An acceptance criterion demanded more precision than the harness has.** The
+  brief gated on the overcast goldens being pixel-identical. They aren't
+  achievable: the animated cloud FBM under `uTime` gives sky-visible poses an
+  inherent capture jitter up to ~0.11%, while the three close poses with no sky
+  read exactly 0.000%. Confirmed by comparing against an earlier E2b review run
+  on the same harness — same three zeros, same five non-zero, same magnitudes.
+  Before writing "bit-identical" into a brief, check the harness is deterministic
+  to that precision.
+- **A golden that is never diffed is a screenshot.** The nine `clear` captures
+  were written once and thereafter only measured for clipping, and the 08:00 one
+  was written unconditionally on every run — so the pre-deploy gate mutated a
+  tracked file and that golden could never fail. Fixed by routing every capture
+  through a shared `checkGolden()`; smoke went 45 → 54 checks.
+
+Residual for E2c.2: `setWeather('rain')` currently sets the reported weather to
+`'rain'` while `stopsFor()` falls back to overcast, so `state().weather` names a
+column that is not being rendered. Harmless until rain exists; a real trap the
+moment it does and a name gets typo'd.
 
 - The engineering is a refactor, not the palette data: `update()` currently
   lerps straight into the live light objects, which supports one blend axis
