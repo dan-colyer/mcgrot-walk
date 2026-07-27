@@ -9,12 +9,16 @@
 const MASTER_GAIN = 0.16; // low — this is a bed, not a soundtrack
 const DUCK_GAIN = 0.5; // ~50%, per spec, while a comic is playing
 const DUCK_RAMP = 0.6; // seconds
+const RAIN_RAMP = 0.8; // seconds — a setRain() step glides rather than snaps
+const RAIN_PEAK_GAIN = 0.5; // rain's own gain node ceiling at intensity 1, pre-master
 
 export function createAmbience() {
   let ctx = null;
   let master = null;
   let started = false;
   let ducked = false;
+  let rainGain = null; // created lazily inside start(); setRain before start() just remembers the target
+  let pendingRain = 0;
 
   function start() {
     if (started) {
@@ -33,6 +37,8 @@ export function createAmbience() {
 
     buildDrone(ctx, master);
     buildWind(ctx, master);
+    rainGain = buildRain(ctx, master);
+    rainGain.gain.value = pendingRain;
   }
 
   function setDucked(v) {
@@ -50,7 +56,23 @@ export function createAmbience() {
     playCrackle(ctx, master);
   }
 
-  return { start, setDucked, triggerCrackle };
+  // E2c.2: driven every frame from src/atmosphere.js's applyPalette with
+  // palette.rain (0..1) — visible rain you can't hear is uncanny. Must never
+  // throw: callable before start() (no ctx yet — just remembers the target
+  // for buildRain to pick up) and from a suspended AudioContext (scheduling
+  // a ramp on a suspended context's clock is valid WebAudio, it simply won't
+  // audibly progress until the context resumes on the title-card gesture).
+  function setRain(intensity) {
+    const target = Math.max(0, Math.min(1, intensity)) * RAIN_PEAK_GAIN;
+    pendingRain = target;
+    if (!ctx || !rainGain) return;
+    const now = ctx.currentTime;
+    rainGain.gain.cancelScheduledValues(now);
+    rainGain.gain.setValueAtTime(rainGain.gain.value, now);
+    rainGain.gain.linearRampToValueAtTime(target, now + RAIN_RAMP);
+  }
+
+  return { start, setDucked, triggerCrackle, setRain };
 }
 
 // --- Drone: two detuned oscillators through a lowpass filter --------------
@@ -102,6 +124,42 @@ function buildWind(ctx, dest) {
   lfoGain.gain.value = 0.12;
   lfo.connect(lfoGain).connect(gain.gain);
   lfo.start();
+}
+
+// --- Rain: filtered noise bed, gain driven by setRain() --------------------
+// Same shape as buildWind (filtered noise + a slow gusting LFO): a steady
+// downpour hiss rather than individual drop transients, which would need a
+// much higher event rate to not sound like popcorn. Returns the GAIN NODE
+// (not the whole graph) so setRain() above can ramp it directly — everything
+// upstream (noise source, filter, LFO) only needs building once.
+function buildRain(ctx, dest) {
+  const noise = ctx.createBufferSource();
+  noise.buffer = makeNoiseBuffer(ctx, 4);
+  noise.loop = true;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2200; // brighter/hissier than wind's 500Hz — rain reads high, wind reads low
+  filter.Q.value = 0.5;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0; // setRain() (or the pending value applied at start()) drives this
+
+  noise.connect(filter).connect(gain).connect(dest);
+  noise.start();
+
+  // Gentle intensity wobble so a steady downpour doesn't sound like a static
+  // hiss loop — same tremolo-style routing as buildWind's gust LFO, faster
+  // and shallower (rain gusts quicker and less dramatically than wind).
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.15;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.06;
+  lfo.connect(lfoGain).connect(gain.gain);
+  lfo.start();
+
+  return gain;
 }
 
 // --- Crackle: short highpassed noise burst with a fast decay ---------------

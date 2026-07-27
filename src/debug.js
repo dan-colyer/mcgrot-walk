@@ -70,14 +70,18 @@ function hashString(str, hash) {
 }
 
 // Merged world geometry + every InstancedMesh's instanceMatrix (chimneys,
-// aerials, birds, vermin, roadworks cones — enumerated by traversal, not a
-// hardcoded list) + every NPC's placed position. NPCs aren't InstancedMesh
-// in this codebase (each is its own Group — see src/npcs.js), but their
-// placement is just as seeded/static as the InstancedMesh content and just
-// as important to catch drift in, so they're folded in by iterating
-// npcs.npcs directly rather than via scene.traverse. Deliberately excludes
-// anything that moves under real-time rAF (leithers/birds/vermin AI,
-// scenery smoke) — see docs/VALIDATION.md for why.
+// aerials, roadworks cones — enumerated by traversal, not a hardcoded list)
+// + every NPC's placed position. NPCs aren't InstancedMesh in this codebase
+// (each is its own Group — see src/npcs.js), but their placement is just as
+// seeded/static as the InstancedMesh content and just as important to catch
+// drift in, so they're folded in by iterating npcs.npcs directly rather than
+// via scene.traverse. Deliberately excludes anything that moves under
+// real-time rAF — birds/vermin ARE InstancedMesh but their per-frame AI
+// mutates instanceMatrix every tick, so this traversal DOES pick them up
+// (along with leithers/scenery smoke conceptually belonging to the same
+// "moves in real time" category, even though those two aren't InstancedMesh
+// at all) — see docs/VALIDATION.md for why that's a known, accepted gap
+// rather than something this hash is meant to police.
 function computeGeomHash({ scene, world, npcs }) {
   let hash = 0x811c9dc5; // FNV-1a offset basis
 
@@ -266,6 +270,8 @@ export function createDebugApi(ctx) {
       weather: atmo.weather,
       weatherTransition: atmo.weatherTransition,
       exposure: atmo.exposure,
+      rain: atmo.rain,
+      wetness: atmo.wetness,
       // Identity check, not an equality check: catches "THE SEAM" failure
       // mode in sky.js — a `scene.fog.color = new THREE.Color(...)`
       // reassignment anywhere would leave this uniform pointing at a stale

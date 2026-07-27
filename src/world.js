@@ -115,6 +115,9 @@ export function buildWorld(leith) {
 
   const streetMesh = buildStreetMeshes(leith.streetPaths, groundHeight);
   if (streetMesh) group.add(streetMesh);
+  const surfaces = streetMesh
+    ? { road: streetMesh.children[0].material, pavement: streetMesh.children[1].material }
+    : {};
 
   const buildingsMesh = buildBuildings(leith.buildings, groundHeight);
   if (buildingsMesh) group.add(buildingsMesh);
@@ -137,6 +140,13 @@ export function buildWorld(leith) {
     // keyframes on all three — buildWorld's own values above are just the
     // day-one baseline, now effectively the noon keyframe.
     lights,
+    // E2c.2: road/pavement materials, so atmosphere can darken them under
+    // `wetness` — both set only `map` above (color defaults to white), so a
+    // multiply is a clean darken with no new geometry. Atmosphere snapshots
+    // each base colour once and always recomputes from that snapshot, never
+    // the live value — the same non-compounding discipline the tint registry
+    // already uses.
+    surfaces,
   };
 }
 

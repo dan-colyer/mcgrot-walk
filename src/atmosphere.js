@@ -74,6 +74,8 @@ const OVERCAST_STOPS = [
     torch: 1.0,
     windowGlow: 1.0,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 5,
@@ -87,6 +89,8 @@ const OVERCAST_STOPS = [
     torch: 0.95,
     windowGlow: 0.9,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 8,
@@ -100,6 +104,8 @@ const OVERCAST_STOPS = [
     torch: 0.3,
     windowGlow: 0.15,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 12,
@@ -113,6 +119,8 @@ const OVERCAST_STOPS = [
     torch: 0.03,
     windowGlow: 0.0,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 17,
@@ -126,6 +134,8 @@ const OVERCAST_STOPS = [
     torch: 0.15,
     windowGlow: 0.1,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 20,
@@ -139,6 +149,8 @@ const OVERCAST_STOPS = [
     torch: 0.55,
     windowGlow: 0.6,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 22,
@@ -152,6 +164,8 @@ const OVERCAST_STOPS = [
     torch: 0.9,
     windowGlow: 0.95,
     coverage: 1.0,
+    rain: 0,
+    wetness: 0,
   },
 ];
 
@@ -180,6 +194,8 @@ const CLEAR_STOPS = [
     torch: 1.0,
     windowGlow: 1.0,
     coverage: 0.05,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 5,
@@ -193,6 +209,8 @@ const CLEAR_STOPS = [
     torch: 0.95,
     windowGlow: 0.85,
     coverage: 0.08,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 8,
@@ -206,6 +224,8 @@ const CLEAR_STOPS = [
     torch: 0.05,
     windowGlow: 0.05,
     coverage: 0.15,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 12,
@@ -219,6 +239,8 @@ const CLEAR_STOPS = [
     torch: 0.0,
     windowGlow: 0.0,
     coverage: 0.12,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 17,
@@ -232,6 +254,8 @@ const CLEAR_STOPS = [
     torch: 0.1,
     windowGlow: 0.08,
     coverage: 0.15,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 20,
@@ -245,6 +269,8 @@ const CLEAR_STOPS = [
     torch: 0.5,
     windowGlow: 0.55,
     coverage: 0.1,
+    rain: 0,
+    wetness: 0,
   },
   {
     hour: 22,
@@ -258,14 +284,141 @@ const CLEAR_STOPS = [
     torch: 0.85,
     windowGlow: 0.9,
     coverage: 0.06,
+    rain: 0,
+    wetness: 0,
   },
 ];
 
-const KEYFRAMES = { overcast: OVERCAST_STOPS, clear: CLEAR_STOPS };
+// 'rain' — E2c.2. A heavy, steady downpour: cloud deck stays fully closed
+// (coverage 1.0, same as overcast) and sun/hemi/ambient are pulled darker and
+// cooler than overcast at every hour — heavier rain cuts more daylight than a
+// plain grey sky does. rain/wetness are held flat across the day: this is
+// "it is raining", not a storm that waxes and wanes with the clock (E2c.3's
+// night-torch case is what varies the *look*, not the rain itself). Exposure
+// is kept at or below OVERCAST_STOPS at every matching hour, so the six
+// LIT_ALBEDO_GAIN-boosted materials stay comfortably under the clipped-
+// highlight gate without retuning the shared gain.
+const RAIN_STOPS = [
+  {
+    hour: 0,
+    sun: { color: 0x2a3648, intensity: 0.04, pos: { x: -100, y: -50, z: 80 } },
+    hemi: { sky: 0x161e28, ground: 0x0b0a07, intensity: 0.5 },
+    ambient: { color: 0x101008, intensity: 0.2 },
+    fog: 0x10120e,
+    exposure: 0.48,
+    tint: { r: 0.1, g: 0.1, b: 0.13 },
+    sky: { band: 0x151a15, zenith: 0x0b0d10, cloudDark: 0x080a0d, cloudLit: 0x1c1e18, glow: 0x5c2c12 },
+    torch: 1.0,
+    windowGlow: 1.0,
+    coverage: 1.0,
+    rain: 0.7,
+    wetness: 0.85,
+  },
+  {
+    hour: 5,
+    sun: { color: 0x2f3c4e, intensity: 0.06, pos: { x: 250, y: 20, z: -150 } },
+    hemi: { sky: 0x1a222c, ground: 0x0d0c08, intensity: 0.6 },
+    ambient: { color: 0x131309, intensity: 0.25 },
+    fog: 0x13150f,
+    exposure: 0.52,
+    tint: { r: 0.12, g: 0.12, b: 0.15 },
+    sky: { band: 0x1a1c16, zenith: 0x0d0f12, cloudDark: 0x0a0c0f, cloudLit: 0x1e2018, glow: 0x63300f },
+    torch: 0.95,
+    windowGlow: 0.9,
+    coverage: 1.0,
+    rain: 0.7,
+    wetness: 0.85,
+  },
+  {
+    hour: 8,
+    sun: { color: 0x7a889c, intensity: 0.3, pos: { x: 200, y: 180, z: -100 } },
+    hemi: { sky: 0x48505c, ground: 0x1e1b15, intensity: 1.6 },
+    ambient: { color: 0x262617, intensity: 0.6 },
+    fog: 0x2e3230,
+    exposure: 0.85,
+    tint: { r: 0.42, g: 0.44, b: 0.48 },
+    sky: { band: 0x4e5644, zenith: 0x1c2026, cloudDark: 0x161a20, cloudLit: 0x3a382c, glow: 0x8a4a1e },
+    torch: 0.35,
+    windowGlow: 0.2,
+    coverage: 1.0,
+    rain: 0.85,
+    wetness: 0.9,
+  },
+  {
+    hour: 12,
+    sun: { color: 0x9aa8ba, intensity: 0.65, pos: { x: -200, y: 300, z: 150 } },
+    hemi: { sky: 0x6a7078, ground: 0x2c281c, intensity: 2.9 },
+    ambient: { color: 0x38361f, intensity: 1.0 },
+    fog: 0x383c34, // rain-cooled overcast noon: slightly bluer than OVERCAST_STOPS' 0x4a5142
+    exposure: 1.1,
+    tint: { r: 0.72, g: 0.74, b: 0.78 },
+    sky: { band: 0x6a715a, zenith: 0x242830, cloudDark: 0x1c2028, cloudLit: 0x484636, glow: 0xb05a24 },
+    torch: 0.06,
+    windowGlow: 0.0,
+    coverage: 1.0,
+    rain: 0.85,
+    wetness: 0.9,
+  },
+  {
+    hour: 17,
+    sun: { color: 0x8a7e70, intensity: 0.4, pos: { x: -250, y: 150, z: 200 } },
+    hemi: { sky: 0x50493e, ground: 0x222016, intensity: 1.7 },
+    ambient: { color: 0x2a2618, intensity: 0.65 },
+    fog: 0x2e3028,
+    exposure: 0.9,
+    tint: { r: 0.46, g: 0.44, b: 0.42 },
+    sky: { band: 0x585240, zenith: 0x20232a, cloudDark: 0x181c22, cloudLit: 0x3c3a2e, glow: 0xa8541e },
+    torch: 0.2,
+    windowGlow: 0.15,
+    coverage: 1.0,
+    rain: 0.8,
+    wetness: 0.9,
+  },
+  {
+    hour: 20,
+    sun: { color: 0x464050, intensity: 0.12, pos: { x: -300, y: 40, z: 220 } },
+    hemi: { sky: 0x24262e, ground: 0x14120d, intensity: 0.8 },
+    ambient: { color: 0x161409, intensity: 0.32 },
+    fog: 0x1c1d18,
+    exposure: 0.62,
+    tint: { r: 0.24, g: 0.22, b: 0.24 },
+    sky: { band: 0x282820, zenith: 0x141720, cloudDark: 0x0f1116, cloudLit: 0x2c2a22, glow: 0x8c3e18 },
+    torch: 0.6,
+    windowGlow: 0.6,
+    coverage: 1.0,
+    rain: 0.75,
+    wetness: 0.9,
+  },
+  {
+    hour: 22,
+    sun: { color: 0x2e3648, intensity: 0.05, pos: { x: -150, y: -30, z: 100 } },
+    hemi: { sky: 0x181e28, ground: 0x0c0b08, intensity: 0.6 },
+    ambient: { color: 0x121208, intensity: 0.25 },
+    fog: 0x13150f,
+    exposure: 0.52,
+    tint: { r: 0.13, g: 0.13, b: 0.16 },
+    sky: { band: 0x181a14, zenith: 0x0b0d10, cloudDark: 0x090b0e, cloudLit: 0x1e2018, glow: 0x662f12 },
+    torch: 0.92,
+    windowGlow: 0.95,
+    coverage: 1.0,
+    rain: 0.7,
+    wetness: 0.85,
+  },
+];
+
+const KEYFRAMES = { overcast: OVERCAST_STOPS, clear: CLEAR_STOPS, rain: RAIN_STOPS };
 
 function stopsFor(weather) {
   return KEYFRAMES[weather] || KEYFRAMES.overcast;
 }
+
+// 'drizzle' — E2c.2, Dan's call: derived from a blend of 'overcast' and
+// 'rain' rather than authored as its own column, so the light/rain/wetness
+// relationship never has to be hand-tuned twice. k is the weight toward
+// 'rain'; rainScale further scales the blended rain intensity down when the
+// light-side blend alone doesn't land the particle rate right (unused here —
+// k=0.45 landed both at once, see resolvePalette below).
+const DERIVED = { drizzle: { from: 'overcast', to: 'rain', k: 0.45 } };
 
 // Locates the bracketing pair of stops for `hours` (wrapping past the last
 // stop back to the first at hour+24) and the 0..1 interpolation fraction.
@@ -307,6 +460,8 @@ function makePalette() {
     torch: 0,
     windowGlow: 0,
     coverage: 1,
+    rain: 0,
+    wetness: 0,
   };
 }
 
@@ -330,14 +485,33 @@ function copyPalette(src, dst) {
   dst.torch = src.torch;
   dst.windowGlow = src.windowGlow;
   dst.coverage = src.coverage;
+  dst.rain = src.rain;
+  dst.wetness = src.wetness;
   return dst;
 }
 
-export function createAtmosphere({ scene, renderer, world, sky, torch, windows }) {
+export function createAtmosphere({ scene, renderer, world, sky, torch, windows, rain, ambience }) {
   const hemi = world.lights && world.lights.hemi;
   const sun = world.lights && world.lights.sun;
   const ambient = world.lights && world.lights.ambient;
   const fog = world.fog;
+
+  // E2c.2: wetness darkens road/pavement — both set only `map` in world.js
+  // (colour defaults to white), so a multiply is a clean darken with no new
+  // geometry. Snapshotted ONCE here and always recomputed from the snapshot,
+  // never the live value — the tint registry's own non-compounding
+  // discipline (see applyTint below), and the reason IT snapshots before
+  // first tint too.
+  const surfaces = world.surfaces || {};
+  const roadBaseColor = surfaces.road ? surfaces.road.color.clone() : null;
+  const pavementBaseColor = surfaces.pavement ? surfaces.pavement.color.clone() : null;
+  const WETNESS_DARKEN = 0.5; // fraction darker than the dry base at wetness=1
+
+  function applyWetness(k) {
+    const factor = 1 - WETNESS_DARKEN * k;
+    if (surfaces.road && roadBaseColor) surfaces.road.color.copy(roadBaseColor).multiplyScalar(factor);
+    if (surfaces.pavement && pavementBaseColor) surfaces.pavement.color.copy(pavementBaseColor).multiplyScalar(factor);
+  }
 
   let hours = todayStartHour(new Date());
   let rate = HOURS_PER_REAL_MINUTE;
@@ -353,6 +527,14 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
   const sBlend = makePalette();    // this frame's blended output, when transitioning
   const sFrozenFrom = makePalette(); // the frozen "from" snapshot for the active transition
   const sLastApplied = makePalette(); // whatever was actually applied last frame
+
+  // Struct budget for derived weathers (drizzle): only the transition's `to`
+  // side is ever resolved through resolvePalette per frame — its `from` is a
+  // frozen snapshot (sFrozenFrom above), not re-sampled — so two scratch
+  // palettes are enough for the derived blend, same discipline as the four
+  // above (allocated once, never per frame).
+  const sDerivedFrom = makePalette();
+  const sDerivedTo = makePalette();
 
   // Scratch Colors for hex->Color conversion inside samplePalette — reused
   // sequentially (each pair is fully consumed by one lerpColors call before
@@ -403,6 +585,8 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
     out.torch = lerp(a.torch, b.torch, t);
     out.windowGlow = lerp(a.windowGlow, b.windowGlow, t);
     out.coverage = lerp(a.coverage, b.coverage, t);
+    out.rain = lerp(a.rain, b.rain, t);
+    out.wetness = lerp(a.wetness, b.wetness, t);
 
     return out;
   }
@@ -436,7 +620,23 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
     out.torch = lerp(from.torch, to.torch, k);
     out.windowGlow = lerp(from.windowGlow, to.windowGlow, k);
     out.coverage = lerp(from.coverage, to.coverage, k);
+    out.rain = lerp(from.rain, to.rain, k);
+    out.wetness = lerp(from.wetness, to.wetness, k);
 
+    return out;
+  }
+
+  // Resolves ANY weather name — authored (samplePalette handles it directly)
+  // or derived (blended from two authored columns, see DERIVED above) — into
+  // `out`. The only entry point update() below uses; samplePalette/
+  // blendPalette stay unaware of derivation entirely.
+  function resolvePalette(hoursNow, weatherName, out) {
+    const derived = DERIVED[weatherName];
+    if (!derived) return samplePalette(hoursNow, weatherName, out);
+    samplePalette(hoursNow, derived.from, sDerivedFrom);
+    samplePalette(hoursNow, derived.to, sDerivedTo);
+    blendPalette(sDerivedFrom, sDerivedTo, derived.k, out);
+    if (derived.rainScale != null) out.rain *= derived.rainScale;
     return out;
   }
 
@@ -485,6 +685,9 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
 
     if (torch) torch.setDarkness(p.torch);
     if (windows) windows.setGlow(p.windowGlow);
+    if (rain) rain.setIntensity(p.rain);
+    if (ambience) ambience.setRain(p.rain);
+    applyWetness(p.wetness);
   }
 
   // --- the unlit-material tint registry ---
@@ -543,7 +746,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
     }
 
     const liveWeather = transition ? transition.toWeather : settledWeather;
-    samplePalette(hours, liveWeather, sTo);
+    resolvePalette(hours, liveWeather, sTo);
 
     let applied;
     if (transition) {
@@ -595,7 +798,13 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
   // about 0.17 hours of clock time over one ~10s transition at the standing
   // rate. Far below visible; simplicity wins here over re-deriving an
   // "equivalent hour" for a frozen blend that has no single hour of its own.
+  const VALID_WEATHERS = new Set([...Object.keys(KEYFRAMES), ...Object.keys(DERIVED)]);
+
   function setWeather(name) {
+    if (!VALID_WEATHERS.has(name)) {
+      console.warn(`[atmosphere] setWeather: unknown weather "${name}", ignoring`);
+      return;
+    }
     if (transition) {
       if (name === transition.toWeather) return;
     } else if (name === settledWeather) {
@@ -616,6 +825,8 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows }
       sunAltitude,
       exposure: lastExposure,
       tint: { r: tint.r, g: tint.g, b: tint.b },
+      rain: sLastApplied.rain,
+      wetness: sLastApplied.wetness,
     };
   }
 

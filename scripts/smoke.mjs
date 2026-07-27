@@ -23,7 +23,13 @@ import pixelmatch from 'pixelmatch';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const smokeDir = join(root, 'docs/smoke');
+// checkGolden() is the ONLY thing allowed to write into goldenDir — anything
+// else that wants to save a screenshot for a human to look at (not a gated
+// pixel-diff) belongs in captureDir instead (see the night-rain capture
+// below, E2c.2.1 fix 3: it used to write straight into goldenDir, which
+// dirtied a tracked directory on every smoke run).
 const goldenDir = join(smokeDir, 'goldens');
+const captureDir = join(smokeDir, 'captures');
 const budgetPath = join(smokeDir, 'budget.json');
 
 const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
@@ -49,13 +55,46 @@ const CLIP_PCT_MAX = 0.1; // % of pixels allowed at/above the threshold on all 3
 // before a golden capture — see WEATHER_TRANSITION_SECONDS in atmosphere.js.
 const WEATHER_SETTLE_FRAMES = 700;
 
+// E2c.2: the rain axis.
+const DRIZZLE_BOOKMARKS = ['elm-row-hero', 'mid-805-far']; // two representative poses per the brief
+const NIGHT_RAIN_HOUR = 22;
+const NIGHT_RAIN_BOOKMARK = 'mid-805-far'; // same pose the E2a night-darkening check already uses
+// E2c.2.1 fix 2: rain/drizzle's own draw call vs a MATCHED overcast control
+// pass (same fresh-boot, same settle-then-visit sequence) — exactly +1 per
+// bookmark, not a tolerance band. See captureWeatherPass below for why the
+// match has to be this exact to mean anything.
+const RAIN_DRAW_CALL_EXPECTED_DELTA = 1;
+// E2c.2.1 fix 1's harness proof: a drop's per-frame Y movement must stay
+// close to its settled value throughout a weather transition, even deep into
+// a long session — see src/rain.js's FALL_SPEED note for the bug this
+// guards against.
+const RAIN_MEASURE_T = 600; // seconds — deep into a session, per the brief
+const RAIN_MEASURE_FRAMES = 60;
+const RAIN_MEASURE_MAX_RATIO = 3; // acceptance criterion 1
+const RAIN_BOX_HEIGHT = 20; // metres — must match BOX_HEIGHT in src/rain.js
+// An Eulerian circuit over the complete directed graph on the 4 weathers —
+// every ordered (from, to) pair appears as one consecutive step exactly
+// once, so 12 transitions are exercised for the price of 12 setWeather calls
+// instead of 12 independent from-scratch round trips.
+const WEATHER_CHAIN = [
+  'overcast', 'clear', 'rain', 'drizzle', 'clear', 'drizzle',
+  'rain', 'clear', 'overcast', 'rain', 'overcast', 'drizzle', 'overcast',
+];
+const SWEEP_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 23.99, 0.01]; // includes the midnight-wrap edge for each weather's own bracket
+// These two console-clean sweeps only need to CATCH AN ERROR, not verify a
+// transition has fully settled (WEATHER_SETTLE_FRAMES, ~11.7s of dt, is
+// already asserted elsewhere) — a bug here throws immediately, not only
+// after 10 full seconds of blend. Kept short because both sweeps repeat
+// this settle many times (12 transitions x this + 4 weathers x this).
+const QUICK_SETTLE_FRAMES = 90;
+
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
 // accident — a mismatch here means main.js's updaters list changed and this
 // script needs a conscious update, not a silent pass.
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
-  'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
+  'rain', 'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
 ];
 
 function getFreePort() {
@@ -566,6 +605,272 @@ async function main() {
         (wrapInv.consoleErrors.length ? ` (${wrapInv.consoleErrors.join(' | ')})` : ''),
     });
 
+    // --- E2c.2.1: rain phase must stay independent of intensity across a
+    // transition, even deep into a long session — the harness proof for the
+    // src/rain.js fix above. Own fresh boot: samples the rain THREE.Points
+    // object's own Y positions across consecutive stepped frames, once
+    // settled in 'rain' and once immediately after starting a transition
+    // toward 'overcast' — both windows start at the SAME t (RAIN_MEASURE_T),
+    // per the brief, so the second window's t deliberately reads backward
+    // from wherever the first window's stepping left it; rain.js's position
+    // is a pure function of t so that's harmless to rain itself, and this is
+    // the only subsystem this check reads from.
+    async function measureRainDisplacement(page, tStart, frames) {
+      return page.evaluate(({ tStart, frames, boxHeight }) => {
+        const dbg = window.__mcgrotDebug;
+        let rainObj = null;
+        dbg.camera.parent.traverse((o) => { if (o.name === 'rain') rainObj = o; });
+        if (!rainObj) return null;
+        dbg.stepFrame(1 / 60, tStart); // prime: establish the position AT tStart itself, uncounted
+        const posArr = rainObj.geometry.attributes.position.array;
+        const n = rainObj.geometry.attributes.position.count;
+        const prevY = new Float32Array(n);
+        for (let i = 0; i < n; i++) prevY[i] = posArr[i * 3 + 1];
+        let totalAbsDelta = 0;
+        for (let f = 1; f <= frames; f++) {
+          dbg.stepFrame(1 / 60, tStart + f / 60);
+          for (let i = 0; i < n; i++) {
+            const y = posArr[i * 3 + 1];
+            // Circular distance, folding out BOX_HEIGHT wraparound — a normal
+            // wrap event reads as a near-BOX_HEIGHT raw jump even though the
+            // true per-frame movement is tiny.
+            let d = ((y - prevY[i]) % boxHeight + boxHeight) % boxHeight;
+            if (d > boxHeight / 2) d -= boxHeight;
+            totalAbsDelta += Math.abs(d);
+            prevY[i] = y;
+          }
+        }
+        return totalAbsDelta / (n * frames);
+      }, { tStart, frames, boxHeight: RAIN_BOX_HEIGHT });
+    }
+
+    {
+      const { context: ctxDisp, page: pageDisp } = await bootPage(browser, port);
+      await pageDisp.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await pageDisp.evaluate(() => window.__mcgrotDebug.setWeather('rain'));
+      await pageDisp.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      }, WEATHER_SETTLE_FRAMES);
+
+      const settledDisp = await measureRainDisplacement(pageDisp, RAIN_MEASURE_T, RAIN_MEASURE_FRAMES);
+      await pageDisp.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+      const transitionDisp = await measureRainDisplacement(pageDisp, RAIN_MEASURE_T, RAIN_MEASURE_FRAMES);
+
+      const dispRatio = settledDisp > 0 ? transitionDisp / settledDisp : (transitionDisp > 0 ? Infinity : 0);
+      results.push({
+        name: 'rain phase independent of intensity (transition displacement)',
+        pass: settledDisp != null && transitionDisp != null && dispRatio <= RAIN_MEASURE_MAX_RATIO,
+        detail: settledDisp == null || transitionDisp == null
+          ? 'rain object not found in scene'
+          : `settled=${settledDisp.toFixed(4)}m/frame, mid-transition=${transitionDisp.toFixed(4)}m/frame, ` +
+            `ratio=${dispRatio.toFixed(2)}x (max ${RAIN_MEASURE_MAX_RATIO}x) at t=${RAIN_MEASURE_T}s`,
+      });
+
+      await ctxDisp.close();
+    }
+
+    // --- E2c.2 / E2c.2.1: rain, drizzle ---
+    // Each weather (including a MATCHED overcast control) gets its OWN fresh
+    // boot, and every pass settles fully (WEATHER_SETTLE_FRAMES) BEFORE
+    // visiting any bookmark — draw calls are then diffed against the control
+    // pass's own draw calls, not against budget.perBookmark. Because every
+    // pass runs the identical sequence (fresh boot -> settle -> bookmarks in
+    // the same order), leithers/NPCs/birds/vermin (real-time simulated, not
+    // seeded-static — see docs/VALIDATION.md's geomHash note) have drifted by
+    // the exact same number of stepped frames at each bookmark index in every
+    // pass, so the only draw-call difference left between rain/drizzle and
+    // the control is the rain object's own. This replaces the earlier
+    // "no pre-loop settle, diff against budget.perBookmark" approach, which
+    // captured mid-transition goldens (palette.rain still blending in) and
+    // compared against a baseline pass that visited bookmarks with a
+    // different settle history entirely.
+    // `visitBookmarkIds` is ALWAYS the full set, for every weather including
+    // drizzle: gotoBookmark's own settleAt() burns ~150+ stepped frames per
+    // call, so visiting a shorter bookmark subset shifts every later
+    // bookmark's elapsed-frame count relative to a pass that visited more
+    // bookmarks first — the exact "spurious draw-call delta from entity
+    // drift, not the rain object" failure mode this whole fix exists to
+    // avoid. `goldenBookmarkIds` (default: all) is only which of those
+    // visits actually get a golden/clip check — drizzle keeps its original
+    // two representative poses there.
+    async function captureWeatherPass(weatherName, visitBookmarkIds, { goldenBookmarkIds = visitBookmarkIds, nightCapture = false } = {}) {
+      const { context, page } = await bootPage(browser, port);
+      await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await page.evaluate((name) => window.__mcgrotDebug.setWeather(name), weatherName);
+      await page.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* teleport audio ramp, harmless */ } }
+      }, WEATHER_SETTLE_FRAMES);
+
+      const drawCalls = {};
+      let lastInv = null;
+      for (const id of visitBookmarkIds) {
+        await page.evaluate((bid) => window.__mcgrotDebug.gotoBookmark(bid), id);
+        const inv = await getInvariants(page);
+        lastInv = inv;
+        // Acceptance criterion 2: assert fully settled AT EVERY CAPTURE
+        // POINT, not just once before the loop.
+        results.push({
+          name: `settled-at-capture:${weatherName}:${id}`,
+          pass: inv.weather === weatherName && inv.weatherTransition === null,
+          detail: `weather=${inv.weather}, transition=${JSON.stringify(inv.weatherTransition)}`,
+        });
+        if (inv.drawCalls === 0) {
+          results.push({ name: `render-${weatherName}:${id}`, pass: false, detail: 'rendered 0 draw calls (empty frame — capture/GPU failure); golden NOT written' });
+          continue;
+        }
+        drawCalls[id] = inv.drawCalls;
+
+        if (goldenBookmarkIds.includes(id)) {
+          const shot = await page.screenshot();
+          const png = checkGolden(results, `golden-${weatherName}:${id}`, shot, join(goldenDir, `${id}-${weatherName}.png`));
+          const clipPct = clippedHighlightPct(png);
+          results.push({
+            name: `clip-${weatherName}:${id}`,
+            pass: clipPct < CLIP_PCT_MAX,
+            detail: `${clipPct.toFixed(3)}% pixels clipped (${weatherName}, must be <${CLIP_PCT_MAX}%)`,
+          });
+        }
+      }
+
+      results.push({
+        name: `weather reaches target (${weatherName})`,
+        pass: !!lastInv && lastInv.weather === weatherName && lastInv.weatherTransition === null,
+        detail: lastInv
+          ? `weather=${lastInv.weather}, transition=${JSON.stringify(lastInv.weatherTransition)}, rain=${lastInv.rain.toFixed(2)}, wetness=${lastInv.wetness.toFixed(2)}`
+          : 'no bookmarks visited',
+      });
+
+      // One extra capture at NIGHT_RAIN_HOUR, reported but NOT gated (per the
+      // brief) — reuses this same fresh boot rather than a fifth one. Written
+      // to captureDir, not goldenDir (fix 3) — this is evidence for a human,
+      // not a gated golden.
+      if (nightCapture) {
+        if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
+        await page.evaluate((h) => window.__mcgrotDebug.setTime(h), NIGHT_RAIN_HOUR);
+        await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), NIGHT_RAIN_BOOKMARK);
+        const nightShot = await page.screenshot();
+        const nightPath = join(captureDir, `${NIGHT_RAIN_BOOKMARK}-rain-22.png`);
+        writeFileSync(nightPath, nightShot);
+        results.push({
+          name: `capture-rain:${NIGHT_RAIN_BOOKMARK}-22 (not gated)`,
+          pass: true,
+          detail: `captured for a human look, not diffed — ${nightPath}`,
+        });
+      }
+
+      await context.close();
+      return { rain: lastInv ? lastInv.rain : null, drawCalls };
+    }
+
+    const allBookmarkIds = bookmarks.map((bm) => bm.id);
+    const controlCapture = await captureWeatherPass('overcast', allBookmarkIds, { goldenBookmarkIds: [] });
+    const rainCapture = await captureWeatherPass('rain', allBookmarkIds, { nightCapture: true });
+    const rainDrawCallDeltas = Object.entries(rainCapture.drawCalls)
+      .map(([id, calls]) => ({ id, calls, control: controlCapture.drawCalls[id] }))
+      .filter((r) => r.control !== undefined)
+      .map((r) => ({ ...r, delta: r.calls - r.control }));
+    const rainDrawCallFail = rainDrawCallDeltas.filter((r) => r.delta !== RAIN_DRAW_CALL_EXPECTED_DELTA);
+    results.push({
+      name: `draw calls exactly +${RAIN_DRAW_CALL_EXPECTED_DELTA} (rain, E2c.2.1)`,
+      pass: rainDrawCallFail.length === 0,
+      detail: rainDrawCallFail.length === 0
+        ? `every bookmark exactly +${RAIN_DRAW_CALL_EXPECTED_DELTA} vs the matched overcast control (${rainDrawCallDeltas.map((r) => `${r.id}:+${r.delta}`).join(', ')})`
+        : rainDrawCallFail.map((r) => `${r.id}: +${r.delta} (expected +${RAIN_DRAW_CALL_EXPECTED_DELTA}, control=${r.control})`).join('; '),
+    });
+
+    const drizzleCapture = await captureWeatherPass('drizzle', allBookmarkIds, { goldenBookmarkIds: DRIZZLE_BOOKMARKS });
+    const drizzleDrawCallDeltas = Object.entries(drizzleCapture.drawCalls)
+      .map(([id, calls]) => ({ id, calls, control: controlCapture.drawCalls[id] }))
+      .filter((r) => r.control !== undefined)
+      .map((r) => ({ ...r, delta: r.calls - r.control }));
+    const drizzleDrawCallFail = drizzleDrawCallDeltas.filter((r) => r.delta !== RAIN_DRAW_CALL_EXPECTED_DELTA);
+    results.push({
+      name: `draw calls exactly +${RAIN_DRAW_CALL_EXPECTED_DELTA} (drizzle, E2c.2.1)`,
+      pass: drizzleDrawCallFail.length === 0,
+      detail: drizzleDrawCallFail.length === 0
+        ? `every bookmark exactly +${RAIN_DRAW_CALL_EXPECTED_DELTA} vs the matched overcast control (${drizzleDrawCallDeltas.map((r) => `${r.id}:+${r.delta}`).join(', ')})`
+        : drizzleDrawCallFail.map((r) => `${r.id}: +${r.delta} (expected +${RAIN_DRAW_CALL_EXPECTED_DELTA}, control=${r.control})`).join('; '),
+    });
+
+    // "does not scale with intensity": rain and drizzle carry different
+    // palette.rain values (see DERIVED's k=0.45 blend in atmosphere.js) but
+    // the rain object is a single THREE.Points draw call whenever visible at
+    // all — the SAME draw-call delta must show up at both intensities on any
+    // bookmark common to both passes. Both passes now visit all eight
+    // bookmarks (see captureWeatherPass's own note), so this compares across
+    // all eight, not just the two DRIZZLE_BOOKMARKS golden poses.
+    const sharedIds = allBookmarkIds.filter((id) =>
+      rainDrawCallDeltas.some((r) => r.id === id) && drizzleDrawCallDeltas.some((r) => r.id === id));
+    const scaleMismatches = sharedIds
+      .map((id) => ({
+        id,
+        rainDelta: rainDrawCallDeltas.find((r) => r.id === id).delta,
+        drizzleDelta: drizzleDrawCallDeltas.find((r) => r.id === id).delta,
+      }))
+      .filter((r) => r.rainDelta !== r.drizzleDelta);
+    results.push({
+      name: 'draw calls do not scale with rain intensity',
+      pass: sharedIds.length > 0 && scaleMismatches.length === 0,
+      detail: sharedIds.length === 0
+        ? 'no bookmark shared between the rain and drizzle passes to compare'
+        : scaleMismatches.length === 0
+          ? `same draw-call delta at rain=${rainCapture.rain.toFixed(2)} and drizzle=${drizzleCapture.rain.toFixed(2)} intensity on ${sharedIds.join(', ')}`
+          : scaleMismatches.map((r) => `${r.id}: rain +${r.rainDelta} vs drizzle +${r.drizzleDelta}`).join('; '),
+    });
+
+    // --- E2c.2: console-clean across all 12 ordered weather-pair transitions ---
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), WEATHER_CHAIN[0]);
+    await page1.evaluate((frames) => {
+      const dbg = window.__mcgrotDebug;
+      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+    }, WEATHER_SETTLE_FRAMES);
+
+    let errCursor = (await getInvariants(page1)).consoleErrors.length;
+    const transitionFailures = [];
+    for (let i = 1; i < WEATHER_CHAIN.length; i++) {
+      const from = WEATHER_CHAIN[i - 1], to = WEATHER_CHAIN[i];
+      await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), to);
+      await page1.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      }, QUICK_SETTLE_FRAMES);
+      const inv = await getInvariants(page1);
+      const newErrors = inv.consoleErrors.slice(errCursor);
+      if (newErrors.length) transitionFailures.push(`${from}->${to}: ${newErrors.join(' | ')}`);
+      errCursor = inv.consoleErrors.length;
+    }
+    results.push({
+      name: 'console clean: all 12 weather-pair transitions',
+      pass: transitionFailures.length === 0,
+      detail: transitionFailures.length === 0
+        ? `all 12 ordered transitions across ${WEATHER_CHAIN.join('->')} clean`
+        : transitionFailures.join(' ;; '),
+    });
+
+    // --- E2c.2: console-clean 24h sweep in every weather (includes each weather's own midnight-wrap bracket edge) ---
+    for (const w of ['overcast', 'clear', 'rain', 'drizzle']) {
+      await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), w);
+      await page1.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      }, QUICK_SETTLE_FRAMES);
+      const before = (await getInvariants(page1)).consoleErrors.length;
+      for (const h of SWEEP_HOURS) {
+        await page1.evaluate((hh) => window.__mcgrotDebug.setTime(hh), h);
+        await page1.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
+      }
+      const inv = await getInvariants(page1);
+      const newErrors = inv.consoleErrors.slice(before);
+      results.push({
+        name: `console clean: 24h sweep (${w})`,
+        pass: newErrors.length === 0,
+        detail: newErrors.length ? newErrors.join(' | ') : `clean across ${SWEEP_HOURS.length} hours`,
+      });
+    }
+
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {
       const prev = budget.perBookmark || {};
       budget = {
@@ -594,6 +899,31 @@ async function main() {
       name: 'determinism (geomHash)',
       pass: inv1.geomHash === inv2.geomHash,
       detail: `boot1=${inv1.geomHash} boot2=${inv2.geomHash}`,
+    });
+
+    // --- E2c.2: determinism with rain active, not just in overcast ---
+    // Two MORE fresh boots (not a reuse of ctx1/ctx2 above), each settled
+    // into 'rain' before hashing — rain itself is THREE.Points and outside
+    // computeGeomHash's traversal (see src/rain.js's own note), so this is
+    // really asserting that turning rain on doesn't perturb anything that
+    // IS hashed (buildings/InstancedMesh/NPC placement).
+    async function bootWithRain() {
+      const { context, page } = await bootPage(browser, port);
+      await page.evaluate(() => window.__mcgrotDebug.setWeather('rain'));
+      await page.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      }, WEATHER_SETTLE_FRAMES);
+      const inv = await getInvariants(page);
+      await context.close();
+      return inv;
+    }
+    const invRain1 = await bootWithRain();
+    const invRain2 = await bootWithRain();
+    results.push({
+      name: 'determinism (geomHash) with rain active',
+      pass: invRain1.geomHash === invRain2.geomHash,
+      detail: `boot1=${invRain1.geomHash} boot2=${invRain2.geomHash}, rain=${invRain1.rain.toFixed(2)}`,
     });
 
   } finally {

@@ -21,6 +21,7 @@ import { buildFlora } from './flora.js';
 import { buildCars } from './cars.js';
 import { buildLeithers } from './leithers.js';
 import { buildLitter } from './litter.js';
+import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 import { createDebugApi } from './debug.js';
@@ -53,11 +54,18 @@ async function main() {
 
   const torch = createPlayerTorch(camera);
   const windows = buildWindows(assets, world, scene); // lit windows after dark
-  // Sole authority for time-of-day (E2a): lights, exposure, fog/sky colour,
-  // the unlit-façade tint registry, torch reach and window glow all flow
-  // from here every frame. Created after createSky/torch/windows exist —
-  // it drives all three — and before the remaining subsystems below.
-  const atmosphere = createAtmosphere({ scene, renderer, world, sky, torch, windows });
+  const rain = createRain(camera); // E2c.2: one camera-following THREE.Points system
+  scene.add(rain.object);
+  // WebAudio ambience bed — created here (rather than down with the other
+  // subsystems) so atmosphere can drive its setRain() every frame; start()
+  // itself still needs the title-card gesture, wired further down.
+  const ambience = createAmbience();
+  // Sole authority for time-of-day AND weather (E2a/E2c): lights, exposure,
+  // fog/sky colour, the unlit-façade tint registry, torch reach, window
+  // glow, rain and its ambience all flow from here every frame. Created
+  // after createSky/torch/windows/rain/ambience exist — it drives all of
+  // them — and before the remaining subsystems below.
+  const atmosphere = createAtmosphere({ scene, renderer, world, sky, torch, windows, rain, ambience });
 
   // streetLine is oriented north (index 0) -> south; spawn at the north end
   // (Foot of the Walk) facing along the street's actual bearing (Leith Walk
@@ -86,8 +94,6 @@ async function main() {
   buildChimneys(assets, world, scene);   // instanced chimney stacks + TV aerials along rooflines
   buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
   const scenery = buildScenery(world, scene);
-
-  const ambience = createAmbience();
   scenery.onArcFlash = () => ambience.triggerCrackle();
 
   // Duck the ambience bed whenever a comic is being read to camera OR a nearby
@@ -142,6 +148,7 @@ async function main() {
     { name: 'shopfronts', update: () => shopfronts.update(camera.position) },
     { name: 'sky', update: (dt, t) => sky.update(t) },
     { name: 'atmosphere', update: (dt, t) => atmosphere.update(dt, t) },
+    { name: 'rain', update: (dt, t) => rain.update(dt, t) },
     { name: 'birds', update: (dt, t) => birds.update(dt, t) },
     { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
     { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
