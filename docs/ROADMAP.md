@@ -304,14 +304,54 @@ invariant at once, which is why it is last.
   framing is dropped; the reveal ships for the lower Walk and the descent.
   Thinning fog also out-ranges the shopfront pager (`LOAD_RANGE = 250`), so it
   lands with a pager widening (~67MB GPU per 4096² page) and a budget re-check.
-- Decide `TORCH_DISTANCE` here, against haar and dynamic fog rather than in a
-  vacuum.
+- **Night is too dark — Dan's call, 2026-07-27.** Decide `TORCH_DISTANCE` here,
+  against haar and dynamic fog rather than in a vacuum, and lift the night
+  palette with it. Note there is no torch toggle and never was: the light is
+  attached permanently in `createPlayerTorch` (`src/world.js:514`) and driven
+  only by the palette's `torch` field, which is already 0.9–1.0 through the
+  night. "Torch on by default" is therefore about *reach*, not state — 6.5m
+  lights a façade you are standing at and nothing else.
+  - Headroom check before retuning: the `night darkens facades` gate is a
+    **maximum** (22:00 mean luminance ≤45% of 13:00's) and currently reads 2.9%.
+    Night can be lifted a long way before the gate is the constraint.
+  - The three no-sky goldens (`north-150-close`, `mid-550-close`,
+    `fascia-close`) are captured at 13:00, so a night lift shouldn't move them.
+    Confirm rather than assume.
 - Autonomous weather scheduling, once all five states exist.
 
 ### E2d — Post-processing
 
 - AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable
   (mobile fallback).
+
+### E2e — Mobile and sharing
+
+*Dan's call, 2026-07-27: it has to be easy to use on a phone, because sharing a
+link is how anyone else ever sees this.* Sequencing note: this gates E2d, not the
+other way round — there is no point budgeting post-processing before there is a
+measured mobile frame budget to budget against.
+
+- **Movement input is the actual gap.** Drag-look already works on touch —
+  `src/controls.js` uses Pointer Events throughout, and `setForward(v)` exists
+  specifically for "the on-screen hold-to-walk button on touch devices"
+  (`controls.js:133`). The button was never built. Decide between hold-to-walk,
+  a thumbstick, and tap-to-move before writing any of it; hold-to-walk plus
+  drag-look is the smallest thing that could work and matches the existing hook.
+- **Interaction targets.** The proximity prompt and the read-along overlay are
+  keyboard-first (press E). Both need a touch affordance sized for a thumb.
+- **A torch affordance.** Given the note in E2c.3, an explicit toggle — on by
+  default — is worth adding here rather than there: on a phone the player has no
+  way to know a torch exists.
+- **Frame budget is the risk, not layout.** The `skyline` bookmark draws 954 calls,
+  mostly individually-drawn NPCs (see E3). Measure on a real mid-range phone
+  before choosing what to cut; candidates are DPR clamping, a shorter
+  `LOAD_RANGE`, and NPC instancing — but E3's character rework may solve the last
+  one anyway, so don't build a throwaway.
+- Keep the single-file build under ~8MB. The artifact iframe blocks pointer lock,
+  which is why drag-look is primary — that constraint holds on mobile too.
+- Gate: the validation rig is desktop-viewport only (1280×800). Either add a
+  mobile viewport pass to `scripts/smoke.mjs` or state plainly that mobile is
+  unguarded.
 
 ## E3 — The Folk (character system v2)
 
@@ -357,6 +397,48 @@ readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
 - Wayfinding: subtle cues toward unheard comics (a distant voice carried on
   the wind, a gull circling a reader).
 - Stretch: one enterable interior — a McGrot gallery/shop as a hub.
+
+## E6 — Getting About (collision, and a tram that runs)
+
+*Dan's call, 2026-07-27. Two items, and the first is a hard prerequisite for the
+second: you cannot ride a tram you can walk through.*
+
+### E6a — Collision
+
+- **The data is already there.** `leith.buildings[].footprint` is a polygon list
+  (`src/world.js:365`), which is what collision wants. The rendered buildings are
+  merged into one geometry, so per-building meshes do not exist and never should
+  — collide against the source footprints, not the mesh.
+- Broadphase: a uniform grid keyed on chainage. The Walk is ~1617m and the player
+  is soft-clamped within `MAX_OFFSET` of the street line already
+  (`src/controls.js`), so the candidate set per frame is tiny.
+- **Player-only first.** Giving leithers collision changes their pathing, which
+  moves them in every golden that has one in frame — a full recapture for a
+  benefit nobody asked for. `computeGeomHash` excludes them, so the determinism
+  check would not even catch the change. Do the player, measure, stop.
+- Also wants collision: the tram hulk, the wrecked cars, the roadworks cones.
+  These are placed by seeded PRNG, so their boxes are static and cheap.
+
+### E6b — The living tram
+
+*Fast travel up and down the Walk, and the single biggest "this is a place"
+moment available.* Its own phase-sized piece of work, not a milestone.
+
+- **There is no track and no moving tram today.** `src/scenery.js:272` builds one
+  derelict hulk, tilted 0.09 rad, explicitly derailed. A running tram needs rails
+  laid along the street line, a second body, and a stopping pattern.
+- **Riding a moving platform fights two existing systems.** The per-frame
+  ground-follow clamp pulls the camera to `groundHeight + EYE_HEIGHT` every frame
+  (`controls.js`, and `setYFollow(false)` exists solely so the debug harness can
+  pose above ground), and `nearestStreetPoint` soft-clamps the player to the
+  corridor. Boarding has to suspend the first and travel with the second. Expect
+  this, not the rails, to be where the time goes.
+- NPCs boarding and alighting is an E4 behaviour in disguise — leithers with
+  somewhere to be. Worth deferring the NPC half until E4's stance system exists,
+  and shipping a rideable tram with a static waiting crowd first.
+- **Conflicts with an E∞ delight:** "the tram ghost on the dead rails" assumes the
+  rails stay dead. Pick one; a working service and a ghost of the old one can
+  coexist if the ghost runs at night.
 
 ## E∞ — The Delight Ledger (continuous)
 
