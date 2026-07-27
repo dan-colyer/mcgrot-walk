@@ -350,14 +350,65 @@ invariant at once, which is why it is last.
 - AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable
   (mobile fallback).
 
-### E2e — Mobile and sharing
+### E2e — Mobile and sharing — IMPLEMENTED, HELD FOR E2e.1 (2026-07-27)
 
 *Dan's call, 2026-07-27: it has to be easy to use on a phone, because sharing a
 link is how anyone else ever sees this.* Sequencing note: this gates E2d, not the
 other way round — there is no point budgeting post-processing before there is a
 measured mobile frame budget to budget against.
 
-*Brief: `~/.claude/plans/mcgrot-e2e-brief.md`.*
+*Brief: `~/.claude/plans/mcgrot-e2e-brief.md`. Fix round:
+`~/.claude/plans/mcgrot-e2e1-brief.md`.*
+
+**Status: committed at `0eb105e`, not deployed.** Smoke passes 124/124 in 42m27s
+(verified independently, not quoted from the implementation report); the 27
+desktop goldens did not move — zero tracked changes since `67592b6`, and all 27
+inside the jitter band with `north-150-close`, `mid-550-close` and
+`fascia-close` at exactly 0.000%. Held for one fix round because a gate passing
+is not the same as the feature working:
+
+- **The walk button covers the proximity prompt, so you cannot tap it.** Measured
+  at 390×844: `#npc-prompt` spans y 722–788, `#touch-forward` spans y 742–818 at
+  z-index 15, both centred — `elementFromPoint` at the prompt's centre returns
+  the walk button. Tapping "TAP TO HEAR … READ" walks you into the vendor.
+  Pre-existing geometry, but E2e added the copy promising it works, and hearing a
+  resident read is the whole point of the project.
+- **The tap-target gate measures rectangles, not reachability**, which is exactly
+  why the above passed: `#npc-prompt` reports 195×66 while 70% of it is under
+  another control. The lesson generalises — a size assertion is not a
+  reachability assertion.
+- **Two gates cannot fail.** The touch-mode gate runs in a `hasTouch: true`
+  context where `html.touch` is already set at boot, so it would pass with
+  `setTouchMode` stubbed out; the DPR row is hardcoded `pass: true`. Its numbers
+  also do not measure DPR — `stepFrame` timing is CPU-side, so the table came out
+  flat (and in one run *faster* at 2×) while 2× DPR is 4× the fragment work.
+- **The torch toggle has no standing check** (honestly flagged in the
+  implementation report). Verified by hand here: at 01:00, on → off takes
+  `light.distance` 6.435→0.05, `intensity` 17.82→0, mean screen luminance
+  −35.2%. That margin is enormous next to the jitter band, so it is cheap to gate.
+- **`docs/VALIDATION.md` was not updated** for twelve new checks — and the DPR
+  row's own detail string points the reader at it.
+
+**iOS audio bug, found by Dan sharing the link:** he hears the ambience but not
+the NPC voices; Android friends hear both. There are two `AudioContext`s and only
+one is created inside a user gesture — `src/ambience.js` builds its own inside
+the title-card tap (works), while `new THREE.AudioListener()` in
+`src/proximity-audio.js` runs at boot via `src/main.js:112`, before any gesture,
+and is only `resume()`d later. Safari on iOS is far stricter about that than
+Chrome on Android, which fits the symptom split. Strong hypothesis, not confirmed
+— it needs a device. Fix folded into E2e.1: one shared context created in the
+gesture.
+
+**Smoke runtime is ~42 min and prints nothing for ~35 of them.** Per-frame cost
+is not the problem — `stepFrame` measures ~2 ms, so all six 700-frame settles
+together are on the order of ten seconds. Nobody knows where the time actually
+goes, so E2e.1 adds per-phase timing and *proposes* reductions rather than
+applying them.
+
+**Jitter band updated: 0.000–0.114%** (was documented 0.000–0.107%).
+`golden-drizzle:elm-row-hero` 0.114% and `golden-clear:elm-row-hero` 0.109% in a
+run with competing browser probes. Sky-visible poses only; still an order of
+magnitude inside the 0.5% tolerance.
 
 **Correction to an earlier draft of this section: the hold-to-walk button was
 already built.** `#touch-forward` is styled (`src/index.html:216`) and wired to
