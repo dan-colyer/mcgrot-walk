@@ -6,8 +6,8 @@
 // createAmbience().start(sharedCtx) must be called from a user gesture (the
 // title card click) — browsers block AudioContext until then. E2e.1 item 7:
 // takes an optional externally-created AudioContext so it shares one context
-// with src/proximity-audio.js's AudioListener (main.js's
-// getSharedAudioContext()) rather than each creating its own — iOS Safari's
+// with src/proximity-audio.js's AudioListener (main.js's title-card
+// onEnter builds it) rather than each creating its own — iOS Safari's
 // stricter gesture rules were the likely cause of the NPC readers going
 // silent while this ambience bed kept playing.
 

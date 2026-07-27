@@ -22,7 +22,7 @@
 // start(). Previously this constructed at boot, well before any gesture;
 // Safari on iOS is strict enough about that to block the context outright —
 // readers silent, ambience (which DOES start from the gesture) audible.
-// main.js's getSharedAudioContext() calls THREE.AudioContext.setContext(ctx)
+// main.js's title-card onEnter calls THREE.AudioContext.setContext(ctx)
 // before resume() ever runs, so the AudioListener constructed here picks up
 // the SAME context ambience.js uses, rather than creating its own.
 
@@ -60,6 +60,11 @@ export function createProximityAudio({ camera, npcs, assets, onActiveChange }) {
 
   function ensureVoice(npc) {
     if (npc.voice) return npc.voice;
+    // The listener exists only after resume() (the title-card gesture). Every
+    // caller is downstream of that today — update() is gated on `enabled`, and
+    // interact.js's restart() needs an overlay the title card is covering — but
+    // THREE.PositionalAudio(null) throws, so don't leave that to layout luck.
+    if (!listener) return null;
     const pa = new THREE.PositionalAudio(listener);
     pa.setRefDistance(REF_DISTANCE);
     pa.setMaxDistance(MAX_DISTANCE);
@@ -76,6 +81,7 @@ export function createProximityAudio({ camera, npcs, assets, onActiveChange }) {
     if (!path) return;
     loadBuffer(path, (buf) => {
       const pa = ensureVoice(npc);
+      if (!pa) return;
       if (pa.buffer !== buf) pa.setBuffer(buf);
       if (pa.isPlaying) {
         if (!fromZero) return;

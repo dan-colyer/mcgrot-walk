@@ -142,10 +142,15 @@ tells you which check and why.
     object* (identity, not just both non-null) and that context's `state` is
     `running`. Guards against the two subsystems building independent
     `AudioContext`s again — see "Mobile pass" below for why that mattered.
-15. **DPR cap enforced on resize** (E2e) — `renderer.getPixelRatio()` equals
-    `Math.min(devicePixelRatio, DPR_CAP)` after `main.js`'s real `resize`
-    handler runs. The DPR *timing* table (logged, not gated — see "DPR timing
-    is informational" below) is a separate, non-gating measurement.
+15. **DPR cap enforced on resize, below and above the cap** (E2e) —
+    `renderer.getPixelRatio()` equals `Math.min(devicePixelRatio, DPR_CAP)`
+    after `main.js`'s real `resize` handler runs, asserted at two device pixel
+    ratios. Both matter: every smoke context runs at the default scale factor,
+    where `devicePixelRatio` is 1, and `min(1, cap)` is 1 for any cap — so the
+    native reading alone still passes with the cap deleted. The second reading
+    spoofs `devicePixelRatio` to `DPR_CAP + 1`, which is what actually puts the
+    clamp under test. The DPR *timing* table (logged, not gated — see "DPR
+    timing is informational" below) is a separate, non-gating measurement.
 
 ### DPR timing is informational, not a GPU measurement
 
@@ -179,7 +184,13 @@ What it checks, in order:
   fail: this context is built with `hasTouch: true`, under which Chromium
   reports `any-pointer: coarse` at boot, so `html.touch` is already set
   *before* `setTouchMode` is ever called (measured, E2e.1 item 3).
-- **Golden: title card** (`mobile-title.png`), before dismissal.
+- **Golden: title card** (`mobile-title.png`), before dismissal. `#title-enter`
+  pulses (`title-pulse`, opacity 0.75→1 over 1.8s), so the capture pins that
+  animation to a fixed frame alongside the usual fade kill — otherwise the
+  screenshot records whatever phase the wall clock is at, measured 0.595% to
+  2.680% run-to-run against a 0.5% tolerance. It happened to read 0.000%
+  inside a full run because the elapsed time to the mobile pass is repeatable;
+  that stability was accidental and any check added earlier would break it.
 - **Golden: HUD at spawn** (`mobile-hud.png`), touch copy visible
   (`drag — look`, not the desktop `WASD — move, drag — look` — desktop
   copy stays byte-identical, only the touch-class branch changes).

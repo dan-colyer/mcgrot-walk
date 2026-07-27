@@ -336,7 +336,7 @@ async function main() {
 
     // E2e.1 item 7: proximity-audio's listener and ambience's bed must share
     // one AudioContext, both constructed inside the title-card gesture — see
-    // src/main.js's getSharedAudioContext(). bootPage's page.click('#title-enter')
+    // src/main.js's title-card onEnter. bootPage's page.click('#title-enter')
     // above is the gesture. This is what's verifiable from a desktop headless
     // browser; the actual iOS Safari symptom (readers silent, ambience audible)
     // needs a real device — Dan's check, not this rig's.
@@ -1024,20 +1024,31 @@ async function main() {
       // assert renderer.getPixelRatio() lands on min(devicePixelRatio, DPR_CAP)
       // after main.js's real resize handler runs (not the debug override
       // used above, which bypasses the cap on purpose for the timing table).
+      //
+      // Asserted at TWO device pixel ratios. Every smoke context runs at the
+      // default scale factor, where devicePixelRatio is 1 — and min(1, cap)
+      // is 1 for any cap >= 1, so the native reading alone would still pass
+      // with DPR_CAP deleted or set to 1000. The second reading spoofs
+      // devicePixelRatio above the cap so the clamp is the thing under test.
+      // Spoofing is what the handler actually reads; verified against a real
+      // deviceScaleFactor:3 context, which likewise clamps to 2.
       const dprCapResult = await page.evaluate(() => {
-        window.__mcgrotDebug.setPixelRatio(3); // perturb away from the capped value first
-        window.dispatchEvent(new Event('resize'));
-        return {
-          actual: window.__mcgrotDebug.renderer.getPixelRatio(),
-          devicePixelRatio: window.devicePixelRatio || 1,
-          cap: window.__mcgrotDebug.DPR_CAP,
+        const probe = (spoof) => {
+          if (spoof !== null) Object.defineProperty(window, 'devicePixelRatio', { value: spoof, configurable: true });
+          window.__mcgrotDebug.setPixelRatio(3); // perturb away from the capped value first
+          window.dispatchEvent(new Event('resize'));
+          return { dpr: window.devicePixelRatio || 1, actual: window.__mcgrotDebug.renderer.getPixelRatio() };
         };
+        const cap = window.__mcgrotDebug.DPR_CAP;
+        return { cap, native: probe(null), aboveCap: probe(cap + 1) };
       });
-      const expectedDpr = Math.min(dprCapResult.devicePixelRatio, dprCapResult.cap);
+      const { cap, native, aboveCap } = dprCapResult;
+      const expect = (r) => Math.min(r.dpr, cap);
       results.push({
-        name: 'DPR cap enforced on resize',
-        pass: dprCapResult.actual === expectedDpr,
-        detail: `renderer.getPixelRatio()=${dprCapResult.actual} expected min(devicePixelRatio=${dprCapResult.devicePixelRatio}, DPR_CAP=${dprCapResult.cap})=${expectedDpr}`,
+        name: 'DPR cap enforced on resize (below and above the cap)',
+        pass: native.actual === expect(native) && aboveCap.actual === expect(aboveCap) && aboveCap.actual === cap,
+        detail: `DPR_CAP=${cap}; devicePixelRatio=${native.dpr} -> getPixelRatio()=${native.actual} (expect ${expect(native)}), ` +
+          `devicePixelRatio=${aboveCap.dpr} -> getPixelRatio()=${aboveCap.actual} (expect ${expect(aboveCap)})`,
       });
 
       await context.close();
@@ -1078,6 +1089,15 @@ async function main() {
       await page.evaluate(() => {
         const el = document.getElementById('title-card');
         if (el) el.style.transition = 'none'; // kill the 0.9s fade, same as bootPage
+        // ...and pin #title-enter's `title-pulse` animation (opacity 0.75->1
+        // on a 1.8s loop, src/index.html). A screenshot otherwise catches
+        // whatever phase the wall clock happens to be at: measured 0.595% to
+        // 2.680% run-to-run in isolation, against a 0.5% golden tolerance.
+        // It reads 0.000% inside a full smoke run only because the elapsed
+        // time to this point is repeatable — accidental stability, which any
+        // check added before the mobile pass would silently break.
+        const btn = document.getElementById('title-enter');
+        if (btn) { btn.style.animation = 'none'; btn.style.opacity = '1'; }
       });
       const titleEnterRect = await measureTapTarget(page, 'title-enter');
       const titleShot = await page.screenshot();
