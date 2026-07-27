@@ -257,6 +257,39 @@ moment it does and a name gets typo'd.
 - Puddle **reflections are dropped from E2c** — they need a render pass, so they
   belong with E2d's post-processing, either properly or as a screen-space fake.
 
+Implemented and reviewed 2026-07-27; held for a fix round before deploy. The
+design constraints all held — one `THREE.Points` draw call (+1 in rain and
+drizzle, ±0 in overcast and clear, and flat across intensity), `geomHash`
+unmoved, wetness non-compounding, `k = 0.45` exact. Three defects, all in
+`#### E2c.2.1` below.
+
+#### E2c.2.1 — Rain fixes
+
+*Brief: `~/.claude/plans/mcgrot-e2c21-brief.md`.*
+
+Three review lessons worth keeping whatever the fixes look like:
+
+- **A pure function of `t` is not automatically a stable one.** Rain's phase is
+  `wrap(seedY − fallSpeed · t)` — pure in `t` as the brief demanded, but
+  `fallSpeed` varies with intensity, so during a transition every drop moves by
+  about `t × Δv` per frame. Measured 9.29 m per frame at t = 600 s against a 20 m
+  box: a full re-randomise every frame, for the whole 10-second transition,
+  worsening for the life of the session. Purity in `t` is necessary; independence
+  from every *other* animated quantity is what actually makes it stable.
+- **The harness's own regime can hide a bug from the harness.** Smoke drives `t`
+  from ~0, where the same effect measures 0.15 m and looks correct. A check that
+  only ever exercises small `t` cannot see a defect proportional to `t`.
+- **Protecting a measurement can corrupt the evidence.** Dropping the pre-settle
+  kept the draw-call comparison honest against `budget.perBookmark`, but left
+  five goldens captured mid-blend — including both drizzle ones, at 0.099 and
+  0.198 against a 0.378 target, so the only visual evidence for the derived
+  weather showed no rain at all. The fix is a matched control pass, not a
+  shortened settle.
+
+Also closes the E2c.1 residual above: `setWeather` still accepts any string, so a
+typo renders overcast while `state().weather` reports the name it was given. It
+was left out of the E2c.2 brief by mistake, not missed by the implementer.
+
 #### E2c.3 — Haar and the long view
 
 The one risk cluster that touches view distance, GPU budget and the seam
