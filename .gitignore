@@ -24,3 +24,7 @@ assets/shopfronts/elevations/
 
 # Site build output (published to the gh-pages branch)
 dist-site/
+
+# Smoke-rig evidence captures — regenerated on every run, never diffed.
+# See the captureDir note in scripts/smoke.mjs.
+docs/smoke/captures/

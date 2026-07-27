@@ -28,6 +28,14 @@ const smokeDir = join(root, 'docs/smoke');
 // pixel-diff) belongs in captureDir instead (see the night-rain capture
 // below, E2c.2.1 fix 3: it used to write straight into goldenDir, which
 // dirtied a tracked directory on every smoke run).
+//
+// captureDir is GITIGNORED, and has to be. Moving the write out of goldenDir
+// was only half the fix — the write is still unconditional, so a tracked file
+// there is rewritten by every run, and the documented sky-FBM capture jitter
+// (up to ~0.1% of pixels on any sky-visible pose) means the bytes genuinely
+// differ each time. Tracking it would mean a permanently dirty tree. It is
+// evidence for a human to look at, regenerated on every run; nothing here
+// ever diffs it, so a stale committed copy would be worse than none.
 const goldenDir = join(smokeDir, 'goldens');
 const captureDir = join(smokeDir, 'captures');
 const budgetPath = join(smokeDir, 'budget.json');
