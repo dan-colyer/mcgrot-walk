@@ -236,13 +236,15 @@
   }
 
   /* --- Mobile hold-to-walk button, shown only in touch mode (html.touch,
-     driven by JS capability detection above — see E2e note in title.js) --- */
+     driven by JS capability detection above — see E2e note in title.js).
+     Bottom-left, mirroring #torch-toggle at bottom-right — the centre column
+     is left clear for #npc-prompt (E2e.1 item 1: a centred button sat under
+     the prompt's tap area and swallowed the tap). --- */
   #touch-forward {
     display: none;
     position: fixed;
-    left: 50%;
+    left: calc(20px + var(--safe-left));
     bottom: calc(26px + var(--safe-bottom));
-    transform: translateX(-50%);
     width: 74px;
     height: 74px;
     border-radius: 50%;
@@ -328,6 +330,6 @@
   </div>
 </div>
 
-<script src="dev-bundle.js?v=7a23d8280f"></script>
+<script src="dev-bundle.js?v=a2d3bdb956"></script>
 </body>
 </html>

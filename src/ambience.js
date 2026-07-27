@@ -3,8 +3,13 @@
 // is synthesised. Master gain is kept low (atmospheric bed, not a soundtrack)
 // and ducks further while a comic is playing so it never fights the reading.
 //
-// createAmbience().start() must be called from a user gesture (the title
-// card click) — browsers block AudioContext until then.
+// createAmbience().start(sharedCtx) must be called from a user gesture (the
+// title card click) — browsers block AudioContext until then. E2e.1 item 7:
+// takes an optional externally-created AudioContext so it shares one context
+// with src/proximity-audio.js's AudioListener (main.js's
+// getSharedAudioContext()) rather than each creating its own — iOS Safari's
+// stricter gesture rules were the likely cause of the NPC readers going
+// silent while this ambience bed kept playing.
 
 const MASTER_GAIN = 0.16; // low — this is a bed, not a soundtrack
 const DUCK_GAIN = 0.5; // ~50%, per spec, while a comic is playing
@@ -20,17 +25,21 @@ export function createAmbience() {
   let rainGain = null; // created lazily inside start(); setRain before start() just remembers the target
   let pendingRain = 0;
 
-  function start() {
+  function start(sharedCtx) {
     if (started) {
       if (ctx && ctx.state === 'suspended') ctx.resume();
       return;
     }
     started = true;
 
-    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextCtor) return; // no WebAudio support — ambience silently does nothing
+    if (sharedCtx) {
+      ctx = sharedCtx;
+    } else {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return; // no WebAudio support — ambience silently does nothing
+      ctx = new AudioContextCtor();
+    }
 
-    ctx = new AudioContextCtor();
     master = ctx.createGain();
     master.gain.value = MASTER_GAIN;
     master.connect(ctx.destination);
@@ -72,7 +81,7 @@ export function createAmbience() {
     rainGain.gain.linearRampToValueAtTime(target, now + RAIN_RAMP);
   }
 
-  return { start, setDucked, triggerCrackle, setRain };
+  return { start, setDucked, triggerCrackle, setRain, get context() { return ctx; } };
 }
 
 // --- Drone: two detuned oscillators through a lowpass filter --------------

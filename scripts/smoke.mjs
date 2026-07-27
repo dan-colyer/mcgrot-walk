@@ -112,6 +112,10 @@ const SIMULATED_INSET = { top: 47, bottom: 34 };
 const DPR_TABLE = [1, 1.5, 2]; // + one more entry for the real unclamped devicePixelRatio, appended below
 const DPR_TIMING_FRAMES = 60;
 const DPR_TIMING_BOOKMARK = 'skyline'; // heaviest pose in the goldens (954 draw calls)
+// E2e.1 item 4: measured at TORCH_HOUR/north-150-close a 35.2% luminance drop
+// toggling off — far above the 0.000-0.133% capture-jitter band, so this
+// leaves an enormous margin against false negatives.
+const TORCH_TOGGLE_LUMA_DROP_MIN_PCT = 10;
 
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
@@ -254,6 +258,27 @@ function checkGolden(results, name, shot, goldenPath) {
   return actual;
 }
 
+// E2e.1 item 2: rect size alone doesn't prove a target is tappable — another
+// fixed-position element can sit on top of it. elementFromPoint at the
+// target's own centre is what a real tap actually hits; getBoundingClientRect
+// knows nothing about paint order.
+async function measureTapTarget(page, id) {
+  return page.evaluate((elId) => {
+    const el = document.getElementById(elId);
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const hit = document.elementFromPoint(cx, cy);
+    return {
+      width: r.width,
+      height: r.height,
+      visible: getComputedStyle(el).display !== 'none',
+      reachable: !!hit && (hit === el || el.contains(hit)),
+      hitId: hit ? hit.id || hit.tagName : null,
+    };
+  }, id);
+}
+
 function meanLuminanceUpperHalf(png) {
   const { width, height, data } = png;
   const halfH = Math.floor(height / 2);
@@ -307,6 +332,28 @@ async function main() {
       detail: `expected ${EXPECTED_UPDATERS.length}, got ${inv1.updaterNames.length}` +
         (missingUpdaters.length ? `; missing: ${missingUpdaters.join(',')}` : '') +
         (extraUpdaters.length ? `; unexpected: ${extraUpdaters.join(',')}` : ''),
+    });
+
+    // E2e.1 item 7: proximity-audio's listener and ambience's bed must share
+    // one AudioContext, both constructed inside the title-card gesture — see
+    // src/main.js's getSharedAudioContext(). bootPage's page.click('#title-enter')
+    // above is the gesture. This is what's verifiable from a desktop headless
+    // browser; the actual iOS Safari symptom (readers silent, ambience audible)
+    // needs a real device — Dan's check, not this rig's.
+    const audioCheck = await page1.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const listenerCtx = dbg.proximityAudio.listener && dbg.proximityAudio.listener.context;
+      const ambienceCtx = dbg.ambience && dbg.ambience.context;
+      return {
+        sameObject: !!listenerCtx && !!ambienceCtx && listenerCtx === ambienceCtx,
+        listenerState: listenerCtx ? listenerCtx.state : null,
+        ambienceState: ambienceCtx ? ambienceCtx.state : null,
+      };
+    });
+    results.push({
+      name: 'shared AudioContext (desktop-verifiable only; iOS needs a device check)',
+      pass: audioCheck.sameObject && audioCheck.listenerState === 'running',
+      detail: `same object=${audioCheck.sameObject}, listener.state=${audioCheck.listenerState}, ambience.state=${audioCheck.ambienceState}`,
     });
 
     // --- bookmarks: draw-call budget + goldens ---
@@ -952,6 +999,10 @@ async function main() {
     });
 
     // --- E2e item 3 / acceptance criterion 8: DPR cap frame-timing table ---
+    // Informational only — see docs/VALIDATION.md on why headless
+    // SwiftShader command-submission timing isn't a real-device GPU
+    // measurement (renderer.render only queues; raster happens at the next
+    // await, so this doesn't capture actual frame cost). Logged, not gated.
     console.log('[smoke] DPR timing...');
     {
       const { context, page } = await bootPage(browser, port);
@@ -966,13 +1017,30 @@ async function main() {
         }, r);
         rows.push({ ratio: r, ...timing });
       }
-      await context.close();
-      results.push({
-        name: 'DPR frame-timing table (informational — see docs/VALIDATION.md)',
-        pass: true,
-        detail: rows.map((row) => `${row.ratio}x${row.ratio === unclamped ? ' (unclamped)' : ''}: mean=${row.meanMs.toFixed(2)}ms p95=${row.p95Ms.toFixed(2)}ms`).join(' | ') +
-          ` — shipped default cap is 2 (src/main.js DPR_CAP), provisional pending a real-device check`,
+      console.log('[smoke] DPR command-submission timing (NOT a raster/GPU measurement — see docs/VALIDATION.md): ' +
+        rows.map((row) => `${row.ratio}x${row.ratio === unclamped ? ' (unclamped)' : ''}: mean=${row.meanMs.toFixed(2)}ms p95=${row.p95Ms.toFixed(2)}ms`).join(' | '));
+
+      // E2e.1 item 6: the thing that can actually regress is the cap itself —
+      // assert renderer.getPixelRatio() lands on min(devicePixelRatio, DPR_CAP)
+      // after main.js's real resize handler runs (not the debug override
+      // used above, which bypasses the cap on purpose for the timing table).
+      const dprCapResult = await page.evaluate(() => {
+        window.__mcgrotDebug.setPixelRatio(3); // perturb away from the capped value first
+        window.dispatchEvent(new Event('resize'));
+        return {
+          actual: window.__mcgrotDebug.renderer.getPixelRatio(),
+          devicePixelRatio: window.devicePixelRatio || 1,
+          cap: window.__mcgrotDebug.DPR_CAP,
+        };
       });
+      const expectedDpr = Math.min(dprCapResult.devicePixelRatio, dprCapResult.cap);
+      results.push({
+        name: 'DPR cap enforced on resize',
+        pass: dprCapResult.actual === expectedDpr,
+        detail: `renderer.getPixelRatio()=${dprCapResult.actual} expected min(devicePixelRatio=${dprCapResult.devicePixelRatio}, DPR_CAP=${dprCapResult.cap})=${expectedDpr}`,
+      });
+
+      await context.close();
     }
 
     // --- E2e: mobile pass — touch mode forced at a phone viewport ---
@@ -986,16 +1054,24 @@ async function main() {
 
       await page.goto(`http://localhost:${port}/`);
       await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
-      // Acceptance criterion 2: forced via the debug override, not
-      // Playwright's own hasTouch — ordinary headless Chromium reports
-      // pointer:fine / maxTouchPoints 0 regardless, which is the whole
-      // reason item 1's html.touch class (not @media(pointer:coarse)) exists.
-      await page.evaluate(() => window.__mcgrotDebug.setTouchMode(true));
-      const touchClassForced = await page.evaluate(() => document.documentElement.classList.contains('touch'));
+      // E2e.1 item 3: this context is built with hasTouch:true, under which
+      // Chromium reports any-pointer:coarse at boot — html.touch is already
+      // set before setTouchMode is ever called, so asserting only the 'on'
+      // direction can't fail even if setTouchMode were a no-op (measured).
+      // Assert both directions: force off (proves the class isn't just
+      // stuck on from boot), then force on.
+      const touchClassOff = await page.evaluate(() => {
+        window.__mcgrotDebug.setTouchMode(false);
+        return document.documentElement.classList.contains('touch');
+      });
+      const touchClassOn = await page.evaluate(() => {
+        window.__mcgrotDebug.setTouchMode(true);
+        return document.documentElement.classList.contains('touch');
+      });
       results.push({
-        name: 'mobile: touch class forced via setTouchMode',
-        pass: touchClassForced,
-        detail: `html.touch=${touchClassForced}`,
+        name: 'mobile: touch class driven by setTouchMode (both directions)',
+        pass: touchClassOff === false && touchClassOn === true,
+        detail: `setTouchMode(false)->html.touch=${touchClassOff}, setTouchMode(true)->html.touch=${touchClassOn}`,
       });
 
       // golden 1: title card, before dismissal
@@ -1003,10 +1079,7 @@ async function main() {
         const el = document.getElementById('title-card');
         if (el) el.style.transition = 'none'; // kill the 0.9s fade, same as bootPage
       });
-      const titleEnterRect = await page.evaluate(() => {
-        const r = document.getElementById('title-enter').getBoundingClientRect();
-        return { width: r.width, height: r.height };
-      });
+      const titleEnterRect = await measureTapTarget(page, 'title-enter');
       const titleShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:title', titleShot, join(goldenDir, 'mobile-title.png'));
 
@@ -1021,13 +1094,22 @@ async function main() {
       const hudShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:hud', hudShot, join(goldenDir, 'mobile-hud.png'));
 
+      // E2e.1 item 4: default-on with no localStorage key set — this context
+      // is fresh, so mcgrot-torch-on has never been written.
+      const torchDefault = await page.evaluate(() => ({
+        storageKey: localStorage.getItem('mcgrot-torch-on'),
+        toggleActive: document.getElementById('torch-toggle').classList.contains('active'),
+        distance: window.__mcgrotDebug.torch.light.distance,
+      }));
+      results.push({
+        name: 'mobile: torch defaults on with no stored preference',
+        pass: torchDefault.storageKey === null && torchDefault.toggleActive === true && torchDefault.distance > 0.05,
+        detail: `localStorage['mcgrot-torch-on']=${torchDefault.storageKey}, #torch-toggle.active=${torchDefault.toggleActive}, light.distance=${torchDefault.distance.toFixed(3)}`,
+      });
+
       const tapTargets = { 'title-enter': titleEnterRect };
       for (const id of ['touch-forward', 'torch-toggle']) {
-        tapTargets[id] = await page.evaluate((elId) => {
-          const el = document.getElementById(elId);
-          const r = el.getBoundingClientRect();
-          return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
-        }, id);
+        tapTargets[id] = await measureTapTarget(page, id);
       }
 
       // acceptance criterion 3: hold-to-walk moves the camera; releasing stops it.
@@ -1094,11 +1176,7 @@ async function main() {
         detail: `#comic-overlay display=${overlayOpen ? 'flex' : 'not flex'}`,
       });
       for (const id of ['comic-close', 'comic-playpause']) {
-        tapTargets[id] = await page.evaluate((elId) => {
-          const el = document.getElementById(elId);
-          const r = el.getBoundingClientRect();
-          return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
-        }, id);
+        tapTargets[id] = await measureTapTarget(page, id);
       }
       const comicShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:comic', comicShot, join(goldenDir, 'mobile-comic.png'));
@@ -1128,17 +1206,13 @@ async function main() {
       // in-range NPC, so the prompt reappears next frame.
       await page.keyboard.press('Escape');
       await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
-      tapTargets['npc-prompt'] = await page.evaluate(() => {
-        const el = document.getElementById('npc-prompt');
-        const r = el.getBoundingClientRect();
-        return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
-      });
+      tapTargets['npc-prompt'] = await measureTapTarget(page, 'npc-prompt');
 
       results.push({
-        name: 'mobile: tap targets >=44x44 CSS px',
-        pass: Object.values(tapTargets).every((t) => t.width >= MIN_TAP_TARGET_PX && t.height >= MIN_TAP_TARGET_PX),
+        name: 'mobile: tap targets >=44x44 CSS px and reachable',
+        pass: Object.values(tapTargets).every((t) => t.width >= MIN_TAP_TARGET_PX && t.height >= MIN_TAP_TARGET_PX && t.reachable),
         detail: Object.entries(tapTargets)
-          .map(([id, t]) => `${id}: ${t.width.toFixed(0)}x${t.height.toFixed(0)}${t.visible === false ? ' (NOT VISIBLE)' : ''}`)
+          .map(([id, t]) => `${id}: ${t.width.toFixed(0)}x${t.height.toFixed(0)} centre-hit=#${t.hitId || 'none'} reachable=${t.reachable}${t.visible === false ? ' (NOT VISIBLE)' : ''}`)
           .join(', '),
       });
 
@@ -1172,6 +1246,66 @@ async function main() {
       await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), MOBILE_WALK_BOOKMARK);
       const streetShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:street', streetShot, join(goldenDir, 'mobile-street.png'));
+
+      // E2e.1 item 4: toggling the torch off/on at night must visibly change
+      // the rendered frame — gate it on mean screen luminance, not just the
+      // toggle/DOM state. Needs a pose the torch actually reaches (~6.5m):
+      // MOBILE_WALK_BOOKMARK's camera stands 12m off the street centreline,
+      // outside that range, so this reuses the E2b torch check's own recipe
+      // — stand TORCH_STAND_OFF from a litter comic at TORCH_HOUR — rather
+      // than the street-view golden's pose.
+      const mobileTorchPose = await page.evaluate(({ hour, eyeHeight, standOff }) => {
+        const dbg = window.__mcgrotDebug;
+        dbg.setTime(hour);
+        const items = dbg.litter.items;
+        if (!items.length) return false;
+        const it = items[0];
+        const px = it.x, pz = it.z + standOff;
+        const groundY = dbg.world.groundHeight ? dbg.world.groundHeight(px, pz) : 0;
+        dbg.camera.position.set(px, groundY + eyeHeight, pz);
+        dbg.camera.lookAt(it.x, groundY + 0.055, it.z);
+        return true;
+      }, { hour: TORCH_HOUR, eyeHeight: TORCH_EYE_HEIGHT, standOff: TORCH_STAND_OFF });
+      let torchOnLuma = 0, torchOffLuma = 0, torchToggleActiveAfterOff = null;
+      if (mobileTorchPose) {
+        // Settle once so the night atmosphere/torch darkness-scale commit at
+        // the new pose (leithers/vermin/birds also advance here — expected).
+        for (let i = 0; i < 10; i++) {
+          await page.evaluate((i) => window.__mcgrotDebug.stepFrame(1 / 60, i / 60), i);
+        }
+        const torchOnShot = await page.screenshot();
+        torchOnLuma = meanLuminanceCenterCrop(PNG.sync.read(torchOnShot), 0.3, 0.3);
+
+        // Toggle via the real button (exercises the click handler + DOM
+        // state), then render DIRECTLY — not stepFrame — so nothing else in
+        // the scene moves between the two shots; only the torch changed.
+        // stepFrame's full updater pass would advance leithers/vermin/birds
+        // again and swamp a real toggle regression in simulation noise (the
+        // same reasoning as the E2b torch check's direct renderer.render()
+        // above).
+        await page.click('#torch-toggle');
+        await page.evaluate(() => {
+          const dbg = window.__mcgrotDebug;
+          dbg.torch.update(9 / 60); // same t the settle loop's last frame used
+          dbg.renderer.render(dbg.scene, dbg.camera);
+        });
+        const torchOffShot = await page.screenshot();
+        torchOffLuma = meanLuminanceCenterCrop(PNG.sync.read(torchOffShot), 0.3, 0.3);
+        torchToggleActiveAfterOff = await page.evaluate(() => document.getElementById('torch-toggle').classList.contains('active'));
+        await page.click('#torch-toggle'); // restore
+      }
+      const lumaDropPct = torchOnLuma > 0 ? ((torchOnLuma - torchOffLuma) / torchOnLuma) * 100 : 0;
+      results.push({
+        name: 'mobile: torch toggle darkens the rendered frame',
+        pass: mobileTorchPose && lumaDropPct >= TORCH_TOGGLE_LUMA_DROP_MIN_PCT && torchToggleActiveAfterOff === false,
+        detail: mobileTorchPose
+          ? `on=${torchOnLuma.toFixed(1)} off=${torchOffLuma.toFixed(1)} (${lumaDropPct.toFixed(1)}% drop, min ${TORCH_TOGGLE_LUMA_DROP_MIN_PCT}%), #torch-toggle.active after off=${torchToggleActiveAfterOff}`
+          : 'no litter comic available to pose the camera at',
+      });
+      // Restore daytime overcast street framing for the golden captured above
+      // — this check reposed the camera and changed the hour after it ran.
+      await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), MOBILE_WALK_BOOKMARK);
 
       results.push({
         name: 'mobile: console clean',

@@ -131,8 +131,25 @@ async function main() {
     controls,
     torch,
     onEnter: () => {
-      ambience.start();       // AudioContext creation needs this user gesture
-      proximityAudio.resume(); // ...and so does the positional-audio listener
+      // E2e.1 item 7: one AudioContext shared between the ambience bed and
+      // the proximity-audio listener, both constructed inside THIS gesture.
+      // THREE.AudioContext.setContext must run before the first
+      // `new THREE.AudioListener()` (inside proximityAudio.resume()) so that
+      // listener picks up this context instead of creating its own.
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      const sharedCtx = AudioContextCtor ? new AudioContextCtor() : null;
+      if (sharedCtx) {
+        THREE.AudioContext.setContext(sharedCtx);
+        // iOS Safari unlock: play a one-sample silent buffer through the
+        // shared context on the same gesture that resumes it. Long-standing
+        // trick, costs nothing, belt-and-braces alongside ctx.resume() below.
+        const unlockSrc = sharedCtx.createBufferSource();
+        unlockSrc.buffer = sharedCtx.createBuffer(1, 1, sharedCtx.sampleRate);
+        unlockSrc.connect(sharedCtx.destination);
+        unlockSrc.start(0);
+      }
+      ambience.start(sharedCtx);        // AudioContext creation needs this user gesture
+      proximityAudio.resume();          // ...and so does the positional-audio listener
     },
   });
 
@@ -204,7 +221,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
-      sky, atmosphere, torch,
+      sky, atmosphere, torch, DPR_CAP, ambience,
       stepFrame: runFrame,
       updateFrame,
       updaters,

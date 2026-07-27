@@ -137,6 +137,102 @@ tells you which check and why.
     bookmark later catches a different set of leithers/NPCs/vermin/birds,
     which are real-time simulated rather than seeded-static (the same
     exclusion the geomHash makes), so a second pass would false-fail.
+14. **Shared AudioContext** (E2e.1) — after the title-card gesture,
+    `proximityAudio.listener.context` and `ambience.context` are the *same
+    object* (identity, not just both non-null) and that context's `state` is
+    `running`. Guards against the two subsystems building independent
+    `AudioContext`s again — see "Mobile pass" below for why that mattered.
+15. **DPR cap enforced on resize** (E2e) — `renderer.getPixelRatio()` equals
+    `Math.min(devicePixelRatio, DPR_CAP)` after `main.js`'s real `resize`
+    handler runs. The DPR *timing* table (logged, not gated — see "DPR timing
+    is informational" below) is a separate, non-gating measurement.
+
+### DPR timing is informational, not a GPU measurement
+
+`scripts/smoke.mjs` logs a `mean`/`p95` frame-cost table at DPR 1, 1.5, 2 and
+the context's unclamped `devicePixelRatio`, via `console.log`, not a `results`
+row — it used to be a hardcoded `pass: true` row, which is honest labelling
+but still counted toward the headline check total for a number that measures
+the wrong thing. As "Why the suite is fast" below explains, headless
+Chromium's `renderer.render` only *queues* commands — the raster lands at the
+next `await` — so `performance.now()` timing around a stepped frame measures
+command submission, not drawing. That's why the table reads flat across DPR
+1/1.5/2 (in one run, *faster* at 2× when 2× DPR is 4× the fragment work): it
+isn't measuring the fragment work at all. The true per-frame cost (~160 ms at
+the `skyline` pose) only shows up as wall-clock runtime, never in this table.
+Treat it as a rough sanity log, not a real-device benchmark. What IS gated is
+check 15 above: the cap itself is applied correctly after a resize.
+
+## Mobile pass (E2e / E2e.1)
+
+A second smoke pass at a phone-shaped viewport (390×844), with touch mode
+forced via `dbg.setTouchMode(true)` rather than Playwright's own touch
+emulation — `hasTouch: true` on the browser context is still set (Chromium
+needs it to accept synthetic `PointerEvent`s with `pointerType: 'touch'`), but
+the *UI's* touch/keyboard branching is driven by the `html.touch` class the
+same way it is in production, not by whatever Playwright's context reports.
+
+What it checks, in order:
+
+- **Touch class driven by `setTouchMode` in both directions** — forces the
+  class off, then on, and asserts each transition. Checking only "on" cannot
+  fail: this context is built with `hasTouch: true`, under which Chromium
+  reports `any-pointer: coarse` at boot, so `html.touch` is already set
+  *before* `setTouchMode` is ever called (measured, E2e.1 item 3).
+- **Golden: title card** (`mobile-title.png`), before dismissal.
+- **Golden: HUD at spawn** (`mobile-hud.png`), touch copy visible
+  (`drag — look`, not the desktop `WASD — move, drag — look` — desktop
+  copy stays byte-identical, only the touch-class branch changes).
+- **Torch defaults on with no stored preference** — this context has no
+  `localStorage` entry yet, so `mcgrot-torch-on` reads `null` and the toggle
+  must default active.
+- **Hold-to-walk moves the camera; releasing stops it** — dispatches real
+  `pointerdown`/`pointerup` `PointerEvent`s at `#touch-forward`, steps 30
+  frames held and 30 after release, asserts the held distance clears a floor
+  and the post-release drift stays near zero.
+- **Golden: comic overlay** (`mobile-comic.png`) — opened via the keyboard `E`
+  path (the overlay itself has no touch-specific code path; the *reachability*
+  of `#npc-prompt`'s tap is what item below checks).
+- **Torch toggle darkens the rendered frame** — at night, mean centre-crop
+  luminance with the torch on vs. clicking `#torch-toggle` off; must drop by
+  at least 10% (measured drop at the brief's pose was 35.2%, so this leaves an
+  enormous margin against the 0.000–0.133% capture-jitter band).
+- **Tap targets ≥44×44 CSS px and reachable** (E2e.1 item 2) — for every
+  interactive target, both `getBoundingClientRect` size *and*
+  `document.elementFromPoint` at the target's own centre returning the target
+  itself (or a descendant). Rect size alone doesn't prove a tap lands: E2e's
+  original `#touch-forward` sat centred over the bottom of `#npc-prompt` and
+  both measured ≥44×44, yet a tap at the prompt's centre actually hit the
+  button underneath. Fixed in E2e.1 by moving `#touch-forward` to bottom-left,
+  mirroring `#torch-toggle` at bottom-right, so the centre column is clear.
+- **No target intrudes on a simulated safe area** — overrides the `--safe-*`
+  CSS custom properties directly (`src/index.html`'s `:root`) rather than
+  `env(safe-area-inset-*)` itself, because `env()` reflects the *real* device
+  notch/home-indicator and can't be spoofed from JS or a Playwright context
+  option — there is no way to make headless Chromium report a fake one. The
+  custom properties are what every safe-area-aware rule in the stylesheet
+  actually reads (`calc(26px + var(--safe-bottom))`, etc.), so overriding them
+  exercises the exact same CSS path a real notched/home-indicator device
+  would, without needing real device hardware.
+- **Golden: street view** (`mobile-street.png`), touch mode still forced.
+- **Console clean**, same bar as the desktop pass.
+
+### Why 390×844
+
+A common modern-iPhone-class viewport (iPhone 12/13/14 CSS size) — narrow
+enough to exercise the `@media (max-width: 480px)` comic-overlay layout, tall
+enough that the safe-area math (home-indicator strip, notch) is meaningfully
+different from a square or desktop aspect.
+
+### The `-mobile` goldens
+
+Four PNGs in `docs/smoke/goldens/`, separate from and never diffed against
+the 27 desktop goldens: `mobile-title.png`, `mobile-hud.png`,
+`mobile-comic.png`, `mobile-street.png`. Same capture-or-compare path as the
+desktop goldens (`checkGolden`, 0.1 per-pixel threshold, 0.5% tolerance) — the
+only difference is the viewport and the forced touch class. To recapture,
+delete only these four files and run a normal `npm run smoke` (never
+`--update-goldens`, which recaptures every golden, desktop included).
 
 ## Why the suite is fast, and how to keep it that way
 

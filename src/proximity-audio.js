@@ -15,6 +15,16 @@
 //
 // Vendors whose MP3 hasn't been generated yet (the free-tier trickle) simply
 // stay silent — their buffer loads as 'missing' and never plays.
+//
+// E2e.1 item 7: the AudioListener (and the THREE.AudioContext singleton it
+// lazily creates via AudioContext.getContext()) is built lazily, inside
+// resume() — called from the title-card gesture, same as ambience.js's
+// start(). Previously this constructed at boot, well before any gesture;
+// Safari on iOS is strict enough about that to block the context outright —
+// readers silent, ambience (which DOES start from the gesture) audible.
+// main.js's getSharedAudioContext() calls THREE.AudioContext.setContext(ctx)
+// before resume() ever runs, so the AudioListener constructed here picks up
+// the SAME context ambience.js uses, rather than creating its own.
 
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
@@ -27,8 +37,7 @@ const MAX_DISTANCE = 22;
 const ROLLOFF = 1.4;     // inverse model — steepish, busker-like falloff
 
 export function createProximityAudio({ camera, npcs, assets, onActiveChange }) {
-  const listener = new THREE.AudioListener();
-  camera.add(listener);
+  let listener = null; // constructed in resume(), inside the title-card gesture
   const loader = new THREE.AudioLoader();
   const buffers = new Map(); // audio path -> AudioBuffer | 'loading' | 'missing'
 
@@ -128,7 +137,7 @@ export function createProximityAudio({ camera, npcs, assets, onActiveChange }) {
   }
 
   return {
-    listener,
+    get listener() { return listener; },
     update,
     restart(npc) {
       play(npc, true);
@@ -143,7 +152,13 @@ export function createProximityAudio({ camera, npcs, assets, onActiveChange }) {
     setOverlayOpen(v) { overlayOpen = !!v; },
     isEnabled() { return enabled; },
     setEnabled(v) { enabled = !!v; },
+    // Called from the title-card gesture (src/main.js's onEnter). Constructs
+    // the AudioListener HERE, not at module init — see the file-header note.
     resume() {
+      if (!listener) {
+        listener = new THREE.AudioListener();
+        camera.add(listener);
+      }
       enabled = true;
       const ctx = listener.context;
       if (ctx && ctx.state === 'suspended') ctx.resume();

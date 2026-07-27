@@ -141,6 +141,7 @@ export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
+    DPR_CAP, ambience,
   } = ctx;
 
   const consoleErrors = [];
@@ -263,8 +264,14 @@ export function createDebugApi(ctx) {
 
   // E2e acceptance criterion 2: forces the touch-capability class on <html>
   // regardless of the harness's real pointer/touch capabilities, so
-  // scripts/smoke.mjs can exercise the touch UI in ordinary headless
-  // Chromium (which reports pointer:fine / maxTouchPoints 0).
+  // scripts/smoke.mjs can exercise the touch UI. Ordinary headless Chromium
+  // (no hasTouch context option) reports pointer:fine / maxTouchPoints 0 and
+  // needs this override to get html.touch at all — but scripts/smoke.mjs's
+  // mobile pass builds its context with hasTouch:true, under which Chromium
+  // reports any-pointer:coarse at boot and html.touch is already set before
+  // this is ever called (measured: see E2e.1 item 3). The gate there asserts
+  // the override in both directions instead of relying on the class being
+  // absent beforehand.
   function setTouchMode(v) {
     document.documentElement.classList.toggle('touch', !!v);
     // title.js's copy swap runs once at boot (before this override can ever
@@ -342,7 +349,7 @@ export function createDebugApi(ctx) {
 
   return {
     // --- back-compat: existing probe fields keep working unchanged ---
-    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer,
+    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
     stepFrame,
     stepFrames,
 
@@ -357,6 +364,8 @@ export function createDebugApi(ctx) {
     setPixelRatio,
     measureFrameTiming,
     torch,
+    DPR_CAP,
+    ambience,
     invariants,
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),
