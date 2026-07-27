@@ -164,8 +164,20 @@ async function main() {
     { name: 'proximityAudio', update: () => proximityAudio.update() },
     { name: 'torch', update: (dt, t) => torch.update(t) },
   ];
-  function runFrame(dt, t) {
+  // Simulation only, no draw. Settling the world costs the same updater work
+  // either way, but headless Chromium rasterises in SOFTWARE (SwiftShader —
+  // there is no GPU), where one 945-draw-call frame costs ~160ms of real time
+  // against ~2ms of JavaScript. The cost is invisible from JS because
+  // renderer.render only queues commands; it lands at the next await. So a
+  // settle that draws every intermediate frame it never looks at was most of
+  // the validation rig's 42-minute runtime. Same updater sequence, same dt/t,
+  // so the settled state is identical — measured pixel-identical (0.000% at
+  // north-150-close). See docs/VALIDATION.md.
+  function updateFrame(dt, t) {
     for (const u of updaters) u.update(dt, t);
+  }
+  function runFrame(dt, t) {
+    updateFrame(dt, t);
     renderer.render(scene, camera);
   }
 
@@ -194,6 +206,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
       sky, atmosphere, torch,
       stepFrame: runFrame,
+      updateFrame,
       updaters,
       setAutoAnimate(v) {
         autoAnimate = v;

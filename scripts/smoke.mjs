@@ -520,8 +520,8 @@ async function main() {
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate(() => window.__mcgrotDebug.setWeather('clear'));
     await page1.evaluate((frames) => {
-      const dbg = window.__mcgrotDebug;
-      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* teleport audio ramp, harmless */ } }
+      // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+      window.__mcgrotDebug.stepFrames(frames);
     }, WEATHER_SETTLE_FRAMES);
 
     const clearSettledInv = await getInvariants(page1);
@@ -588,8 +588,8 @@ async function main() {
     });
     const midInv = await getInvariants(page1);
     await page1.evaluate((frames) => {
-      const dbg = window.__mcgrotDebug;
-      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+      window.__mcgrotDebug.stepFrames(frames);
     }, WEATHER_SETTLE_FRAMES);
     const finalInv = await getInvariants(page1);
 
@@ -674,8 +674,8 @@ async function main() {
       await pageDisp.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
       await pageDisp.evaluate(() => window.__mcgrotDebug.setWeather('rain'));
       await pageDisp.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+        // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+        window.__mcgrotDebug.stepFrames(frames);
       }, WEATHER_SETTLE_FRAMES);
 
       const settledDisp = await measureRainDisplacement(pageDisp, RAIN_MEASURE_T, RAIN_MEASURE_FRAMES);
@@ -724,8 +724,8 @@ async function main() {
       await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
       await page.evaluate((name) => window.__mcgrotDebug.setWeather(name), weatherName);
       await page.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* teleport audio ramp, harmless */ } }
+        // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+        window.__mcgrotDebug.stepFrames(frames);
       }, WEATHER_SETTLE_FRAMES);
 
       const drawCalls = {};
@@ -849,8 +849,8 @@ async function main() {
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), WEATHER_CHAIN[0]);
     await page1.evaluate((frames) => {
-      const dbg = window.__mcgrotDebug;
-      for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+      // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+      window.__mcgrotDebug.stepFrames(frames);
     }, WEATHER_SETTLE_FRAMES);
 
     let errCursor = (await getInvariants(page1)).consoleErrors.length;
@@ -859,8 +859,8 @@ async function main() {
       const from = WEATHER_CHAIN[i - 1], to = WEATHER_CHAIN[i];
       await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), to);
       await page1.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+        // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+        window.__mcgrotDebug.stepFrames(frames);
       }, QUICK_SETTLE_FRAMES);
       const inv = await getInvariants(page1);
       const newErrors = inv.consoleErrors.slice(errCursor);
@@ -879,8 +879,8 @@ async function main() {
     for (const w of ['overcast', 'clear', 'rain', 'drizzle']) {
       await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), w);
       await page1.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+        // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+        window.__mcgrotDebug.stepFrames(frames);
       }, QUICK_SETTLE_FRAMES);
       const before = (await getInvariants(page1)).consoleErrors.length;
       for (const h of SWEEP_HOURS) {
@@ -936,8 +936,8 @@ async function main() {
       const { context, page } = await bootPage(browser, port);
       await page.evaluate(() => window.__mcgrotDebug.setWeather('rain'));
       await page.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) { try { dbg.stepFrame(1 / 60, i / 60); } catch { /* harmless */ } }
+        // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
+        window.__mcgrotDebug.stepFrames(frames);
       }, WEATHER_SETTLE_FRAMES);
       const inv = await getInvariants(page);
       await context.close();
@@ -1040,8 +1040,7 @@ async function main() {
           new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true }));
       });
       await page.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) dbg.stepFrame(1 / 60, i / 60);
+        window.__mcgrotDebug.stepFrames(frames);
       }, MOBILE_WALK_HOLD_FRAMES);
       const posHeld = await page.evaluate(() => {
         const p = window.__mcgrotDebug.camera.position;
@@ -1056,8 +1055,7 @@ async function main() {
         return { x: p.x, z: p.z };
       });
       await page.evaluate((frames) => {
-        const dbg = window.__mcgrotDebug;
-        for (let i = 0; i < frames; i++) dbg.stepFrame(1 / 60, i / 60);
+        window.__mcgrotDebug.stepFrames(frames);
       }, MOBILE_WALK_HOLD_FRAMES);
       const posAfterRelease = await page.evaluate(() => {
         const p = window.__mcgrotDebug.camera.position;

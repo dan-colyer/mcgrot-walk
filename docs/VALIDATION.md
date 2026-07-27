@@ -138,6 +138,45 @@ tells you which check and why.
     which are real-time simulated rather than seeded-static (the same
     exclusion the geomHash makes), so a second pass would false-fail.
 
+## Why the suite is fast, and how to keep it that way
+
+**Headless Chromium here has no GPU.** It rasterises in software — the WebGL
+context reports `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device), SwiftShader
+driver)`. At the `skyline` pose (945 draw calls) **one rendered frame costs
+~160 ms of wall-clock**, against ~2 ms of JavaScript.
+
+That cost is invisible from JS. `renderer.render` only queues commands and
+returns; the raster lands at the next `await`. So per-frame timing taken with
+`performance.now()` around `stepFrame` — including `measureFrameTiming`'s —
+measures command submission, not drawing, and will happily report ~2 ms for a
+frame that takes 160 ms. Never size a settle from that number.
+
+The suite used to draw every frame of every settle: 156 renders per bookmark
+visit, six 700-frame weather settles, 52 ninety-frame quick settles — roughly
+14,000 frames nobody ever looked at, and **42 minutes** of runtime. Settles now
+run simulation *without* drawing and render only the frame that gets captured
+(`updateFrame` in `src/main.js`, `stepFrames` in `src/debug.js`). Same updater
+sequence, same `dt`/`t`, same frame count — so the settled state is identical.
+Runtime is **~4.5 minutes**, and all nine no-sky golden captures still read
+exactly 0.000%.
+
+Rules that keep this true:
+
+- **`stepFrames(n)` must run exactly `n` updater calls**, with only the last one
+  drawing. One extra frame of simulation moves every golden.
+- **Some frames must still render.** `invariants()` reads
+  `renderer.info.render`, which only updates on a draw; `settleAt`'s
+  post-texture-wait frames exist because texture upload happens on render. Don't
+  "optimise" either into `updateFrame`.
+- **Do not enable a real GPU to make this faster.** SwiftShader is a
+  deterministic software rasteriser: identical pixels on any machine, any time.
+  A hardware rasteriser differs by vendor and driver in texture filtering and
+  shader rounding, so every golden would need recapturing and would then be tied
+  to one machine's GPU and driver version — a macOS update could move them.
+  Worse, a forced-GPU flag can silently fall back to SwiftShader, so you would
+  not know which rasteriser produced a given golden. The determinism is the
+  point; the speed has already been taken from elsewhere.
+
 ## The debug API (`window.__mcgrotDebug`)
 
 Hostname-gated to `localhost`/`127.0.0.1` (see `src/main.js`) — inert

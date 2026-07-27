@@ -140,7 +140,7 @@ function waitForPagesLoaded(shopfronts, timeoutMs) {
 export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
-    renderer, scene, sky, atmosphere, torch, stepFrame, updaters, setAutoAnimate,
+    renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
   } = ctx;
 
   const consoleErrors = [];
@@ -162,6 +162,13 @@ export function createDebugApi(ctx) {
   // single step so the last render is exactly on-target. Returns once the
   // lazily-loaded shopfront atlas page(s) near the new position have
   // finished decoding.
+  //
+  // The settle loop UPDATES without drawing (updateFrame, not stepFrame): the
+  // intermediate frames are never looked at, and drawing them cost ~160ms each
+  // under SwiftShader — 150 of them per bookmark visit. The final on-target
+  // step below and the post-texture-wait frames still render, which is what
+  // actually matters: the texture upload happens on render, and the last frame
+  // has to be the one that gets captured. See the note in src/main.js.
   // fixed.eyeY / fixed.lookY override the terrain-derived heights for custom
   // bookmarks that pose the camera at an absolute elevation (skyline). The
   // caller must suspend controls' yFollow around such a pose (see gotoBookmark)
@@ -174,7 +181,7 @@ export function createDebugApi(ctx) {
     camera.position.set(px, eyeY, pz);
     camera.lookAt(lookX, lookY, lookZ);
     for (let i = 0; i < SETTLE_FRAMES; i++) {
-      try { stepFrame(SETTLE_DT, i * SETTLE_DT); } catch { /* non-finite audio ramp on teleport, documented above */ }
+      try { updateFrame(SETTLE_DT, i * SETTLE_DT); } catch { /* non-finite audio ramp on teleport, documented above */ }
     }
     camera.position.set(px, eyeY, pz);
     camera.lookAt(lookX, lookY, lookZ);
@@ -290,6 +297,23 @@ export function createDebugApi(ctx) {
     return { meanMs: mean, p95Ms: p95, pixelRatio: renderer.getPixelRatio(), frames };
   }
 
+  // Bulk settle for scripts/smoke.mjs — a drop-in for
+  //   for (let i = 0; i < n; i++) stepFrame(1/60, i/60)
+  // that draws only the LAST frame. EXACTLY n updater calls at exactly the same
+  // dt/t values, so the settled state is bit-identical to the loop it replaces
+  // — the count matters, one extra frame of simulation would move every golden.
+  // Only the ~160ms-per-frame SwiftShader raster of the n-1 frames nobody looks
+  // at goes away. The final frame renders so a screenshot or invariants() taken
+  // straight after still sees the settled state. try/catch is the teleport
+  // audio ramp, same as settleAt.
+  function stepFrames(n, tOffset = 0) {
+    if (n <= 0) return;
+    for (let i = 0; i < n - 1; i++) {
+      try { updateFrame(SETTLE_DT, tOffset + i * SETTLE_DT); } catch { /* non-finite audio ramp, see settleAt */ }
+    }
+    try { stepFrame(SETTLE_DT, tOffset + (n - 1) * SETTLE_DT); } catch { /* as above */ }
+  }
+
   function invariants() {
     stepFrame(SETTLE_DT, 0);
     const info = renderer.info.render;
@@ -320,6 +344,7 @@ export function createDebugApi(ctx) {
     // --- back-compat: existing probe fields keep working unchanged ---
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer,
     stepFrame,
+    stepFrames,
 
     // --- new test API ---
     goto,
