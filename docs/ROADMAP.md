@@ -357,27 +357,45 @@ link is how anyone else ever sees this.* Sequencing note: this gates E2d, not th
 other way round — there is no point budgeting post-processing before there is a
 measured mobile frame budget to budget against.
 
-- **Movement input is the actual gap.** Drag-look already works on touch —
-  `src/controls.js` uses Pointer Events throughout, and `setForward(v)` exists
-  specifically for "the on-screen hold-to-walk button on touch devices"
-  (`controls.js:133`). The button was never built. Decide between hold-to-walk,
-  a thumbstick, and tap-to-move before writing any of it; hold-to-walk plus
-  drag-look is the smallest thing that could work and matches the existing hook.
-- **Interaction targets.** The proximity prompt and the read-along overlay are
-  keyboard-first (press E). Both need a touch affordance sized for a thumb.
-- **A torch affordance.** Given the note in E2c.3, an explicit toggle — on by
-  default — is worth adding here rather than there: on a phone the player has no
-  way to know a torch exists.
-- **Frame budget is the risk, not layout.** The `skyline` bookmark draws 954 calls,
-  mostly individually-drawn NPCs (see E3). Measure on a real mid-range phone
-  before choosing what to cut; candidates are DPR clamping, a shorter
-  `LOAD_RANGE`, and NPC instancing — but E3's character rework may solve the last
-  one anyway, so don't build a throwaway.
+*Brief: `~/.claude/plans/mcgrot-e2e-brief.md`.*
+
+**Correction to an earlier draft of this section: the hold-to-walk button was
+already built.** `#touch-forward` is styled (`src/index.html:216`) and wired to
+`controls.setForward` (`src/title.js:40`); drag-look already works on touch via
+`controls.js`'s Pointer Events; the proximity prompt already responds to a tap
+(`src/interact.js:135`); the title card already guards the tap/click double-fire.
+Mobile had been thought about. The gap is narrower and more specific, and all of
+the below was measured in a 375×812 viewport rather than inferred:
+
+- **The touch rules are gated on the wrong query.** `@media (pointer: coarse)` is
+  the only media query in the whole stylesheet. A hybrid device (touch laptop,
+  iPad with a trackpad) reports `pointer: fine` and gets no button, and the
+  harness cannot exercise the button at all. Move to a boot-time capability class
+  on `<html>` plus a debug override, which is also what makes a mobile smoke pass
+  possible.
+- **No safe-area insets, despite `viewport-fit=cover` being set.** The HUD
+  (`bottom: 10px`), the walk button (`bottom: 26px`) and the comic controls
+  (bottom edge y=788 of 812) all sit in the iOS home-indicator strip; the comic
+  close button (y=14) sits in the status-bar strip.
+- **DPR is unclamped** — measured 2, with a 750×1624 drawing buffer at a 375×812
+  CSS viewport. Phones reporting 3 do 9× the fragment work of DPR 1. Against the
+  `skyline` pose's 954 draw calls this is the frame-budget risk and the cheapest
+  lever. Clamp it; don't restructure what is drawn (E3's character rework owns
+  the NPC draw calls, so anything built here would be thrown away).
+- **Tap targets under 44px:** `#comic-close` 42×42, `#comic-playpause` 46×40.
+- **All on-screen copy is keyboard-only** — "CLICK TO ENTER", "WASD — move, drag
+  — look", "[E] Hear read". ⚠ The HUD string is visible in every golden, so
+  changing the desktop copy moves all 27. Swap copy under the touch class only.
+- **A torch toggle**, on by default — folded here from E2c.3 rather than shipped
+  there, because on a phone the player has no way to know a torch exists.
 - Keep the single-file build under ~8MB. The artifact iframe blocks pointer lock,
   which is why drag-look is primary — that constraint holds on mobile too.
-- Gate: the validation rig is desktop-viewport only (1280×800). Either add a
-  mobile viewport pass to `scripts/smoke.mjs` or state plainly that mobile is
-  unguarded.
+- Gate: the rig is desktop-viewport only (1280×800). This milestone adds a
+  390×844 pass with touch mode forced, four `-mobile` goldens, and a safe-area
+  intrusion check.
+- **Real device performance cannot be measured from here.** Headless Chromium at
+  a phone viewport is not a phone GPU. The milestone instruments and reports;
+  Dan makes the final call on the DPR cap.
 
 ## E3 — The Folk (character system v2)
 
