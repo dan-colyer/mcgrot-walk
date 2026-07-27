@@ -229,7 +229,7 @@ moment it does and a name gets typo'd.
 - Weather changes only on an explicit `setWeather`. Autonomous drift waits for
   E2c.3, when there are five states worth scheduling between.
 
-#### E2c.2 — Rain
+#### E2c.2 — Rain — SHIPPED + DEPLOYED (2026-07-27, with E2c.2.1)
 
 *Brief: `~/.claude/plans/mcgrot-e2c2-brief.md`.*
 
@@ -289,6 +289,32 @@ Three review lessons worth keeping whatever the fixes look like:
 Also closes the E2c.1 residual above: `setWeather` still accepts any string, so a
 typo renders overcast while `state().weather` reports the name it was given. It
 was left out of the E2c.2 brief by mistake, not missed by the implementer.
+
+Shipped and deployed 2026-07-27 — `main` `ecae9ac`, gh-pages `12b65c8`, bundle md5
+`2751010499f82e035efd21a0342ccaa7`, CDN-confirmed on the third poll. Smoke 112
+checks, 0 failures. Rain and drizzle both cost exactly +1 draw call at all eight
+bookmarks against a matched control; overcast and clear ±0; `geomHash dd1a6657`
+throughout.
+
+Two more lessons from the fix round, both about the *checks* rather than the code:
+
+- **A regression check is worthless until you have watched it fail.** Fix 1's new
+  displacement gate was verified by re-breaking `rain.js` in a scratch worktree
+  and running it: 30.21× against a ≤3× gate. The pre-fix settled reading came out
+  at 0.2427 m/frame, which is exactly `(7 + 9 × 0.84) / 60` — a metric landing on
+  its own arithmetic is what makes it trustworthy. Do this for every new gate.
+  - Known limit: the metric folds displacement circularly at ±`BOX_HEIGHT`/2, so
+    it aliases above 10 m/frame. Fine at t = 600 s; it would under-report a
+    scramble deep enough to exceed that.
+- **"Working tree clean" means nothing until the files are committed.** Fix 3
+  moved the night capture out of `goldens/` but left the write unconditional and
+  the file tracked, so the gate still dirtied the tree on every run — the same
+  defect as `29f82f9`, one directory over, and invisible while the file was
+  untracked. `docs/smoke/captures/` is now gitignored (`ecae9ac`): capture jitter
+  means those bytes can never be stable, so it holds regenerated evidence for a
+  human and nothing ever diffs it.
+- Cost note: the suite is now ~38 minutes wall-clock and eight fresh boots. It is
+  past the point where "run the gate" is a cheap action.
 
 #### E2c.3 — Haar and the long view
 
