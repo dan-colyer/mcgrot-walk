@@ -399,16 +399,48 @@ Chrome on Android, which fits the symptom split. Strong hypothesis, not confirme
 — it needs a device. Fix folded into E2e.1: one shared context created in the
 gesture.
 
-**Smoke runtime is ~42 min and prints nothing for ~35 of them.** Per-frame cost
-is not the problem — `stepFrame` measures ~2 ms, so all six 700-frame settles
-together are on the order of ten seconds. Nobody knows where the time actually
-goes, so E2e.1 adds per-phase timing and *proposes* reductions rather than
-applying them.
+**Jitter band updated: 0.000–0.133%** (was documented 0.000–0.107%). Widest is
+`golden-drizzle:elm-row-hero`. Sky-visible poses only — the three no-sky poses
+read exactly 0.000% in every weather column. Still far inside the 0.5% tolerance.
 
-**Jitter band updated: 0.000–0.114%** (was documented 0.000–0.107%).
-`golden-drizzle:elm-row-hero` 0.114% and `golden-clear:elm-row-hero` 0.109% in a
-run with competing browser probes. Sky-visible poses only; still an order of
-magnitude inside the 0.5% tolerance.
+### Smoke runtime — FIXED (2026-07-27, `0f32c48`)
+
+*Dan, 2026-07-27: the 42-minute suite was slowing development down.* Fixed
+ahead of E2e.1 rather than after it, since every subsequent milestone pays the
+cost.
+
+**42m27s → 4m32s, a 9.4× speedup, with no check weakened and no golden
+recaptured.** The cause was not what the instrumentation suggested. Headless
+Chromium here has no GPU — it rasterises in software via SwiftShader, where one
+945-draw-call frame costs **~160 ms of wall-clock** against ~2 ms of JavaScript.
+That cost is invisible from JS because `renderer.render` only queues commands
+and returns; the raster lands at the next `await`. So the ~2 ms per-frame figure
+everything had been reasoned from — including E2e's DPR table, which is why it
+came out flat and even *faster* at 2× — was measuring command submission, not
+drawing.
+
+The suite was drawing ~14,000 settle frames it never captured: 156 renders per
+bookmark visit, six 700-frame weather settles, 52 ninety-frame quick settles.
+`runFrame` is now split into `updateFrame` (simulation) + render, and settles go
+through a new `stepFrames(n)` that runs exactly *n* updater calls with only the
+last one drawing. Same sequence, same `dt`/`t`, same count — so the settled state
+is unchanged. Measured: `gotoBookmark` 19–46 s → 0.8–1.3 s; the 700-frame
+weather settle 110 s → 361 ms; 124/124 checks pass; all nine no-sky captures
+still read exactly 0.000%.
+
+Settle counts were deliberately left alone (Dan's call) — they are nearly free
+now, and cutting them would change simulation state at capture time and move all
+27 goldens.
+
+**Do not enable a hardware GPU to speed this up further.** SwiftShader's
+determinism is what makes the goldens reproducible across machines and time; a
+hardware rasteriser differs by vendor and driver, so every golden would need
+recapturing and would then be pinned to one machine's driver version. A
+forced-GPU flag can also silently fall back, leaving nobody sure which
+rasteriser produced a golden. Recorded in `docs/VALIDATION.md`. The one
+legitimate use of a GPU run is as a *measurement* tool for the DPR-cap question,
+which SwiftShader genuinely cannot answer — and even then a Mac GPU is not a
+phone GPU, so Dan's device check remains the real answer.
 
 **Correction to an earlier draft of this section: the hold-to-walk button was
 already built.** `#touch-forward` is styled (`src/index.html:216`) and wired to
