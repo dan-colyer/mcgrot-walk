@@ -96,6 +96,23 @@ const SWEEP_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 23.99, 0.01]; // includes the m
 // this settle many times (12 transitions x this + 4 weathers x this).
 const QUICK_SETTLE_FRAMES = 90;
 
+// E2e: mobile pass — a phone-shaped viewport with touch mode forced via
+// __mcgrotDebug.setTouchMode rather than relying on Playwright's own
+// touch/pointer emulation, per the brief's acceptance criterion 2.
+const MOBILE_VIEWPORT = { width: 390, height: 844 };
+const MOBILE_WALK_BOOKMARK = 'north-150-close';
+const MOBILE_WALK_HOLD_FRAMES = 30;
+const MOBILE_WALK_MIN_MOVE_M = 0.5; // held for 30 frames at 14 m/s should move ~7m
+const MOBILE_WALK_MAX_DRIFT_M = 0.01; // after release, position must not keep changing
+const MIN_TAP_TARGET_PX = 44;
+// item 6 acceptance criterion: simulate a notch + home-indicator device by
+// overriding the CSS custom properties safe-area math is built on (see
+// src/index.html's :root — env() itself can't be spoofed from JS).
+const SIMULATED_INSET = { top: 47, bottom: 34 };
+const DPR_TABLE = [1, 1.5, 2]; // + one more entry for the real unclamped devicePixelRatio, appended below
+const DPR_TIMING_FRAMES = 60;
+const DPR_TIMING_BOOKMARK = 'skyline'; // heaviest pose in the goldens (954 draw calls)
+
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
 // accident — a mismatch here means main.js's updaters list changed and this
@@ -933,6 +950,239 @@ async function main() {
       pass: invRain1.geomHash === invRain2.geomHash,
       detail: `boot1=${invRain1.geomHash} boot2=${invRain2.geomHash}, rain=${invRain1.rain.toFixed(2)}`,
     });
+
+    // --- E2e item 3 / acceptance criterion 8: DPR cap frame-timing table ---
+    console.log('[smoke] DPR timing...');
+    {
+      const { context, page } = await bootPage(browser, port);
+      await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), DPR_TIMING_BOOKMARK);
+      const unclamped = await page.evaluate(() => window.devicePixelRatio || 1);
+      const ratios = [...new Set([...DPR_TABLE, unclamped])];
+      const rows = [];
+      for (const r of ratios) {
+        const timing = await page.evaluate((ratio) => {
+          window.__mcgrotDebug.setPixelRatio(ratio);
+          return window.__mcgrotDebug.measureFrameTiming(60);
+        }, r);
+        rows.push({ ratio: r, ...timing });
+      }
+      await context.close();
+      results.push({
+        name: 'DPR frame-timing table (informational — see docs/VALIDATION.md)',
+        pass: true,
+        detail: rows.map((row) => `${row.ratio}x${row.ratio === unclamped ? ' (unclamped)' : ''}: mean=${row.meanMs.toFixed(2)}ms p95=${row.p95Ms.toFixed(2)}ms`).join(' | ') +
+          ` — shipped default cap is 2 (src/main.js DPR_CAP), provisional pending a real-device check`,
+      });
+    }
+
+    // --- E2e: mobile pass — touch mode forced at a phone viewport ---
+    console.log('[smoke] mobile pass...');
+    {
+      const context = await browser.newContext({ viewport: MOBILE_VIEWPORT, hasTouch: true });
+      const page = await context.newPage();
+      const mobileConsole = [];
+      page.on('console', (msg) => { if (msg.type() === 'error') mobileConsole.push(msg.text()); });
+      page.on('pageerror', (err) => mobileConsole.push(String(err)));
+
+      await page.goto(`http://localhost:${port}/`);
+      await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      // Acceptance criterion 2: forced via the debug override, not
+      // Playwright's own hasTouch — ordinary headless Chromium reports
+      // pointer:fine / maxTouchPoints 0 regardless, which is the whole
+      // reason item 1's html.touch class (not @media(pointer:coarse)) exists.
+      await page.evaluate(() => window.__mcgrotDebug.setTouchMode(true));
+      const touchClassForced = await page.evaluate(() => document.documentElement.classList.contains('touch'));
+      results.push({
+        name: 'mobile: touch class forced via setTouchMode',
+        pass: touchClassForced,
+        detail: `html.touch=${touchClassForced}`,
+      });
+
+      // golden 1: title card, before dismissal
+      await page.evaluate(() => {
+        const el = document.getElementById('title-card');
+        if (el) el.style.transition = 'none'; // kill the 0.9s fade, same as bootPage
+      });
+      const titleEnterRect = await page.evaluate(() => {
+        const r = document.getElementById('title-enter').getBoundingClientRect();
+        return { width: r.width, height: r.height };
+      });
+      const titleShot = await page.screenshot();
+      checkGolden(results, 'golden-mobile:title', titleShot, join(goldenDir, 'mobile-title.png'));
+
+      // dismiss, then pin clock/weather exactly like every other boot
+      await page.click('#title-enter');
+      await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+      await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
+
+      // golden 2: HUD at spawn
+      const hudShot = await page.screenshot();
+      checkGolden(results, 'golden-mobile:hud', hudShot, join(goldenDir, 'mobile-hud.png'));
+
+      const tapTargets = { 'title-enter': titleEnterRect };
+      for (const id of ['touch-forward', 'torch-toggle']) {
+        tapTargets[id] = await page.evaluate((elId) => {
+          const el = document.getElementById(elId);
+          const r = el.getBoundingClientRect();
+          return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
+        }, id);
+      }
+
+      // acceptance criterion 3: hold-to-walk moves the camera; releasing stops it.
+      const posBefore = await page.evaluate(() => {
+        const p = window.__mcgrotDebug.camera.position;
+        return { x: p.x, z: p.z };
+      });
+      await page.evaluate(() => {
+        document.getElementById('touch-forward').dispatchEvent(
+          new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true }));
+      });
+      await page.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) dbg.stepFrame(1 / 60, i / 60);
+      }, MOBILE_WALK_HOLD_FRAMES);
+      const posHeld = await page.evaluate(() => {
+        const p = window.__mcgrotDebug.camera.position;
+        return { x: p.x, z: p.z };
+      });
+      await page.evaluate(() => {
+        document.getElementById('touch-forward').dispatchEvent(
+          new PointerEvent('pointerup', { pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true }));
+      });
+      const posAtRelease = await page.evaluate(() => {
+        const p = window.__mcgrotDebug.camera.position;
+        return { x: p.x, z: p.z };
+      });
+      await page.evaluate((frames) => {
+        const dbg = window.__mcgrotDebug;
+        for (let i = 0; i < frames; i++) dbg.stepFrame(1 / 60, i / 60);
+      }, MOBILE_WALK_HOLD_FRAMES);
+      const posAfterRelease = await page.evaluate(() => {
+        const p = window.__mcgrotDebug.camera.position;
+        return { x: p.x, z: p.z };
+      });
+      const movedM = Math.hypot(posHeld.x - posBefore.x, posHeld.z - posBefore.z);
+      const driftM = Math.hypot(posAfterRelease.x - posAtRelease.x, posAfterRelease.z - posAtRelease.z);
+      results.push({
+        name: 'mobile: hold-to-walk moves camera',
+        pass: movedM >= MOBILE_WALK_MIN_MOVE_M,
+        detail: `moved ${movedM.toFixed(2)}m over ${MOBILE_WALK_HOLD_FRAMES} held frames (min ${MOBILE_WALK_MIN_MOVE_M}m)`,
+      });
+      results.push({
+        name: 'mobile: release stops camera',
+        pass: driftM <= MOBILE_WALK_MAX_DRIFT_M,
+        detail: `drifted ${driftM.toFixed(4)}m over ${MOBILE_WALK_HOLD_FRAMES} frames after release (max ${MOBILE_WALK_MAX_DRIFT_M}m)`,
+      });
+
+      // golden 3: an open comic overlay — stand 2m from the first NPC (well
+      // within interact.js's 8m RANGE) and press E, same as a desktop
+      // keyboard user would; the overlay itself has no touch-specific path.
+      await page.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const npc = dbg.npcs.npcs[0];
+        const p = npc.group.position;
+        dbg.camera.position.set(p.x + 2, dbg.camera.position.y, p.z);
+        dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+      });
+      await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0)); // let interact.update() see the NPC in range
+      await page.keyboard.press('KeyE');
+      await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
+      const overlayOpen = await page.evaluate(() => document.getElementById('comic-overlay').style.display === 'flex');
+      results.push({
+        name: 'mobile: comic overlay opens',
+        pass: overlayOpen,
+        detail: `#comic-overlay display=${overlayOpen ? 'flex' : 'not flex'}`,
+      });
+      for (const id of ['comic-close', 'comic-playpause']) {
+        tapTargets[id] = await page.evaluate((elId) => {
+          const el = document.getElementById(elId);
+          const r = el.getBoundingClientRect();
+          return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
+        }, id);
+      }
+      const comicShot = await page.screenshot();
+      checkGolden(results, 'golden-mobile:comic', comicShot, join(goldenDir, 'mobile-comic.png'));
+
+      // acceptance criterion 6: no interactive target intrudes into a
+      // simulated notch/home-indicator safe area — overlay still open, so
+      // this covers comic-close/comic-playpause.
+      const comicOverlaps = await page.evaluate(({ top, bottom, ids }) => {
+        const root = document.documentElement;
+        root.style.setProperty('--safe-top', `${top}px`);
+        root.style.setProperty('--safe-bottom', `${bottom}px`);
+        const vh = window.innerHeight;
+        const bad = [];
+        for (const id of ids) {
+          const el = document.getElementById(id);
+          if (!el || getComputedStyle(el).display === 'none') continue;
+          const r = el.getBoundingClientRect();
+          if (r.top < top) bad.push(`${id} top=${r.top.toFixed(0)} < inset ${top}`);
+          if (r.bottom > vh - bottom) bad.push(`${id} bottom=${r.bottom.toFixed(0)} > ${(vh - bottom).toFixed(0)}`);
+        }
+        root.style.removeProperty('--safe-top');
+        root.style.removeProperty('--safe-bottom');
+        return bad;
+      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['comic-close', 'comic-playpause'] });
+
+      // npc-prompt tap target — closing the overlay drops back to the same
+      // in-range NPC, so the prompt reappears next frame.
+      await page.keyboard.press('Escape');
+      await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
+      tapTargets['npc-prompt'] = await page.evaluate(() => {
+        const el = document.getElementById('npc-prompt');
+        const r = el.getBoundingClientRect();
+        return { width: r.width, height: r.height, visible: getComputedStyle(el).display !== 'none' };
+      });
+
+      results.push({
+        name: 'mobile: tap targets >=44x44 CSS px',
+        pass: Object.values(tapTargets).every((t) => t.width >= MIN_TAP_TARGET_PX && t.height >= MIN_TAP_TARGET_PX),
+        detail: Object.entries(tapTargets)
+          .map(([id, t]) => `${id}: ${t.width.toFixed(0)}x${t.height.toFixed(0)}${t.visible === false ? ' (NOT VISIBLE)' : ''}`)
+          .join(', '),
+      });
+
+      const hudOverlaps = await page.evaluate(({ top, bottom, ids }) => {
+        const root = document.documentElement;
+        root.style.setProperty('--safe-top', `${top}px`);
+        root.style.setProperty('--safe-bottom', `${bottom}px`);
+        const vh = window.innerHeight;
+        const bad = [];
+        for (const id of ids) {
+          const el = document.getElementById(id);
+          if (!el || getComputedStyle(el).display === 'none') continue;
+          const r = el.getBoundingClientRect();
+          if (r.top < top) bad.push(`${id} top=${r.top.toFixed(0)} < inset ${top}`);
+          if (r.bottom > vh - bottom) bad.push(`${id} bottom=${r.bottom.toFixed(0)} > ${(vh - bottom).toFixed(0)}`);
+        }
+        root.style.removeProperty('--safe-top');
+        root.style.removeProperty('--safe-bottom');
+        return bad;
+      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['hud', 'touch-forward', 'torch-toggle', 'npc-prompt'] });
+      const allOverlaps = [...comicOverlaps, ...hudOverlaps];
+      results.push({
+        name: 'mobile: no target intrudes on simulated safe area',
+        pass: allOverlaps.length === 0,
+        detail: allOverlaps.length === 0
+          ? `clear of a simulated ${SIMULATED_INSET.top}px top / ${SIMULATED_INSET.bottom}px bottom inset`
+          : allOverlaps.join('; '),
+      });
+
+      // golden 4: a plain street view, touch mode still forced.
+      await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), MOBILE_WALK_BOOKMARK);
+      const streetShot = await page.screenshot();
+      checkGolden(results, 'golden-mobile:street', streetShot, join(goldenDir, 'mobile-street.png'));
+
+      results.push({
+        name: 'mobile: console clean',
+        pass: mobileConsole.length === 0,
+        detail: mobileConsole.length ? mobileConsole.join(' | ') : 'no errors',
+      });
+
+      await context.close();
+    }
 
   } finally {
     if (browser) await browser.close();

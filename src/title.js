@@ -1,18 +1,58 @@
-// Title card + mobile hold-to-walk button for McGrot Walk.
+// Title card + mobile hold-to-walk button + torch toggle for McGrot Walk.
 //
-// createTitleCard({ controls, onEnter }) wires:
+// createTitleCard({ controls, torch, onEnter }) wires:
 //  - the fullscreen "CLICK TO ENTER" card (#title-card in index.html),
 //    dismissed on first click/tap. This is also the required user gesture
 //    for starting WebAudio (onEnter is called synchronously from it) and for
 //    re-enabling controls, which main.js leaves disabled until entry.
-//  - an on-screen hold-to-walk button (#touch-forward). It's shown only on
-//    coarse-pointer/touch devices via a CSS media query in index.html —
-//    this module just wires the press/release events to controls.setForward.
-//    Drag-to-look already works on touch via controls.js's pointer handlers.
+//  - an on-screen hold-to-walk button (#touch-forward). It's shown only in
+//    touch mode (html.touch, set by the capability-detection script in
+//    index.html's <head>) — this module just wires the press/release events
+//    to controls.setForward. Drag-to-look already works on touch via
+//    controls.js's pointer handlers.
+//  - the torch toggle (#torch-toggle), also touch-only, on by default,
+//    persisted to localStorage.
+//  - touch-mode copy: the keyboard-oriented HUD/title-hint/enter-button
+//    strings are swapped for tap-oriented ones ONLY under html.touch, so the
+//    desktop strings (baked into 27 golden screenshots) stay byte-identical.
 
-export function createTitleCard({ controls, onEnter }) {
+const TORCH_STORAGE_KEY = 'mcgrot-torch-on';
+
+// Re-run on 'mcgrot:touchmodechange' (src/debug.js's setTouchMode) as well as
+// at boot — the smoke harness can only force the class on AFTER
+// window.__mcgrotDebug exists, which is after this module's initial call.
+function swapTouchCopy() {
+  if (!document.documentElement.classList.contains('touch')) return;
+  const hud = document.getElementById('hud');
+  const hint = document.getElementById('title-hint');
+  const enter = document.getElementById('title-enter');
+  if (hud) hud.textContent = 'drag — look';
+  if (hint) hint.textContent = 'drag to look — walk up to a resident, tap them';
+  if (enter) enter.textContent = 'TAP TO ENTER';
+}
+
+function wireTorchToggle(torch) {
+  const toggleEl = document.getElementById('torch-toggle');
+  if (!toggleEl || !torch) return;
+  const stored = localStorage.getItem(TORCH_STORAGE_KEY);
+  let on = stored === null ? true : stored === 'true';
+  torch.setToggle(on);
+  toggleEl.classList.toggle('active', on);
+  toggleEl.addEventListener('click', () => {
+    on = !on;
+    torch.setToggle(on);
+    toggleEl.classList.toggle('active', on);
+    localStorage.setItem(TORCH_STORAGE_KEY, String(on));
+  });
+}
+
+export function createTitleCard({ controls, torch, onEnter }) {
   const cardEl = document.getElementById('title-card');
   const forwardEl = document.getElementById('touch-forward');
+
+  swapTouchCopy();
+  window.addEventListener('mcgrot:touchmodechange', swapTouchCopy);
+  wireTorchToggle(torch);
 
   function enter() {
     if (!cardEl || cardEl.classList.contains('hidden')) return;
@@ -43,7 +83,11 @@ export function createTitleCard({ controls, onEnter }) {
     };
     forwardEl.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      forwardEl.setPointerCapture?.(e.pointerId);
+      // Real touch input always has an active pointer to capture; a
+      // synthetic PointerEvent (the smoke harness) doesn't, and throws
+      // InvalidPointerId — harmless here since capture is an enhancement,
+      // not required for setForward to work.
+      try { forwardEl.setPointerCapture?.(e.pointerId); } catch { /* no-op */ }
       setForward(true);
     });
     const release = () => setForward(false);

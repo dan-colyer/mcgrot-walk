@@ -140,7 +140,7 @@ function waitForPagesLoaded(shopfronts, timeoutMs) {
 export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
-    renderer, scene, sky, atmosphere, stepFrame, updaters, setAutoAnimate,
+    renderer, scene, sky, atmosphere, torch, stepFrame, updaters, setAutoAnimate,
   } = ctx;
 
   const consoleErrors = [];
@@ -254,6 +254,42 @@ export function createDebugApi(ctx) {
     atmosphere.setRate(hoursPerRealMinute);
   }
 
+  // E2e acceptance criterion 2: forces the touch-capability class on <html>
+  // regardless of the harness's real pointer/touch capabilities, so
+  // scripts/smoke.mjs can exercise the touch UI in ordinary headless
+  // Chromium (which reports pointer:fine / maxTouchPoints 0).
+  function setTouchMode(v) {
+    document.documentElement.classList.toggle('touch', !!v);
+    // title.js's copy swap runs once at boot (before this override can ever
+    // fire, since it needs window.__mcgrotDebug to exist first) — this event
+    // lets it re-check the class instead of staying stuck with whatever copy
+    // it picked before the harness forced touch mode on.
+    window.dispatchEvent(new CustomEvent('mcgrot:touchmodechange'));
+  }
+
+  // E2e item 3 (DPR cap): lets the harness re-measure frame cost at a
+  // different pixel ratio than the shipped default without a page reload.
+  function setPixelRatio(v) {
+    renderer.setPixelRatio(v);
+  }
+
+  // Mean/p95 JS-side frame cost (updaters + render) over N stepped frames at
+  // the renderer's CURRENT pixel ratio — call setPixelRatio first. This is a
+  // headless CPU-timing proxy, not a real phone's GPU frame time (see the
+  // E2e brief's "what you cannot verify" — Dan does the on-device check).
+  function measureFrameTiming(frames = 60) {
+    const samples = [];
+    for (let i = 0; i < frames; i++) {
+      const t0 = performance.now();
+      stepFrame(SETTLE_DT, i * SETTLE_DT);
+      samples.push(performance.now() - t0);
+    }
+    samples.sort((a, b) => a - b);
+    const mean = samples.reduce((s, v) => s + v, 0) / samples.length;
+    const p95 = samples[Math.min(samples.length - 1, Math.floor(samples.length * 0.95))];
+    return { meanMs: mean, p95Ms: p95, pixelRatio: renderer.getPixelRatio(), frames };
+  }
+
   function invariants() {
     stepFrame(SETTLE_DT, 0);
     const info = renderer.info.render;
@@ -292,6 +328,10 @@ export function createDebugApi(ctx) {
     setTime,
     setWeather,
     setRate,
+    setTouchMode,
+    setPixelRatio,
+    measureFrameTiming,
+    torch,
     invariants,
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),

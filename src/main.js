@@ -26,13 +26,20 @@ import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 import { createDebugApi } from './debug.js';
 
+const DPR_CAP = 2;
+
 async function main() {
   const canvas = document.getElementById('scene');
   // preserveDrawingBuffer (localhost only) lets a manually-driven stepFrame render
   // survive to a screenshot when the preview pane is hidden and rAF is paused.
   const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: isLocal });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // E2e: measured against the 'skyline' bookmark's 954-draw-call frame (the
+  // heaviest pose in the goldens) at DPR 1/1.5/2/unclamped via
+  // __mcgrotDebug.measureFrameTiming — see scripts/smoke.mjs's DPR table.
+  // 2 is kept as the default cap pending a real-device check (Dan's call,
+  // per the E2e brief); this is provisional, not a final verdict.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP));
   renderer.setSize(window.innerWidth, window.innerHeight);
   // Filmic tone mapping lifts the murk into readable values without losing the grim mood
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -122,6 +129,7 @@ async function main() {
 
   createTitleCard({
     controls,
+    torch,
     onEnter: () => {
       ambience.start();       // AudioContext creation needs this user gesture
       proximityAudio.resume(); // ...and so does the positional-audio listener
@@ -132,7 +140,7 @@ async function main() {
   function onResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP));
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -184,7 +192,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
-      sky, atmosphere,
+      sky, atmosphere, torch,
       stepFrame: runFrame,
       updaters,
       setAutoAnimate(v) {

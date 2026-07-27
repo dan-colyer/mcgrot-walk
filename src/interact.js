@@ -36,9 +36,13 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     if (onReadingChange) onReadingChange(!!v);
   }
 
+  const isTouch = () => document.documentElement.classList.contains('touch');
+
   function showPrompt(npc) {
     if (!promptEl) return;
-    if (promptLabel) promptLabel.textContent = `[E] Hear ${npc.name} read`;
+    if (promptLabel) {
+      promptLabel.textContent = isTouch() ? `Tap to hear ${npc.name} read` : `[E] Hear ${npc.name} read`;
+    }
     promptEl.style.display = 'block';
   }
 
@@ -80,6 +84,13 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     proximityAudio.setOverlayOpen(false);
     openNpc = null;
     openLitter = null;
+    // update()'s change-detection only re-shows the prompt when `nearest`
+    // actually changes — closing while still standing next to the same NPC
+    // would otherwise leave the prompt hidden (set by open() above) until
+    // the player steps away and back. Reset so the very next update() call
+    // re-detects and re-shows it if still in range.
+    nearest = null;
+    nearLitter = null;
   }
 
   // Reading a comic nobody holds. No voice plays — but closing the page may
@@ -164,7 +175,9 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
       nearLitter = litterBest;
       if (nearest) showPrompt(nearest);
       else if (nearLitter) {
-        if (promptLabel) promptLabel.textContent = '[E] Read the comic on the ground';
+        if (promptLabel) {
+          promptLabel.textContent = isTouch() ? 'Tap to read the comic on the ground' : '[E] Read the comic on the ground';
+        }
         if (promptEl) promptEl.style.display = 'block';
       } else hidePrompt();
     }

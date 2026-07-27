@@ -4,6 +4,19 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>McGrot Walk</title>
+<script>
+  // Touch-capability detection (E2e). Runs synchronously before first paint
+  // so touch-only UI has no FOUC. `any-pointer: coarse` catches touch
+  // devices even when a mouse/trackpad is ALSO present (hybrid laptops);
+  // maxTouchPoints is the fallback for browsers without that media feature.
+  // window.__mcgrotDebug.setTouchMode (src/debug.js, localhost-only) can
+  // force this class either way for the smoke harness.
+  (function () {
+    var touch = (matchMedia && matchMedia('(any-pointer: coarse)').matches) ||
+      (navigator.maxTouchPoints > 0);
+    document.documentElement.classList.toggle('touch', touch);
+  })();
+</script>
 <style>
   html, body {
     margin: 0;
@@ -14,6 +27,14 @@
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
+  :root {
+    /* Named so scripts/smoke.mjs can simulate a notch/home-indicator by
+       overriding these directly (env() itself can't be spoofed from JS). */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+  }
   canvas {
     display: block;
     width: 100vw;
@@ -22,8 +43,8 @@
   }
   #hud {
     position: fixed;
-    left: 12px;
-    bottom: 10px;
+    left: calc(12px + var(--safe-left));
+    bottom: calc(10px + var(--safe-bottom));
     color: rgba(220, 224, 200, 0.65);
     font-size: 13px;
     letter-spacing: 0.02em;
@@ -37,7 +58,7 @@
     display: none;
     position: fixed;
     left: 50%;
-    bottom: 56px;
+    bottom: calc(56px + var(--safe-bottom));
     transform: translateX(-50%);
     padding: 10px 18px;
     background: rgba(16, 18, 12, 0.82);
@@ -107,6 +128,7 @@
   }
   #comic-controls {
     margin-top: 8px;
+    margin-bottom: var(--safe-bottom);
     display: flex;
     gap: 10px;
     align-items: center;
@@ -126,8 +148,8 @@
   #comic-playpause:active { background: rgba(44, 48, 32, 0.95); }
   #comic-close {
     position: absolute;
-    top: 14px;
-    right: 16px;
+    top: calc(14px + var(--safe-top));
+    right: calc(16px + var(--safe-right));
     width: 42px;
     height: 42px;
     font-size: 22px;
@@ -213,12 +235,13 @@
     50% { opacity: 1; }
   }
 
-  /* --- Mobile hold-to-walk button, shown only on coarse-pointer devices - */
+  /* --- Mobile hold-to-walk button, shown only in touch mode (html.touch,
+     driven by JS capability detection above — see E2e note in title.js) --- */
   #touch-forward {
     display: none;
     position: fixed;
     left: 50%;
-    bottom: 26px;
+    bottom: calc(26px + var(--safe-bottom));
     transform: translateX(-50%);
     width: 74px;
     height: 74px;
@@ -235,8 +258,45 @@
     touch-action: none;
   }
   #touch-forward.active { background: rgba(60, 54, 34, 0.75); }
-  @media (pointer: coarse) {
-    #touch-forward { display: block; }
+  html.touch #touch-forward { display: block; }
+
+  /* --- Torch toggle, touch-only affordance (E2e item 7) ----------------- */
+  #torch-toggle {
+    display: none;
+    position: fixed;
+    right: calc(20px + var(--safe-right));
+    bottom: calc(26px + var(--safe-bottom));
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(20, 22, 14, 0.55);
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    color: #d8d4c0;
+    font-size: 20px;
+    line-height: 48px;
+    text-align: center;
+    z-index: 15;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.45;
+  }
+  #torch-toggle.active { opacity: 1; background: rgba(122, 71, 24, 0.55); }
+  html.touch #torch-toggle { display: block; }
+
+  /* --- Touch-mode tap-target sizing (E2e item 4) — desktop rules above are
+     untouched so the 27 existing goldens can't move. --------------------- */
+  html.touch #comic-close { width: 44px; height: 44px; }
+  html.touch #comic-playpause { width: 48px; height: 44px; }
+  html.touch #npc-prompt { padding: 15px 18px; }
+  html.touch #title-enter { padding: 15px 28px; }
+
+  /* --- Comic overlay narrow-width layout (E2e item 6) -------------------- */
+  @media (max-width: 480px) {
+    #comic-overlay { padding: 16px 10px; }
+    /* Reserve room so long titles don't run under the fixed close button. */
+    #comic-title { font-size: 16px; padding: 0 46px; }
+    #comic-image { max-width: 96vw; }
+    #comic-meta { font-size: 13px; }
   }
 </style>
 </head>
@@ -257,6 +317,7 @@
 </div>
 
 <div id="touch-forward" aria-hidden="true">▲</div>
+<button id="torch-toggle" type="button" aria-label="Toggle torch">🔦</button>
 
 <div id="title-card">
   <div id="title-inner">
@@ -267,6 +328,6 @@
   </div>
 </div>
 
-<script src="dev-bundle.js?v=afa13e7fa6"></script>
+<script src="dev-bundle.js?v=f7f13971e9"></script>
 </body>
 </html>

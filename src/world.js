@@ -520,21 +520,34 @@ export function createPlayerTorch(camera) {
   // meaningless competing with daylight). Distance is scaled too — a torch
   // that reaches 6.5m at night should barely glow a hand's-width by noon.
   let scale = 1;
+  // Player-facing on/off (E2e torch toggle) — independent of the palette's
+  // darkness scale above, so the toggle doesn't fight applyPalette for
+  // ownership of `scale`. On by default.
+  let toggleOn = true;
 
   function setDarkness(k) {
     scale = k;
+    applyDistance();
+  }
+
+  function setToggle(v) {
+    toggleOn = !!v;
+    applyDistance();
+  }
+
+  function applyDistance() {
     // three.js reads light.distance === 0 as UNBOUNDED range, not "off" — a
     // future sunny keyframe naturally written as `torch: 0` would silently
     // light the entire street. Clamp above zero; at this floor the torch is
     // already imperceptible against daylight exposure.
-    light.distance = Math.max(0.05, TORCH_DISTANCE * scale);
+    light.distance = toggleOn ? Math.max(0.05, TORCH_DISTANCE * scale) : 0.05;
   }
 
   function update(time) {
     // Cheap flicker from a few off-frequency sines — no per-frame allocations.
     const n = Math.sin(time * 11.3) * 0.5 + Math.sin(time * 27.1) * 0.3 + Math.sin(time * 4.7) * 0.2;
-    light.intensity = (TORCH_BASE_INTENSITY + n * TORCH_FLICKER_AMOUNT * 0.3333) * scale;
+    light.intensity = toggleOn ? (TORCH_BASE_INTENSITY + n * TORCH_FLICKER_AMOUNT * 0.3333) * scale : 0;
   }
 
-  return { light, update, setDarkness };
+  return { light, update, setDarkness, setToggle };
 }
