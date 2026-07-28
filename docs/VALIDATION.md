@@ -258,16 +258,51 @@ about night reach.
 defect and not a regression — haar is simply the first column whose numbers sat
 close enough to the line to expose a pre-existing flake.
 
-`elm-row-hero` is the only pose whose frame is dominated by an ambient
-**leither** at close range: it fills roughly a tenth of the frame width at the
-right edge, so a small difference in its walk phase moves thousands of pixels.
+`elm-row-hero` is the pose where an ambient **leither** ends up closest to the
+camera, so a small difference in its walk phase moves thousands of pixels.
 Leithers are real-time simulated, not seeded-static — the same exclusion
-`computeGeomHash` makes — and their phase depends on how many rAF frames
-`animate()` completed before the harness got to `pauseAuto()`, which varies with
-machine load.
+`computeGeomHash` makes.
 
-The behaviour is **bimodal, not jittery**. Six fresh boots per weather at 13:00,
-same sequence every time:
+**The mechanism is measured, not inferred** (probes run while planning
+E2c.3b.1). Three findings, in order of how much they change what you'd do:
+
+1. **The pre-pause frame count varies.** `window.__mcgrotDebug` only exists
+   after `main()`'s async asset load, so the harness cannot call `pauseAuto()`
+   until `animate()` has already run some frames. Wrapping
+   `requestAnimationFrame` in a Playwright `addInitScript` and counting
+   callbacks gives **13 to 20 frames** across 20 boots.
+2. **Each of those frames advances the sim by exactly 0.1 s.** `main.js` clamps
+   `dt = Math.min((now - lastFrame) / 1000, 0.1)`, and every SwiftShader frame
+   costs more than 100 ms, so the clamp is always active. Leither state is a
+   pure function of an *integer*, which is why the diff is discrete-modal
+   rather than a jitter band. Summed chainage over the 30 walkers reproduces to
+   six decimal places whenever the count repeats:
+
+   | rAF frames | Σ chainage (30 walkers) |
+   |---|---|
+   | 17 | 20182.038027 |
+   | 18 | 20182.528630 |
+   | 19 | 20183.019648 |
+
+3. **Roughly +0.3% of pixels per extra frame, at this pose in the haar pass.**
+   Replicating `captureWeatherPass('haar', …)` exactly: 0.277% at 19 frames,
+   0.571% and 0.585% at 20. That reproduces the six-boot history below and puts
+   the 0.680% failure one further frame out.
+
+Two traps this exposed, both of which cost a probe each:
+
+- **Footprint is sequence-dependent.** Hiding the real-time set moves
+  `elm-row-hero` by **1.49%** during the haar pass but by **~0.00%** during the
+  first bookmark pass — the 700 settle frames are what walk someone into shot.
+  Measure inside the pass you actually care about.
+- **Frame count is not the only source.** Two boots with identical rAF counts
+  and byte-identical Σ chainage still differed by ~0.09% at this pose when the
+  pose was visited directly. Async façade-page decode is the likely second
+  source (`settleAt`'s own comment describes exactly this hazard). It is small,
+  but do not expect a frame-count fix alone to produce 0.000%.
+
+The behaviour is **discrete-modal, not jittery**. Six fresh boots per weather at
+13:00, same sequence every time:
 
 | pose | overcast | haar |
 |---|---|---|
@@ -289,8 +324,10 @@ failure mode that teaches people to re-run until green. Keep the map as short as
 the evidence makes it.
 
 **The real fix** is a deterministic boot, so the real-time set lands identically
-on every run. It would move all 35 desktop goldens, so it is scheduled on its
-own rather than smuggled into a weather milestone — see `docs/ROADMAP.md`.
+on every run — with the pre-pause frame count pinned at zero rather than left to
+machine load. It moves every golden that has a leither, gull or rat in frame, so
+it is scheduled on its own rather than smuggled into a weather milestone — see
+E2c.3b.1 in `docs/ROADMAP.md`.
 
 ### DPR timing is informational, not a GPU measurement
 

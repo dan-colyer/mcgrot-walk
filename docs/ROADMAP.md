@@ -327,8 +327,9 @@ third is genuinely coupled:
   fog-density axis, the `clear` retune it enables, the `LOAD_RANGE` widening
   that was expected to follow, and the Forth reveal. Brief:
   `~/.claude/plans/mcgrot-e2c3a-brief.md`.
-- **E2c.3b — Haar. NEXT.** A new weather column, and the thick end of the same
-  density axis. Brief: `~/.claude/plans/mcgrot-e2c3b-brief.md`.
+- **E2c.3b — Haar. DONE (2026-07-28), see below.** A new weather column, and the
+  thick end of the same density axis. Brief:
+  `~/.claude/plans/mcgrot-e2c3b-brief.md`.
   - **Authored, not derived.** `drizzle` could be a `DERIVED` blend because it
     sits between two existing states; haar sits outside all of them on both
     density and colour, so there is nothing to blend it from.
@@ -348,6 +349,19 @@ third is genuinely coupled:
   - **Haar should cost zero draw calls** (`rain: 0` at every stop), against
     rain/drizzle's exact +1. That is a gate, using E2c.2.1's matched control.
   - `WEATHER_CHAIN` goes from 12 ordered pairs to **20**, chain length 21.
+- **E2c.3b.1 — Deterministic boot. NEXT.** Retire `FLAKY_POSES` by removing the
+  nondeterminism it papers over, rather than widening a tolerance again. Brief:
+  `~/.claude/plans/mcgrot-e2c3b1-brief.md`.
+  - **The cause is measured, not guessed** (see `docs/VALIDATION.md`): the
+    harness cannot call `pauseAuto()` until `__mcgrotDebug` exists, which is
+    after `main()`'s async asset load, so `animate()` gets 13–20 real-time
+    frames in first — and `dt`'s 0.1 s clamp is always active under
+    SwiftShader, making the sim state a pure function of that integer.
+  - **It goes before 3c** because E2d adds post-processing on top of this gate,
+    and every milestone that lands first is one more set of goldens baked at a
+    machine-load-dependent state.
+  - **It moves goldens**, so it lands on its own with nothing else in the
+    commit — the same containment discipline as 3a's two-step.
 - **E2c.3c — Night reach (`TORCH_DISTANCE`), road sheen, autonomous weather
   scheduling.** Night reach wants haar and dynamic fog to judge against, so it
   goes last rather than in a vacuum.
@@ -444,22 +458,31 @@ are), `fogDensity` 0.03 flat, `wetness` 0.25, `rain` 0 throughout. 8 new
   gate red; 5 of 8 haar goldens moved 19–34%).
 
 **Open, and it is the harness's problem, not haar's: `elm-row-hero` is
-bimodal.** A full smoke on an unmodified tree failed at
-`golden-haar:elm-row-hero` (0.680% against 0.5%). It is the only pose with an
-ambient leither filling ~a tenth of the frame at close range; leithers are
-real-time simulated and their phase depends on how many rAF frames ran before
-`pauseAuto()`. Measured over six fresh boots per weather it reads 0.118% once
-and 1.18–1.26% five times in overcast — two states, not a band. Pre-existing;
-haar was just the first column close enough to the line to trip it.
+discrete-modal.** A full smoke on an unmodified tree failed at
+`golden-haar:elm-row-hero` (0.680% against 0.5%). Pre-existing; haar was just
+the first column close enough to the line to trip it.
+
+The cause was inferred at review time and has since been **measured** (probes,
+during E2c.3b.1 planning — full numbers in `docs/VALIDATION.md`):
+
+- The pre-pause rAF count varies **13–20** across boots, because
+  `__mcgrotDebug` only exists after `main()`'s async asset load.
+- `dt`'s 0.1 s clamp is always active under SwiftShader, so each of those
+  frames advances the sim by exactly 0.1 s and the state is a pure function of
+  an integer — hence discrete states, not a jitter band.
+- At this pose in the haar pass that is worth about **+0.3% of pixels per extra
+  frame** (0.277% at 19 frames, 0.571–0.585% at 20).
+
+Two corrections to what the review wrote: the leither occupies ~1.5% of that
+frame, not "a tenth" — and only *in that pass*, since the footprint is
+sequence-dependent (~0.00% in the first bookmark pass). And frame count is not
+the only source: boots with identical counts still differ ~0.09%, most likely
+async façade-page decode.
 
 - **Interim:** `FLAKY_POSES` in `scripts/smoke.mjs` gives that one pose a
   measured 2.5% tolerance in every weather, applied on both golden paths.
   Everything else stays at 0.5%. Numbers and reasoning in `docs/VALIDATION.md`.
-- **The real fix — a deterministic boot — is its own milestone.** Freezing the
-  real-time set before the first rAF frame would land every run identically,
-  but it moves all 35 desktop goldens, so it must not be smuggled into a
-  weather brief. Worth doing before E2d adds post-processing on top of an
-  already-unreliable gate.
+- **The real fix — a deterministic boot — is E2c.3b.1**, planned above.
 
 ### E2d — Post-processing
 

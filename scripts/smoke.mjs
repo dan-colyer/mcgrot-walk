@@ -240,16 +240,29 @@ function clippedHighlightPct(png) {
 // keeps DIFF_PCT_TOLERANCE, and this map should stay as short as the evidence
 // makes it.
 //
-// `elm-row-hero` is the only pose whose frame is dominated by an ambient
-// leither at close range (it fills roughly a tenth of the width at the right
-// edge). Leithers are real-time simulated, not seeded-static — the same
-// exclusion computeGeomHash makes — and their phase depends on how many rAF
-// frames `animate()` got through before the harness called `pauseAuto()`,
-// which is machine-load dependent. So this pose is BIMODAL, not jittery:
-// measured over six fresh boots per weather at 13:00, `elm-row-hero` reads
-// 0.118% once and 1.18-1.26% the other five times in overcast, and
-// 0.255-0.273% / 0.576% in haar. Every other pose stays inside the usual
-// 0.000-0.133% band.
+// `elm-row-hero` is the pose where an ambient leither ends up closest to the
+// camera. Leithers are real-time simulated, not seeded-static — the same
+// exclusion computeGeomHash makes — and the mechanism is now measured rather
+// than assumed (probes, E2c.3b.1 planning):
+//
+//  - `animate()` runs a variable number of rAF frames before the harness can
+//    call pauseAuto(), because __mcgrotDebug only exists after main()'s async
+//    asset load. Observed range over 20 boots: 13 to 20 frames.
+//  - `dt` is clamped to 0.1s (main.js) and every SwiftShader frame costs more
+//    than that, so each frame advances the sim by EXACTLY 0.1s. Leither state
+//    is therefore a pure function of an integer frame count, not a continuous
+//    jitter — which is why the diff is discrete-modal. Summed chainage over
+//    the 30 walkers reproduces to 6 decimal places whenever the count repeats
+//    (17 -> 20182.038027, 18 -> 20182.528630, 19 -> 20183.019648).
+//  - In the haar pass, elm-row-hero reads 0.277% at 19 frames and
+//    0.571-0.585% at 20 — about +0.3% per extra frame. That matches the
+//    six-boot history (0.255-0.273% / 0.576%) and the 0.680% that failed.
+//
+// How much of the frame is at stake is SEQUENCE-dependent, so measure it in
+// the pass you care about: hiding the real-time set moves elm-row-hero by
+// 1.49% during the haar pass (700 settle frames have walked someone into
+// shot) but by ~0.00% during the first bookmark pass. Every other pose stays
+// inside the usual 0.000-0.133% band.
 //
 // This is pre-existing — it predates the haar column, which merely produced
 // the first run to cross 0.5% (a full smoke on an unmodified tree failed at
