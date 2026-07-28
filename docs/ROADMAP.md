@@ -319,7 +319,27 @@ Two more lessons from the fix round, both about the *checks* rather than the cod
 #### E2c.3 — Haar and the long view
 
 The one risk cluster that touches view distance, GPU budget and the seam
-invariant at once, which is why it is last.
+invariant at once, which is why it is last. **Split into three briefs
+(2026-07-28)** — the original grouping was about coupling, and only the first
+third is genuinely coupled:
+
+- **E2c.3a — Dynamic fog and the long view. NEXT.** The fog-density axis, the
+  `clear` retune it enables, the `LOAD_RANGE` widening that has to follow, and
+  the Forth reveal. Brief: `~/.claude/plans/mcgrot-e2c3a-brief.md`.
+- **E2c.3b — Haar.** A new weather column, and the thick end of the same
+  density axis. Needs 3a.
+- **E2c.3c — Night reach (`TORCH_DISTANCE`), road sheen, autonomous weather
+  scheduling.** Night reach wants haar and dynamic fog to judge against, so it
+  goes last rather than in a vacuum.
+
+**The constraint that shapes 3a:** fog density multiplies every pixel, so a
+global change moves all 27 desktop goldens in the same commit as the riskiest
+change in the project. 3a therefore lands the axis as a proven no-op first
+(every column pinned at today's 0.0095, all 27 goldens unmoved), and only then
+retunes the `clear` column — moving exactly its 9 goldens and leaving the other
+18 as the invariant that catches a leak. A long view belongs to a clear day
+anyway, so this is better weather design than a global thinning, not just a
+safer one.
 
 - Dynamic fog **density** (E2c.1 leaves it pinned at 0.0095). The fog/sky seam
   invariant (`sky.js`) must survive it.
