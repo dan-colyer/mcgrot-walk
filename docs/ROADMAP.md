@@ -332,11 +332,11 @@ invariant at once, which is why it is last.
   lands with a pager widening (~67MB GPU per 4096² page) and a budget re-check.
 - **Night is too dark — Dan's call, 2026-07-27.** Decide `TORCH_DISTANCE` here,
   against haar and dynamic fog rather than in a vacuum, and lift the night
-  palette with it. Note there is no torch toggle and never was: the light is
-  attached permanently in `createPlayerTorch` (`src/world.js:514`) and driven
-  only by the palette's `torch` field, which is already 0.9–1.0 through the
-  night. "Torch on by default" is therefore about *reach*, not state — 6.5m
-  lights a façade you are standing at and nothing else.
+  palette with it. The problem is *reach*, not state: 6.5m lights a façade you
+  are standing at and nothing else. (E2e since added a player-facing on/off
+  toggle — `toggleOn` in `createPlayerTorch`, `src/world.js` — kept deliberately
+  separate from the palette's `torch` darkness scale so the two don't fight over
+  the same field. That toggle does not work on iOS; see "iOS bugs" below.)
   - Headroom check before retuning: the `night darkens facades` gate is a
     **maximum** (22:00 mean luminance ≤45% of 13:00's) and currently reads 2.9%.
     Night can be lifted a long way before the gate is the constraint.
@@ -455,6 +455,44 @@ this milestone's own; the 27 desktop goldens never moved. Widest desktop diff
 timing table while item 8 of the same brief said not to add per-phase timing.
 Item 8 was written after the smoke fix landed and criterion 7 was not updated.
 Skipping it was right. Re-read the criteria against late edits before sending.
+
+### iOS bugs — OPEN (found 2026-07-28, deferred by Dan)
+
+Found by Dan on **iOS Chrome** (WebKit underneath, so read this as Safari's
+engine) against the deployed E2e + E2e.1 build. Deferred deliberately: recorded
+here, not being fixed in the next milestone.
+
+**1. All audio is silent — and this one is a REGRESSION.** No NPC voices *and
+no ambience bed*. The bed worked on the same device before this deploy; that is
+the whole diagnostic value of the report. E2e.1 item 7 set out to fix the silent
+readers and instead took out the music that was working.
+
+The shape of the symptom points at a **throw inside `main.js`'s `onEnter`
+before `ambience.start()` is reached** — one exception there silences
+everything at once, which is exactly what changed. The new code between the
+gesture and `ambience.start(sharedCtx)` is the suspect list, in order:
+`THREE.AudioContext.setContext(sharedCtx)`, `createBuffer(1, 1, sampleRate)`,
+`unlockSrc.start(0)`. Nothing here is verified — no device console has been
+read. Do not skip that step and start rewriting.
+
+Cheapest first move, before any theory: make `onEnter` fail soft (wrap the
+shared-context setup so `ambience.start()` runs regardless) and surface the
+error. That restores the music even if the readers stay broken, and turns a
+silent failure into a legible one.
+
+**2. The torch toggle does nothing.** Not a regression — E2e added it and E2e
+was held until this deploy, so this is its first contact with a real device.
+Desktop-gated at 98.3% luminance drop, so the render path is sound; the failure
+is between an iOS tap and `setToggle`. Note the walk button was *not* reported
+broken, so `html.touch` and touch wiring in general are presumably fine — which
+makes `#torch-toggle`'s own `click` listener (`wireTorchToggle`, `src/title.js`)
+the place to look first.
+
+**Why the rig missed both:** headless Chromium on a Mac is not WebKit on a
+phone. No amount of gate-writing here reaches these. The lesson for the next
+mobile round is that a device check has to be a *step*, not a follow-up — and
+that shipping an unverified fix for an unreproducible bug can make things worse
+than leaving it alone, which is what happened to the ambience.
 
 ### Smoke runtime — FIXED (2026-07-27, `0f32c48`)
 
