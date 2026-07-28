@@ -327,8 +327,27 @@ third is genuinely coupled:
   fog-density axis, the `clear` retune it enables, the `LOAD_RANGE` widening
   that was expected to follow, and the Forth reveal. Brief:
   `~/.claude/plans/mcgrot-e2c3a-brief.md`.
-- **E2c.3b — Haar.** A new weather column, and the thick end of the same
-  density axis. Needs 3a.
+- **E2c.3b — Haar. NEXT.** A new weather column, and the thick end of the same
+  density axis. Brief: `~/.claude/plans/mcgrot-e2c3b-brief.md`.
+  - **Authored, not derived.** `drizzle` could be a `DERIVED` blend because it
+    sits between two existing states; haar sits outside all of them on both
+    density and colour, so there is nothing to blend it from.
+  - **Haar is bright, not dark.** A daytime haar is a luminous white-out — flat,
+    cold, high-key light, not gloom. If it reads as a darker `rain` the column
+    is not worth its eight goldens, and the goldens cannot catch that (a
+    wrong-but-consistent palette diffs at 0.000% against itself).
+  - **Starting density 0.03**, tuning band 0.02–0.05 (`FogExp2` is ~90% opaque
+    at `1.517/density`, so 50 m at 0.03). Bounded by things that must survive:
+    the far frontage ~12–15 m across staying legible, and `interact.js`'s 8 m
+    prompt range never firing for someone you cannot see.
+  - **"Rolling up from the Forth" is dropped as a spatial effect.** `FogExp2` is
+    isotropic; directional or volumetric haar needs a custom fog shader or a
+    post pass, which is E2d and would put the seam invariant back in play. The
+    rolling is temporal — the existing 10 s transition. A scheduler that favours
+    haar at the Foot is the natural home for the idea, in 3c.
+  - **Haar should cost zero draw calls** (`rain: 0` at every stop), against
+    rain/drizzle's exact +1. That is a gate, using E2c.2.1's matched control.
+  - `WEATHER_CHAIN` goes from 12 ordered pairs to **20**, chain length 21.
 - **E2c.3c — Night reach (`TORCH_DISTANCE`), road sheen, autonomous weather
   scheduling.** Night reach wants haar and dynamic fog to judge against, so it
   goes last rather than in a vacuum.
