@@ -136,17 +136,39 @@ async function main() {
       // THREE.AudioContext.setContext must run before the first
       // `new THREE.AudioListener()` (inside proximityAudio.resume()) so that
       // listener picks up this context instead of creating its own.
-      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-      const sharedCtx = AudioContextCtor ? new AudioContextCtor() : null;
-      if (sharedCtx) {
-        THREE.AudioContext.setContext(sharedCtx);
-        // iOS Safari unlock: play a one-sample silent buffer through the
-        // shared context on the same gesture that resumes it. Long-standing
-        // trick, costs nothing, belt-and-braces alongside ctx.resume() below.
-        const unlockSrc = sharedCtx.createBufferSource();
-        unlockSrc.buffer = sharedCtx.createBuffer(1, 1, sharedCtx.sampleRate);
-        unlockSrc.connect(sharedCtx.destination);
-        unlockSrc.start(0);
+      //
+      // E2c.3a item 0: this whole preamble is wrapped in try/catch. A throw
+      // here (observed on iOS: visitors got no sound at all, not even the
+      // ambience bed that worked before this preamble existed) used to take
+      // out ambience.start()/proximityAudio.resume() below it too. Neither
+      // call may depend on sharedCtx surviving — ambience.start(undefined)
+      // and proximityAudio.resume() both already fall back to constructing
+      // their own AudioContext (see ambience.js/proximity-audio.js), so a
+      // failed shared-context setup degrades to "two contexts" rather than
+      // "no sound".
+      let sharedCtx = null;
+      try {
+        // Dev/test-only fault injection (see scripts/smoke.mjs) — proves the
+        // catch below actually protects ambience.start()/proximityAudio.resume(),
+        // not just that no one has broken this preamble yet.
+        if (window.__mcgrotForceAudioContextError && ['localhost', '127.0.0.1'].includes(location.hostname)) {
+          throw new Error('[debug] forced AudioContext setup failure');
+        }
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        sharedCtx = AudioContextCtor ? new AudioContextCtor() : null;
+        if (sharedCtx) {
+          THREE.AudioContext.setContext(sharedCtx);
+          // iOS Safari unlock: play a one-sample silent buffer through the
+          // shared context on the same gesture that resumes it. Long-standing
+          // trick, costs nothing, belt-and-braces alongside ctx.resume() below.
+          const unlockSrc = sharedCtx.createBufferSource();
+          unlockSrc.buffer = sharedCtx.createBuffer(1, 1, sharedCtx.sampleRate);
+          unlockSrc.connect(sharedCtx.destination);
+          unlockSrc.start(0);
+        }
+      } catch (err) {
+        console.warn('[title] shared AudioContext setup failed, falling back to per-subsystem contexts:', err);
+        sharedCtx = null;
       }
       ambience.start(sharedCtx);        // AudioContext creation needs this user gesture
       proximityAudio.resume();          // ...and so does the positional-audio listener

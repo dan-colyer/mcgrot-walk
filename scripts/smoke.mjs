@@ -356,6 +356,40 @@ async function main() {
       detail: `same object=${audioCheck.sameObject}, listener.state=${audioCheck.listenerState}, ambience.state=${audioCheck.ambienceState}`,
     });
 
+    // E2c.3a item 0: a throw inside onEnter's shared-context preamble must
+    // not prevent ambience.start()/proximityAudio.resume() below it — the
+    // observed iOS symptom (no sound at all) is exactly what happens when it
+    // does. addInitScript sets the fault-injection flag before any page
+    // script runs, so it's live for the title-card click below. A fresh
+    // context/page — bootPage's shared page1 must never see this flag.
+    {
+      const faultContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      await faultContext.addInitScript(() => { window.__mcgrotForceAudioContextError = true; });
+      const faultPage = await faultContext.newPage();
+      const faultConsole = [];
+      faultPage.on('console', (msg) => { if (msg.type() === 'error') faultConsole.push(msg.text()); });
+      faultPage.on('pageerror', (err) => faultConsole.push(String(err)));
+      await faultPage.goto(`http://localhost:${port}/`);
+      await faultPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await faultPage.click('#title-enter');
+      const faultCheck = await faultPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const listenerCtx = dbg.proximityAudio.listener && dbg.proximityAudio.listener.context;
+        const ambienceCtx = dbg.ambience && dbg.ambience.context;
+        return {
+          ambienceStarted: !!ambienceCtx,
+          listenerStarted: !!listenerCtx,
+          ambienceState: ambienceCtx ? ambienceCtx.state : null,
+        };
+      });
+      results.push({
+        name: 'onEnter: shared-context throw does not swallow ambience/proximityAudio',
+        pass: faultCheck.ambienceStarted && faultCheck.listenerStarted,
+        detail: `ambience.context=${faultCheck.ambienceStarted}, proximityAudio.listener=${faultCheck.listenerStarted}, ambience.state=${faultCheck.ambienceState}`,
+      });
+      await faultContext.close();
+    }
+
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);
