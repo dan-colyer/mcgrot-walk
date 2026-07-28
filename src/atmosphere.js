@@ -188,6 +188,32 @@ const OVERCAST_STOPS = [
 // keep the six MeshLambertMaterial conversions (LIT_ALBEDO_GAIN=4.7, tuned
 // against overcast) under the <0.1% clipped-highlight gate — see the E2c.1
 // brief's "risk to measure, not eyeball".
+//
+// fogDensity — E2c.3a. Daylight stops only (08/12/17) are thinned from the
+// 0.0095 constant to 0.0022, ~4.3x thinner — this is what opens the long
+// view the whole milestone is for. 0/5/20/22 (deep night/dusk) keep 0.0095;
+// you can't see the Forth at those hours regardless, and thinning them is
+// night-reach work (TORCH_DISTANCE), a later brief. Measured, not eyeballed:
+//   - No world-edge (terrain edge, last building, street-ribbon end) becomes
+//     visible from any of the four long-view goldens (skyline, mid-805-far,
+//     foot-1500-far, north-250-far) even at 0.0015, well past this value.
+//   - LOAD_RANGE (src/shopfronts.js) needs no widening at this density:
+//     rendering those same four poses at LOAD_RANGE 250 vs 600 differs by
+//     <0.1% of pixels at 0.0022, and what differs is flora sway, not a
+//     popped-in page — so 250 already covers what's actually visible.
+//   - The Forth (src/forth.js) reads from an elevated clearing angle near
+//     the Foot at this density (raycast-verified line of sight; the shore's
+//     355m puts it at ~54% fog-clear at 0.0022) and stays fully fogged from
+//     Picardy (~2000m, effectively 0% clear at any density tried). Ground
+//     level dead-on-axis at the Foot stays occluded by the terminus
+//     building — an E1-era accepted constraint (docs/ROADMAP.md), not a
+//     regression: even at the thinnest density tried (0.0015) a raycast from
+//     the literal Foot point to the water/shore never clears the building at
+//     any lateral offset up to +/-80m and any elevation up to 27m directly
+//     ahead; only stepping ~40m to either side AND rising to ~27m (well
+//     above head height — roughly a rooftop vantage, not a walking pose)
+//     clears it. The reveal is real but is not visible from the ordinary
+//     walking eye-line at the Foot itself.
 const CLEAR_STOPS = [
   {
     hour: 0,
@@ -227,7 +253,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x5478a0, ground: 0x201c12, intensity: 1.25 },
     ambient: { color: 0x1e1c14, intensity: 0.42 },
     fog: 0x84a0bc,
-    fogDensity: 0.0095,
+    fogDensity: 0.0022,
     exposure: 1.15,
     tint: { r: 0.68, g: 0.64, b: 0.58 },
     sky: { band: 0xa8c2d8, zenith: 0x3a5c7c, cloudDark: 0x334a62, cloudLit: 0x6888a4, glow: 0x9a5620 },
@@ -243,7 +269,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x6890b4, ground: 0x241f15, intensity: 1.55 },
     ambient: { color: 0x201e13, intensity: 0.5 },
     fog: 0x84a0ba,
-    fogDensity: 0.0095,
+    fogDensity: 0.0022,
     exposure: 1.25,
     tint: { r: 1.0, g: 0.98, b: 0.92 },
     sky: { band: 0xaecad0, zenith: 0x2c5476, cloudDark: 0x40566c, cloudLit: 0x86a0ba, glow: 0xb05a24 },
@@ -259,7 +285,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x465064, ground: 0x1c190f, intensity: 1.0 },
     ambient: { color: 0x18150e, intensity: 0.35 },
     fog: 0x565f74,
-    fogDensity: 0.0095,
+    fogDensity: 0.0022,
     exposure: 0.98,
     tint: { r: 0.6, g: 0.53, b: 0.46 },
     sky: { band: 0x866f54, zenith: 0x28344c, cloudDark: 0x2a3244, cloudLit: 0x586074, glow: 0xa8541e },

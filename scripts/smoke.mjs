@@ -659,9 +659,31 @@ async function main() {
       detail: `${morningClipPct.toFixed(3)}% pixels clipped (clear, 08:00, must be <${CLIP_PCT_MAX}%)`,
     });
 
+    // E2c.3a acceptance criterion 2, time-of-day half: samplePalette's own
+    // lerp, independent of blendPalette's weather-transition lerp tested
+    // below. Weather is still 'clear' from the loop above (setTime doesn't
+    // touch weather). hour 6.5 sits inside the 5->8 bracket, whose stops are
+    // 0.0095 (still-night) and 0.0022 (thinned daylight) — a real, unequal
+    // pair, so a mid-bracket sample has somewhere to land other than one of
+    // the two endpoints. Verified by hand: commenting out samplePalette's
+    // `out.fogDensity = lerp(...)` line collapses this to hour 5's raw
+    // 0.0095 (outside the (lo,hi) open interval since it collapses to lo
+    // itself, not strictly inside it), and this check goes red.
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), 6.5);
+    const todInv = await getInvariants(page1);
+    const todLo = Math.min(0.0095, 0.0022);
+    const todHi = Math.max(0.0095, 0.0022);
+    results.push({
+      name: 'fogDensity blends across time-of-day bracket',
+      pass: todInv.weather === 'clear' && todInv.fogDensity > todLo && todInv.fogDensity < todHi,
+      detail: `06:30 fogDensity ${todInv.fogDensity.toFixed(5)} between hour5=0.00950 and hour8=0.00220`,
+    });
+
     // --- E2c.1: transition midpoint sits between the two endpoints ---
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
-    const clearExposure = (await getInvariants(page1)).exposure;
+    const clearSettledInvAtSmokeHour = await getInvariants(page1);
+    const clearExposure = clearSettledInvAtSmokeHour.exposure;
+    const clearFogDensity = clearSettledInvAtSmokeHour.fogDensity;
     await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
     await page1.evaluate(() => {
       const dbg = window.__mcgrotDebug;
@@ -680,6 +702,23 @@ async function main() {
       name: 'weather transition midpoint',
       pass: !!midInv.weatherTransition && midInv.exposure > lo && midInv.exposure < hi,
       detail: `mid-transition exposure ${midInv.exposure.toFixed(3)} between clear=${clearExposure.toFixed(3)} and overcast=${finalInv.exposure.toFixed(3)} (progress=${midInv.weatherTransition ? midInv.weatherTransition.progress.toFixed(2) : 'n/a'})`,
+    });
+
+    // E2c.3a acceptance criterion 2: fogDensity blends across BOTH axes —
+    // this specific gate only proves the weather-transition blend (the same
+    // clear->overcast transition captured above, at SMOKE_HOUR so both
+    // columns' densities differ: clear=0.0022, overcast=0.0095). Same shape
+    // as the exposure check above, same clearFogDensity/finalFogDensity
+    // captured alongside clearExposure/finalInv.exposure — a strictly-between
+    // assertion that's able to fail (verified by hand: commenting out either
+    // the samplePalette or blendPalette fogDensity lerp collapses this to the
+    // unblended endpoint value, which fails the strict inequality).
+    const fdLo = Math.min(clearFogDensity, finalInv.fogDensity);
+    const fdHi = Math.max(clearFogDensity, finalInv.fogDensity);
+    results.push({
+      name: 'fogDensity blends across weather transition',
+      pass: !!midInv.weatherTransition && midInv.fogDensity > fdLo && midInv.fogDensity < fdHi,
+      detail: `mid-transition fogDensity ${midInv.fogDensity.toFixed(5)} between clear=${clearFogDensity.toFixed(5)} and overcast=${finalInv.fogDensity.toFixed(5)} (progress=${midInv.weatherTransition ? midInv.weatherTransition.progress.toFixed(2) : 'n/a'})`,
     });
     results.push({
       name: 'weather reaches target (overcast)',
