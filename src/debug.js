@@ -337,6 +337,7 @@ export function createDebugApi(ctx) {
       weather: atmo.weather,
       weatherTransition: atmo.weatherTransition,
       exposure: atmo.exposure,
+      fogDensity: atmo.fogDensity,
       rain: atmo.rain,
       wetness: atmo.wetness,
       // Identity check, not an equality check: catches "THE SEAM" failure

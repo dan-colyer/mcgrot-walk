@@ -68,6 +68,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x1c2430, ground: 0x0d0c08, intensity: 0.6 },
     ambient: { color: 0x14140f, intensity: 0.25 },
     fog: 0x14150f,
+    fogDensity: 0.0095,
     exposure: 0.55,
     tint: { r: 0.12, g: 0.12, b: 0.15 },
     sky: { band: 0x1a1c16, zenith: 0x0d0f12, cloudDark: 0x0a0c0f, cloudLit: 0x22241c, glow: 0x5c2c12 },
@@ -83,6 +84,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x222c38, ground: 0x100f0a, intensity: 0.7 },
     ambient: { color: 0x17170f, intensity: 0.3 },
     fog: 0x181a13,
+    fogDensity: 0.0095,
     exposure: 0.6,
     tint: { r: 0.14, g: 0.14, b: 0.17 },
     sky: { band: 0x20221a, zenith: 0x101318, cloudDark: 0x0d0f12, cloudLit: 0x262820, glow: 0x63300f },
@@ -98,6 +100,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x5c6572, ground: 0x24211a, intensity: 2.0,},
     ambient: { color: 0x30301f, intensity: 0.8 },
     fog: 0x3a4038,
+    fogDensity: 0.0095,
     exposure: 1.0,
     tint: { r: 0.55, g: 0.55, b: 0.6 },
     sky: { band: 0x616a52, zenith: 0x232830, cloudDark: 0x1c2028, cloudLit: 0x494636, glow: 0x8a4a1e },
@@ -113,6 +116,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x8b93a0, ground: 0x3a3324, intensity: 3.9 },
     ambient: { color: 0x4c4838, intensity: 1.4 },
     fog: 0x4a5142,
+    fogDensity: 0.0095,
     exposure: 1.46,
     tint: { r: 1.0, g: 1.0, b: 1.0 },
     sky: { band: 0x8d9377, zenith: 0x2e343a, cloudDark: 0x232830, cloudLit: 0x5c5748, glow: 0xb05a24 },
@@ -128,6 +132,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x6a6458, ground: 0x2e2a1e, intensity: 2.3 },
     ambient: { color: 0x363020, intensity: 0.9 },
     fog: 0x3c3f30,
+    fogDensity: 0.0095,
     exposure: 1.05,
     tint: { r: 0.6, g: 0.58, b: 0.55 },
     sky: { band: 0x746b52, zenith: 0x282c34, cloudDark: 0x1e222a, cloudLit: 0x4e4a3c, glow: 0xa8541e },
@@ -143,6 +148,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x2e323e, ground: 0x181510, intensity: 1.0 },
     ambient: { color: 0x1c1a12, intensity: 0.4 },
     fog: 0x25271f,
+    fogDensity: 0.0095,
     exposure: 0.75,
     tint: { r: 0.3, g: 0.28, b: 0.3 },
     sky: { band: 0x34342a, zenith: 0x181b20, cloudDark: 0x12151a, cloudLit: 0x38352a, glow: 0x8c3e18 },
@@ -158,6 +164,7 @@ const OVERCAST_STOPS = [
     hemi: { sky: 0x1e2530, ground: 0x0e0d09, intensity: 0.7 },
     ambient: { color: 0x15150e, intensity: 0.3 },
     fog: 0x181a14,
+    fogDensity: 0.0095,
     exposure: 0.6,
     tint: { r: 0.16, g: 0.16, b: 0.19 },
     sky: { band: 0x1c1e17, zenith: 0x0e1014, cloudDark: 0x0b0d10, cloudLit: 0x24261e, glow: 0x662f12 },
@@ -188,6 +195,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x141c2a, ground: 0x0a0906, intensity: 0.45 },
     ambient: { color: 0x0e0e09, intensity: 0.18 },
     fog: 0x0f130f,
+    fogDensity: 0.0095,
     exposure: 0.5,
     tint: { r: 0.09, g: 0.09, b: 0.13 },
     sky: { band: 0x121a14, zenith: 0x080a10, cloudDark: 0x07080a, cloudLit: 0x181a16, glow: 0x5c2c12 },
@@ -203,6 +211,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x1a2436, ground: 0x0c0b08, intensity: 0.55 },
     ambient: { color: 0x101109, intensity: 0.22 },
     fog: 0x12150f,
+    fogDensity: 0.0095,
     exposure: 0.55,
     tint: { r: 0.11, g: 0.11, b: 0.15 },
     sky: { band: 0x181e18, zenith: 0x0a0e18, cloudDark: 0x090b0e, cloudLit: 0x1c1e18, glow: 0x63300f },
@@ -218,6 +227,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x5478a0, ground: 0x201c12, intensity: 1.25 },
     ambient: { color: 0x1e1c14, intensity: 0.42 },
     fog: 0x84a0bc,
+    fogDensity: 0.0095,
     exposure: 1.15,
     tint: { r: 0.68, g: 0.64, b: 0.58 },
     sky: { band: 0xa8c2d8, zenith: 0x3a5c7c, cloudDark: 0x334a62, cloudLit: 0x6888a4, glow: 0x9a5620 },
@@ -233,6 +243,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x6890b4, ground: 0x241f15, intensity: 1.55 },
     ambient: { color: 0x201e13, intensity: 0.5 },
     fog: 0x84a0ba,
+    fogDensity: 0.0095,
     exposure: 1.25,
     tint: { r: 1.0, g: 0.98, b: 0.92 },
     sky: { band: 0xaecad0, zenith: 0x2c5476, cloudDark: 0x40566c, cloudLit: 0x86a0ba, glow: 0xb05a24 },
@@ -248,6 +259,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x465064, ground: 0x1c190f, intensity: 1.0 },
     ambient: { color: 0x18150e, intensity: 0.35 },
     fog: 0x565f74,
+    fogDensity: 0.0095,
     exposure: 0.98,
     tint: { r: 0.6, g: 0.53, b: 0.46 },
     sky: { band: 0x866f54, zenith: 0x28344c, cloudDark: 0x2a3244, cloudLit: 0x586074, glow: 0xa8541e },
@@ -263,6 +275,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x222a38, ground: 0x120f0a, intensity: 0.7 },
     ambient: { color: 0x121009, intensity: 0.28 },
     fog: 0x1c2030,
+    fogDensity: 0.0095,
     exposure: 0.68,
     tint: { r: 0.3, g: 0.26, b: 0.3 },
     sky: { band: 0x282a38, zenith: 0x121622, cloudDark: 0x0f121a, cloudLit: 0x282a38, glow: 0x8c3e18 },
@@ -278,6 +291,7 @@ const CLEAR_STOPS = [
     hemi: { sky: 0x18202e, ground: 0x0a0906, intensity: 0.5 },
     ambient: { color: 0x0f0d08, intensity: 0.22 },
     fog: 0x131624,
+    fogDensity: 0.0095,
     exposure: 0.52,
     tint: { r: 0.14, g: 0.14, b: 0.18 },
     sky: { band: 0x161a26, zenith: 0x090c14, cloudDark: 0x07090e, cloudLit: 0x1c1e26, glow: 0x662f12 },
@@ -305,6 +319,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x161e28, ground: 0x0b0a07, intensity: 0.5 },
     ambient: { color: 0x101008, intensity: 0.2 },
     fog: 0x10120e,
+    fogDensity: 0.0095,
     exposure: 0.48,
     tint: { r: 0.1, g: 0.1, b: 0.13 },
     sky: { band: 0x151a15, zenith: 0x0b0d10, cloudDark: 0x080a0d, cloudLit: 0x1c1e18, glow: 0x5c2c12 },
@@ -320,6 +335,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x1a222c, ground: 0x0d0c08, intensity: 0.6 },
     ambient: { color: 0x131309, intensity: 0.25 },
     fog: 0x13150f,
+    fogDensity: 0.0095,
     exposure: 0.52,
     tint: { r: 0.12, g: 0.12, b: 0.15 },
     sky: { band: 0x1a1c16, zenith: 0x0d0f12, cloudDark: 0x0a0c0f, cloudLit: 0x1e2018, glow: 0x63300f },
@@ -335,6 +351,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x48505c, ground: 0x1e1b15, intensity: 1.6 },
     ambient: { color: 0x262617, intensity: 0.6 },
     fog: 0x2e3230,
+    fogDensity: 0.0095,
     exposure: 0.85,
     tint: { r: 0.42, g: 0.44, b: 0.48 },
     sky: { band: 0x4e5644, zenith: 0x1c2026, cloudDark: 0x161a20, cloudLit: 0x3a382c, glow: 0x8a4a1e },
@@ -350,6 +367,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x6a7078, ground: 0x2c281c, intensity: 2.9 },
     ambient: { color: 0x38361f, intensity: 1.0 },
     fog: 0x383c34, // rain-cooled overcast noon: slightly bluer than OVERCAST_STOPS' 0x4a5142
+    fogDensity: 0.0095,
     exposure: 1.1,
     tint: { r: 0.72, g: 0.74, b: 0.78 },
     sky: { band: 0x6a715a, zenith: 0x242830, cloudDark: 0x1c2028, cloudLit: 0x484636, glow: 0xb05a24 },
@@ -365,6 +383,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x50493e, ground: 0x222016, intensity: 1.7 },
     ambient: { color: 0x2a2618, intensity: 0.65 },
     fog: 0x2e3028,
+    fogDensity: 0.0095,
     exposure: 0.9,
     tint: { r: 0.46, g: 0.44, b: 0.42 },
     sky: { band: 0x585240, zenith: 0x20232a, cloudDark: 0x181c22, cloudLit: 0x3c3a2e, glow: 0xa8541e },
@@ -380,6 +399,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x24262e, ground: 0x14120d, intensity: 0.8 },
     ambient: { color: 0x161409, intensity: 0.32 },
     fog: 0x1c1d18,
+    fogDensity: 0.0095,
     exposure: 0.62,
     tint: { r: 0.24, g: 0.22, b: 0.24 },
     sky: { band: 0x282820, zenith: 0x141720, cloudDark: 0x0f1116, cloudLit: 0x2c2a22, glow: 0x8c3e18 },
@@ -395,6 +415,7 @@ const RAIN_STOPS = [
     hemi: { sky: 0x181e28, ground: 0x0c0b08, intensity: 0.6 },
     ambient: { color: 0x121208, intensity: 0.25 },
     fog: 0x13150f,
+    fogDensity: 0.0095,
     exposure: 0.52,
     tint: { r: 0.13, g: 0.13, b: 0.16 },
     sky: { band: 0x181a14, zenith: 0x0b0d10, cloudDark: 0x090b0e, cloudLit: 0x1e2018, glow: 0x662f12 },
@@ -451,6 +472,7 @@ function makePalette() {
     hemi: { sky: new THREE.Color(), ground: new THREE.Color(), intensity: 0 },
     ambient: { color: new THREE.Color(), intensity: 0 },
     fog: new THREE.Color(),
+    fogDensity: 0.0095,
     exposure: 1,
     tint: new THREE.Color(1, 1, 1),
     sky: {
@@ -475,6 +497,7 @@ function copyPalette(src, dst) {
   dst.ambient.color.copy(src.ambient.color);
   dst.ambient.intensity = src.ambient.intensity;
   dst.fog.copy(src.fog);
+  dst.fogDensity = src.fogDensity;
   dst.exposure = src.exposure;
   dst.tint.copy(src.tint);
   dst.sky.band.copy(src.sky.band);
@@ -567,6 +590,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     out.ambient.intensity = lerp(a.ambient.intensity, b.ambient.intensity, t);
 
     sampleColor(out.fog, a.fog, b.fog, t);
+    out.fogDensity = lerp(a.fogDensity, b.fogDensity, t);
 
     out.exposure = lerp(a.exposure, b.exposure, t);
 
@@ -606,6 +630,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     out.ambient.intensity = lerp(from.ambient.intensity, to.ambient.intensity, k);
 
     out.fog.lerpColors(from.fog, to.fog, k);
+    out.fogDensity = lerp(from.fogDensity, to.fogDensity, k);
 
     out.exposure = lerp(from.exposure, to.exposure, k);
 
@@ -668,6 +693,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
       // — the seam invariant sky.js depends on requires fog.color stay the
       // same object across its whole lifetime. See sky.js's "THE SEAM" note.
       fog.color.copy(p.fog);
+      fog.density = p.fogDensity;
     }
 
     lastExposure = p.exposure;
@@ -824,6 +850,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
         : null,
       sunAltitude,
       exposure: lastExposure,
+      fogDensity: fog ? fog.density : sLastApplied.fogDensity,
       tint: { r: tint.r, g: tint.g, b: tint.b },
       rain: sLastApplied.rain,
       wetness: sLastApplied.wetness,
