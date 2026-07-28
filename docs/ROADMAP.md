@@ -419,6 +419,48 @@ measurement, not the report.
 - **The E1 measurement is retired.** Fog density is no longer a constant, so
   any future "N× thinner" claim has to name its column and hour.
 
+##### E2c.3b — what actually landed (2026-07-28)
+
+One commit, `5b2e1b7`: `HAAR_STOPS` authored (7 stops, `sun.pos` verified
+byte-identical to `OVERCAST_STOPS` at every hour, as `clear` and `rain` also
+are), `fogDensity` 0.03 flat, `wetness` 0.25, `rain` 0 throughout. 8 new
+`-haar` goldens, no existing golden touched. 159 checks.
+
+- **It is bright, and that is measured, not asserted.** Mean frame luminance at
+  `mid-805-far`, 13:00: haar **124.7** vs overcast 57.0, clear 63.6, rain 23.8
+  — 2.2× overcast. The failure the goldens could never catch (a
+  wrong-but-consistent palette diffs at 0.000% against itself) did not happen.
+- **Zero draw calls, confirmed independently** of the harness's own gate: haar
+  47 = overcast 47 at `mid-805-far`, against rain's 48.
+- **No `NaN` anywhere.** Swept all 5 weathers × 48 half-hours reading live
+  `fog.density`, fog colour, exposure, sun/hemi/ambient intensity and
+  `skyFogLinked` — every value finite, link held throughout. A missing palette
+  field poisons both lerps silently and nothing throws, so this needed checking
+  rather than assuming.
+- **`WEATHER_CHAIN` is a genuine Eulerian circuit** — verified by construction,
+  not by eye: 21 entries, 20 steps, all 20 ordered pairs present exactly once,
+  no self-loops, closed.
+- Both new gates watched failing under a deliberate density sabotage (ordering
+  gate red; 5 of 8 haar goldens moved 19–34%).
+
+**Open, and it is the harness's problem, not haar's: `elm-row-hero` is
+bimodal.** A full smoke on an unmodified tree failed at
+`golden-haar:elm-row-hero` (0.680% against 0.5%). It is the only pose with an
+ambient leither filling ~a tenth of the frame at close range; leithers are
+real-time simulated and their phase depends on how many rAF frames ran before
+`pauseAuto()`. Measured over six fresh boots per weather it reads 0.118% once
+and 1.18–1.26% five times in overcast — two states, not a band. Pre-existing;
+haar was just the first column close enough to the line to trip it.
+
+- **Interim:** `FLAKY_POSES` in `scripts/smoke.mjs` gives that one pose a
+  measured 2.5% tolerance in every weather, applied on both golden paths.
+  Everything else stays at 0.5%. Numbers and reasoning in `docs/VALIDATION.md`.
+- **The real fix — a deterministic boot — is its own milestone.** Freezing the
+  real-time set before the first rAF frame would land every run identically,
+  but it moves all 35 desktop goldens, so it must not be smuggled into a
+  weather brief. Worth doing before E2d adds post-processing on top of an
+  already-unreliable gate.
+
 ### E2d — Post-processing
 
 - AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable

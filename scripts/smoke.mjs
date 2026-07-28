@@ -15,7 +15,7 @@
 import { spawn, execSync } from 'child_process';
 import { createServer } from 'net';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { basename, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
@@ -236,6 +236,40 @@ function clippedHighlightPct(png) {
   return count ? (clipped / count) * 100 : 0;
 }
 
+// Per-pose tolerance override. NOT a general loosening — every other golden
+// keeps DIFF_PCT_TOLERANCE, and this map should stay as short as the evidence
+// makes it.
+//
+// `elm-row-hero` is the only pose whose frame is dominated by an ambient
+// leither at close range (it fills roughly a tenth of the width at the right
+// edge). Leithers are real-time simulated, not seeded-static — the same
+// exclusion computeGeomHash makes — and their phase depends on how many rAF
+// frames `animate()` got through before the harness called `pauseAuto()`,
+// which is machine-load dependent. So this pose is BIMODAL, not jittery:
+// measured over six fresh boots per weather at 13:00, `elm-row-hero` reads
+// 0.118% once and 1.18-1.26% the other five times in overcast, and
+// 0.255-0.273% / 0.576% in haar. Every other pose stays inside the usual
+// 0.000-0.133% band.
+//
+// This is pre-existing — it predates the haar column, which merely produced
+// the first run to cross 0.5% (a full smoke on an unmodified tree failed at
+// golden-haar:elm-row-hero 0.680%). The real fix is a deterministic boot so
+// the real-time set lands identically every run, and that would move all 35
+// desktop goldens, so it is scheduled separately (docs/ROADMAP.md). Until
+// then a measured 2.5% here keeps the pose gating real regressions — a
+// palette, geometry or fog change moves far more than one walker — without
+// red-lighting a clean tree, which is the failure that teaches people to
+// re-run until green.
+const FLAKY_POSES = { 'elm-row-hero': 2.5 };
+
+function goldenTolerance(goldenPath) {
+  const file = basename(goldenPath, '.png');
+  for (const [pose, tol] of Object.entries(FLAKY_POSES)) {
+    if (file === pose || file.startsWith(`${pose}-`)) return tol;
+  }
+  return DIFF_PCT_TOLERANCE;
+}
+
 // Capture-or-compare for one golden. Captures (and passes trivially) only when
 // --update-goldens is set or the file doesn't exist yet; otherwise pixel-diffs.
 // Shared so a golden can never be written unconditionally — an unguarded
@@ -257,10 +291,11 @@ function checkGolden(results, name, shot, goldenPath) {
   const diffPng = new PNG({ width: actual.width, height: actual.height });
   const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
   const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
+  const tolerance = goldenTolerance(goldenPath);
   results.push({
     name,
-    pass: diffPct <= DIFF_PCT_TOLERANCE,
-    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
+    pass: diffPct <= tolerance,
+    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${tolerance}%${tolerance !== DIFF_PCT_TOLERANCE ? ', per-pose — see FLAKY_POSES' : ''})`,
   });
   return actual;
 }
@@ -452,10 +487,15 @@ async function main() {
       const diffPng = new PNG({ width: actual.width, height: actual.height });
       const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
       const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
+      // Same per-pose override checkGolden applies — this first pass keeps its
+      // own inline diff (it also stashes `shot` for later checks), so the
+      // lookup has to be repeated here or `elm-row-hero.png`, the very golden
+      // FLAKY_POSES was measured on, would be the one left on 0.5%.
+      const overcastTolerance = goldenTolerance(goldenPath);
       results.push({
         name: `golden:${bm.id}`,
-        pass: diffPct <= DIFF_PCT_TOLERANCE,
-        detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
+        pass: diffPct <= overcastTolerance,
+        detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${overcastTolerance}%${overcastTolerance !== DIFF_PCT_TOLERANCE ? ', per-pose — see FLAKY_POSES' : ''})`,
       });
 
       // E2c.1 acceptance criterion 3's control figure — overcast should

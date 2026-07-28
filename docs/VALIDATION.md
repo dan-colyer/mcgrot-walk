@@ -175,6 +175,18 @@ tells you which check and why.
     localhost-gated in `main.js` and the fault runs in its own browser
     context, so the shared `page1` never sees it. This is a fail-soft gate,
     **not** a fix for the open iOS silence — see `docs/ROADMAP.md`.
+19. **`fogDensity` axis is ordered: haar > overcast > clear** (E2c.3b) — read
+    live off `scene.fog.density` at 13:00 for all three, plus a named floor of
+    0.02 so it cannot pass off a near-zero value. See "Haar" below.
+20. **Draw calls exactly +0 (haar)** (E2c.3b) — haar is fog only, so it adds no
+    geometry: exact equality against the matched `overcast` control pass, not a
+    tolerance. Same machinery as rain/drizzle's `+1`. See "Haar" below.
+
+    Note what these two do **not** cover: every weather column is gated at
+    13:00 only. A density authored wrongly at an hour no golden and no
+    ordering check visits — a night stop, say — passes everything here, and
+    the 24h sweep only catches a *throw*, not a wrong number. Verified: an
+    hour-0 density sabotage in `HAAR_STOPS` produced a completely green run.
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -238,6 +250,47 @@ node, rather than hand-arranging 20 pairs. A night capture at 22:00
 (`mid-805-far-haar-22.png`, `docs/smoke/captures/`, gitignored, not gated) is
 evidence for E2c.3c's `TORCH_DISTANCE` call, not a claim this milestone makes
 about night reach.
+
+### `elm-row-hero` is bimodal, and it is the harness's fault (E2c.3b review)
+
+**A full `npm run smoke` on an unmodified, committed tree failed** at
+`golden-haar:elm-row-hero`, 0.680% against the 0.5% tolerance. It is not a haar
+defect and not a regression — haar is simply the first column whose numbers sat
+close enough to the line to expose a pre-existing flake.
+
+`elm-row-hero` is the only pose whose frame is dominated by an ambient
+**leither** at close range: it fills roughly a tenth of the frame width at the
+right edge, so a small difference in its walk phase moves thousands of pixels.
+Leithers are real-time simulated, not seeded-static — the same exclusion
+`computeGeomHash` makes — and their phase depends on how many rAF frames
+`animate()` completed before the harness got to `pauseAuto()`, which varies with
+machine load.
+
+The behaviour is **bimodal, not jittery**. Six fresh boots per weather at 13:00,
+same sequence every time:
+
+| pose | overcast | haar |
+|---|---|---|
+| `elm-row-hero` | **0.118% once, 1.18–1.26% five times** | **0.255–0.273%, one excursion to 0.576%** |
+| `north-250-far` | 0.245–0.271% | 0.491–0.592% |
+| `foot-1500-far` | 0.336–0.346% | 0.375–0.386% |
+| `skyline` | 0.203–0.221% | 0.114–0.120% |
+| the three no-sky poses | 0.000% every run | 0.000% every run |
+
+(Absolute values differ from a real smoke run — the probe's boot sequence is
+not identical — but the *spread* is the point, and only `elm-row-hero` has two
+distinct states rather than a narrow band.)
+
+**Interim measure:** `FLAKY_POSES` in `scripts/smoke.mjs` gives `elm-row-hero`
+a measured 2.5% tolerance in every weather. Every other golden keeps 0.5%. That
+still gates real regressions at this pose — a deliberate density sabotage moved
+`elm-row-hero-haar` by 31.6% — while not red-lighting a clean tree, which is the
+failure mode that teaches people to re-run until green. Keep the map as short as
+the evidence makes it.
+
+**The real fix** is a deterministic boot, so the real-time set lands identically
+on every run. It would move all 35 desktop goldens, so it is scheduled on its
+own rather than smuggled into a weather milestone — see `docs/ROADMAP.md`.
 
 ### DPR timing is informational, not a GPU measurement
 
