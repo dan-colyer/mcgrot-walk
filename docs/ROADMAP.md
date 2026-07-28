@@ -349,9 +349,9 @@ third is genuinely coupled:
   - **Haar should cost zero draw calls** (`rain: 0` at every stop), against
     rain/drizzle's exact +1. That is a gate, using E2c.2.1's matched control.
   - `WEATHER_CHAIN` goes from 12 ordered pairs to **20**, chain length 21.
-- **E2c.3b.1 — Deterministic boot. NEXT.** Retire `FLAKY_POSES` by removing the
-  nondeterminism it papers over, rather than widening a tolerance again. Brief:
-  `~/.claude/plans/mcgrot-e2c3b1-brief.md`.
+- **E2c.3b.1 — Deterministic boot. DONE (2026-07-28), see below.** Retired
+  `FLAKY_POSES` by removing the nondeterminism it papered over, rather than
+  widening a tolerance again. Brief: `~/.claude/plans/mcgrot-e2c3b1-brief.md`.
   - **The cause is measured, not guessed** (see `docs/VALIDATION.md`): the
     harness cannot call `pauseAuto()` until `__mcgrotDebug` exists, which is
     after `main()`'s async asset load, so `animate()` gets 13–20 real-time
@@ -457,8 +457,9 @@ are), `fogDensity` 0.03 flat, `wetness` 0.25, `rain` 0 throughout. 8 new
 - Both new gates watched failing under a deliberate density sabotage (ordering
   gate red; 5 of 8 haar goldens moved 19–34%).
 
-**Open, and it is the harness's problem, not haar's: `elm-row-hero` is
-discrete-modal.** A full smoke on an unmodified tree failed at
+**It was the harness's problem, not haar's: `elm-row-hero` was
+discrete-modal.** Fixed in E2c.3b.1, below — kept here as the review that
+found it. A full smoke on an unmodified tree failed at
 `golden-haar:elm-row-hero` (0.680% against 0.5%). Pre-existing; haar was just
 the first column close enough to the line to trip it.
 
@@ -479,10 +480,55 @@ sequence-dependent (~0.00% in the first bookmark pass). And frame count is not
 the only source: boots with identical counts still differ ~0.09%, most likely
 async façade-page decode.
 
-- **Interim:** `FLAKY_POSES` in `scripts/smoke.mjs` gives that one pose a
+- **Interim:** `FLAKY_POSES` in `scripts/smoke.mjs` gave that one pose a
   measured 2.5% tolerance in every weather, applied on both golden paths.
-  Everything else stays at 0.5%. Numbers and reasoning in `docs/VALIDATION.md`.
-- **The real fix — a deterministic boot — is E2c.3b.1**, planned above.
+  Everything else stayed at 0.5%. **Retired in E2c.3b.1**, below.
+
+##### E2c.3b.1 — what actually landed (2026-07-28)
+
+Three commits, the same containment shape as 3a: `13aeea0` (the mechanism —
+freeze flag, both new gates, no golden touched, `golden-haar:north-250-far`
+now fails at 0.82% as evidence the fix does something), `6cc60c8` (recapture —
+exactly the two goldens the mechanism proved move), and this one
+(`FLAKY_POSES`/`goldenTolerance()` deleted, docs updated).
+
+- **Fix is by construction, not tuning.** A localhost-gated
+  `window.__mcgrotFreezeAtBoot` flag, set via Playwright `addInitScript`
+  before any page script runs, suppresses `main.js`'s very first `animate()`
+  call — the pre-pause rAF count is now **0**, asserted by a gate, not merely
+  "usually small". Applied to both the desktop and mobile smoke passes (the
+  mobile pass built its own context rather than reusing `bootPage`, and had
+  the identical bug — measured 0.000–62% run to run on `golden-mobile:comic`
+  before the same fix was applied there too).
+- **A direct determinism gate, not just "goldens didn't move".** `invariants()`
+  now hashes the real-time set's own live state (leither chainage/side/
+  direction, birds' and vermin's instance matrices — both groups newly named
+  so the hash can find them without relying on scene build order) and
+  `scripts/smoke.mjs` asserts it identical across the two independently
+  booted pages the run already creates. Both new gates were watched failing
+  first: frame count read 18 and 19 with the flag disabled.
+- **Exactly two goldens moved**: `elm-row-hero-haar` (1.465% → 0.069% after
+  recapture) and `north-250-far-haar` (0.824% → passing). Every other pose
+  across all five weather columns stayed under the standard 0.5% even before
+  recapture — max 0.272% (`golden-drizzle:elm-row-hero`). Pixel-diffing each
+  recaptured file against its predecessor confirmed the changed pixels are a
+  leither and a couple of gull silhouettes; no building, shopfront or sky
+  pixel moved.
+- **Residual, measured, not assumed:** three fresh full smoke runs after the
+  fix, zero golden files rewritten across all three. Worst-case per-pose
+  diff over that data: `elm-row-hero` 0.275%, `skyline` 0.249%, everything
+  else lower — comfortably under 0.5% everywhere, so the ~0.09% async
+  façade-decode source flagged during planning never became a problem in
+  practice.
+- **`setAutoAnimate(true)`/`resumeAuto()` verified working from a frozen
+  boot** — a walker's chainage advances and `requestAnimationFrame` keeps
+  scheduling after `resumeAuto()`, confirmed with an ad hoc probe (not
+  committed; the harness never calls it, so nothing exercises this path by
+  default).
+- **No player-facing change.** The flag only ever exists behind the same
+  `localhost`/`127.0.0.1` gate `__mcgrotDebug` already lives behind, and is
+  otherwise `undefined` — checked visually via the dev preview (title card,
+  boot, WASD movement, birds/leithers animating) with the flag absent.
 
 ### E2d — Post-processing
 

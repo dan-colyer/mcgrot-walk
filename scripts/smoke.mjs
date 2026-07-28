@@ -15,7 +15,7 @@
 import { spawn, execSync } from 'child_process';
 import { createServer } from 'net';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { basename, dirname, join } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
@@ -249,53 +249,6 @@ function clippedHighlightPct(png) {
   return count ? (clipped / count) * 100 : 0;
 }
 
-// Per-pose tolerance override. NOT a general loosening — every other golden
-// keeps DIFF_PCT_TOLERANCE, and this map should stay as short as the evidence
-// makes it.
-//
-// `elm-row-hero` is the pose where an ambient leither ends up closest to the
-// camera. Leithers are real-time simulated, not seeded-static — the same
-// exclusion computeGeomHash makes — and the mechanism is now measured rather
-// than assumed (probes, E2c.3b.1 planning):
-//
-//  - `animate()` runs a variable number of rAF frames before the harness can
-//    call pauseAuto(), because __mcgrotDebug only exists after main()'s async
-//    asset load. Observed range over 20 boots: 13 to 20 frames.
-//  - `dt` is clamped to 0.1s (main.js) and every SwiftShader frame costs more
-//    than that, so each frame advances the sim by EXACTLY 0.1s. Leither state
-//    is therefore a pure function of an integer frame count, not a continuous
-//    jitter — which is why the diff is discrete-modal. Summed chainage over
-//    the 30 walkers reproduces to 6 decimal places whenever the count repeats
-//    (17 -> 20182.038027, 18 -> 20182.528630, 19 -> 20183.019648).
-//  - In the haar pass, elm-row-hero reads 0.277% at 19 frames and
-//    0.571-0.585% at 20 — about +0.3% per extra frame. That matches the
-//    six-boot history (0.255-0.273% / 0.576%) and the 0.680% that failed.
-//
-// How much of the frame is at stake is SEQUENCE-dependent, so measure it in
-// the pass you care about: hiding the real-time set moves elm-row-hero by
-// 1.49% during the haar pass (700 settle frames have walked someone into
-// shot) but by ~0.00% during the first bookmark pass. Every other pose stays
-// inside the usual 0.000-0.133% band.
-//
-// This is pre-existing — it predates the haar column, which merely produced
-// the first run to cross 0.5% (a full smoke on an unmodified tree failed at
-// golden-haar:elm-row-hero 0.680%). The real fix is a deterministic boot so
-// the real-time set lands identically every run, and that would move all 35
-// desktop goldens, so it is scheduled separately (docs/ROADMAP.md). Until
-// then a measured 2.5% here keeps the pose gating real regressions — a
-// palette, geometry or fog change moves far more than one walker — without
-// red-lighting a clean tree, which is the failure that teaches people to
-// re-run until green.
-const FLAKY_POSES = { 'elm-row-hero': 2.5 };
-
-function goldenTolerance(goldenPath) {
-  const file = basename(goldenPath, '.png');
-  for (const [pose, tol] of Object.entries(FLAKY_POSES)) {
-    if (file === pose || file.startsWith(`${pose}-`)) return tol;
-  }
-  return DIFF_PCT_TOLERANCE;
-}
-
 // Capture-or-compare for one golden. Captures (and passes trivially) only when
 // --update-goldens is set or the file doesn't exist yet; otherwise pixel-diffs.
 // Shared so a golden can never be written unconditionally — an unguarded
@@ -317,11 +270,10 @@ function checkGolden(results, name, shot, goldenPath) {
   const diffPng = new PNG({ width: actual.width, height: actual.height });
   const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
   const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
-  const tolerance = goldenTolerance(goldenPath);
   results.push({
     name,
-    pass: diffPct <= tolerance,
-    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${tolerance}%${tolerance !== DIFF_PCT_TOLERANCE ? ', per-pose — see FLAKY_POSES' : ''})`,
+    pass: diffPct <= DIFF_PCT_TOLERANCE,
+    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
   });
   return actual;
 }
@@ -522,15 +474,10 @@ async function main() {
       const diffPng = new PNG({ width: actual.width, height: actual.height });
       const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
       const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
-      // Same per-pose override checkGolden applies — this first pass keeps its
-      // own inline diff (it also stashes `shot` for later checks), so the
-      // lookup has to be repeated here or `elm-row-hero.png`, the very golden
-      // FLAKY_POSES was measured on, would be the one left on 0.5%.
-      const overcastTolerance = goldenTolerance(goldenPath);
       results.push({
         name: `golden:${bm.id}`,
-        pass: diffPct <= overcastTolerance,
-        detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${overcastTolerance}%${overcastTolerance !== DIFF_PCT_TOLERANCE ? ', per-pose — see FLAKY_POSES' : ''})`,
+        pass: diffPct <= DIFF_PCT_TOLERANCE,
+        detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
       });
 
       // E2c.1 acceptance criterion 3's control figure — overcast should

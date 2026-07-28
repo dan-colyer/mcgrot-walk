@@ -80,6 +80,9 @@ tells you which check and why.
 4. **Determinism** — `invariants().geomHash` identical across two independent
    fresh page loads. Non-negotiable: a mismatch means something that should
    be seeded/static changed between runs — see "Determinism" below.
+   `invariants().realtimeHash` (E2c.3b.1) is the direct counterpart for the
+   real-time set (leithers/birds/vermin) that `geomHash` deliberately
+   excludes — see check 21 below.
 5. **Goldens** — a screenshot at each bookmark, pixel-diffed against
    `docs/smoke/goldens/<id>.png` (pixelmatch, 0.1 per-pixel threshold, 0.5%
    changed-pixel tolerance).
@@ -187,6 +190,22 @@ tells you which check and why.
     ordering check visits — a night stop, say — passes everything here, and
     the 24h sweep only catches a *throw*, not a wrong number. Verified: an
     hour-0 density sabotage in `HAAR_STOPS` produced a completely green run.
+21. **Pre-pause frame count is 0** (E2c.3b.1) — `bootPage()` counts
+    `requestAnimationFrame` callbacks (wrapped via a Playwright
+    `addInitScript`, set before any page script runs) and asserts the count
+    is exactly zero once `pauseAuto()` has run. This is the deterministic-boot
+    fix itself, made assertable: before it, `main.js`'s first `animate()`
+    call ran a machine-load-dependent 13–20 real-time frames before the
+    harness could stop it. Watched failing (18, then 19 frames) with the
+    freeze flag disabled.
+22. **Determinism (realtimeHash)** (E2c.3b.1) — `invariants().realtimeHash`
+    identical across the same two independently booted pages check 4 already
+    compares. Hashes leither chainage/side/direction plus the `birds` and
+    `vermin` `InstancedMesh` matrices (both groups are now named — see
+    `computeRealtimeHash`, `src/debug.js`). Only meaningful given check 21:
+    before the frame count was pinned at zero this would have been flaky by
+    construction, not a real gate. See "`elm-row-hero` is bimodal" below —
+    now resolved, kept for the mechanism it documents.
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -251,7 +270,7 @@ node, rather than hand-arranging 20 pairs. A night capture at 22:00
 evidence for E2c.3c's `TORCH_DISTANCE` call, not a claim this milestone makes
 about night reach.
 
-### `elm-row-hero` is bimodal, and it is the harness's fault (E2c.3b review)
+### `elm-row-hero` was bimodal, and it was the harness's fault (E2c.3b review, fixed E2c.3b.1)
 
 **A full `npm run smoke` on an unmodified, committed tree failed** at
 `golden-haar:elm-row-hero`, 0.680% against the 0.5% tolerance. It is not a haar
@@ -316,18 +335,26 @@ The behaviour is **discrete-modal, not jittery**. Six fresh boots per weather at
 not identical — but the *spread* is the point, and only `elm-row-hero` has two
 distinct states rather than a narrow band.)
 
-**Interim measure:** `FLAKY_POSES` in `scripts/smoke.mjs` gives `elm-row-hero`
-a measured 2.5% tolerance in every weather. Every other golden keeps 0.5%. That
-still gates real regressions at this pose — a deliberate density sabotage moved
-`elm-row-hero-haar` by 31.6% — while not red-lighting a clean tree, which is the
-failure mode that teaches people to re-run until green. Keep the map as short as
-the evidence makes it.
+**Interim measure (retired E2c.3b.1):** `FLAKY_POSES` in `scripts/smoke.mjs`
+gave `elm-row-hero` a measured 2.5% tolerance in every weather while the real
+fix was pending. It served its purpose — a deliberate density sabotage still
+moved `elm-row-hero-haar` by 31.6%, well past even the widened tolerance —
+without red-lighting a clean tree.
 
-**The real fix** is a deterministic boot, so the real-time set lands identically
-on every run — with the pre-pause frame count pinned at zero rather than left to
-machine load. It moves every golden that has a leither, gull or rat in frame, so
-it is scheduled on its own rather than smuggled into a weather milestone — see
-E2c.3b.1 in `docs/ROADMAP.md`.
+**The real fix — a deterministic boot** — is now shipped. A localhost-gated
+`window.__mcgrotFreezeAtBoot` flag, set via `addInitScript` before any page
+script runs, suppresses `main.js`'s very first `animate()` call, so the
+pre-pause frame count is 0 by construction rather than left to machine load
+(checks 21–22 above assert this directly, not just infer it from goldens
+holding still). `elm-row-hero-haar` and `north-250-far-haar` — the two poses
+that had drifted past 0.5% under the old boot — were recaptured; every other
+golden across all five weather columns was already under 0.5% even before
+recapture. Three fresh full smoke runs afterwards rewrote no golden files;
+worst-case residual per pose measured across that data was 0.275%
+(`elm-row-hero`) — comfortably clear of the 0.5% tolerance, so the ~0.09%
+async façade-decode source noted above never became the binding constraint.
+`FLAKY_POSES` and `goldenTolerance()` are deleted; every golden is back on the
+standard tolerance.
 
 ### DPR timing is informational, not a GPU measurement
 
@@ -524,6 +551,7 @@ before committing.
 |---|---|---|
 | `drawCalls`/`triangles` | `renderer.info.render` after one stepped frame | A budget breach usually means new unmerged geometry (a new per-NPC mesh, an unbatched decal) landed somewhere it'll multiply by hundreds of instances. Check what changed near that bookmark's chainage. |
 | `geomHash` | FNV-1a over: the merged buildings mesh's position array, every `InstancedMesh`'s `instanceMatrix` (chimneys, aerials, birds, vermin, roadwork cones — found by traversal, not a hardcoded list), and every NPC's placed position (NPCs are individual `Group`s in this codebase, not instanced, but their placement is just as seeded — see `src/debug.js`'s `computeGeomHash`) | **Determinism breach = a seeded PRNG call sequence got disturbed.** Treat as a blocker (see root `CLAUDE.md` / `docs/ROADMAP.md`: "seeded PRNG order is sacred; additions via hash32 only"). Bisect recent commits touching `hash32`/`hash2` call sites in `chimneys.js`, `gables.js`, `shopfronts.js`, `road.js`, `npcs.js`. |
+| `realtimeHash` (E2c.3b.1) | FNV-1a over the real-time set `geomHash` deliberately excludes: every leither's chainage/side/direction, plus the `birds` and `vermin` groups' `InstancedMesh.instanceMatrix` (found by name, not build order — see `src/debug.js`'s `computeRealtimeHash`) | A mismatch means the boot itself is nondeterministic — check the pre-pause frame count gate first (it should read 0); if that's green and this still mismatches, something new is reading real wall-clock time instead of the stepped `dt`/`t` the harness feeds it. |
 | `updaterCount`/`updaterNames` | `main.js`'s `updaters` array | A new subsystem wired into `animate()` but not `stepFrame` (or vice versa) — the exact D0 bug this exists to catch. Update `EXPECTED_UPDATERS` in `scripts/smoke.mjs` deliberately when you add one. |
 | `consoleErrors` | `console.error` calls + `window` `error`/`unhandledrejection` events, collected from page load | Any non-empty result is a bug, not noise — `console.warn` (chimney/building skip warnings) is expected and NOT counted. |
 | `time`/`rate` (E2a) | `src/atmosphere.js`'s current hour (0..24) and cycle rate (hours/real-minute; 0 when frozen) | A pose that should be stable (any `gotoBookmark` after `setTime`) but reports `rate !== 0` means something called `setRate`/resumed the cycle after your `setTime` — the frame will drift under repeat capture. |
@@ -541,6 +569,17 @@ after clicking through the title card, so from that point on the world only
 advances via explicit `stepFrame` calls (deterministic `dt`, deterministic
 frame count) — this is *why* the determinism check is meaningful at all.
 Don't remove the `pauseAuto()` call when editing the harness.
+
+**E2c.3b.1:** `pauseAuto()` alone was not enough — `window.__mcgrotDebug`
+(and so `pauseAuto` itself) only exists after `main()`'s async asset load,
+and `animate()` had already been running on real wall-clock time since page
+load. Every context that boots the page now also sets
+`window.__mcgrotFreezeAtBoot = true` via `addInitScript`, **before**
+`page.goto` — this suppresses `animate()`'s very first call, so zero
+real-time frames run before `pauseAuto()` takes over. Both `bootPage()` and
+the mobile pass's own hand-built context set this flag; if you add a third
+page-boot path to the harness, it needs the flag too, or its goldens will
+inherit the old machine-load-dependent flake.
 
 Geometry that visibly moves (leithers walking, birds wheeling, smoke) is
 **excluded** from `geomHash` for the same reason it needs `pauseAuto()`:
