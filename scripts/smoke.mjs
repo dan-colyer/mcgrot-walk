@@ -80,13 +80,20 @@ const RAIN_MEASURE_T = 600; // seconds — deep into a session, per the brief
 const RAIN_MEASURE_FRAMES = 60;
 const RAIN_MEASURE_MAX_RATIO = 3; // acceptance criterion 1
 const RAIN_BOX_HEIGHT = 20; // metres — must match BOX_HEIGHT in src/rain.js
-// An Eulerian circuit over the complete directed graph on the 4 weathers —
+// An Eulerian circuit over the complete directed graph on the 5 weathers —
 // every ordered (from, to) pair appears as one consecutive step exactly
-// once, so 12 transitions are exercised for the price of 12 setWeather calls
-// instead of 12 independent from-scratch round trips.
+// once, so all 20 transitions are exercised for the price of 20 setWeather
+// calls instead of 20 independent from-scratch round trips. Built by
+// decomposing K5* into 4 edge-disjoint Hamiltonian cycles (step size
+// d=1,2,3,4 mod 5 over the 5 weathers, each a cycle since gcd(d,5)=1) and
+// merging them at a shared start node — the standard construction for an
+// Eulerian circuit over a complete balanced digraph. E2c.3b added 'haar',
+// taking this from 4 weathers/12 transitions/13 entries to 5/20/21.
 const WEATHER_CHAIN = [
-  'overcast', 'clear', 'rain', 'drizzle', 'clear', 'drizzle',
-  'rain', 'clear', 'overcast', 'rain', 'overcast', 'drizzle', 'overcast',
+  'overcast', 'clear', 'rain', 'drizzle', 'haar', 'overcast',
+  'rain', 'haar', 'clear', 'drizzle', 'overcast', 'drizzle',
+  'clear', 'haar', 'rain', 'overcast', 'haar', 'drizzle',
+  'rain', 'clear', 'overcast',
 ];
 const SWEEP_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 23.99, 0.01]; // includes the midnight-wrap edge for each weather's own bracket
 // These two console-clean sweeps only need to CATCH AN ERROR, not verify a
@@ -890,23 +897,25 @@ async function main() {
       // One extra capture at NIGHT_RAIN_HOUR, reported but NOT gated (per the
       // brief) — reuses this same fresh boot rather than a fifth one. Written
       // to captureDir, not goldenDir (fix 3) — this is evidence for a human,
-      // not a gated golden.
+      // not a gated golden. Labelled by weatherName so this doubles as the
+      // E2c.3b haar night capture (evidence for 3c's TORCH_DISTANCE call)
+      // without a second bespoke code path.
       if (nightCapture) {
         if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
         await page.evaluate((h) => window.__mcgrotDebug.setTime(h), NIGHT_RAIN_HOUR);
         await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), NIGHT_RAIN_BOOKMARK);
         const nightShot = await page.screenshot();
-        const nightPath = join(captureDir, `${NIGHT_RAIN_BOOKMARK}-rain-22.png`);
+        const nightPath = join(captureDir, `${NIGHT_RAIN_BOOKMARK}-${weatherName}-22.png`);
         writeFileSync(nightPath, nightShot);
         results.push({
-          name: `capture-rain:${NIGHT_RAIN_BOOKMARK}-22 (not gated)`,
+          name: `capture-${weatherName}:${NIGHT_RAIN_BOOKMARK}-22 (not gated)`,
           pass: true,
           detail: `captured for a human look, not diffed — ${nightPath}`,
         });
       }
 
       await context.close();
-      return { rain: lastInv ? lastInv.rain : null, drawCalls };
+      return { rain: lastInv ? lastInv.rain : null, drawCalls, fogDensity: lastInv ? lastInv.fogDensity : null };
     }
 
     const allBookmarkIds = bookmarks.map((bm) => bm.id);
@@ -965,6 +974,40 @@ async function main() {
           : scaleMismatches.map((r) => `${r.id}: rain +${r.rainDelta} vs drizzle +${r.drizzleDelta}`).join('; '),
     });
 
+    // --- E2c.3b: haar — full 8-bookmark golden pass at 13:00, matched-control
+    // draw-call parity, density ordering, plus the 22:00 night capture (reuses
+    // captureWeatherPass's nightCapture path, see its own note above). Unlike
+    // rain/drizzle, haar's zero-draw-call claim is checked as EXACT equality
+    // (delta 0), not the rain/drizzle +1 — a haar is fog only, no new geometry.
+    const haarCapture = await captureWeatherPass('haar', allBookmarkIds, { nightCapture: true });
+    const haarDrawCallDeltas = Object.entries(haarCapture.drawCalls)
+      .map(([id, calls]) => ({ id, calls, control: controlCapture.drawCalls[id] }))
+      .filter((r) => r.control !== undefined)
+      .map((r) => ({ ...r, delta: r.calls - r.control }));
+    const haarDrawCallFail = haarDrawCallDeltas.filter((r) => r.delta !== 0);
+    results.push({
+      name: 'draw calls exactly +0 (haar, E2c.3b)',
+      pass: haarDrawCallFail.length === 0,
+      detail: haarDrawCallFail.length === 0
+        ? `every bookmark exactly +0 vs the matched overcast control (${haarDrawCallDeltas.map((r) => `${r.id}:+${r.delta}`).join(', ')})`
+        : haarDrawCallFail.map((r) => `${r.id}: +${r.delta} (expected +0, control=${r.control})`).join('; '),
+    });
+
+    // Density axis is ordered: haar > overcast > clear, all read live off
+    // scene.fog.density at the same settled hour (13:00) — this is the check
+    // that would catch a haar column authored with the wrong sign, or a stop
+    // that silently fell back to a default. HAAR_FOG_DENSITY_FLOOR is well
+    // below the 0.03 shipped (see atmosphere.js's HAAR_STOPS note) so this
+    // isn't just re-asserting the exact authored constant.
+    const HAAR_FOG_DENSITY_FLOOR = 0.02;
+    results.push({
+      name: 'fogDensity axis is ordered: haar > overcast > clear (E2c.3b)',
+      pass: haarCapture.fogDensity > controlCapture.fogDensity &&
+        controlCapture.fogDensity > clearFogDensity &&
+        haarCapture.fogDensity > HAAR_FOG_DENSITY_FLOOR,
+      detail: `haar=${haarCapture.fogDensity.toFixed(5)} overcast=${controlCapture.fogDensity.toFixed(5)} clear=${clearFogDensity.toFixed(5)} (haar floor ${HAAR_FOG_DENSITY_FLOOR})`,
+    });
+
     // --- E2c.2: console-clean across all 12 ordered weather-pair transitions ---
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), WEATHER_CHAIN[0]);
@@ -988,15 +1031,15 @@ async function main() {
       errCursor = inv.consoleErrors.length;
     }
     results.push({
-      name: 'console clean: all 12 weather-pair transitions',
+      name: 'console clean: all 20 weather-pair transitions',
       pass: transitionFailures.length === 0,
       detail: transitionFailures.length === 0
-        ? `all 12 ordered transitions across ${WEATHER_CHAIN.join('->')} clean`
+        ? `all 20 ordered transitions across ${WEATHER_CHAIN.join('->')} clean`
         : transitionFailures.join(' ;; '),
     });
 
-    // --- E2c.2: console-clean 24h sweep in every weather (includes each weather's own midnight-wrap bracket edge) ---
-    for (const w of ['overcast', 'clear', 'rain', 'drizzle']) {
+    // --- E2c.2/E2c.3b: console-clean 24h sweep in every weather (includes each weather's own midnight-wrap bracket edge) ---
+    for (const w of ['overcast', 'clear', 'rain', 'drizzle', 'haar']) {
       await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), w);
       await page1.evaluate((frames) => {
         // Settle without drawing the frames nobody looks at (see debug.js stepFrames).

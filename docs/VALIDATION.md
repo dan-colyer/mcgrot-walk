@@ -205,6 +205,40 @@ from chainage 100 to 1500 in both directions, the worst stop is 263 pixels
 pages (~268MB of atlas texture at ~67MB per 4096² page). Re-measure this way
 before thinning any further.
 
+### Haar — the thick end of the fogDensity axis (E2c.3b)
+
+`haar` is authored, not derived (see `src/atmosphere.js`'s `HAAR_STOPS`): it
+sits outside both `overcast`/`clear`'s density and `rain`'s colour, so there
+is nothing to blend it from. Shipped `fogDensity` is 0.03 at every stop, flat
+across the day — measured against the far-façade legibility of the opposite
+side of the street (~12-15m across, ~18% fogged at 0.03) and `interact.js`'s
+8m `RANGE` (~21% fogged there — an NPC reads long before the prompt could
+fire). The far façade is the tighter constraint: it starts failing by ~0.05
+(~43% fogged), well before 8m interaction would.
+
+Two new gates, both demonstrated failing before being trusted (temporarily
+authoring `HAAR_STOPS.fogDensity` at 0.005 reddened the ordering gate;
+temporarily wiring `rain.setIntensity` into the haar branch reddened the
+parity gate):
+
+- **`fogDensity` axis is ordered: haar > overcast > clear** — reads
+  `scene.fog.density` live for all three at 13:00, plus a named floor
+  (0.02, comfortably below the shipped 0.03) so this can't pass by accident
+  off a near-zero value.
+- **Draw calls exactly +0 (haar)** — the same matched-control machinery
+  `captureWeatherPass` already uses for rain/drizzle's `+1`, but haar's own
+  claim is *zero* new geometry: a fog-only weather adds no draw calls versus
+  the identical-sequence `overcast` control pass.
+
+`WEATHER_CHAIN` (`scripts/smoke.mjs`) is an Eulerian circuit over the complete
+directed graph on all 5 weathers now (20 ordered pairs, 21-entry chain) —
+built by decomposing the graph into 4 edge-disjoint Hamiltonian cycles (step
+sizes 1-4 mod 5, each a cycle since 5 is prime) and merging them at a shared
+node, rather than hand-arranging 20 pairs. A night capture at 22:00
+(`mid-805-far-haar-22.png`, `docs/smoke/captures/`, gitignored, not gated) is
+evidence for E2c.3c's `TORCH_DISTANCE` call, not a claim this milestone makes
+about night reach.
+
 ### DPR timing is informational, not a GPU measurement
 
 `scripts/smoke.mjs` logs a `mean`/`p95` frame-cost table at DPR 1, 1.5, 2 and
@@ -291,7 +325,7 @@ different from a square or desktop aspect.
 ### The `-mobile` goldens
 
 Four PNGs in `docs/smoke/goldens/`, separate from and never diffed against
-the 27 desktop goldens: `mobile-title.png`, `mobile-hud.png`,
+the 35 desktop goldens: `mobile-title.png`, `mobile-hud.png`,
 `mobile-comic.png`, `mobile-street.png`. Same capture-or-compare path as the
 desktop goldens (`checkGolden`, 0.1 per-pixel threshold, 0.5% tolerance) — the
 only difference is the viewport and the forced touch class. To recapture,

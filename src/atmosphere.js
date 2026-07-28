@@ -453,7 +453,162 @@ const RAIN_STOPS = [
   },
 ];
 
-const KEYFRAMES = { overcast: OVERCAST_STOPS, clear: CLEAR_STOPS, rain: RAIN_STOPS };
+// 'haar' — E2c.3b, the thick end of the fogDensity axis. Authored, not
+// derived: haar sits outside every other column on both density and colour,
+// so there's nothing to blend it from (unlike 'drizzle', which sits between
+// 'overcast' and 'rain').
+//
+// The look this column has to hit: NOT a darker overcast. A daytime haar is a
+// luminous white-out — the sun is killed (very low intensity, kept only so
+// sun.pos stays meaningful) but the scene reads bright and flat, because the
+// brightness comes from hemi/ambient fill, not the sun. sun.pos is copied
+// verbatim from OVERCAST_STOPS at every hour, same discipline as CLEAR_STOPS
+// above. fog/sky.band/sky.zenith/sky.cloudDark/sky.cloudLit are all kept
+// close to one pale, neutral, faintly-cold colour (coverage 1.0) — with this
+// much fog, the sky dome is almost the only thing on screen, so it has to
+// read as "inside the fog", not "normal sky over a white-out street". glow
+// (the docks) is pulled most of the way toward that same colour rather than
+// keeping overcast's vivid ember orange — a burning glow doesn't carry
+// through a proper haar.
+//
+// fogDensity: 0.03 at every stop (flat across the day; night reach is
+// TORCH_DISTANCE/E2c.3c's job, not this milestone's). Measured against:
+//   - far façade legibility: frontages are ~12-15m across (E2b), so 0.03
+//     puts the far side of the street at ~18% fogged — it stays legible.
+//     0.05 (~43% fogged) is where it stops reading as a building; 0.03
+//     leaves clear margin.
+//   - interact.js's RANGE (8m): at 0.03, 8m is ~21% opacity — an NPC is
+//     unmistakably visible well before the prompt can fire. The floor this
+//     would break is much higher (RANGE reads fine even at the 0.05 tried
+//     during tuning); the far-façade constraint above is the tighter one.
+//   - litter comics are read at ~1m; fogDensity plays no visible part at
+//     that distance at any value tried.
+// What breaks first if thickened further: the far-façade legibility above —
+// by 0.05 the opposite pavement is most of the way to fully fogged, and a
+// pose like fascia-close starts losing the building it's meant to show.
+//
+// wetness: 0.25 at every stop — a haar leaves surfaces damp but this isn't
+// rain; picked at the low end of the brief's ~0.2-0.3 range.
+//
+// rain: 0 at every stop, non-negotiable — haar's zero-draw-call claim
+// (E2c.3b acceptance criterion 4) depends on this exactly, the same "matched
+// control" discipline captureWeatherPass already applies to rain/drizzle.
+const HAAR_STOPS = [
+  {
+    hour: 0,
+    sun: { color: 0x1c2430, intensity: 0.03, pos: { x: -100, y: -50, z: 80 } },
+    hemi: { sky: 0x20262a, ground: 0x0c0c0a, intensity: 0.5 },
+    ambient: { color: 0x141616, intensity: 0.22 },
+    fog: 0x1a1e1e,
+    fogDensity: 0.03,
+    exposure: 0.55,
+    tint: { r: 0.14, g: 0.15, b: 0.16 },
+    sky: { band: 0x1c201e, zenith: 0x14181a, cloudDark: 0x101214, cloudLit: 0x222624, glow: 0x4a3c30 },
+    torch: 1.0,
+    windowGlow: 1.0,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 5,
+    sun: { color: 0x24303c, intensity: 0.05, pos: { x: 250, y: 20, z: -150 } },
+    hemi: { sky: 0x262c30, ground: 0x0e0e0c, intensity: 0.6 },
+    ambient: { color: 0x181a1a, intensity: 0.28 },
+    fog: 0x222626,
+    fogDensity: 0.03,
+    exposure: 0.62,
+    tint: { r: 0.18, g: 0.19, b: 0.2 },
+    sky: { band: 0x24282a, zenith: 0x1a1e22, cloudDark: 0x141618, cloudLit: 0x282c2a, glow: 0x504436 },
+    torch: 0.9,
+    windowGlow: 0.85,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 8,
+    sun: { color: 0xb8c0c4, intensity: 0.15, pos: { x: 200, y: 180, z: -100 } },
+    hemi: { sky: 0xd8dcdc, ground: 0x606058, intensity: 3.4 },
+    ambient: { color: 0x9ca09c, intensity: 1.6 },
+    fog: 0xced6d4,
+    fogDensity: 0.03,
+    exposure: 1.3,
+    tint: { r: 0.82, g: 0.84, b: 0.84 },
+    sky: { band: 0xd2dad8, zenith: 0xc8d2d0, cloudDark: 0xb8c2c0, cloudLit: 0xdce4e2, glow: 0x8a7668 },
+    torch: 0.02,
+    windowGlow: 0.02,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 12,
+    sun: { color: 0xb0b8ba, intensity: 0.2, pos: { x: -200, y: 300, z: 150 } },
+    hemi: { sky: 0xe4e8e6, ground: 0x686860, intensity: 3.8 },
+    ambient: { color: 0xa8aca8, intensity: 1.8 },
+    fog: 0xd6dedc,
+    fogDensity: 0.03,
+    exposure: 1.42,
+    tint: { r: 1.0, g: 1.0, b: 0.98 },
+    sky: { band: 0xdae2e0, zenith: 0xd0d8d6, cloudDark: 0xc0cac8, cloudLit: 0xe2eae8, glow: 0x8c786a },
+    torch: 0.0,
+    windowGlow: 0.0,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 17,
+    sun: { color: 0xa89890, intensity: 0.18, pos: { x: -250, y: 150, z: 200 } },
+    hemi: { sky: 0xc8c8c0, ground: 0x605a4e, intensity: 3.0 },
+    ambient: { color: 0x969288, intensity: 1.5 },
+    fog: 0xc4c2ba,
+    fogDensity: 0.03,
+    exposure: 1.2,
+    tint: { r: 0.86, g: 0.82, b: 0.78 },
+    sky: { band: 0xc6c4ba, zenith: 0xbcbcb4, cloudDark: 0xacaca4, cloudLit: 0xd0cec4, glow: 0x8a7460 },
+    torch: 0.08,
+    windowGlow: 0.06,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 20,
+    sun: { color: 0x585868, intensity: 0.1, pos: { x: -300, y: 40, z: 220 } },
+    hemi: { sky: 0x383c40, ground: 0x1c1c18, intensity: 1.3 },
+    ambient: { color: 0x28282a, intensity: 0.55 },
+    fog: 0x2e3236,
+    fogDensity: 0.03,
+    exposure: 0.78,
+    tint: { r: 0.36, g: 0.35, b: 0.38 },
+    sky: { band: 0x303436, zenith: 0x24282c, cloudDark: 0x1c2024, cloudLit: 0x363a3a, glow: 0x5c4a3c },
+    torch: 0.5,
+    windowGlow: 0.55,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+  {
+    hour: 22,
+    sun: { color: 0x303a48, intensity: 0.05, pos: { x: -150, y: -30, z: 100 } },
+    hemi: { sky: 0x22262e, ground: 0x0e0e0c, intensity: 0.6 },
+    ambient: { color: 0x16181a, intensity: 0.28 },
+    fog: 0x1c2024,
+    fogDensity: 0.03,
+    exposure: 0.58,
+    tint: { r: 0.16, g: 0.17, b: 0.19 },
+    sky: { band: 0x1e2224, zenith: 0x161a1e, cloudDark: 0x121416, cloudLit: 0x24282a, glow: 0x4c3e32 },
+    torch: 0.88,
+    windowGlow: 0.9,
+    coverage: 1.0,
+    rain: 0,
+    wetness: 0.25,
+  },
+];
+
+const KEYFRAMES = { overcast: OVERCAST_STOPS, clear: CLEAR_STOPS, rain: RAIN_STOPS, haar: HAAR_STOPS };
 
 function stopsFor(weather) {
   return KEYFRAMES[weather] || KEYFRAMES.overcast;
