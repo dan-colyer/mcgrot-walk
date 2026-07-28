@@ -56,6 +56,7 @@ export function buildBirds(world, leith, scene) {
   const groundHeight = world.groundHeight || (() => 0);
 
   const group = new THREE.Group();
+  group.name = 'birds';
   scene.add(group);
 
   const wheeling = buildWheeling(line, group);

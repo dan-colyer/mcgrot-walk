@@ -232,7 +232,12 @@ async function main() {
     lastFrame = now;
     runFrame(dt, now / 1000);
   }
-  animate();
+  // The harness sets this via addInitScript, before any page script runs, so
+  // that NO real-time frame executes before it can call pauseAuto(). Without
+  // it the frame count is machine-load dependent (13-20 measured) and every
+  // one of those frames advances the sim by exactly dt's 0.1s clamp above —
+  // see docs/VALIDATION.md's "elm-row-hero is bimodal" section.
+  if (!(isLocal && window.__mcgrotFreezeAtBoot)) animate();
 
   // Dev-only test API (localhost only). stepFrame lets tests drive frames
   // manually — rAF is paused whenever the preview pane is hidden. pauseAuto()

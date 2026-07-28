@@ -117,6 +117,48 @@ function computeGeomHash({ scene, world, npcs }) {
   return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
+// Hash over the real-time set's live state — leithers, birds, vermin — the
+// same three subsystems computeGeomHash's own note names as excluded from it
+// (they move under rAF/stepFrame, so bit-for-bit build-time placement isn't
+// the right thing to assert there). This is the direct counterpart: it
+// asserts that state IS identical between two independently booted pages,
+// which only holds once the pre-pause frame count is pinned at zero — see
+// docs/VALIDATION.md's "elm-row-hero is bimodal" section for why an
+// uncontrolled frame count made that untrue before E2c.3b.1.
+//
+// Leithers aren't InstancedMesh (each is its own Group, src/leithers.js), so
+// their chainage/side/direction are read directly off the walker objects
+// rather than by scene traversal. Birds and vermin ARE InstancedMesh and are
+// found by name (src/birds.js / src/vermin.js both name their group as of
+// this milestone) rather than by build-order position among the scene's
+// several unnamed groups, which was the fragile alternative.
+function computeRealtimeHash({ scene, leithers }) {
+  let hash = 0x811c9dc5; // FNV-1a offset basis, same as computeGeomHash
+
+  if (leithers && Array.isArray(leithers.walkers) && leithers.walkers.length) {
+    const arr = new Float32Array(leithers.walkers.length * 3);
+    leithers.walkers.forEach((w, i) => {
+      arr[i * 3] = w.s;
+      arr[i * 3 + 1] = w.side;
+      arr[i * 3 + 2] = w.dir;
+    });
+    hash = hashString('leithers-realtime', hash);
+    hash = hashFloatArray(arr, hash);
+  }
+
+  for (const name of ['birds', 'vermin']) {
+    const group = scene.getObjectByName(name);
+    let mesh = null;
+    if (group) group.traverse((obj) => { if (obj.isInstancedMesh) mesh = obj; });
+    if (mesh) {
+      hash = hashString(`${name}-realtime`, hash);
+      hash = hashFloatArray(mesh.instanceMatrix.array, hash);
+    }
+  }
+
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
 // Polls shopfronts' lazy atlas pages until every page the engine has already
 // decided is "near" (p.loaded, set by shopfronts.js's own update() during the
 // settle loop above) has an actual decoded image behind it — or times out.
@@ -331,6 +373,7 @@ export function createDebugApi(ctx) {
       drawCalls: info.calls,
       triangles: info.triangles,
       geomHash: computeGeomHash({ scene, world, npcs }),
+      realtimeHash: computeRealtimeHash({ scene, leithers }),
       updaterCount: updaters.length,
       updaterNames: updaters.map((u) => u.name),
       consoleErrors: consoleErrors.slice(),

@@ -32,6 +32,7 @@ export function buildVermin(world, scene) {
   if (line.length < 2) return { group: new THREE.Group(), update() {} };
 
   const group = new THREE.Group();
+  group.name = 'vermin';
   scene.add(group);
 
   const len = chainLength(line);

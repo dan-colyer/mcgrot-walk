@@ -165,6 +165,18 @@ async function bootPage(browser, port) {
   });
   page.on('pageerror', (err) => consoleMessages.push(String(err)));
 
+  // Set BEFORE any page script runs, so main.js's first animate() call never
+  // fires — see the flag's own comment there. __mcgrotRafCount counts rAF
+  // callbacks that slip through anyway (there should be none pre-freeze);
+  // reading it after pauseAuto() below is the E2c.3b.1 acceptance gate on the
+  // pre-pause frame count.
+  await page.addInitScript(() => {
+    window.__mcgrotFreezeAtBoot = true;
+    window.__mcgrotRafCount = 0;
+    const rawRaf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (cb) => rawRaf((t) => { window.__mcgrotRafCount++; return cb(t); });
+  });
+
   await page.goto(`http://localhost:${port}/`);
   await page.click('#title-enter');
   // The title card fades out over a real 0.9s CSS transition (src/index.html)
@@ -175,6 +187,7 @@ async function bootPage(browser, port) {
     if (el) el.style.transition = 'none';
   });
   await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+  const preFreezeRafCount = await page.evaluate(() => window.__mcgrotRafCount);
   await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
   // Pin the clock before any capture — see SMOKE_HOUR above.
   await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
@@ -182,7 +195,7 @@ async function bootPage(browser, port) {
   // a future default-weather change must not silently move these goldens.
   // No-ops today (construction already defaults to 'overcast'), by design.
   await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
-  return { context, page, consoleMessages };
+  return { context, page, consoleMessages, preFreezeRafCount };
 }
 
 async function getInvariants(page) {
@@ -369,8 +382,17 @@ async function main() {
     browser = await chromium.launch();
 
     // --- boot #1: invariants + goldens ---
-    const { context: ctx1, page: page1, consoleMessages: pc1 } = await bootPage(browser, port);
+    const { context: ctx1, page: page1, consoleMessages: pc1, preFreezeRafCount: preFreezeRafCount1 } = await bootPage(browser, port);
     const inv1 = await getInvariants(page1);
+
+    // E2c.3b.1: the deterministic-boot fix by construction — main.js suppresses
+    // its first animate() call while __mcgrotFreezeAtBoot is set, so no
+    // real-time frame should ever run before pauseAuto() takes over.
+    results.push({
+      name: 'pre-pause frame count is 0 (deterministic boot)',
+      pass: preFreezeRafCount1 === 0,
+      detail: `rAF callbacks before pauseAuto(): ${preFreezeRafCount1}`,
+    });
 
     const allConsoleErrors = summarizeConsole(pc1, inv1.consoleErrors);
     results.push({
@@ -1142,6 +1164,16 @@ async function main() {
       detail: `boot1=${inv1.geomHash} boot2=${inv2.geomHash}`,
     });
 
+    // E2c.3b.1: the direct counterpart to geomHash for the real-time set
+    // (leithers/birds/vermin) that geomHash deliberately excludes — see
+    // computeRealtimeHash in src/debug.js. Only meaningful given the frame
+    // count gate above: before that fix this was flaky by construction.
+    results.push({
+      name: 'determinism (realtimeHash)',
+      pass: inv1.realtimeHash === inv2.realtimeHash,
+      detail: `boot1=${inv1.realtimeHash} boot2=${inv2.realtimeHash}`,
+    });
+
     // --- E2c.2: determinism with rain active, not just in overcast ---
     // Two MORE fresh boots (not a reuse of ctx1/ctx2 above), each settled
     // into 'rain' before hashing — rain itself is THREE.Points and outside
@@ -1231,6 +1263,14 @@ async function main() {
       const mobileConsole = [];
       page.on('console', (msg) => { if (msg.type() === 'error') mobileConsole.push(msg.text()); });
       page.on('pageerror', (err) => mobileConsole.push(String(err)));
+
+      // Same deterministic-boot freeze as bootPage() — this pass builds its
+      // own context rather than reusing bootPage, but the pre-pause frame
+      // count bug is identical, and it lands on golden-mobile:comic (an NPC
+      // and its nearby leithers are visible around the overlay) far harder
+      // than on the desktop bookmarks: measured 0.000-62% run to run before
+      // this was added.
+      await page.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
 
       await page.goto(`http://localhost:${port}/`);
       await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
