@@ -202,7 +202,16 @@ tells you which check and why.
     identical across the same two independently booted pages check 4 already
     compares. Hashes leither chainage/side/direction plus the `birds` and
     `vermin` `InstancedMesh` matrices (both groups are now named — see
-    `computeRealtimeHash`, `src/debug.js`). Only meaningful given check 21:
+    `computeRealtimeHash`, `src/debug.js`). **Every** instanced mesh in each
+    group is hashed, not just the last one a `traverse` lands on: `birds`
+    builds three (wheeling, perched, pigeons) and only the wheeling set is
+    animated, so a last-one-wins pick covered the static pigeons and left this
+    group's one real-time mesh unguarded — found and fixed at review, after
+    measuring that birds[0] moves over 700 stepped frames and birds[2] never
+    does. Note the caller contract in `computeRealtimeHash`'s comment:
+    `invariants()` steps a frame before hashing, so two values only compare if
+    both pages have had the same number of `invariants()` calls. Only
+    meaningful given check 21:
     before the frame count was pinned at zero this would have been flaky by
     construction, not a real gate. See "`elm-row-hero` is bimodal" below —
     now resolved, kept for the mechanism it documents.

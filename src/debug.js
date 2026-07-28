@@ -126,6 +126,14 @@ function computeGeomHash({ scene, world, npcs }) {
 // docs/VALIDATION.md's "elm-row-hero is bimodal" section for why an
 // uncontrolled frame count made that untrue before E2c.3b.1.
 //
+// CALLER CONTRACT: invariants() calls stepFrame() before hashing, so every
+// call advances the real-time set by one SETTLE_DT. Two realtimeHash values
+// are only comparable if both pages have had the SAME number of invariants()
+// calls (and the same stepFrame history) since boot. That holds today —
+// smoke.mjs takes inv1 and inv2 as each page's first call — but adding an
+// extra invariants() call to only one of those paths would fail this gate for
+// a reason that has nothing to do with determinism.
+//
 // Leithers aren't InstancedMesh (each is its own Group, src/leithers.js), so
 // their chainage/side/direction are read directly off the walker objects
 // rather than by scene traversal. Birds and vermin ARE InstancedMesh and are
@@ -148,12 +156,20 @@ function computeRealtimeHash({ scene, leithers }) {
 
   for (const name of ['birds', 'vermin']) {
     const group = scene.getObjectByName(name);
-    let mesh = null;
-    if (group) group.traverse((obj) => { if (obj.isInstancedMesh) mesh = obj; });
-    if (mesh) {
-      hash = hashString(`${name}-realtime`, hash);
-      hash = hashFloatArray(mesh.instanceMatrix.array, hash);
-    }
+    if (!group) continue;
+    // EVERY InstancedMesh in the group, not just the last one a traverse
+    // lands on. `birds` builds three (wheeling, perched, pigeons) and
+    // birds.update() animates only the wheeling set — so a last-one-wins pick
+    // hashed the static pigeons and left this group's one real-time mesh
+    // unguarded. Measured at E2c.3b.1 review: over 700 stepped frames,
+    // birds[0] moved and was not hashed, birds[2] was hashed and never moved.
+    // Indexing the label keeps two same-sized meshes from cancelling out.
+    let i = 0;
+    group.traverse((obj) => {
+      if (!obj.isInstancedMesh) return;
+      hash = hashString(`${name}-realtime-${i++}`, hash);
+      hash = hashFloatArray(obj.instanceMatrix.array, hash);
+    });
   }
 
   return (hash >>> 0).toString(16).padStart(8, '0');
