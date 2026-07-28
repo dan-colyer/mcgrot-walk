@@ -323,9 +323,10 @@ invariant at once, which is why it is last. **Split into three briefs
 (2026-07-28)** — the original grouping was about coupling, and only the first
 third is genuinely coupled:
 
-- **E2c.3a — Dynamic fog and the long view. NEXT.** The fog-density axis, the
-  `clear` retune it enables, the `LOAD_RANGE` widening that has to follow, and
-  the Forth reveal. Brief: `~/.claude/plans/mcgrot-e2c3a-brief.md`.
+- **E2c.3a — Dynamic fog and the long view. DONE (2026-07-28), see below.** The
+  fog-density axis, the `clear` retune it enables, the `LOAD_RANGE` widening
+  that was expected to follow, and the Forth reveal. Brief:
+  `~/.claude/plans/mcgrot-e2c3a-brief.md`.
 - **E2c.3b — Haar.** A new weather column, and the thick end of the same
   density axis. Needs 3a.
 - **E2c.3c — Night reach (`TORCH_DISTANCE`), road sheen, autonomous weather
@@ -348,8 +349,10 @@ safer one.
   needs fog 3.1× thinner to read from the Foot, but 17× thinner from Picardy,
   which would destroy the haze. The "water and Fife from the top of the brae"
   framing is dropped; the reveal ships for the lower Walk and the descent.
-  Thinning fog also out-ranges the shopfront pager (`LOAD_RANGE = 250`), so it
-  lands with a pager widening (~67MB GPU per 4096² page) and a budget re-check.
+  ~~Thinning fog also out-ranges the shopfront pager (`LOAD_RANGE = 250`), so it
+  lands with a pager widening (~67MB GPU per 4096² page) and a budget
+  re-check.~~ Measured false in 3a — occlusion, not fog, is what hides the
+  unloaded pages, and 250 needed no change. See "what actually landed" below.
 - **Night is too dark — Dan's call, 2026-07-27.** Decide `TORCH_DISTANCE` here,
   against haar and dynamic fog rather than in a vacuum, and lift the night
   palette with it. The problem is *reach*, not state: 6.5m lights a façade you
@@ -364,6 +367,38 @@ safer one.
     `fascia-close`) are captured at 13:00, so a night lift shouldn't move them.
     Confirm rather than assume.
 - Autonomous weather scheduling, once all five states exist.
+
+##### E2c.3a — what actually landed (2026-07-28)
+
+Three commits, in the order the containment argument needs: `c70ba9b` (item 0,
+the iOS fail-soft), `e5f5b20` (the axis pinned at 0.0095, **no golden file
+touched**), `1ac1990` (clear's 08/12/17 stops retuned to 0.0022, exactly the 9
+`-clear` goldens recaptured). Smoke: 130 checks, 0 failures, ~4m44s, tree clean
+across two consecutive runs. Reviewed against the brief with independent
+measurement, not the report.
+
+- **The long view is real.** `skyline` on clear now reads the street down to
+  the far rooflines instead of dissolving at ~250m, with no horizon seam and no
+  world edge at any pose.
+- **`LOAD_RANGE` stays at 250.** Not a deferral — measured. Load every façade
+  page, then toggle `.visible` on only those a 250m range would have skipped
+  and re-render the same frame: **0 pixels** differ at all eight bookmark
+  poses, and walking chainage 100→1500 looking along the corridor both ways the
+  worst stop is **263 pixels (0.026%)**, one cluster at the vanishing point.
+  Peak residency 4 of 8 pages, ~268MB of atlas texture. No GPU cost added, no
+  draw-call budget moved. Method and the reason a naive pixel-diff cannot
+  answer this are in `docs/VALIDATION.md`.
+- **The Forth reveal is narrower than E1 promised.** It does read, and it is
+  correctly hidden from Picardy (0 pixels) — but at eye height it covers only
+  **344–540 pixels** of a 1280×800 frame, between chainage 5 and 80, and
+  nothing from chainage 150 onward. The terminus building still blocks the axis
+  dead-on, so what a walker sees is a dark band through the gaps beside it, not
+  an estuary. The E1-era "3.1× thinner" figure was not re-measured; the shipped
+  4.3× is justified against world-edge and seam limits instead. **Open
+  question for 3b: whether to move the reveal off the fog axis** — a lower
+  shore, a gap in the terminus row, or a viewpoint — rather than thin further.
+- **The E1 measurement is retired.** Fog density is no longer a constant, so
+  any future "N× thinner" claim has to name its column and hour.
 
 ### E2d — Post-processing
 

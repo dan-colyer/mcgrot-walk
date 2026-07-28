@@ -38,10 +38,12 @@ const BOOKMARK_DEFS = [
     id: 'skyline',
     custom: true,
     // Elevated look down the street from ~chainage 700, over the rooflines —
-    // not chainage-derived (hand-picked, not goto()-computed). FogExp2
-    // density (0.0095, src/world.js) hides almost everything past ~150m, so
-    // this sits low and close rather than high and far to actually show the
-    // skyline instead of solid fog.
+    // not chainage-derived (hand-picked, not goto()-computed). Picked when fog
+    // density was a fixed 0.0095, which hid almost everything past ~150m: it
+    // sits low and close rather than high and far so it showed a skyline
+    // instead of solid fog. Since E2c.3a density is a palette axis and clear
+    // daylight runs at 0.0022, so this pose now carries the milestone's long
+    // view as well — do not move it without recapturing both columns.
     camera: { x: -293.81, y: 15, z: 633.95 },
     lookAt: { x: -317.4, y: 6, z: 683.62 },
   },

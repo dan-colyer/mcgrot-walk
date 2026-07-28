@@ -3,13 +3,21 @@
 // street runs out and the estuary begins.
 //
 // Deliberately impressionistic, not simulated: a big dark plane and a low
-// ridge, both using the scene's OWN existing fog (untouched — FogExp2
-// density 0.0095, src/world.js) to do all the work. From the top of the
-// brae (chainage ~1617) the water is 1600m+ away and fully fogged out; as
-// the player descends toward the Foot the distance shrinks and the water
-// resolves out of the haze on its own. No new fog logic needed, and none
-// added — see sky.js's "THE SEAM" note for why nothing here may touch the
-// global fog or add colour at the horizon.
+// ridge, both using the scene's OWN existing fog (untouched) to do all the
+// work. From the top of the brae (chainage ~1617) the water is 1600m+ away
+// and fully fogged out; as the player descends toward the Foot the distance
+// shrinks and the water resolves out of the haze on its own. No new fog
+// logic needed, and none added — see sky.js's "THE SEAM" note for why
+// nothing here may touch the global fog or add colour at the horizon.
+//
+// E2c.3a: fog density is now a palette axis (src/atmosphere.js), and clear
+// daylight thinned to 0.0022 is what finally makes this module visible at
+// all. Measured at 13:00 clear, eye height, looking north along the street:
+// the shore and water cover 344-540 pixels of a 1280x800 frame between
+// chainage 5 and 80, and nothing at all from chainage 150 or beyond. So the
+// reveal is real but narrow — a dark band glimpsed through the gaps beside
+// the terminus building, which still blocks the axis dead-on. Hidden from
+// Picardy (0 pixels), which is the constraint that matters.
 //
 // Kept as a separate module (not folded into sky.js, which stays a pure
 // direction-painted dome) because this is real, positioned geometry.

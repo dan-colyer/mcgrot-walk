@@ -20,10 +20,15 @@ import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
 const END_MARGIN = 60;        // leave this much clear at the south end
-// FogExp2 density 0.0095 (world.js) only obscures ~35% of contrast at 70m and
-// ~50% at 90m — nowhere near opaque — so a comic held at head height is
-// legible well beyond the old 34m range. 85m loads it while still fogged
-// enough that the swap from paper placeholder to real art isn't obvious.
+// At the 0.0095 density this was tuned against, fog only obscures ~35% of
+// contrast at 70m and ~50% at 90m — nowhere near opaque — so a comic held at
+// head height is legible well beyond the old 34m range. 85m loads it while
+// still fogged enough that the swap from paper placeholder to real art isn't
+// obvious. E2c.3a made density a palette axis (atmosphere.js) and clear
+// daylight now runs at 0.0022, which leaves 85m only ~3% fogged rather than
+// ~48% — so fog is no longer what hides the swap. Distance still is: a
+// 0.44×0.31m comic quad at 85m covers about 3×2 pixels at this camera's 70°
+// FOV, well under anything a player can resolve. Left at 85m deliberately.
 const COMIC_LOAD_RANGE = 85;
 
 // Drab post-apocalyptic coat palette, cycled across vendors for variety.

@@ -151,6 +151,59 @@ tells you which check and why.
     spoofs `devicePixelRatio` to `DPR_CAP + 1`, which is what actually puts the
     clamp under test. The DPR *timing* table (logged, not gated — see "DPR
     timing is informational" below) is a separate, non-gating measurement.
+16. **`fogDensity` blends across the time-of-day bracket** (E2c.3a) — at 06:30
+    on `clear`, the live `scene.fog.density` sits strictly between hour 5's
+    0.0095 and hour 8's 0.0022. Reads the fog object, not the palette struct,
+    so it also covers `applyPalette` writing the value through. The 5→8
+    bracket is chosen because it is the only one whose two stops differ: a
+    mid-sample inside a bracket of equal stops has nowhere to land but the
+    endpoint value, and the check could not fail.
+17. **`fogDensity` blends across the weather transition** (E2c.3a) — the same
+    strictly-between assertion at the midpoint of the `clear`→`overcast`
+    transition already captured for check 12, at 13:00 where the two columns
+    genuinely differ (0.0022 vs 0.0095). Checks 16 and 17 are separate gates
+    because the two lerps are separate code paths: `samplePalette` (between
+    two hour stops) and `blendPalette` (between two weather columns).
+    Demonstrated independent — disabling `blendPalette`'s `fogDensity` line
+    reddens 17 and leaves 16 green; disabling `samplePalette`'s reddens both.
+18. **A throw in the shared-AudioContext preamble does not swallow the
+    ambience** (E2c.3a item 0) — a fresh context sets
+    `window.__mcgrotForceAudioContextError` via `addInitScript`, which makes
+    `main.js`'s title-card `onEnter` throw inside its `try` before
+    `ambience.start()`. The check fails unless both `ambience.context` and
+    `proximityAudio.listener` still exist afterwards. The flag is
+    localhost-gated in `main.js` and the fault runs in its own browser
+    context, so the shared `page1` never sees it. This is a fail-soft gate,
+    **not** a fix for the open iOS silence — see `docs/ROADMAP.md`.
+
+### The fog-density axis, and why it landed in two commits (E2c.3a)
+
+`fog.density` is palette-driven (`fogDensity`, `src/atmosphere.js`) rather than
+the old hardcoded `0.0095`. `src/world.js` still constructs the fog at 0.0095
+as the boot default before the first `applyPalette`.
+
+Density multiplies every pixel of every frame, so a global change moves all 27
+desktop goldens in the same commit that introduces the risk. It was split:
+`e5f5b20` added the axis pinned at 0.0095 everywhere and touched **no** golden
+file; `1ac1990` retuned `clear`'s three daylight stops (08/12/17) to 0.0022 and
+recaptured **exactly** the 9 `-clear` goldens. The 18 non-clear goldens are the
+invariant that proves the change stayed inside its column — if one of them
+moves, suspect the blending, not the tuning. Keep that shape for haar and for
+night reach.
+
+**`LOAD_RANGE` (250m, `src/shopfronts.js`) needed no widening at 0.0022**, and
+the pixel-diff that first suggested so was not evidence: comparing a 250m run
+against an all-pages-resident run reads ~0.23% at `skyline`, but re-running
+*the same build twice* reads ~0.24%, so the signal sits under the harness's own
+jitter. The measurement that does work removes the noise entirely — load every
+page, then toggle `.visible` on just the ones 250m would have left out and
+re-render **the same frame** with `renderer.render` (no `stepFrame`, so nothing
+in the simulation advances). On that basis: 0 pixels differ at all eight
+bookmark poses, and walking the street at eye height looking along the corridor
+from chainage 100 to 1500 in both directions, the worst stop is 263 pixels
+(0.026%) — one small cluster at the vanishing point. Peak residency is 4 of 8
+pages (~268MB of atlas texture at ~67MB per 4096² page). Re-measure this way
+before thinning any further.
 
 ### DPR timing is informational, not a GPU measurement
 
