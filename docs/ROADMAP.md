@@ -350,7 +350,7 @@ invariant at once, which is why it is last.
 - AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable
   (mobile fallback).
 
-### E2e — Mobile and sharing — IMPLEMENTED, HELD FOR E2e.1 (2026-07-27)
+### E2e — Mobile and sharing — DONE, DEPLOYED (2026-07-28, with E2e.1)
 
 *Dan's call, 2026-07-27: it has to be easy to use on a phone, because sharing a
 link is how anyone else ever sees this.* Sequencing note: this gates E2d, not the
@@ -360,7 +360,13 @@ measured mobile frame budget to budget against.
 *Brief: `~/.claude/plans/mcgrot-e2e-brief.md`. Fix round:
 `~/.claude/plans/mcgrot-e2e1-brief.md`.*
 
-**Status: committed at `0eb105e`, not deployed.** Smoke passes 124/124 in 42m27s
+**Status: shipped.** E2e landed at `0eb105e` and was held for one fix round;
+E2e.1 (`bcddd8a`) and the review fixes (`6fc4a8a`) close it out. See "E2e.1 —
+the fix round" below for what each defect turned out to be. The held-state
+record that follows is kept because the *pattern* — gates that pass while being
+incapable of failing — is the one this loop keeps repeating.
+
+Smoke passed 124/124 in 42m27s at the point of the hold
 (verified independently, not quoted from the implementation report); the 27
 desktop goldens did not move — zero tracked changes since `67592b6`, and all 27
 inside the jitter band with `north-150-close`, `mid-550-close` and
@@ -402,6 +408,53 @@ gesture.
 **Jitter band updated: 0.000–0.133%** (was documented 0.000–0.107%). Widest is
 `golden-drizzle:elm-row-hero`. Sky-visible poses only — the three no-sky poses
 read exactly 0.000% in every weather column. Still far inside the 0.5% tolerance.
+
+### E2e.1 — the fix round — DONE (2026-07-28, `bcddd8a` + `6fc4a8a`)
+
+*Brief: `~/.claude/plans/mcgrot-e2e1-brief.md`.* Every defect above is closed,
+and each new gate was watched failing before it was trusted.
+
+**The blocker is gone by construction, not by tuning.** `#touch-forward` moved
+to the bottom-left, mirroring `#torch-toggle` at the bottom-right and leaving
+the centre column to the prompt. Measured at 390×844 the two no longer overlap
+on either axis (button x 20–96, prompt x 98–293), `page.tap('#npc-prompt')`
+opens the overlay, and hold-to-walk still moves 7.00m from its new home.
+
+**The audio fix went further than the brief asked.** `proximityAudio.listener`
+is now `null` until the title-card gesture — no `AudioContext` is constructed
+at boot at all, which is the property iOS actually objects to — and afterwards
+the listener and the ambience bed hold the same `running` context.
+`THREE.AudioContext.setContext()` runs before the listener exists, plus a
+silent-buffer unlock. **Still a hypothesis: it needs Dan's phone.** A green
+desktop gate proves the contexts are shared, not that iOS is happy.
+
+**Four defects found in review** (`6fc4a8a`), two of them the same failure mode
+the round existed to fix — a check that cannot go red:
+
+- `golden-mobile:title` captured `#title-enter` mid-pulse (`title-pulse`,
+  opacity 0.75→1 over 1.8s). It read 0.000% only because the elapsed time to
+  the mobile pass is repeatable; in isolation the same build varied
+  **0.595–2.680%** against a 0.5% tolerance. Any check added earlier in the run
+  would have broken it. The animation is now pinned before the screenshot.
+- `DPR cap enforced on resize` could not fail *on the cap*. Every smoke context
+  runs at `devicePixelRatio` 1, and `min(1, cap)` is 1 for any cap, so it
+  passed with `DPR_CAP` deleted. Now asserted at two ratios, the second spoofed
+  above the cap — verified against a real `deviceScaleFactor:3` context.
+- Three comments cited a `getSharedAudioContext()` that does not exist.
+- `ensureVoice` would throw on `THREE.PositionalAudio(null)` if it ever ran
+  before `resume()`. Unreachable today, but the listener stopped being built at
+  boot in `bcddd8a`; guarded rather than left to the title card covering the
+  overlay.
+
+**Verified:** 127 checks, 0 failures, ~4.5 min, across three independent runs.
+Goldens are additions-only against `67592b6` — the four `-mobile` goldens are
+this milestone's own; the 27 desktop goldens never moved. Widest desktop diff
+0.123%, the three no-sky poses at exactly 0.000%.
+
+*Brief defect, for the next one:* acceptance criterion 7 asked for a per-phase
+timing table while item 8 of the same brief said not to add per-phase timing.
+Item 8 was written after the smoke fix landed and criterion 7 was not updated.
+Skipping it was right. Re-read the criteria against late edits before sending.
 
 ### Smoke runtime — FIXED (2026-07-27, `0f32c48`)
 
