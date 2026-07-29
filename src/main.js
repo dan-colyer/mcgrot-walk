@@ -174,6 +174,7 @@ async function main() {
   createTitleCard({
     controls,
     torch,
+    setPostProcessing,
     onEnter: () => {
       // E2e.1 item 7: one AudioContext shared between the ambience bed and
       // the proximity-audio listener, both constructed inside THIS gesture.

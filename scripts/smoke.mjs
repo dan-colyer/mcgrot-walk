@@ -601,6 +601,30 @@ async function main() {
       const torchOnShot = await page1.screenshot();
       const torchOnLum = meanLuminanceCenterCrop(PNG.sync.read(torchOnShot), 0.3, 0.3);
 
+      // E2d.1 acceptance criterion 9: the composer must be provably IN the
+      // render path — a bloom pass that silently stopped composing would
+      // look exactly like a healthy one otherwise. Same pose, same torch-on
+      // frame; only the post-processing toggle changes.
+      const postOffLum = await page1.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        dbg.setPostProcessing(false);
+        dbg.renderNow();
+        return null;
+      }).then(async () => {
+        const shot = await page1.screenshot();
+        return meanLuminanceCenterCrop(PNG.sync.read(shot), 0.3, 0.3);
+      });
+      await page1.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        dbg.setPostProcessing(true);
+        dbg.renderNow();
+      });
+      results.push({
+        name: 'post-processing is provably in the render path',
+        pass: torchOnLum !== postOffLum,
+        detail: `post-on mean luminance ${torchOnLum.toFixed(2)} vs post-off ${postOffLum.toFixed(2)} (same pose, torch on both)`,
+      });
+
       // Zero the torch and render directly (renderer.render, not stepFrame) —
       // the 'torch' and 'atmosphere' updaters both recompute the light's
       // intensity/distance from time-of-day every stepFrame call, so going

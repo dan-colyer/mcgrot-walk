@@ -17,6 +17,7 @@
 //    desktop strings (baked into 27 golden screenshots) stay byte-identical.
 
 const TORCH_STORAGE_KEY = 'mcgrot-torch-on';
+const POST_STORAGE_KEY = 'mcgrot-post-on';
 
 // Re-run on 'mcgrot:touchmodechange' (src/debug.js's setTouchMode) as well as
 // at boot — the smoke harness can only force the class on AFTER
@@ -46,13 +47,31 @@ function wireTorchToggle(torch) {
   });
 }
 
-export function createTitleCard({ controls, torch, onEnter }) {
+// E2d.1: mobile fallback for the bloom composer pass — same on-by-default,
+// localStorage-persisted idiom as the torch toggle above.
+function wirePostToggle(setPostProcessing) {
+  const toggleEl = document.getElementById('post-toggle');
+  if (!toggleEl || !setPostProcessing) return;
+  const stored = localStorage.getItem(POST_STORAGE_KEY);
+  let on = stored === null ? true : stored === 'true';
+  setPostProcessing(on);
+  toggleEl.classList.toggle('active', on);
+  toggleEl.addEventListener('click', () => {
+    on = !on;
+    setPostProcessing(on);
+    toggleEl.classList.toggle('active', on);
+    localStorage.setItem(POST_STORAGE_KEY, String(on));
+  });
+}
+
+export function createTitleCard({ controls, torch, setPostProcessing, onEnter }) {
   const cardEl = document.getElementById('title-card');
   const forwardEl = document.getElementById('touch-forward');
 
   swapTouchCopy();
   window.addEventListener('mcgrot:touchmodechange', swapTouchCopy);
   wireTorchToggle(torch);
+  wirePostToggle(setPostProcessing);
 
   function enter() {
     if (!cardEl || cardEl.classList.contains('hidden')) return;
