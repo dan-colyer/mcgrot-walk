@@ -28,3 +28,6 @@ dist-site/
 # Smoke-rig evidence captures — regenerated on every run, never diffed.
 # See the captureDir note in scripts/smoke.mjs.
 docs/smoke/captures/
+
+# Daily TTS harvest logs (scripts/daily-tts.sh)
+scripts/.tts-logs/
