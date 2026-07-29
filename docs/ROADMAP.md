@@ -658,7 +658,8 @@ AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable (mobile
 fallback). Split in two, because the first effect through a new render path
 costs far more than the fourth.
 
-- **E2d.1 — The composer, and bloom. DONE (2026-07-29), see below.** Introduced
+- **E2d.1 — The composer, and bloom. PLUMBING ACCEPTED, BLOOM SENT BACK
+  (review 2026-07-29). NOT DEPLOYED — see E2d.1a.** Introduced
   `EffectComposer` (`RenderPass` -> `UnrealBloomPass`) and repaired the harness
   around it: `renderer.info.autoReset` fixed (draw-call accounting was
   silently collapsing to ~1), both direct `renderer.render()` smoke sites
@@ -670,6 +671,25 @@ costs far more than the fourth.
   The wet-night payoff this was meant to unlock did not materialise: no
   bookmark pose frames near-camera wet road at night, confirmed again here.
   Full account in `docs/VALIDATION.md`'s "The composer, and bloom" section.
+
+  **Review verdict.** The composer plumbing is correct and stays: draw-call
+  accounting verified live (`renderer.info.autoReset === false`, `skyline` 968,
+  every delta gate exact), and `RenderPass`-only measured **pixel-identical**
+  (0.0000%) to a direct `renderer.render()`, so step 1 was a genuine no-op and
+  bloom costs exactly +14 draw calls at every pose. Full smoke green, no golden
+  rewritten, tree clean. Bloom's *tuning and gating* are what fail.
+
+- **E2d.1a — Bloom as an authored per-weather axis. NEXT.** Isolated same-frame
+  (post-on vs post-off, everything else held constant), bloom adds **+23% to
+  +33% mean frame luminance under `haar`** and +0.2-1.9% under `overcast` — it
+  behaves as a broad exposure lift scaled by how bright the frame already is,
+  not as a highlight effect. Under `rain`, the weather the milestone existed to
+  serve, it contributes nothing (golden-to-golden lift is within state noise,
+  negative on four poses). `CLIP_PCT_MAX_HAAR = 8` masks this rather than
+  accommodating a threshold artefact. Fix: drive `bloomPass.strength` from the
+  atmosphere `*_STOPS` tables the way `toneMappingExposure` already is, gate the
+  contribution per weather with a two-sided band, and add a night capture pose
+  that actually frames torch-lit wet tarmac so the payoff is evaluable at all.
 
 - **E2d.2 — the rest.** AO, vignette, film grain, colour grade, once the render
   path is settled and the harness has been repaired around it. Film grain is
