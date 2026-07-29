@@ -362,9 +362,35 @@ third is genuinely coupled:
     machine-load-dependent state.
   - **It moves goldens**, so it lands on its own with nothing else in the
     commit — the same containment discipline as 3a's two-step.
-- **E2c.3c — Night reach (`TORCH_DISTANCE`), road sheen, autonomous weather
-  scheduling.** Night reach wants haar and dynamic fog to judge against, so it
-  goes last rather than in a vacuum.
+- **E2c.3c — The wet night. NEXT.** Night reach (`TORCH_DISTANCE`), road sheen,
+  autonomous weather scheduling. Night reach wanted haar and dynamic fog to
+  judge against, so it goes last rather than in a vacuum. Brief:
+  `~/.claude/plans/mcgrot-e2c3c-brief.md`.
+  - **Parts 1 and 2 attack the same defect.** The 22:00 captures are the
+    evidence: haar reads well (a pale luminous band behind a dark roofline —
+    a keeper), but the road is pure black, and rain at 22:00 is almost entirely
+    void. `wetness` currently makes that *worse* — `WETNESS_DARKEN = 0.5`
+    darkens road and pavement, rain runs 0.85–0.9, and nothing reflects. We
+    shipped half an axis.
+  - **Road sheen via a real material conversion** (Dan's call, 2026-07-29 —
+    a cheap non-PBR overlay was offered and declined). Safer than E2b's
+    conversions for two verified reasons: road/pavement never carried
+    `LIT_ALBEDO_GAIN`, and `color` means albedo on `MeshStandardMaterial` too,
+    so `applyWetness`'s snapshot-and-multiply survives untouched.
+  - **Staged like 3a's fog axis**: conversion at `roughness: 1, metalness: 0`
+    as a provable near-no-op first, then `wetness` → roughness. `metalness`
+    stays 0 — tarmac is a dielectric, and the metal path tints reflections with
+    the albedo.
+  - **Sky reflections are optional and gated.** With no `scene.environment`, a
+    Standard material reflects only punctual lights (sun, torch), so the haar
+    band will not appear in the road. A cheap palette-driven gradient env map
+    is the fallback if 2b reads dead — not a PMREM of the live dome.
+  - **The scheduler must not spend E2c.3b.1.** Drive it off the in-sim clock,
+    never wall time or `Math.random()`; because `setTime()` sets `rate = 0`, a
+    clock-driven scheduler cannot fire while the harness holds time pinned.
+    Explicit `setWeather()` wins over any pending scheduled change.
+  - **All three in one milestone** (Dan's call — a split into "the wet night"
+    now and scheduling later was offered and declined).
 
 **The constraint that shapes 3a:** fog density multiplies every pixel, so a
 global change moves all 27 desktop goldens in the same commit as the riskiest
