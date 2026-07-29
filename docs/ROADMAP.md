@@ -565,8 +565,8 @@ constants in `src/lighting-constants.js`); a clock-driven, `hash32`-seeded
 autonomous weather scheduler (`src/atmosphere.js`), three new gates
 (`docs/VALIDATION.md` 23-25). 2c (procedural sky env map) **skipped** — see
 below. Smoke: 175 checks, 0 failures, tree clean across three consecutive
-runs. Exactly 3 goldens recaptured out of 27: `skyline-clear`,
-`mid-805-far-clear-08`, `skyline-rain`.
+runs. 3 goldens recaptured for the conversion itself — `skyline-clear`,
+`mid-805-far-clear-08`, `skyline-rain` — plus 2 more at review, below.
 
 - **Torch reach settled at 10m, by eye against both 22:00 captures**
   (`docs/smoke/captures/mid-805-far-{haar,rain}-22.png`, both re-taken). The
@@ -638,6 +638,19 @@ runs. Exactly 3 goldens recaptured out of 27: `skyline-clear`,
 - **Draw calls unchanged by the material conversion** — `skyline` (the
   heaviest pose, 954 calls) matches its baseline exactly at every weather
   tested; the conversion adds no geometry, only a material swap.
+- **Two more goldens recaptured at review.** The movement table above covers
+  the 27 weather-suffixed goldens; re-measuring all 39 (pre-milestone code
+  against the delivered goldens, every pose) found two the conversion had
+  left sitting near tolerance rather than over it, so they were never
+  recaptured: `golden-drizzle:elm-row-hero` at **0.443%** and
+  `golden-clear:mid-550-close` at **0.366%**, both against a 0.5% ceiling.
+  Passing, but with the headroom nearly gone and a stale Lambert-era image
+  as the reference — a pose primed to flake on the next unrelated change.
+  Recapturing both drops the worst residual across all 39 poses back to
+  **0.267%** (`golden:skyline`, the long-standing pre-existing one; every
+  other pose is now under 0.1%). The lesson is the measuring rule, not the
+  two files: **a golden that moved materially wants recapturing even when it
+  still passes** — tolerance is the flake budget, not a target to spend.
 
 ### E2d — Post-processing
 
