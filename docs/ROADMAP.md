@@ -654,8 +654,36 @@ runs. 3 goldens recaptured for the conversion itself — `skyline-clear`,
 
 ### E2d — Post-processing
 
-- AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable
-  (mobile fallback).
+AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable (mobile
+fallback). Split in two, because the first effect through a new render path
+costs far more than the fourth.
+
+- **E2d.1 — The composer, and bloom. NEXT.** Introduce `EffectComposer` and
+  land one effect through it. Bloom goes first because it is the operator that
+  pays off E2c.3c's unmet half: the torch's specular return on wet tarmac is
+  real (measured 2.19×) but sits at 0.06–0.14 out of 255 — correct, and
+  invisible. Brief: `~/.claude/plans/mcgrot-e2d1-brief.md`.
+
+  Mostly a containment milestone. A composer breaks three things that are wired
+  to `renderer.render` being the only path to the screen, and **two of them
+  break silently**: `renderer.info.autoReset` is at its default, so draw-call
+  accounting would report the last fullscreen pass instead of the scene (~30
+  gates); and the two direct `renderer.render` calls in `scripts/smoke.mjs`
+  (the E2b torch A/B, the mobile torch toggle) would compare a composed frame
+  against a raw one and still pass. On top of that, all 39 goldens move — so it
+  lands as a provable no-op `RenderPass` commit first, then bloom.
+
+  The architectural fork is where tone mapping happens. Bloom on an
+  already-ACES-compressed LDR target will be weakest exactly where this
+  milestone needs it; the HDR route fixes that but silently retires
+  `renderer.toneMappingExposure`, killing the authored exposure axis across
+  every weather and hour with no gate to notice. Whichever route is taken, the
+  exposure axis needs a gate that binds.
+
+- **E2d.2 — the rest.** AO, vignette, film grain, colour grade, once the render
+  path is settled and the harness has been repaired around it. Film grain is
+  the determinism trap of the group: it must be driven off the same seeded,
+  stepped `t` the updaters use, never wall time or `Math.random()`.
 
 ### E2e — Mobile and sharing — DONE, DEPLOYED (2026-07-28, with E2e.1)
 
