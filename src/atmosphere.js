@@ -27,6 +27,7 @@
 // move a single pixel for this refactor to be behaviour-preserving.
 
 import * as THREE from 'three';
+import { DRY_ROUGHNESS, WET_ROUGHNESS } from './lighting-constants.js';
 
 // A full day/night cycle in 24 real minutes — long enough that a full walk
 // of the street (15-20 minutes) sees most of one, short enough to actually
@@ -622,6 +623,39 @@ function stopsFor(weather) {
 // k=0.45 landed both at once, see resolvePalette below).
 const DERIVED = { drizzle: { from: 'overcast', to: 'rain', k: 0.45 } };
 
+// E2c.3c Part 3: which weather can follow which, for the autonomous
+// scheduler below. Encodes the brief's "overcast -> drizzle -> rain rather
+// than clear -> rain -> clear" plausibility — every edge is a small step on
+// the light/wetness axis, never a jump between opposites. 'haar' only
+// borders 'overcast': it's a still, becalmed condition (E2c.3b's brief), not
+// one that plausibly rolls in mid-downpour or burns off straight into a
+// clear sky.
+const WEATHER_ADJACENCY = {
+  overcast: ['clear', 'drizzle', 'haar'],
+  clear: ['overcast'],
+  drizzle: ['overcast', 'rain'],
+  rain: ['drizzle'],
+  haar: ['overcast'],
+};
+
+// How long (in in-sim hours) the scheduler waits before its next autonomous
+// change, drawn uniformly from this band each time one fires or an explicit
+// setWeather() defers it. Wide enough that a normal walk (15-20 real
+// minutes, i.e. that many in-sim hours at the standing HOURS_PER_REAL_MINUTE)
+// sees at most a couple of autonomous changes, not a flicker.
+const SCHEDULE_MIN_HOURS = 1.5;
+const SCHEDULE_MAX_HOURS = 4;
+
+// Same mix/avalanche as chimneys.js's hash32 (deterministic placement seed),
+// duplicated rather than imported — this module has no other dependency on
+// chimneys.js and the function is a few lines of pure arithmetic.
+function hash32(a, b) {
+  let h = (a * 73856093) ^ (b * 19349663);
+  h = Math.imul(h ^ (h >>> 13), 0x85ebca6b);
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
 // Locates the bracketing pair of stops for `hours` (wrapping past the last
 // stop back to the first at hour+24) and the 0..1 interpolation fraction.
 function bracket(hours, weather) {
@@ -713,8 +747,15 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
 
   function applyWetness(k) {
     const factor = 1 - WETNESS_DARKEN * k;
-    if (surfaces.road && roadBaseColor) surfaces.road.color.copy(roadBaseColor).multiplyScalar(factor);
-    if (surfaces.pavement && pavementBaseColor) surfaces.pavement.color.copy(pavementBaseColor).multiplyScalar(factor);
+    const roughness = DRY_ROUGHNESS + (WET_ROUGHNESS - DRY_ROUGHNESS) * k;
+    if (surfaces.road && roadBaseColor) {
+      surfaces.road.color.copy(roadBaseColor).multiplyScalar(factor);
+      surfaces.road.roughness = roughness;
+    }
+    if (surfaces.pavement && pavementBaseColor) {
+      surfaces.pavement.color.copy(pavementBaseColor).multiplyScalar(factor);
+      surfaces.pavement.roughness = roughness;
+    }
   }
 
   let hours = todayStartHour(new Date());
@@ -725,6 +766,52 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   // — `from` is a frozen snapshot (see setWeather below), not live-resampled.
   let settledWeather = 'overcast';
   let transition = null;
+
+  // --- Part 3: autonomous weather scheduling ---
+  // Drives weather changes off `hours` (the in-sim clock) alone — never off
+  // wall time, never off Math.random(). That's the whole safety property:
+  // setTime() sets rate=0 (see setTime below), and the scheduler only ever
+  // advances schedClock inside the `if (rate !== 0)` branch of update(), so a
+  // harness that has pinned time can never see an autonomous change — the
+  // exact determinism this milestone depends on (E2c.3b.1's deterministic
+  // boot would otherwise be spent again).
+  //
+  // schedClock is `hours`' un-wrapped twin: same per-frame increment, but
+  // monotonic (never mod 24) so "next change due at X" is a plain
+  // ever-increasing target, not something that has to reason about wrapping
+  // past midnight.
+  let schedClock = 0;
+  let scheduleEnabled = true;
+  // Seeded from the date-derived boot hour (already computed above via
+  // hashDateString) rather than a fresh Date() call — deterministic per
+  // calendar day, and draws are taken in a dedicated counter sequence
+  // (scheduleSeedCounter) so they never interleave with any other hash32
+  // call elsewhere in the project ("draw order is sacred").
+  const scheduleSeedBase = Math.floor(hours * 1e6) >>> 0;
+  let scheduleSeedCounter = 0;
+  let nextChangeAt = null;   // schedClock value the next autonomous change fires at
+  let pendingTarget = null;  // weather name it will change to
+
+  function pickNextWeather(fromWeather) {
+    const options = WEATHER_ADJACENCY[fromWeather] || WEATHER_ADJACENCY.overcast;
+    const seed = hash32(scheduleSeedBase, scheduleSeedCounter++);
+    return options[seed % options.length];
+  }
+
+  // (Re)arms the schedule from `fromWeather` — called at construction, after
+  // every autonomous fire (from the weather just entered), and from every
+  // explicit setWeather() (so a manual call always defers whatever was
+  // pending rather than racing it).
+  function scheduleNext(fromWeather) {
+    pendingTarget = pickNextWeather(fromWeather);
+    const seed = hash32(scheduleSeedBase, scheduleSeedCounter++);
+    const hoursUntil = SCHEDULE_MIN_HOURS + (seed % 1000) / 1000 * (SCHEDULE_MAX_HOURS - SCHEDULE_MIN_HOURS);
+    nextChangeAt = schedClock + hoursUntil;
+  }
+
+  function setWeatherSchedule(v) {
+    scheduleEnabled = !!v;
+  }
 
   // Scratch structs, allocated once — see makePalette's own note.
   const sTo = makePalette();       // this frame's sample of the live target weather
@@ -950,6 +1037,19 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     if (rate !== 0) {
       hours = (hours + rate * (dt / 60)) % 24;
       if (hours < 0) hours += 24;
+
+      // Autonomous fire: only ever reached when rate!==0, i.e. never while a
+      // harness has pinned time via setTime() — that's the load-bearing
+      // guard, not a flag the scheduler checks. Also holds off mid-transition
+      // (nothing here races beginTransition), and rearms itself immediately
+      // from the weather it just started moving to, so the schedule is
+      // always self-perpetuating.
+      schedClock += rate * (dt / 60);
+      if (scheduleEnabled && nextChangeAt !== null && schedClock >= nextChangeAt && !transition) {
+        const target = pendingTarget;
+        beginTransition(target);
+        scheduleNext(target);
+      }
     }
 
     const liveWeather = transition ? transition.toWeather : settledWeather;
@@ -976,6 +1076,11 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     if (frame % TINT_RESCAN_INTERVAL === 0) scanForUnlitMaterials();
     applyTint();
   }
+
+  // Arms the very first autonomous change before any frame has run, so the
+  // schedule is live from boot rather than only after the first explicit
+  // setWeather().
+  scheduleNext(settledWeather);
 
   // Initial scan + apply so the very first rendered frame (before update()
   // has run TINT_RESCAN_INTERVAL times) already has façades tinted rather
@@ -1007,11 +1112,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   // "equivalent hour" for a frozen blend that has no single hour of its own.
   const VALID_WEATHERS = new Set([...Object.keys(KEYFRAMES), ...Object.keys(DERIVED)]);
 
-  function setWeather(name) {
-    if (!VALID_WEATHERS.has(name)) {
-      console.warn(`[atmosphere] setWeather: unknown weather "${name}", ignoring`);
-      return;
-    }
+  function beginTransition(name) {
     if (transition) {
       if (name === transition.toWeather) return;
     } else if (name === settledWeather) {
@@ -1019,6 +1120,21 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     }
     copyPalette(sLastApplied, sFrozenFrom);
     transition = { from: sFrozenFrom, toWeather: name, elapsed: 0, duration: WEATHER_TRANSITION_SECONDS };
+  }
+
+  // Explicit call — the harness's own setWeather (via debug.js) and any
+  // future player-facing trigger both land here. Always rearms the schedule
+  // from `name`, even when beginTransition itself is a no-op (already
+  // there/already heading there): an explicit call is a statement of intent
+  // about what the weather should do next, and must defer whatever the
+  // scheduler had pending rather than let it race in moments later.
+  function setWeather(name) {
+    if (!VALID_WEATHERS.has(name)) {
+      console.warn(`[atmosphere] setWeather: unknown weather "${name}", ignoring`);
+      return;
+    }
+    beginTransition(name);
+    if (scheduleEnabled) scheduleNext(name);
   }
 
   function state() {
@@ -1035,10 +1151,11 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
       tint: { r: tint.r, g: tint.g, b: tint.b },
       rain: sLastApplied.rain,
       wetness: sLastApplied.wetness,
+      weatherScheduleEnabled: scheduleEnabled,
     };
   }
 
-  return { update, setTime, getTime, setRate, setWeather, state };
+  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state };
 }
 
 // FNV-1a over a short string — deterministic per calendar date, no PRNG

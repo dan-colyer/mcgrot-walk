@@ -174,13 +174,21 @@ function buildStreetMeshes(streetPaths, groundHeight) {
   const group = new THREE.Group();
   group.position.y = STREET_Y;
 
+  // E2c.3c step 2a: MeshStandardMaterial at roughness:1/metalness:0 is close
+  // to Lambert by construction (three.js reuses the same diffuse term for
+  // direct lights) plus a weak GGX specular lobe from the sun — this is the
+  // near-no-op conversion the brief calls for, landed separately from the
+  // wetness-driven roughness (step 2b, src/atmosphere.js) so a golden move
+  // can be attributed to one or the other. Neither surface carries
+  // LIT_ALBEDO_GAIN (see world.js's `surfaces` note below), so the E2b
+  // failure mode where Lambert-vs-Basic albedo needed a gain doesn't apply.
   group.add(new THREE.Mesh(
     mergeGeometries(road, false),
-    new THREE.MeshLambertMaterial({ map: makeTarmacTexture() })
+    new THREE.MeshStandardMaterial({ map: makeTarmacTexture(), roughness: 1, metalness: 0 })
   ));
   group.add(new THREE.Mesh(
     mergeGeometries(paving, false),
-    new THREE.MeshLambertMaterial({ map: makePavementTexture() })
+    new THREE.MeshStandardMaterial({ map: makePavementTexture(), roughness: 1, metalness: 0 })
   ));
 
   return group;
@@ -508,7 +516,14 @@ function addLighting(group) {
 const TORCH_COLOR = 0xff8a4a;
 const TORCH_BASE_INTENSITY = 18;
 const TORCH_FLICKER_AMOUNT = 5;
-const TORCH_DISTANCE = 6.5;
+// E2c.3c: held undecided at 6.5 since E2b for exactly this call. 10m keeps
+// the noir haar band (docs/smoke/captures/mid-805-far-haar-22.png) reading as
+// the brightest thing in a 22:00 frame while finally putting the torch pool
+// on a building at every bookmark except the 6.69m-close ones (see
+// BOOKMARK_DEFS/SIDE_OFFSET) — the "night darkens facades" gate has ~15x
+// headroom (2.9% vs a 45% ceiling) so it does not bound this; judged by eye
+// against the two E2c.3-brief captures instead.
+const TORCH_DISTANCE = 10;
 
 export function createPlayerTorch(camera) {
   const light = new THREE.PointLight(TORCH_COLOR, TORCH_BASE_INTENSITY, TORCH_DISTANCE, 2);

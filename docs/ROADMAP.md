@@ -362,7 +362,7 @@ third is genuinely coupled:
     machine-load-dependent state.
   - **It moves goldens**, so it lands on its own with nothing else in the
     commit — the same containment discipline as 3a's two-step.
-- **E2c.3c — The wet night. NEXT.** Night reach (`TORCH_DISTANCE`), road sheen,
+- **E2c.3c — The wet night. DONE (2026-07-29), see below.** Night reach (`TORCH_DISTANCE`), road sheen,
   autonomous weather scheduling. Night reach wanted haar and dynamic fog to
   judge against, so it goes last rather than in a vacuum. Brief:
   `~/.claude/plans/mcgrot-e2c3c-brief.md`.
@@ -555,6 +555,89 @@ exactly the two goldens the mechanism proved move), and this one
   `localhost`/`127.0.0.1` gate `__mcgrotDebug` already lives behind, and is
   otherwise `undefined` — checked visually via the dev preview (title card,
   boot, WASD movement, birds/leithers animating) with the flag absent.
+
+##### E2c.3c — what actually landed (2026-07-29)
+
+`TORCH_DISTANCE` 6.5 → 10 (`src/world.js`); road/pavement converted to
+`MeshStandardMaterial` at `roughness: 1, metalness: 0` (`src/world.js`),
+`wetness` now also drives `roughness` toward 0.25 (`src/atmosphere.js`,
+constants in `src/lighting-constants.js`); a clock-driven, `hash32`-seeded
+autonomous weather scheduler (`src/atmosphere.js`), three new gates
+(`docs/VALIDATION.md` 23-25). 2c (procedural sky env map) **skipped** — see
+below. Smoke: 175 checks, 0 failures, tree clean across three consecutive
+runs. Exactly 3 goldens recaptured out of 27: `skyline-clear`,
+`mid-805-far-clear-08`, `skyline-rain`.
+
+- **Torch reach settled at 10m, by eye against both 22:00 captures**
+  (`docs/smoke/captures/mid-805-far-{haar,rain}-22.png`, both re-taken). The
+  haar band still reads as the brightest thing in the frame; the "night
+  darkens facades" gate has enormous headroom either way (2.9% vs a 45%
+  ceiling, unchanged by this move) so it was never going to be the thing that
+  stopped an overshoot. "Torch lights a readable surface" moved from 68.83× to
+  **85.88×** — a floor, not a target, and left there deliberately.
+- **The material conversion is a genuine near-no-op for 25 of 27 poses**
+  (max 0.366%, `golden-clear:mid-550-close`), confirming the brief's
+  "same diffuse term, weak specular lobe" claim holds almost everywhere.
+  It is **not** a no-op at two poses under `clear`: `skyline` (1.681%) and
+  `mid-805-far-08` (4.285%, the single largest move in the milestone).
+  Investigated, not just recaptured: an A/B probe (torch-off render at the
+  same pose) and a side-by-side pixel diff confirmed the cause is a real
+  Fresnel-driven brightening of the road under `clear`'s much higher sun
+  intensity (2.9-3.0 vs overcast's 0.05-1.15) at a viewing/light geometry
+  that happens to be more grazing at these two poses — not a bug, not
+  clipping (`clip-clear:*` both 0.000%), not a draw-call or budget change
+  (`skyline` still exactly 954). `overcast` and `haar`'s much dimmer suns
+  never cross the same threshold, staying under 0.28% everywhere. Every other
+  clear-weather pose stayed under 0.4% at the same conversion.
+- **`golden-rain:skyline`'s 2.771% move is step 2b's intended new behaviour,
+  not step 2a's side effect** — isolated by testing 2a alone first (see
+  above) before 2b's roughness mapping was reapplied; `skyline`'s only other
+  rain-adjacent move (elm-row-hero, mid-805-far, etc.) all stayed under 0.1%.
+- **Sky-env reflection (2c) skipped.** The brief's own payoff case for 2c is a
+  *daytime* haar/overcast band reflecting in the road; the milestone's actual
+  target — the wet-*night* road — is a different scenario entirely, and an
+  env map can only reflect brightness that exists in the palette it is built
+  from. Every `HAAR_STOPS`/`OVERCAST_STOPS` night stop (hours 20/22/0/5) has a
+  sky about as dark as the sun/hemi/ambient values at those hours — building
+  an env map from it would add reflected light that does not exist to
+  reflect. Confirmed empirically before deciding: an A/B luminance probe at
+  `mid-805-far`, 22:00, rain (torch on vs torch off, lower-frame crop) showed
+  the torch's specular contribution to the wet road is real — **2.19× the
+  luma of the torch-off reading** — matching the physically-correct GGX
+  response 2b implements. But both readings sit at 0.06-0.14 out of 255: a
+  real, correctly-computed effect that is nonetheless invisible on screen,
+  because the entire night palette is intentionally near-black (mean
+  luminance ~2.4/255 — see the "night darkens facades" gate) and no
+  standard bookmark pose puts a grazing view of near-camera wet road in frame
+  at night (the "far" bookmarks view it at too steep a downward angle for a
+  co-located point light's specular return to read; the "close" bookmarks
+  don't frame the ground at all). 2c would not have changed this: the gap is
+  in how dark night is by design, not in the absence of a sky reflection.
+  **Recorded as a genuine limit for Dan's judgement**, not quietly dropped —
+  a future pass that wants a *visible* torch-glare pool at night would need
+  to revisit torch intensity/reach specifically (Part 1, already settled by
+  eye against the noir look this phase protects) or add a purpose-built
+  camera-relative glint, not a scene-wide env map.
+- **The scheduler cannot fire while time is pinned, demonstrated not just
+  asserted**: gate 23 settles a weather, freezes time, steps 5000 frames,
+  asserts nothing moved. Watched failing once during development — not
+  because the scheduler fired, but because the gate's own "before" snapshot
+  was taken while an unrelated transition was still in flight (a transition's
+  `elapsed` advances on real `dt` regardless of `rate`, by existing design);
+  fixed by settling explicitly before snapshotting, not by touching the
+  scheduler.
+- **The scheduler does fire autonomously when the clock actually runs**
+  (gate 24): fast-forwarding via the existing `setRate` debug hook well past
+  the authored 1.5-4h band produces a weather change with zero explicit
+  `setWeather()` calls. Watched failing with the fire check commented out.
+- **`setWeatherSchedule(false)` (gate 25) is wired in but not needed in
+  practice**: at the standing clock rate a full capture pass advances the
+  in-sim clock by ~0.2h, far under the 1.5h minimum interval, so the schedule
+  was never actually at risk of firing mid-pass — the hook is insurance for a
+  future faster rate or shorter interval, asserted rather than left untested.
+- **Draw calls unchanged by the material conversion** — `skyline` (the
+  heaviest pose, 954 calls) matches its baseline exactly at every weather
+  tested; the conversion adds no geometry, only a material swap.
 
 ### E2d — Post-processing
 

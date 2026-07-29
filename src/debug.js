@@ -311,6 +311,14 @@ export function createDebugApi(ctx) {
     atmosphere.setWeather(name); // starts (or no-ops) a transition — see atmosphere.js
   }
 
+  // E2c.3c Part 3: lets scripts/smoke.mjs disable the autonomous scheduler
+  // for golden capture passes — belt-and-braces alongside the schedule's own
+  // multi-hour minimum interval (see atmosphere.js), which already keeps it
+  // from firing during any capture pass at the standing clock rate.
+  function setWeatherSchedule(enabled) {
+    atmosphere.setWeatherSchedule(enabled);
+  }
+
   // Test-only override of the atmosphere's own cycle rate, independent of
   // setTime (which always freezes it to 0 — see docs/VALIDATION.md). Exists
   // so the smoke harness can deterministically drive the clock across a
@@ -421,6 +429,7 @@ export function createDebugApi(ctx) {
     face,
     setTime,
     setWeather,
+    setWeatherSchedule,
     setRate,
     setTouchMode,
     setPixelRatio,

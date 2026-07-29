@@ -215,6 +215,34 @@ tells you which check and why.
     before the frame count was pinned at zero this would have been flaky by
     construction, not a real gate. See "`elm-row-hero` is bimodal" below —
     now resolved, kept for the mechanism it documents.
+23. **Weather scheduler never fires while time is pinned** (E2c.3c) — settles
+    an explicit weather, freezes time via `setTime` (`rate = 0`), then steps
+    5000 frames and asserts `settledWeather`/`weatherTransition` are
+    unchanged. This is the determinism guarantee every other gate in this
+    file depends on implicitly (a scheduled change firing mid-capture would
+    flake every `settled-at-capture:*` and `golden-*` check); it is asserted
+    directly here rather than left as an inference. The gate settles any
+    pending transition before taking its "before" snapshot — a transition's
+    own `elapsed` always advances on real `dt` regardless of `rate` (weather
+    transitions must not freeze along with the day/night cycle at a posed
+    hour), so an unsettled transition left over from an earlier test would
+    otherwise complete during the 5000 frames for a reason that has nothing
+    to do with the scheduler. Watched failing exactly this way once, before
+    the fix.
+24. **Weather scheduler changes weather autonomously over time** (E2c.3c) —
+    `setRate(240)` (an E2c.1 debug hook) fast-forwards the in-sim clock far
+    past the scheduler's authored 1.5–4h band, with no explicit `setWeather()`
+    call in between; asserts the weather actually changed. Watched failing
+    (`weather=overcast, transition=null` after the same fast-forward) with the
+    `update()` fire check commented out, while check 23 and 25 both still
+    passed — confirming this gate, not the machinery around it, is what
+    catches a dead scheduler.
+25. **`setWeatherSchedule(false)` suppresses autonomous changes** (E2c.3c) —
+    same fast-forward as check 24, schedule disabled first via the debug hook;
+    asserts the weather held. This is the escape hatch `captureWeatherPass`
+    style golden passes would reach for if the schedule's own multi-hour
+    minimum interval (already far longer than any capture pass takes at the
+    standing clock rate) ever stopped being enough on its own.
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -278,6 +306,57 @@ node, rather than hand-arranging 20 pairs. A night capture at 22:00
 (`mid-805-far-haar-22.png`, `docs/smoke/captures/`, gitignored, not gated) is
 evidence for E2c.3c's `TORCH_DISTANCE` call, not a claim this milestone makes
 about night reach.
+
+### The wet night: road sheen and the autonomous scheduler (E2c.3c)
+
+Road/pavement (`src/world.js`) moved from `MeshLambertMaterial` to
+`MeshStandardMaterial({ roughness: 1, metalness: 0 })`, landed in two steps so
+a golden move could be attributed to one or the other: step 2a is the bare
+conversion (no behaviour change), step 2b adds `wetness -> roughness`
+(`DRY_ROUGHNESS`/`WET_ROUGHNESS` in `src/lighting-constants.js`, applied in
+`applyWetness`, `src/atmosphere.js`). `metalness` stays 0 throughout — tarmac
+is a dielectric, and a metalness ramp would tint reflections with the road's
+albedo (foil) instead of the light's colour (a puddle).
+
+2a is a near-no-op for 25 of 27 goldens (max 0.366%) but genuinely moves two
+`clear`-weather poses — `skyline` (1.681%) and `mid-805-far-08` (4.285%) — a
+real Fresnel-driven brightening of the road under `clear`'s much brighter sun,
+confirmed with an ad hoc torch-off A/B probe and a pixel-diff against the
+prior golden (not clipping, not a draw-call change). `overcast`/`haar`'s
+dimmer suns never cross the same threshold. Both were recaptured; every other
+pose stayed under tolerance and was left alone.
+
+**2c (a procedural sky-gradient env map) was evaluated and skipped.** Its
+payoff case is a *daytime* haar/overcast sky reflecting in the road; this
+milestone's target is the wet-*night* road, and an env map can only reflect
+brightness that exists in the palette it's built from — every night stop's
+sky is about as dark as its sun/hemi/ambient. An A/B luminance probe (torch on
+vs off, `mid-805-far`, 22:00, rain, lower-frame crop) found the torch's
+specular contribution to wet tarmac is real (2.19x) but both readings sit at
+0.06-0.14 out of 255 — correct, invisible, because night is intentionally
+near-black by design (mean luminance ~2.4/255, see check 8) and no existing
+bookmark pose puts a grazing view of near-camera wet road in frame at night.
+2c would not change this. Recorded as a known limit, not silently dropped —
+see `docs/ROADMAP.md`'s E2c.3c "what actually landed".
+
+**The autonomous scheduler** (`src/atmosphere.js`) drives weather changes off
+`hours` alone — a `schedClock` accumulator, incremented identically to
+`hours` but never wrapped, only inside `update()`'s `if (rate !== 0)` branch.
+That single guard is the whole determinism argument: `setTime()` always sets
+`rate = 0`, so a harness holding time pinned can never see an autonomous
+change, by construction rather than by a flag the scheduler has to remember
+to check. `WEATHER_ADJACENCY` constrains which weather can follow which
+(overcast <-> clear/drizzle/haar, drizzle <-> rain) so changes step along the
+light/wetness axis rather than jumping between opposites; both the next
+target and the wait (1.5-4h, in-sim) are drawn via `hash32`, in their own
+counter sequence seeded from the date-derived boot hour, so draw order never
+interleaves with any other seeded sequence in the project. An explicit
+`setWeather()` always reschedules the next autonomous change from itself,
+so a manual call defers whatever was pending rather than racing it.
+`setWeatherSchedule(false)` (debug hook) is wired in as insurance for capture
+passes, though not load-bearing in practice — the schedule's own multi-hour
+minimum is already far longer than any capture pass takes at the standing
+clock rate (~0.2h for a full 8-bookmark pass at `WEATHER_SETTLE_FRAMES`).
 
 ### `elm-row-hero` was bimodal, and it was the harness's fault (E2c.3b review, fixed E2c.3b.1)
 

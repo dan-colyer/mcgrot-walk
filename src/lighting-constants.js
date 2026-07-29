@@ -7,3 +7,14 @@
 // value is tuned empirically against all eight goldens instead, landing every
 // bookmark within +/-10%.
 export const LIT_ALBEDO_GAIN = 4.7;
+
+// E2c.3c step 2b: road/pavement roughness at the dry and fully-wet ends of
+// the `wetness` axis (src/atmosphere.js's applyWetness). Dry tarmac/paving
+// stay near-fully rough (matte, same read as the step-2a conversion);
+// wetness lowers roughness toward a tighter, brighter GGX specular lobe —
+// the missing half of "wet" that darkening alone (WETNESS_DARKEN) never
+// supplied. metalness stays 0 throughout: tarmac is a dielectric, and a
+// metalness ramp would tint the reflection with the road's albedo instead of
+// the light's colour, reading as foil rather than a puddle.
+export const DRY_ROUGHNESS = 1.0;
+export const WET_ROUGHNESS = 0.25;

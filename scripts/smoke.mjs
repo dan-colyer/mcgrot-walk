@@ -1081,6 +1081,73 @@ async function main() {
       });
     }
 
+    // --- E2c.3c Part 3: autonomous weather scheduler ---
+    // 3a: the load-bearing determinism guarantee — the scheduler must never
+    // fire while a harness has pinned time via setTime() (rate=0). This is
+    // what every other gate in this file relies on implicitly (a scheduled
+    // change firing mid-capture would flake every settled-at-capture:* and
+    // golden-*  check); this gate demonstrates it directly rather than
+    // leaving it as an inference from those passing.
+    //
+    // Forces + fully settles an explicit weather first: a transition's own
+    // `elapsed` always advances on real dt regardless of `rate` (by design —
+    // see beginTransition/update in atmosphere.js, weather transitions must
+    // not freeze along with the day/night cycle at a posed hour), so a
+    // pending transition left over from an earlier test would complete
+    // during the 5000 stepped frames below for a reason that has nothing to
+    // do with the scheduler. Settling first removes that confound.
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+    await page1.evaluate((frames) => window.__mcgrotDebug.stepFrames(frames), WEATHER_SETTLE_FRAMES);
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    const schedBefore = await getInvariants(page1);
+    await page1.evaluate(() => window.__mcgrotDebug.stepFrames(5000));
+    const schedAfterPinned = await getInvariants(page1);
+    results.push({
+      name: 'weather scheduler never fires while time is pinned (rate=0)',
+      pass: schedAfterPinned.weather === schedBefore.weather && schedAfterPinned.weatherTransition === null,
+      detail: `weather stayed "${schedAfterPinned.weather}" (transition=${JSON.stringify(schedAfterPinned.weatherTransition)}) across 5000 stepped frames at rate=0`,
+    });
+
+    // 3b: with the clock actually running, the scheduler must produce an
+    // autonomous change within its authored 1.5-4h band with NO explicit
+    // setWeather() call in between. setRate (already an E2c.1 debug hook)
+    // fast-forwards the in-sim clock far past that band without touching
+    // wall time. Watched failing before this landed: with the `if
+    // (scheduleEnabled && ...)` fire check in update() commented out, this
+    // gate fails (`weather=overcast, transition=null` after the same
+    // fast-forward) while 3a and 3c both still pass — confirming this gate,
+    // not just the machinery around it, is what catches a dead scheduler.
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+    await page1.evaluate((frames) => window.__mcgrotDebug.stepFrames(frames), WEATHER_SETTLE_FRAMES);
+    const schedStart = await getInvariants(page1);
+    await page1.evaluate(() => window.__mcgrotDebug.setRate(240)); // >> SCHEDULE_MAX_HOURS per stepped pass below
+    await page1.evaluate(() => window.__mcgrotDebug.stepFrames(3000));
+    const schedFired = await getInvariants(page1);
+    await page1.evaluate(() => window.__mcgrotDebug.setRate(0));
+    results.push({
+      name: 'weather scheduler changes weather autonomously over time',
+      pass: schedFired.weather !== schedStart.weather || schedFired.weatherTransition !== null,
+      detail: `started settled on "${schedStart.weather}"; after fast-forwarding the clock (rate=240, 3000 stepped frames, no setWeather() calls) weather=${schedFired.weather}, transition=${JSON.stringify(schedFired.weatherTransition)}`,
+    });
+
+    // 3c: the debug hook actually suppresses it — same fast-forward, schedule
+    // disabled first. This is the escape hatch scripts/smoke.mjs's own golden
+    // capture passes rely on (belt-and-braces alongside the 1.5-4h band being
+    // far longer than any capture pass takes at the standing clock rate).
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+    await page1.evaluate((frames) => window.__mcgrotDebug.stepFrames(frames), WEATHER_SETTLE_FRAMES);
+    await page1.evaluate(() => window.__mcgrotDebug.setWeatherSchedule(false));
+    await page1.evaluate(() => window.__mcgrotDebug.setRate(240));
+    await page1.evaluate(() => window.__mcgrotDebug.stepFrames(3000));
+    const schedDisabled = await getInvariants(page1);
+    await page1.evaluate(() => window.__mcgrotDebug.setRate(0));
+    await page1.evaluate(() => window.__mcgrotDebug.setWeatherSchedule(true));
+    results.push({
+      name: 'setWeatherSchedule(false) suppresses autonomous changes',
+      pass: schedDisabled.weather === 'overcast' && schedDisabled.weatherTransition === null,
+      detail: `weather=${schedDisabled.weather}, transition=${JSON.stringify(schedDisabled.weatherTransition)} after the same fast-forward with the schedule disabled`,
+    });
+
     if (UPDATE_GOLDENS || Object.keys(budget.perBookmark).length === 0) {
       const prev = budget.perBookmark || {};
       budget = {
