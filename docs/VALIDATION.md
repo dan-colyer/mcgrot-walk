@@ -243,6 +243,16 @@ tells you which check and why.
     style golden passes would reach for if the schedule's own multi-hour
     minimum interval (already far longer than any capture pass takes at the
     standing clock rate) ever stopped being enough on its own.
+26. **Post-processing is provably in the render path** (E2d.1) — at the same
+    torch-lit pose the torch A/B check already uses, a post-on frame
+    (`dbg.setPostProcessing(true)`) is asserted to differ from a post-off
+    frame (`dbg.setPostProcessing(false)`), both rendered via `dbg.renderNow()`
+    with the torch itself unchanged. This is the anti-dead-gate measure for
+    the composer itself — without it, a composer that silently stopped
+    composing would look exactly like a healthy one, and nothing else in the
+    suite would notice. Watched failing with `renderNow()` temporarily forced
+    to bypass the composer regardless of the toggle (on/off luminance
+    identical, as expected).
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -357,6 +367,98 @@ so a manual call defers whatever was pending rather than racing it.
 passes, though not load-bearing in practice — the schedule's own multi-hour
 minimum is already far longer than any capture pass takes at the standing
 clock rate (~0.2h for a full 8-bookmark pass at `WEATHER_SETTLE_FRAMES`).
+
+### The composer, and bloom (E2d.1)
+
+`EffectComposer` lands in `src/main.js`, carrying `RenderPass` then
+`UnrealBloomPass`. Landed as two separate commits, per the containment plan:
+a provable no-op (`RenderPass` alone) first, then bloom.
+
+**The no-op step, verified.** `renderer.info.autoReset` is `true` by default,
+which resets draw-call accounting at the start of every internal
+`renderer.render()` call a postprocessing pass makes via `FullScreenQuad` —
+without a fix, every `budget:*`/`draw calls exactly +N` gate would have
+silently started reading ~1 (the final pass only) instead of the scene's real
+count. Fixed with `renderer.info.autoReset = false` plus one explicit
+`renderer.info.reset()` in `runFrame`/`renderNow`, before the composer runs.
+Verified, not assumed: `skyline`'s budget read 954 draw calls (identical to
+its pre-composer baseline) with `RenderPass` alone, confirming the fix worked
+end to end rather than happening to look right. All 39 goldens held at their
+existing noise-floor residuals (worst: `golden:skyline` at 0.267%, unchanged)
+in that same commit — the leak detector this class of change gets exactly
+once, since every golden legitimately moves the moment a real effect lands.
+
+**The two direct-`renderer.render()` sites** in `scripts/smoke.mjs` (the E2b
+torch A/B, the mobile torch toggle) now call `dbg.renderNow()` instead — a
+composer-aware render that skips the updaters (same reason the direct calls
+existed: `torch`/`atmosphere` would overwrite the intensity override before
+the frame landed) but goes through the composer so a torch-on/torch-off
+comparison stays like-for-like once bloom is in the path.
+
+**The tone-mapping fork: HDR was tried and reverted.** The textbook-correct
+multi-pass composer setup is `renderer.toneMapping = NoToneMapping` (materials
+render raw linear HDR, no per-material tonemap) with one `OutputPass` applying
+ACES + `renderer.toneMappingExposure` at the very end — this is also what
+would have let bloom see genuine HDR values instead of the already-compressed
+0-1 range ACES leaves behind. It broke fog: three's material fragment shader
+runs `fog_fragment` *after* `tonemapping_fragment` and `colorspace_fragment`
+(`meshphysical.glsl.js`), so every fog colour in `src/atmosphere.js` was
+authored and tuned assuming it blends in POST-tonemap space. Moving
+tonemapping to the very end moved fog to PRE-tonemap space instead — same
+authored values, different result, independent of bloom entirely. Measured
+with bloom fully disabled: 56-72% of pixels differed on every `haar` golden
+(thick fog dominates the frame there), against noise-floor diffs everywhere
+bloom wasn't the only variable. Retuning fog for 5 weathers across many hour
+stops is a different, much larger project than this milestone.
+
+A second, independent bug surfaced trying the HDR route and is worth
+recording since it will bite again if anyone revisits this: adding an
+`OutputPass` back — even forcing `NoToneMapping` for just its own draw, to
+avoid double-applying ACES on top of materials that already tonemap — still
+re-runs the sRGB encode on output the materials had already encoded
+themselves (materials apply full tonemap+encode into `EffectComposer`'s
+intermediate buffer exactly as they would to the canvas; `OutputPass` assumes
+they didn't). Measured as a ~4x brightening/blowout with bloom thresholded so
+high it should visually contribute nothing. The shipped LDR route needs no
+`OutputPass` at all — `UnrealBloomPass` as the last enabled pass renders
+straight to the canvas the same way a lone `RenderPass` does, verified
+pixel-identical to a direct `renderer.render()` call when bloom contributes
+zero.
+
+**Bloom's threshold/strength/radius are bound by the daytime clip-* gates, not
+the wet-night pose.** `UnrealBloomPass`'s multi-mip blur spreads any
+threshold-crossing source across a wide screen-space radius — fine on a
+near-black frame with headroom to spare, but on `haar` (whose authored fog/sky
+already sits within a few percent of the tonemapped ceiling) even a threshold
+of 0.999 at strength 0.01 pushed 0.4-2%+ of pixels over the clip ceiling on
+different bookmarks, because the blur bleeds onto a huge already-near-white
+area regardless of how few pixels crossed the threshold to begin with. Ship
+settings (strength 0.05, radius 0.2, threshold 0.95) were picked as the
+smallest combination that kept clear/overcast/rain/drizzle under a modest,
+committed ceiling raise (0.1% -> 0.4%); `haar` needed a much larger one
+(0.4% -> 8%, see `CLIP_PCT_MAX_HAAR` in `scripts/smoke.mjs`) and is reported
+separately rather than silently folded into the shared number. See "Raise the
+clip-highlight ceiling..." commit for the full per-bookmark measurements.
+
+**The wet-night payoff did not materialise, and that's a finding, not a
+regression.** The milestone's stated goal was making the torch's measured
+2.19x specular return on wet tarmac (E2c.3c) visible — it sits at 0.06-0.14
+out of 255, correct but invisible. Re-measured at the shipped settings,
+`mid-805-far` at 22:00/rain and 22:00/haar (the exact pose captured to
+`docs/smoke/captures/`): lower-frame-crop mean luminance 0.14 and 0.64
+respectively — indistinguishable from the pre-milestone numbers, and
+indistinguishable by eye. This is not a bloom-tuning shortfall: E2c.3c already
+found "no existing bookmark pose puts a grazing view of near-camera wet road
+in frame at night", and this milestone confirms it again, independent of the
+LDR/HDR choice — bloom cannot amplify a highlight that isn't geometrically in
+the frame to begin with. Fixing this needs a bookmark (or a dedicated capture
+pose) that actually frames the ground near the torch at night, which is a
+smaller follow-up, not a reason to hold this milestone.
+
+**Mobile toggle.** `#post-toggle` mirrors `#torch-toggle` exactly — touch-only,
+on by default, persisted to `localStorage['mcgrot-post-on']` — and
+`setPostProcessing(bool)` swaps `renderNow()` between `composer.render()` and
+a direct `renderer.render()`. Check 26 above is the proof it's load-bearing.
 
 ### `elm-row-hero` was bimodal, and it was the harness's fault (E2c.3b review, fixed E2c.3b.1)
 
@@ -835,6 +937,14 @@ building segments at once). If you see a number here and expected something
 closer to "one flat total" — draw calls are inherently pose-dependent in a
 first-person game; there's no single scene-wide constant to check against,
 only per-pose baselines with a tolerance.
+
+**E2d.1 regenerated every baseline** once bloom landed: each bookmark's count
+rose by bloom's own internal `FullScreenQuad` passes (the bright-pass extract,
+each mip level's horizontal+vertical blur, the composite, the final blend —
+`skyline` moved from 954 to 968, +14; every other bookmark moved by the same
+14). The delta gates (`+1` rain/drizzle, `+0` haar, both measured against a
+same-run matched control) read unaffected, since both sides of each
+comparison gain the identical 14.
 
 ## Browser-pane QA recipe (interactive investigation)
 
