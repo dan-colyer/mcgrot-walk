@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { loadAssets } from './assets.js';
 import { buildWorld, createPlayerTorch } from './world.js';
 import { createControls } from './controls.js';
@@ -44,10 +46,23 @@ async function main() {
   // Filmic tone mapping lifts the murk into readable values without losing the grim mood
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.46;
+  // E2d.1: composer passes draw through FullScreenQuad, each an internal
+  // renderer.render() call. renderer.info resets at the start of every
+  // renderer.render() by default (autoReset), which would collapse the
+  // draw-call count every invariants()/budget gate reads down to ~1 (the
+  // final pass only). Disabled here; runFrame calls info.reset() itself,
+  // once, before the composer runs — see docs/VALIDATION.md.
+  renderer.info.autoReset = false;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
   scene.add(camera); // needed so the camera-attached torch light (below) renders
+
+  // E2d.1: RenderPass only for now (a provable no-op — see docs/VALIDATION.md).
+  // Post-processing effects land as additional passes in later milestones.
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  let postEnabled = true; // mobile fallback toggle, see setPostProcessing below
 
   const assets = await loadAssets();
   const world = buildWorld(assets.leith);
@@ -181,6 +196,8 @@ async function main() {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP));
     renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setPixelRatio(renderer.getPixelRatio());
+    composer.setSize(window.innerWidth, window.innerHeight);
   }
 
   // Single registered update list, consumed by BOTH animate() and stepFrame —
@@ -215,9 +232,16 @@ async function main() {
   function updateFrame(dt, t) {
     for (const u of updaters) u.update(dt, t);
   }
+  function renderNow() {
+    renderer.info.reset();
+    if (postEnabled) composer.render(); else renderer.render(scene, camera);
+  }
   function runFrame(dt, t) {
     updateFrame(dt, t);
-    renderer.render(scene, camera);
+    renderNow();
+  }
+  function setPostProcessing(v) {
+    postEnabled = !!v;
   }
 
   // THREE.Clock is deprecated in r185 and its getDelta() yields 0 here,
@@ -248,8 +272,10 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
-      sky, atmosphere, torch, DPR_CAP, ambience,
+      sky, atmosphere, torch, DPR_CAP, ambience, composer,
       stepFrame: runFrame,
+      renderNow,
+      setPostProcessing,
       updateFrame,
       updaters,
       setAutoAnimate(v) {

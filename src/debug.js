@@ -201,7 +201,7 @@ export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
-    DPR_CAP, ambience,
+    DPR_CAP, ambience, composer, renderNow, setPostProcessing,
   } = ctx;
 
   const consoleErrors = [];
@@ -437,6 +437,9 @@ export function createDebugApi(ctx) {
     torch,
     DPR_CAP,
     ambience,
+    composer,
+    renderNow,
+    setPostProcessing,
     invariants,
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),

@@ -593,7 +593,10 @@ async function main() {
         const dbg = window.__mcgrotDebug;
         const torchLight = dbg.camera.children.find((c) => c.isPointLight);
         if (torchLight) torchLight.intensity = 0;
-        dbg.renderer.render(dbg.camera.parent, dbg.camera);
+        // E2d.1: composer-aware direct render (dbg.renderNow) — a raw
+        // dbg.renderer.render() would skip post-processing, making the
+        // torch-on/torch-off shots compared below no longer like-for-like.
+        dbg.renderNow();
       });
       const torchOffShot = await page1.screenshot();
       const torchOffLum = meanLuminanceCenterCrop(PNG.sync.read(torchOffShot), 0.3, 0.3);
@@ -1530,7 +1533,8 @@ async function main() {
         await page.evaluate(() => {
           const dbg = window.__mcgrotDebug;
           dbg.torch.update(9 / 60); // same t the settle loop's last frame used
-          dbg.renderer.render(dbg.scene, dbg.camera);
+          // E2d.1: composer-aware direct render — see the E2b torch A/B note above.
+          dbg.renderNow();
         });
         const torchOffShot = await page.screenshot();
         torchOffLuma = meanLuminanceCenterCrop(PNG.sync.read(torchOffShot), 0.3, 0.3);
