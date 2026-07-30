@@ -658,8 +658,8 @@ AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable (mobile
 fallback). Split in two, because the first effect through a new render path
 costs far more than the fourth.
 
-- **E2d.1 — The composer, and bloom. PLUMBING ACCEPTED, BLOOM SENT BACK
-  (review 2026-07-29). NOT DEPLOYED — see E2d.1a.** Introduced
+- **E2d.1 — The composer, and bloom. PLUMBING ACCEPTED (review 2026-07-29);
+  bloom itself retuned in E2d.1a below.** Introduced
   `EffectComposer` (`RenderPass` -> `UnrealBloomPass`) and repaired the harness
   around it: `renderer.info.autoReset` fixed (draw-call accounting was
   silently collapsing to ~1), both direct `renderer.render()` smoke sites
@@ -679,17 +679,86 @@ costs far more than the fourth.
   bloom costs exactly +14 draw calls at every pose. Full smoke green, no golden
   rewritten, tree clean. Bloom's *tuning and gating* are what fail.
 
-- **E2d.1a — Bloom as an authored per-weather axis. NEXT.** Isolated same-frame
-  (post-on vs post-off, everything else held constant), bloom adds **+23% to
-  +33% mean frame luminance under `haar`** and +0.2-1.9% under `overcast` — it
-  behaves as a broad exposure lift scaled by how bright the frame already is,
-  not as a highlight effect. Under `rain`, the weather the milestone existed to
-  serve, it contributes nothing (golden-to-golden lift is within state noise,
-  negative on four poses). `CLIP_PCT_MAX_HAAR = 8` masks this rather than
-  accommodating a threshold artefact. Fix: drive `bloomPass.strength` from the
-  atmosphere `*_STOPS` tables the way `toneMappingExposure` already is, gate the
-  contribution per weather with a two-sided band, and add a night capture pose
-  that actually frames torch-lit wet tarmac so the payoff is evaluable at all.
+- **E2d.1a — Bloom as an authored per-weather axis. REJECTED AT REVIEW
+  (2026-07-30). NOT DEPLOYED — see the verdict below.** `bloomStrength` is a
+  palette field (`src/atmosphere.js`),
+  written to `bloomPass.strength` every frame the way `toneMappingExposure`
+  already is: 0 flat under `haar`, the pre-E2d.1a value (0.05) flat under
+  `overcast`/`clear`, peaking at the two night stops (0.35) under `rain`.
+  Chasing why `haar` stayed bleached at `bloomStrength=0` (should have been a
+  dead no-op) found the E2d.1 "blur spreading a threshold-crossing source"
+  theory was wrong — the real bug was `UnrealBloomPass`'s own internal
+  screen-copy step re-running ACES on an already-tonemapped buffer, fixed with
+  one line (`bloomPass._basic.toneMapped = false`) that took haar/skyline's
+  contribution from +27% to +12% and its worst clip% from 6.6% to 3.0%. A
+  second, structural cause of the residual (`EffectComposer`'s render targets
+  have no hardware sRGB-decode path available) needs the reverted HDR route to
+  fully close and is out of scope; `CLIP_PCT_MAX_HAAR` is reduced (8 -> 3.5),
+  not eliminated, to absorb it honestly. Haar visually unbleached (facades
+  sepia again, signage/comic/nameplates legible — compared against `fa3ad67`).
+  The rain/drizzle night-hour peak, checked with a new dedicated
+  `torchGroundPose` capture and a 0-to-10x `bloomStrength` sweep, is confirmed
+  cosmetically inert at every pose tried: nothing in the current scene's
+  night-time content crosses the 0.95 bloom threshold regardless of strength.
+  This is a stronger version of E2d.1's own "wet-night payoff did not
+  materialise" finding and ends that line of work, per the brief — a future
+  attempt would need to touch the global `threshold`, reopening the daytime
+  clip-* calibration this milestone left alone. Full account in
+  `docs/VALIDATION.md`'s "Bloom as an authored axis" section.
+
+  **Review verdict (2026-07-30): rejected, and bloom should come out.** The
+  axis was measured against a strength-forced-to-0 control at the same settled
+  state — the control E2d.1a never ran on `rain`. Isolating bloom's own effect
+  (shipped strength vs strength 0) gives: `rain` 13:00 **0.0%**, `rain` 22:00 at
+  strength 0.35, the highest value in the table, **0.0%**, `drizzle` **0.0%**,
+  `haar` 0.0% (authored off), `clear` +0.4%, `overcast` +0.1%. **The authored
+  axis is inert.** Everything the milestone changed visually is the residual
+  colour-management artefact: `rain` 13:00 +42.6%, and `rain` 22:00 lifts mean
+  frame luminance 1.11 -> 7.07, a **6.4x brightening of the night-rain frame**,
+  with all 39 goldens recaptured to enshrine it. E2d.1a read that same +42.5% on
+  rain as the axis working; it is 0.0% axis and 42.6% bug.
+
+  The `_basic.toneMapped = false` diagnosis is correct and confirmed against
+  three's source, but it *moved* the damage rather than reducing it: it removed
+  a double-ACES that was compressing highlights (hence `haar` suffering worst
+  before) and left the double-sRGB-encode unopposed, which lifts shadows hardest
+  — so the worst-hit weather flipped from the brightest to the darkest. `haar`
+  improved (+29% -> +12%); `rain` went from ~+1% to +42.6% by day.
+
+  The new per-weather contribution gate is not merely dead, it is **inverted**:
+  it measures post-on vs post-off, which is now almost entirely the artefact, so
+  it passes *because* the bug exists and would fail if the bug were fixed. The
+  clip ceilings (0.4 shared, 3.5 haar) exist to accommodate the same bug.
+
+  Worth keeping regardless of what happens to bloom: the `_basic` diagnosis, the
+  `torchGroundPose` helper, and the conclusion that the torch's return (~22/255)
+  never approaches the 0.95 threshold at any strength — that ends the
+  "bloom will make the wet night read" theory for good.
+
+- **E2d.0 — Composer colour management. THE REAL PREREQUISITE, NEXT.** No
+  post-processing pass can be trusted in this pipeline until a pass that
+  contributes nothing is provably invisible. That invariant is cheap and strong,
+  and it is testable with no effect present at all:
+
+  > with every pass's contribution forced to zero, the composed frame must be
+  > **bit-identical** to `renderer.render(scene, camera)`.
+
+  `RenderPass` alone already satisfies it (measured 0.0000% at E2d.1 review) —
+  because as the last enabled pass it renders straight to the canvas and no
+  intermediate buffer is ever read back. It breaks the moment any pass composites
+  from a buffer, because `EffectComposer`'s default target is `HalfFloatType`,
+  which has no hardware sRGB decode, so the copy's encode chunk fires a second
+  time on already-encoded output.
+
+  A scoped route exists that E2d.1a did not try and that is **not** the reverted
+  HDR route: `EffectComposer`'s constructor takes a caller-supplied render target
+  (`constructor(renderer, renderTarget)`). Supplying an `UnsignedByteType` target
+  tagged `SRGBColorSpace` gives the intermediate buffer a real hardware decode
+  path, so the read decodes and the write encodes exactly once — no change to
+  `renderer.toneMapping`, no `OutputPass`, and fog stays authored in post-tonemap
+  space exactly as it is today. The cost is an 8-bit intermediate (banding), which
+  is the correct trade for an LDR chain. Untested; the invariant above is how to
+  test it.
 
 - **E2d.2 — the rest.** AO, vignette, film grain, colour grade, once the render
   path is settled and the harness has been repaired around it. Film grain is
