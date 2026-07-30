@@ -201,7 +201,7 @@ export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
-    DPR_CAP, ambience, composer, bloomPass, renderNow, setPostProcessing,
+    DPR_CAP, ambience, composer, renderNow, setPostProcessing,
   } = ctx;
 
   const consoleErrors = [];
@@ -281,6 +281,26 @@ export function createDebugApi(ctx) {
     await settleAt(px, pz, lookX, lookZ);
     const eyeY = world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT;
     return { chainage, side, distance, position: { x: px, y: eyeY, z: pz } };
+  }
+
+  // A ground-level, forward-and-down-looking pose ON the street centreline,
+  // not a bookmark's side-offset frontage shot — putting near-camera tarmac
+  // actually in frame, which no existing bookmark does. Added while chasing
+  // the wet-night payoff (E2c.3c -> E2d.1 -> E2d.1a); the payoff itself is
+  // settled — the torch's return on wet road peaks around 22/255, nowhere
+  // near any bloom threshold — but the pose is the only way to LOOK at
+  // torch-lit ground, so it stays. Evidence only: anything using it writes to
+  // captures/, never goldenDir.
+  async function torchGroundPose(chainage, forwardOffset = 4) {
+    const { point, tangent } = pointAtChainage(world.streetLine, chainage);
+    const px = point[0], pz = point[1];
+    const lookX = px + tangent[0] * forwardOffset;
+    const lookZ = pz + tangent[1] * forwardOffset;
+    const eyeY = world.groundHeight ? world.groundHeight(px, pz) + EYE_HEIGHT : EYE_HEIGHT;
+    // Aim well below eye height at the road surface ahead, not the horizon.
+    const lookY = world.groundHeight ? world.groundHeight(lookX, lookZ) + 0.3 : 0.3;
+    await settleAt(px, pz, lookX, lookZ, { lookY });
+    return { chainage, position: { x: px, y: eyeY, z: pz } };
   }
 
   async function gotoBookmark(id) {
@@ -426,6 +446,7 @@ export function createDebugApi(ctx) {
     // --- new test API ---
     goto,
     gotoBookmark,
+    torchGroundPose,
     face,
     setTime,
     setWeather,
@@ -438,7 +459,6 @@ export function createDebugApi(ctx) {
     DPR_CAP,
     ambience,
     composer,
-    bloomPass,
     renderNow,
     setPostProcessing,
     invariants,

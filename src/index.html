@@ -285,31 +285,6 @@
   #torch-toggle.active { opacity: 1; background: rgba(122, 71, 24, 0.55); }
   html.touch #torch-toggle { display: block; }
 
-  /* --- Post-processing toggle (E2d.1), same idiom as #torch-toggle, stacked
-     above it so the centre column stays clear for #npc-prompt. Mobile fallback
-     for the bloom composer pass — on by default, persisted like the torch. */
-  #post-toggle {
-    display: none;
-    position: fixed;
-    right: calc(20px + var(--safe-right));
-    bottom: calc(82px + var(--safe-bottom));
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(20, 22, 14, 0.55);
-    border: 1px solid rgba(150, 142, 108, 0.55);
-    color: #d8d4c0;
-    font-size: 20px;
-    line-height: 48px;
-    text-align: center;
-    z-index: 15;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    opacity: 0.45;
-  }
-  #post-toggle.active { opacity: 1; background: rgba(122, 71, 24, 0.55); }
-  html.touch #post-toggle { display: block; }
-
   /* --- Touch-mode tap-target sizing (E2e item 4) — desktop rules above are
      untouched so the 27 existing goldens can't move. --------------------- */
   html.touch #comic-close { width: 44px; height: 44px; }
@@ -345,7 +320,6 @@
 
 <div id="touch-forward" aria-hidden="true">▲</div>
 <button id="torch-toggle" type="button" aria-label="Toggle torch">🔦</button>
-<button id="post-toggle" type="button" aria-label="Toggle post-processing">✨</button>
 
 <div id="title-card">
   <div id="title-inner">
@@ -356,6 +330,6 @@
   </div>
 </div>
 
-<script src="dev-bundle.js?v=44a3f6c681"></script>
+<script src="dev-bundle.js?v=764e6ed42d"></script>
 </body>
 </html>

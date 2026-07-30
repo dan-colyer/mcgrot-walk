@@ -58,26 +58,7 @@ const TORCH_MIN_RATIO = 2.5; // E2b acceptance criterion 3
 const CLEAR_MORNING_HOUR = 8; // low sun — the one bookmark that must show a shadowed street side
 const CLEAR_MORNING_BOOKMARK = 'mid-805-far'; // curved corner, both street sides in frame (see E2b notes)
 const CLIP_CHANNEL_THRESHOLD = 250; // out of 255 — "clipped" per the brief
-// E2d.1: bloom pushes highlights by design, so this rose from the pre-bloom
-// 0.1% — measured 0.12-0.29% on clear/overcast/rain/drizzle at the shipped
-// bloom settings (strength 0.05, radius 0.2, threshold 0.95), so 0.4% covers
-// them with headroom without opening the gate wide. `haar` is a separate,
-// much larger ceiling below — see its own comment.
-const CLIP_PCT_MAX = 0.4;
-// haar's authored fog/sky sits within a few percent of the tonemapped ceiling
-// already (its own pre-bloom clip% is ~0, but mean frame brightness is far
-// closer to white than any other weather) — UnrealBloomPass's multi-mip blur
-// spreads any threshold-crossing source broadly, so on a frame already this
-// bright it pushes a large contiguous area over 250 regardless of how high
-// the threshold is tuned (measured 0.02-3.0% across 7 of 8 bookmarks at
-// threshold 0.95/strength 0.05; fascia-close is the outlier at 6.6%, a
-// close-in pose whose frame is almost entirely near-white curved-corner
-// facade under haar). Retuning haar's fog palette to sit further from the
-// ceiling would fix this properly but is out of scope for this milestone
-// (see docs/VALIDATION.md's E2d.1 section) — this ceiling is the honest,
-// measured accommodation (worst case + headroom) instead of silently
-// loosening CLIP_PCT_MAX for every weather to cover haar's worst case.
-const CLIP_PCT_MAX_HAAR = 8;
+const CLIP_PCT_MAX = 0.1; // % of pixels allowed at/above the threshold on all 3 channels
 // >10s of stepped dt so a setWeather() transition is guaranteed complete
 // before a golden capture — see WEATHER_TRANSITION_SECONDS in atmosphere.js.
 const WEATHER_SETTLE_FRAMES = 700;
@@ -601,30 +582,6 @@ async function main() {
       const torchOnShot = await page1.screenshot();
       const torchOnLum = meanLuminanceCenterCrop(PNG.sync.read(torchOnShot), 0.3, 0.3);
 
-      // E2d.1 acceptance criterion 9: the composer must be provably IN the
-      // render path — a bloom pass that silently stopped composing would
-      // look exactly like a healthy one otherwise. Same pose, same torch-on
-      // frame; only the post-processing toggle changes.
-      const postOffLum = await page1.evaluate(() => {
-        const dbg = window.__mcgrotDebug;
-        dbg.setPostProcessing(false);
-        dbg.renderNow();
-        return null;
-      }).then(async () => {
-        const shot = await page1.screenshot();
-        return meanLuminanceCenterCrop(PNG.sync.read(shot), 0.3, 0.3);
-      });
-      await page1.evaluate(() => {
-        const dbg = window.__mcgrotDebug;
-        dbg.setPostProcessing(true);
-        dbg.renderNow();
-      });
-      results.push({
-        name: 'post-processing is provably in the render path',
-        pass: torchOnLum !== postOffLum,
-        detail: `post-on mean luminance ${torchOnLum.toFixed(2)} vs post-off ${postOffLum.toFixed(2)} (same pose, torch on both)`,
-      });
-
       // Zero the torch and render directly (renderer.render, not stepFrame) —
       // the 'torch' and 'atmosphere' updaters both recompute the light's
       // intensity/distance from time-of-day every stepFrame call, so going
@@ -946,11 +903,10 @@ async function main() {
           const shot = await page.screenshot();
           const png = checkGolden(results, `golden-${weatherName}:${id}`, shot, join(goldenDir, `${id}-${weatherName}.png`));
           const clipPct = clippedHighlightPct(png);
-          const clipCeiling = weatherName === 'haar' ? CLIP_PCT_MAX_HAAR : CLIP_PCT_MAX;
           results.push({
             name: `clip-${weatherName}:${id}`,
-            pass: clipPct < clipCeiling,
-            detail: `${clipPct.toFixed(3)}% pixels clipped (${weatherName}, must be <${clipCeiling}%)`,
+            pass: clipPct < CLIP_PCT_MAX,
+            detail: `${clipPct.toFixed(3)}% pixels clipped (${weatherName}, must be <${CLIP_PCT_MAX}%)`,
           });
         }
       }

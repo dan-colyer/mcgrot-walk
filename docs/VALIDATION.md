@@ -243,16 +243,12 @@ tells you which check and why.
     style golden passes would reach for if the schedule's own multi-hour
     minimum interval (already far longer than any capture pass takes at the
     standing clock rate) ever stopped being enough on its own.
-26. **Post-processing is provably in the render path** (E2d.1) — at the same
-    torch-lit pose the torch A/B check already uses, a post-on frame
-    (`dbg.setPostProcessing(true)`) is asserted to differ from a post-off
-    frame (`dbg.setPostProcessing(false)`), both rendered via `dbg.renderNow()`
-    with the torch itself unchanged. This is the anti-dead-gate measure for
-    the composer itself — without it, a composer that silently stopped
-    composing would look exactly like a healthy one, and nothing else in the
-    suite would notice. Watched failing with `renderNow()` temporarily forced
-    to bypass the composer regardless of the toggle (on/off luminance
-    identical, as expected).
+*(There is deliberately no check 26. E2d.1's "post-processing is provably in
+the render path" gate was removed with bloom at the E2d.1a review — with
+`RenderPass` as the only pass, a post-on frame is pixel-identical to a post-off
+one by construction, so the gate could only ever fail. The composer is inert
+plumbing until E2d.0 lands a pass that legitimately changes the frame; the gate
+comes back then. See "The composer's colour management" below.)*
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -368,7 +364,82 @@ passes, though not load-bearing in practice — the schedule's own multi-hour
 minimum is already far longer than any capture pass takes at the standing
 clock rate (~0.2h for a full 8-bookmark pass at `WEATHER_SETTLE_FRAMES`).
 
-### The composer, and bloom (E2d.1)
+### The composer's colour management — why bloom is not in the build (E2d.1a)
+
+**Bloom was reverted at the E2d.1a review (2026-07-30). `src/main.js` ships
+`EffectComposer` with `RenderPass` and nothing else.** The section below
+describes E2d.1 as it was delivered and is kept because its containment
+reasoning and its HDR/fog analysis are still correct and still load-bearing;
+treat every statement in it about `UnrealBloomPass` as history.
+
+Why bloom came out — the measurement, taken against a **strength-forced-to-0
+control at the same settled state**, which is the control neither E2d.1 nor
+E2d.1a ran on `rain`:
+
+| weather | pose | hour | strength | post-off | shipped | strength 0 | artefact | bloom's own effect |
+|---|---|---|---|---|---|---|---|---|
+| overcast | mid-805-far | 13 | 0.050 | 58.83 | 58.99 | 58.91 | +0.1% | +0.1% |
+| clear | mid-805-far | 13 | 0.050 | 68.66 | 70.25 | 69.97 | +1.9% | +0.4% |
+| rain | mid-805-far | 13 | 0.064 | 23.86 | 34.04 | 34.04 | +42.6% | **0.0%** |
+| drizzle | mid-805-far | 13 | 0.056 | 41.43 | 47.91 | 47.91 | +15.7% | **0.0%** |
+| haar | skyline | 13 | 0.000 | 130.00 | 146.16 | 146.16 | +12.4% | 0.0% |
+| rain | mid-805-far | **22** | **0.350** | **1.11** | **7.07** | **7.07** | **+535.4%** | **0.0%** |
+
+The authored `bloomStrength` axis was inert: zero measurable effect at `rain`
+(including at 0.35, the highest value in its table), `drizzle` and `haar`. Every
+visible change came from a colour-management artefact, worst on the darkest
+weather — night rain brightened 6.4x — and all 39 goldens had been recaptured to
+enshrine it.
+
+**The mechanism, in two layers.** E2d.1a correctly found the first:
+`UnrealBloomPass` copies its input to the screen through an internal
+`MeshBasicMaterial` (`_basic`), which defaults `toneMapped: true` and so re-ran
+ACES on a buffer `RenderPass`'s materials had already tonemapped. But
+`_basic.toneMapped = false` *moved* the damage rather than reducing it: the
+double-ACES had been compressing highlights, which is why `haar` (brightest)
+suffered worst before; removing it left the double-sRGB-**encode** unopposed,
+and sRGB encoding lifts shadows hardest, so the worst-hit weather flipped from
+the brightest to the darkest. `haar` improved from +29% to +12%; `rain` went from
+about +1% to +42.6% by day.
+
+**The invariant this all failed, and the one E2d.0 must satisfy:**
+
+> with every pass's contribution forced to zero, the composed frame must be
+> **bit-identical** to `renderer.render(scene, camera)`.
+
+`RenderPass` alone satisfies it — measured 0.0000% across three poses and two
+weathers — because as the last enabled pass it renders straight to the canvas
+and no intermediate buffer is ever read back. It breaks the moment any pass
+composites *from* a buffer, because `EffectComposer`'s default render target is
+`HalfFloatType`, which has no hardware sRGB decode path, so the copy's encode
+chunk fires a second time on already-encoded output. Setting
+`.texture.colorSpace` does not help: GL cannot sRGB-decode a float format
+whatever the tag says.
+
+The untried, scoped route — **not** the reverted HDR route — is that
+`EffectComposer`'s constructor takes a caller-supplied target
+(`constructor(renderer, renderTarget)`). An `UnsignedByteType` target tagged
+`SRGBColorSpace` has a real hardware decode path, so the read decodes and the
+write encodes exactly once, with no change to `renderer.toneMapping`, no
+`OutputPass`, and fog left authored in post-tonemap space as it is today. The
+cost is an 8-bit intermediate (banding), the correct trade for an LDR chain.
+
+**Two gate lessons worth keeping.** First, a contribution gate written as
+post-on vs post-off measures the *artefact plus the effect*, not the effect —
+E2d.1a's per-weather gate passed **because** the bug was present and would have
+failed had anyone fixed it. An inverted gate is worse than a dead one. Second,
+`clip%` cannot see a brightness lift on a frame that never reaches the ceiling,
+and `pixelmatch` at `threshold: 0.1` is nearly blind to broad uniform shifts (a
+pose moved 34% in mean luminance while reporting 0.009% pixel diff). Neither is
+a brightness measurement; isolate against a zeroed control instead.
+
+**Settled, and not worth revisiting:** the torch's specular return on wet road
+peaks around 22/255 and never approaches the 0.95 bloom threshold at any
+strength from 0 to 10x. `dbg.torchGroundPose()` (kept in `src/debug.js`) is the
+only pose that puts near-camera torch-lit tarmac in frame; it confirmed this
+directly. Bloom was never going to make the wet night read.
+
+### The composer, and bloom (E2d.1 — historical, bloom since reverted)
 
 `EffectComposer` lands in `src/main.js`, carrying `RenderPass` then
 `UnrealBloomPass`. Landed as two separate commits, per the containment plan:

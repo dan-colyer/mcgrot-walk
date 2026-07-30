@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { loadAssets } from './assets.js';
 import { buildWorld, createPlayerTorch } from './world.js';
 import { createControls } from './controls.js';
@@ -31,31 +30,6 @@ import { createDebugApi } from './debug.js';
 
 const DPR_CAP = 2;
 
-// E2d.1 bloom route: LDR, not HDR — tried both, measured both. See
-// docs/VALIDATION.md's E2d.1 section for the full account; summary here.
-//
-// The HDR route (renderer.toneMapping = NoToneMapping globally, materials
-// render raw linear values, one ACES curve applied at the very end via an
-// OutputPass) is the textbook-correct multi-pass composer setup, and was
-// tried first. It broke atmosphere's fog: `fog_fragment` runs AFTER
-// `tonemapping_fragment` in three's material shader chunk order (see
-// meshphysical.glsl.js), so every fog colour in src/atmosphere.js was
-// authored and tuned assuming it blends in POST-tonemap space. Moving that to
-// pre-tonemap (raw HDR) space changed what the SAME authored fog values
-// render as, independent of bloom entirely — measured 56-72% pixel diff on
-// every `haar` golden (thick fog dominates the frame there) with bloom fully
-// disabled. Retuning fog for 5 weathers x many hour stops is a different,
-// much bigger project, not this milestone.
-//
-// So: renderer.toneMapping stays ACESFilmicToneMapping, as before — materials
-// keep tonemapping+encoding exactly as they did pre-E2d.1, fog included, and
-// an OutputPass is deliberately NOT in this chain: adding one back (even
-// forcing NoToneMapping for just its own draw, to avoid a double ACES
-// application) re-applies the sRGB encode on top of output the materials
-// already encoded themselves, measured as a ~4x brightening/blowout. Bloom's
-// own last-pass renderToScreen path already matches a direct renderer.render
-// exactly when it contributes nothing (verified) — no fixup pass needed.
-
 async function main() {
   const canvas = document.getElementById('scene');
   // preserveDrawingBuffer (localhost only) lets a manually-driven stepFrame render
@@ -84,13 +58,10 @@ async function main() {
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
   scene.add(camera); // needed so the camera-attached torch light (below) renders
 
+  // E2d.1: RenderPass only for now (a provable no-op — see docs/VALIDATION.md).
+  // Post-processing effects land as additional passes in later milestones.
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  // Threshold/strength/radius picked against the daytime clip-* gates, which
-  // bind much tighter than the wet-night pose does — see docs/VALIDATION.md's
-  // E2d.1 section for the sweep and the `haar`-specific ceiling this still needs.
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.05, 0.2, 0.95);
-  composer.addPass(bloomPass);
   let postEnabled = true; // mobile fallback toggle, see setPostProcessing below
 
   const assets = await loadAssets();
@@ -174,7 +145,6 @@ async function main() {
   createTitleCard({
     controls,
     torch,
-    setPostProcessing,
     onEnter: () => {
       // E2e.1 item 7: one AudioContext shared between the ambience bed and
       // the proximity-audio listener, both constructed inside THIS gesture.
@@ -264,9 +234,6 @@ async function main() {
   }
   function renderNow() {
     renderer.info.reset();
-    // renderer.toneMapping stays ACESFilmicToneMapping either way (see the
-    // LDR-route note above the class definition) — the post-off path is just
-    // the old direct render, unchanged.
     if (postEnabled) composer.render(); else renderer.render(scene, camera);
   }
   function runFrame(dt, t) {
@@ -305,7 +272,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
-      sky, atmosphere, torch, DPR_CAP, ambience, composer, bloomPass,
+      sky, atmosphere, torch, DPR_CAP, ambience, composer,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,
