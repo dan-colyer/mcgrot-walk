@@ -1073,6 +1073,116 @@ moment available.* Its own phase-sized piece of work, not a milestone.
   rails stay dead. Pick one; a working service and a ghost of the old one can
   coexist if the ghost runs at night.
 
+## E7 — The Walk, Shared (ship-readiness, then presence)
+
+*Dan's call, 2026-07-31. The question was "should this be multiplayer, and is
+Three.js still the right engine for that?" Answer: yes to sharing, and the engine
+was never the constraint — hosting and payload are.*
+
+### The engine decision (settled; do not relitigate)
+
+**Stay on vanilla Three.js.** Multiplayer is not a rendering problem. Three.js is
+a renderer and has no netcode; neither do Babylon or PlayCanvas's engine. Everyone
+doing browser multiplayer bolts a separate transport layer on top, and that layer
+is ~600 lines here. Nothing in the alternatives repays a rewrite of `src/`:
+
+| Option | Verdict |
+|---|---|
+| Three.js (stay) | **Chosen.** Netcode is additive either way |
+| Babylon.js | Full rewrite of ~15 render modules, no gain |
+| PlayCanvas | Editor-first workflow fights AI-driven codegen; netcode still BYO |
+| Godot 4 web | Multi-MB wasm, awkward web audio, single-threaded export needed to dodge cross-origin header requirements Pages can't set |
+| Unity WebGL | Heavy download, officially unsupported on mobile browsers |
+| Unreal | Web means Pixel Streaming — a GPU per concurrent user |
+| Roblox / Rec Room | Loses the artifact, the comics pipeline and ownership |
+
+**Two Three.js multiplayer frameworks were evaluated and rejected** (2026-07-31):
+
+- **Hyperfy** — GPL-3.0, 295 stars, default branch last moved 2025-12-18, last
+  tagged release v0.10.0 (April 2025), self-described alpha. It is a platform you
+  move into, not a library you add: worlds are built from its own app/component
+  system over PhysX, so the procedural street, merged OSM geometry, seeded PRNG
+  and terrain authority would all be rewritten as Hyperfy apps. Viral licence on
+  top. No.
+- **networked-aframe** — MIT, 1.2k stars, genuinely well maintained (pushed
+  2026-07-28, release 0.14.3 March 2026). Rejected on architecture only: it syncs
+  **A-Frame entities** via A-Frame's declarative component schema and cannot be
+  pointed at a raw Three.js `Object3D`. Adopting it means inverting the whole
+  imperative/merged-geometry codebase.
+  **Worth an hour of reading before writing `net.js`** — it has already solved
+  remote-transform interpolation (the thing that separates "works" from "feels
+  good"), the entity-ownership model, and the swappable transport-adapter pattern.
+  Take the patterns, not the dependency.
+
+**The determinism rule is the asset here.** Seeded PRNG order is already sacred
+for the smoke rig; the payoff is that every client generates an identical street
+from the same seed, so *no world state goes on the wire* — only `{x, z, yaw}` per
+player. The paper-doll rig in `src/npcs.js` is already the remote-avatar renderer:
+a peer is an NPC whose transform arrives from a socket instead of a walk cycle.
+
+**Sequencing rule:** E7 is a phase, not a milestone, and it does **not** jump E6a.
+Walking through each other is fine; walking through buildings while someone
+watches is what gets screenshotted.
+
+### E7a — Ship-readiness (do this regardless of multiplayer)
+
+*The actual prerequisite for sharing the thing anywhere. Not blocked by E6.*
+
+- **The deployed payload is 87.3 MB** — measured on `gh-pages` 2026-07-31: 588
+  files, seven shopfront atlas pages at ~1.7 MB each, plus audio. GitHub Pages'
+  documented soft bandwidth limit is 100 GB/month, and its remedy for breaching
+  it is to throttle or pull the site. A front-page Reddit post exhausts the month
+  in an afternoon.
+- **Move static hosting to Cloudflare Pages** (unmetered bandwidth on the free
+  tier, same static deploy, repo stays public). This also puts E7b's WebSocket
+  endpoint on the same origin and the same account — no CORS, one vendor, one
+  deploy. Amends the standing hosting constraint below.
+- **Measure and cut first-load bytes.** 87.3 MB is the total; what is eager
+  versus lazy has *not* been measured, and that number is the one that matters.
+  Establish it, then set a budget and enforce it in `scripts/smoke.mjs` alongside
+  the draw-call budget.
+- **Mobile frame-rate pass on real hardware.** Reddit traffic is mostly phones.
+  Touch look and tap-to-interact already exist (`src/controls.js`,
+  `src/interact.js`) and the smoke rig has a mobile pass, so input is done — what
+  is untested is 995 buildings plus 400 NPCs on a mid-range Android over mobile
+  data. Headless Chromium at a phone viewport is not a phone GPU (see E2's same
+  residual); this needs a device in a hand.
+
+### E7b — Presence
+
+- **Transport: a Cloudflare Durable Object**, one per world instance. A Durable
+  Object is a serverless Worker that is globally unique by name
+  (`getByName("leith-walk")` always routes to the same instance) and keeps memory
+  between requests — so the peer list is a plain `Map` on `this`. No VPS, no
+  process to keep alive.
+- **Use the hibernation API** (`ctx.acceptWebSocket()`, not `server.accept()`):
+  Cloudflare evicts the object during quiet periods while leaving sockets open,
+  so idle wall-clock is not billed. Reclaim sockets via `ctx.getWebSockets()` in
+  the constructor. This is what keeps a game that sits at zero players most of
+  the day effectively free.
+- **Budget:** Durable Objects run on the Workers Free plan — 100k requests/day,
+  13,000 GB-s/day, and incoming WebSocket messages bill at 20:1 (so 100k requests
+  ≈ 2M messages/day ≈ ~55 player-hours/day at 10 Hz). Levers if that binds: drop
+  to 5 Hz (invisible with interpolation), and send nothing while the player is
+  stationary — someone standing still listening to a comic should cost zero.
+  Workers Paid puts any plausible scale in the noise.
+- **`src/net.js`** — client transport, ~10 Hz send, interpolated receive. Must
+  **fail silently to a zero-peer world**: the single-file `dist/mcgrot-walk.html`
+  is the shareable artifact and has to keep working with no network at all.
+- **`src/avatars.js`** — remote peers on the existing NPC paper-doll rig. Draw
+  calls are 27–80 at every bookmark except `skyline` (954), so there is headroom;
+  keep peers out of `computeGeomHash` exactly as leithers are.
+- **No chat, and no user-entered names.** Moderating user text is a whole job
+  nobody has volunteered for. Assign preset Leither names — funnier anyway.
+
+### E7c — Shared moments
+
+*The bit that makes having done it worthwhile.*
+
+- Peers visibly gathered around the same reader, hearing the same comic.
+- A peer's speech bubble when they trigger a comic — verbatim rule holds.
+- Feeds E4: a leither's stance reacting to a *crowd* of players, not just one.
+
 ## E∞ — The Delight Ledger (continuous)
 
 A maintained list in `docs/DELIGHTS.md` of second- and third-pass discoveries.
@@ -1085,8 +1195,12 @@ ghost on the dead rails.
 
 ## Standing constraints
 
-- Vanilla Three.js, GitHub Pages (public repo, `main` = source, Pages serves
-  `gh-pages`). Multi-file dist; ~1GB headroom. No engine rebuild.
+- Vanilla Three.js. **The engine question is settled — see E7.** No engine
+  rebuild, and no multiplayer framework: netcode is additive, ~600 lines.
+- Hosting: public repo, `main` = source. GitHub Pages serves `gh-pages` today
+  (multi-file dist, ~1GB size headroom) — but the binding limit is *bandwidth*,
+  100 GB/month soft, against an 87.3 MB payload. **E7a moves this to Cloudflare
+  Pages**; until it does, treat any wide share as capable of taking the site down.
 - Determinism: seeded PRNG order is sacred; additions via `hash32` only.
 - Secrets: `.env.local` never reaches the repo; secret-scan before every push.
 - Verbatim garbled comic text is sacred — never corrected, anywhere.
