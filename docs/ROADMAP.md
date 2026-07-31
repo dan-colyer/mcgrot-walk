@@ -34,7 +34,12 @@ Decisions taken:
 ## Standing trickles (daily, near-zero cost)
 
 - **TTS:** `set -a; source .env.local; set +a; node scripts/generate-tts.mjs`
-  (~12–20/day before free-tier 429s; resumable; completed clips skip). 93/418.
+  (~14/day measured before free-tier 429s; resumable; completed clips skip; the
+  run now stops on the first quota error rather than grinding the remainder).
+  **117/418 voiced, 124/418 transcribed** (2026-07-31). Runs unattended at 09:30
+  via `scripts/daily-tts.sh` + `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`.
+  Transcription, not the API, is the bottleneck: 294 comics still have no script,
+  and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`).
 - **Handmade shopfronts:** Dan feeds real-shop reference photos to ChatGPT,
   drops results in `assets/shopfronts/handmade/`, ingest script does the rest.
   Wishlist: `docs/shopfront-wishlist.md`.
