@@ -1,0 +1,107 @@
+{
+  "batchId": "batch-5",
+  "entries": [
+    {
+      "id": "37a51ef9",
+      "title": "McGrot — The Daily Bishop",
+      "promptFile": "37a51ef9.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Senga Strang",
+        "blurb": "Deliverer o' the Last Paper Round",
+        "voiceName": "Leda",
+        "accent": "sharp Leith newsagent bark with a thin Morningside veneer she cannot hold for more than a sentence",
+        "build": {
+          "height": 1.55,
+          "girth": 0.6,
+          "headScale": 1.35
+        }
+      }
+    },
+    {
+      "id": "37d5a9ae",
+      "title": "McGrot — Main Character Energy",
+      "promptFile": "37d5a9ae.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Boaby Stobie",
+        "blurb": "Continuity Announcer tae the Damned",
+        "voiceName": "Orus",
+        "accent": "Leith vowels dressed up in a soft old-BBC-Scotland announcer polish that keeps slipping",
+        "build": {
+          "height": 2.0,
+          "girth": 1.5,
+          "headScale": 1.5
+        }
+      }
+    },
+    {
+      "id": "38edcb41",
+      "title": "McGrot — The Bonspiel of Leith",
+      "promptFile": "38edcb41.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Isa Struthers",
+        "blurb": "Caretaker o' the Drowned Rink",
+        "voiceName": "Aoede",
+        "accent": "broad Leith docker's growl, hard consonants, breath steaming",
+        "build": {
+          "height": 1.6,
+          "girth": 1.5,
+          "headScale": 1.4
+        }
+      }
+    },
+    {
+      "id": "39199870",
+      "title": "McGrot — The Archive Vault",
+      "promptFile": "39199870.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Wilma Skaithe",
+        "blurb": "Clerk o' Records Nobody Requested",
+        "voiceName": "Callirrhoe",
+        "accent": "papery Leith clerk's mutter, precise and clipped",
+        "build": {
+          "height": 1.65,
+          "girth": 0.7,
+          "headScale": 1.25
+        }
+      }
+    },
+    {
+      "id": "39dd1c74",
+      "title": "McGrot — The Monk of the Grot Order",
+      "promptFile": "39dd1c74.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Peem Sloan",
+        "blurb": "Pilgrim o' the Unnamed Road",
+        "voiceName": "Autonoe",
+        "accent": "soft Highland lilt worn thin, with long reverent vowels",
+        "build": {
+          "height": 1.85,
+          "girth": 0.55,
+          "headScale": 1.3
+        }
+      }
+    },
+    {
+      "id": "3ad6421b",
+      "title": "McGrot — Into the Mirrorpot",
+      "promptFile": "3ad6421b.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Rena Stagg",
+        "blurb": "Proprietrix o' the Bottomless Cup",
+        "voiceName": "Enceladus",
+        "accent": "fast, clattering Dundonian, vowels flattened, consonants fired off",
+        "build": {
+          "height": 1.7,
+          "girth": 1.0,
+          "headScale": 1.45
+        }
+      }
+    }
+  ]
+}

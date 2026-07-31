@@ -18,10 +18,16 @@ transcribing the source image is the expensive step; those files are complete an
 in the house format. Reuse them as-is and spend your effort on the items that have
 none.
 
-You still need to write the batch JSON covering **every** item in your batch,
-including the ones already transcribed — NPC name, blurb, `voiceName`, accent and
-build live only in that file, and nothing downstream works without it. Keep the
-`voiceStart` rotation running across the whole batch in assignment order, not just
-the items you transcribed yourself.
+`batch-5.json`, `batch-7.json` and `batch-8.json` **already exist and are
+partial** — they cover only the items above, so those comics are live in the
+catalog and their audio is rendered. **Extend** them with your remaining items;
+do not overwrite them, or you will orphan finished audio.
+
+The `voiceName` rotation is already assigned for the existing entries by
+assignment index (`voiceStart + index`, wrapping at 30). Continue that same
+indexing for the items you add, so no two NPCs in a batch share a voice.
+
+`batch-6.json` does not exist — batch 6 has nothing transcribed at all, so write
+it from scratch in the normal way.
 
 Delete this file once batches 5-8 are complete.

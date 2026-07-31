@@ -47,7 +47,16 @@ for (const bf of batchFiles) {
     c.promptFile = e.promptFile;
     c.audio = `audio/${c.id}.mp3`;
     c.sparse = !!e.sparse;
-    c.npc = { name, blurb: e.npc.blurb, voiceName: e.npc.voiceName, accent: e.npc.accent, build: e.npc.build };
+    // MERGE into the existing npc, never replace it. Fields assigned by later
+    // pipeline stages — `face` above all (scripts/gen-faces.mjs, and the head
+    // texture every paper-doll NPC renders) — live on this object and are NOT
+    // present in the batch JSON. A wholesale replace silently destroyed all 100
+    // face assignments the first time this ran unattended from the daily job.
+    // Batch fields win where they overlap; anything else already there survives.
+    c.npc = {
+      ...(c.npc || {}),
+      name, blurb: e.npc.blurb, voiceName: e.npc.voiceName, accent: e.npc.accent, build: e.npc.build,
+    };
     merged++;
   }
 }

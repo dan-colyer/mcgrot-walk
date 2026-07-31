@@ -99,7 +99,28 @@
     "330dfaa0",
     "349c1790",
     "36d0f759",
-    "378a560c"
+    "378a560c",
+    "37a51ef9",
+    "37d5a9ae",
+    "38edcb41",
+    "39dd1c74",
+    "3ad6421b",
+    "4f601044",
+    "4fe127d1",
+    "50f0b324",
+    "51256a62",
+    "51834c74",
+    "52ce12ef",
+    "53088e97",
+    "5d49e093",
+    "5eeec173"
   ],
-  "failed": {}
+  "failed": {
+    "39199870": "no audio in response (got text instead)",
+    "5c5f0c9c": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex",
+    "5d715a3c": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex",
+    "5f1b8828": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex",
+    "6075cdd0": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex",
+    "60ee906a": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+  }
 }

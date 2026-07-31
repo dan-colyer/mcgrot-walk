@@ -50,6 +50,13 @@ function pcmToWav(pcm) {
   return Buffer.concat([h, pcm]);
 }
 
+// A 429 / quota / billing / permission refusal, as opposed to a transient
+// network blip or the model handing back text instead of audio — the first is
+// worth stopping the run for, the others are worth retrying.
+function isQuotaError(msg) {
+  return /\b429\b|quota|billing|permission|\b403\b/i.test(msg);
+}
+
 async function tts(text, voiceName, model) {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
@@ -99,18 +106,30 @@ for (const [i, comic] of targets.entries()) {
     catch (e) {
       err = e.message;
       console.warn(`[${comic.id}] attempt ${attempt}/4 (${model}) failed: ${err}`);
+      // Retrying a daily-quota 429 is pointless — the allowance resets tomorrow,
+      // not in nine seconds. Give up on this clip immediately and let the
+      // caller below stop the run.
+      if (isQuotaError(err)) break;
       if (attempt < 4) await new Promise(r => setTimeout(r, 3000 * attempt));
     }
   }
   if (!pcm) {
     fail++; progress.failed[comic.id] = err;
     writeFileSync(progressPath, JSON.stringify(progress, null, 2));
-    console.error(`[${comic.id}] FAILED after 4 attempts`);
-    // A 429/billing error on the very first clip means the key can't do paid TTS — stop early.
-    if (i === 0 && /429|billing|quota|permission|403/i.test(err)) {
-      console.error('\nFirst clip failed with a quota/billing/permission error. Stopping.\n' +
-        'Likely the AI Studio key needs billing enabled (UK = paid tier). Fix that, then rerun.');
-      process.exit(2);
+    console.error(`[${comic.id}] FAILED`);
+    // Stop the whole run on a quota error, wherever it lands. The free daily
+    // allowance runs out mid-run as a matter of course (measured: ~14 clips on
+    // 2026-07-31), and every clip after that point fails identically — the old
+    // "only bail on clip 0" rule meant a run that hit the ceiling ground through
+    // the remainder at 4 attempts each, achieving nothing but noise in the log.
+    if (isQuotaError(err)) {
+      console.error(
+        i === 0
+          ? '\nFirst clip failed with a quota/billing/permission error. Stopping.\n' +
+            'Likely the AI Studio key needs billing enabled (UK = paid tier). Fix that, then rerun.'
+          : `\nDaily quota reached after ${ok} clip(s). Stopping — the rest would fail identically.\n` +
+            'Completed clips are saved; rerun tomorrow to continue.');
+      break;
     }
     continue;
   }
