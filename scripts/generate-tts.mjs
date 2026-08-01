@@ -123,10 +123,17 @@ for (const [i, comic] of targets.entries()) {
     // "only bail on clip 0" rule meant a run that hit the ceiling ground through
     // the remainder at 4 attempts each, achieving nothing but noise in the log.
     if (isQuotaError(err)) {
+      // "Failed on clip 0" does NOT mean the key is broken. The daily job runs
+      // at 09:30 and usually spends the whole free allowance, so a later manual
+      // run legitimately starts already at the ceiling and dies on its first
+      // clip. Say both, rather than sending anyone to the billing console over
+      // a quota that resets by itself tomorrow.
       console.error(
         i === 0
           ? '\nFirst clip failed with a quota/billing/permission error. Stopping.\n' +
-            'Likely the AI Studio key needs billing enabled (UK = paid tier). Fix that, then rerun.'
+            "If the daily job has already run today, this is just today's free allowance\n" +
+            'being spent — rerun tomorrow. If no clip has rendered for days, the AI Studio\n' +
+            'key may need billing enabled (UK = paid tier).'
           : `\nDaily quota reached after ${ok} clip(s). Stopping — the rest would fail identically.\n` +
             'Completed clips are saved; rerun tomorrow to continue.');
       break;
