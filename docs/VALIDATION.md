@@ -766,10 +766,22 @@ check 15 above: the cap itself is applied correctly after a resize.
 `scripts/build-readings.mjs` bakes `assets/readings.json` offline (phrase text
 from `scripts/tts-prompts/<id>.txt`, timing anchored via `ffprobe`/`ffmpeg
 silencedetect`) — it is not part of the smoke run itself, but `smoke.mjs`
-gates the checked-in result. Four checks, all in `scripts/smoke.mjs`:
+gates the checked-in result. Five checks, all in `scripts/smoke.mjs`:
 
+- **5e — phrase times monotonic and non-zero, across the whole corpus.**
+  All 123 comics, not a sample: every phrase must start no earlier than its
+  predecessor and last a non-zero time. Cheap, absolute, and it guards the
+  one failure class 5a is structurally blind to — 5a scores boundaries
+  against the audio, so it cannot see what ORDER they arrive in. 25 of 123
+  comics originally shipped with an inverted boundary (`snapBoundaries`
+  pulling a boundary behind an unsnapped predecessor); the runtime highlight
+  stalled and then jumped, and 5a scored 0.965 throughout. Verified by
+  injecting an inversion into one comic: 5e went red, 5a stayed green at
+  0.9599 — which is the whole argument for keeping both.
 - **5a — phrase alignment (opposed pair).** Pure Node, no browser: over a
-  fixed sample of the first 12 comic ids (sorted) in `readings.json`, decodes
+  fixed 12-comic sample chosen by FNV hash of the id — not `sort().slice()`,
+  which drew every id beginning "0", a systematic slice of the corpus rather
+  than a spread of it — decodes
   each mp3 to raw PCM via `ffmpeg -f f32le` and computes its own RMS envelope
   (50ms window / 25ms hop) — deliberately NOT calling `silencedetect` again,
   or the gate would just be re-asserting the bake's own segmentation. Scores
@@ -787,6 +799,14 @@ gates the checked-in result. Four checks, all in `scripts/smoke.mjs`:
   a bug that always returns 1). All three numbers are logged every run
   (`console.log`, not just the pass/fail row) — they're the evidence, not
   just the verdict.
+
+  **Read the score for what it is.** The bake snaps each boundary onto the
+  nearest silence-gap midpoint, so a snapped boundary sits in a trough *by
+  construction* and the shipped score is close to tautological. It still
+  discriminates against both controls, so it is not a dead gate — but it
+  measures "boundaries land in pauses", NOT "the right phrase is highlighted
+  at the right time". A misassignment (right pause, wrong phrase) scores just
+  as well. Nothing here substitutes for listening to a reading.
 - **5b — one voice (opposed pair).** Stands the camera exactly at `npcs[0]`'s
   position — the ~1600m street split across 124 vendors (every catalog
   vendor has audio) puts several neighbours within `PLAY_RANGE` naturally, no

@@ -84,9 +84,15 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     if (!currentPhrases || !openNpc) return;
     const elapsed = proximityAudio.getElapsed(openNpc);
     if (elapsed == null) return;
+    // Full scan, no early break: breaking on the first phrase whose start is
+    // still ahead assumes strictly non-decreasing starts, and when the bake
+    // once emitted an inverted boundary that assumption froze the highlight
+    // mid-reading. The list is a couple of dozen entries — scanning all of it
+    // costs nothing and cannot be tripped by bad data. (The bake now
+    // guarantees monotonicity too; this is the second lock, not the first.)
     let idx = -1;
     for (let i = 0; i < currentPhrases.length; i++) {
-      if (elapsed >= currentPhrases[i].start) idx = i; else break;
+      if (elapsed >= currentPhrases[i].start) idx = i;
     }
     if (idx === currentPhraseIdx) return;
     if (currentPhraseIdx >= 0 && currentPhraseEls[currentPhraseIdx]) {

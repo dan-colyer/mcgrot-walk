@@ -412,7 +412,45 @@ async function main() {
         results.push({ name: 'E5a: phrase alignment beats flat + shifted controls', pass: false, detail: 'assets/readings.json missing — run scripts/build-readings.mjs' });
       } else {
         const readings = JSON.parse(readFileSync(readingsPath, 'utf8'));
-        const ids = Object.keys(readings).sort().slice(0, ALIGN_SAMPLE_IDS_COUNT);
+        const allIds = Object.keys(readings).sort();
+
+        // --- corpus-wide invariants, all 123 comics, not the 12-comic sample
+        // ---
+        // Phrase times must be non-decreasing and every phrase must last a
+        // non-zero time. This is an absolute invariant, free to check, and it
+        // catches a whole failure class the troughness score below cannot see:
+        // the alignment scores boundaries against the audio, so it is blind to
+        // the ORDER they come in. 25 of 123 comics once shipped with an
+        // inverted boundary (the runtime highlight stalled, then jumped) at a
+        // troughness of 0.965 — that gate passed throughout.
+        const orderBad = [];
+        for (const id of allIds) {
+          const ph = readings[id].phrases || [];
+          for (let i = 0; i < ph.length; i++) {
+            if (i > 0 && ph[i].start < ph[i - 1].start) { orderBad.push(`${id}[${i}]: start ${ph[i].start} < previous ${ph[i - 1].start}`); break; }
+            if (ph[i].end <= ph[i].start) { orderBad.push(`${id}[${i}]: zero-length (${ph[i].start})`); break; }
+          }
+        }
+        results.push({
+          name: 'E5a: phrase times are monotonic and non-zero across the whole corpus',
+          pass: orderBad.length === 0,
+          detail: orderBad.length ? `${orderBad.length}/${allIds.length} comics bad — ${orderBad.slice(0, 3).join('; ')}` : `${allIds.length} comics clean`,
+        });
+
+        // Sample by hash, not by sort order: `.sort().slice(0, 12)` drew every
+        // id beginning "0", which is a systematic slice of the corpus rather
+        // than a spread of it — the two comics with defective audio tails both
+        // sat outside it. Deterministic (hash32 of the id), so the sample is
+        // the same every run.
+        const ids = allIds
+          .map((id) => {
+            let h = 0x811c9dc5;
+            for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return { id, h: h >>> 0 };
+          })
+          .sort((a, b) => a.h - b.h)
+          .slice(0, ALIGN_SAMPLE_IDS_COUNT)
+          .map((x) => x.id);
         let shippedSum = 0, flatSum = 0, shiftedSum = 0, n = 0;
         for (const id of ids) {
           const reading = readings[id];

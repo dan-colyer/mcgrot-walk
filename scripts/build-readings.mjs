@@ -183,24 +183,65 @@ function gapMidpoints(runs) {
 // order (each gap used at most once, never out of sequence) and only within
 // SNAP_MAX_DIST — a boundary with no nearby gap (more phrases than gaps, so
 // several must share one run) is left at its raw proportional position.
+//
+// Boundaries out MUST be non-decreasing. Snapping alone does not guarantee
+// that: a snapped boundary can land BEHIND an unsnapped predecessor left at
+// its raw position (the raw series is non-decreasing, the gap series is
+// non-decreasing, but interleaving the two is not). That inversion shipped in
+// 25 of 123 comics and stalled the read-along highlight — the runtime picks
+// the last phrase whose start has passed, so a start that goes backwards
+// freezes the highlight and then jumps it forward. Two defences here: refuse
+// a snap that would move a boundary behind its predecessor, and clamp what
+// remains. src/interact.js is independently hardened against bad data.
 const SNAP_MAX_DIST = 3; // seconds
 function snapBoundaries(rawTimes, gaps) {
   const out = rawTimes.slice();
   let gi = 0;
+  let prev = -Infinity;
   for (let i = 0; i < rawTimes.length; i++) {
     const remaining = rawTimes.length - i;
     const maxIdx = gaps.length - remaining; // leave enough gaps for the boundaries after this one
-    if (maxIdx < gi) break;
-    let bestIdx = -1, bestDist = Infinity;
-    for (let idx = gi; idx <= maxIdx; idx++) {
-      const d = Math.abs(gaps[idx] - rawTimes[i]);
-      if (d < bestDist) { bestDist = d; bestIdx = idx; }
-      else if (gaps[idx] > rawTimes[i]) break; // sorted ascending — past the nearest point, distance only grows
+    let snapped = false;
+    if (maxIdx >= gi) {
+      let bestIdx = -1, bestDist = Infinity;
+      for (let idx = gi; idx <= maxIdx; idx++) {
+        const d = Math.abs(gaps[idx] - rawTimes[i]);
+        if (d < bestDist) { bestDist = d; bestIdx = idx; }
+        else if (gaps[idx] > rawTimes[i]) break; // sorted ascending — past the nearest point, distance only grows
+      }
+      // `gaps[bestIdx] >= prev` is the anti-inversion rule: a snap that would
+      // go backwards is declined outright, leaving the raw position (which is
+      // already monotonic) rather than corrupting the sequence.
+      if (bestIdx >= 0 && bestDist <= SNAP_MAX_DIST && gaps[bestIdx] >= prev) {
+        out[i] = gaps[bestIdx];
+        gi = bestIdx + 1;
+        snapped = true;
+      }
     }
-    if (bestIdx >= 0 && bestDist <= SNAP_MAX_DIST) {
-      out[i] = gaps[bestIdx];
-      gi = bestIdx + 1;
-    }
+    if (!snapped) out[i] = Math.max(rawTimes[i], prev);
+    prev = out[i];
+  }
+  return out;
+}
+
+// Declining an inverting snap (above) leaves the boundary clamped onto its
+// predecessor, which collapses that phrase to zero length — and a zero-length
+// phrase is never the "current" one at runtime, so it would sit in the panel
+// and never light up. Spread any collapsed run evenly across the interval
+// between the last distinct boundary and the next one, so every phrase gets a
+// real, if short, turn. Deterministic and order-preserving.
+function spreadCollapsed(boundaries, endTime) {
+  const out = boundaries.slice();
+  for (let i = 0; i < out.length; i++) {
+    const lo = i > 0 ? out[i - 1] : 0;
+    if (out[i] > lo) continue;
+    let j = i;
+    while (j < out.length && out[j] <= lo) j++; // j > i guaranteed: out[i] <= lo
+    const hi = j < out.length ? out[j] : endTime;
+    if (hi <= lo) continue; // no room to spread into — leave the clamp alone
+    const n = j - i + 1;
+    for (let k = i; k < j; k++) out[k] = lo + ((k - i + 1) * (hi - lo)) / n;
+    i = j - 1;
   }
   return out;
 }
@@ -241,13 +282,16 @@ function scheduleOverRuns(phrases, runs) {
     cum += weights[i];
     rawBoundaries.push(spokenToReal((cum / totalWeight) * totalSpoken));
   }
-  const boundaries = snapBoundaries(rawBoundaries, gapMidpoints(runs));
+  const boundaries = spreadCollapsed(snapBoundaries(rawBoundaries, gapMidpoints(runs)), spokenToReal(totalSpoken));
 
   const out = [];
   let start = 0;
   for (let i = 0; i < phrases.length; i++) {
-    const end = i < boundaries.length ? boundaries[i] : spokenToReal(totalSpoken);
-    out.push({ text: phrases[i].text, kind: phrases[i].kind, start: round3(start), end: round3(Math.max(end, start)) });
+    const end = Math.max(i < boundaries.length ? boundaries[i] : spokenToReal(totalSpoken), start);
+    out.push({ text: phrases[i].text, kind: phrases[i].kind, start: round3(start), end: round3(end) });
+    // The clamped end, not the raw boundary — carrying the raw value forward
+    // is what let an inverted boundary escape the Math.max above and become
+    // the NEXT phrase's start.
     start = end;
   }
   return out;
