@@ -1593,6 +1593,28 @@ goldens unmoved, then one enable commit recaptures `mobile-comic.png`
 deliberately. **That enable commit is the high-effort review**, per the
 tiering table's golden rule, even though no HUD copy changes.
 
+**LANDED 2026-08-01** — `d74b330` (flag off), `9e54896` (enable), `35fac9b`
+(review fix). Smoke 171 checks green, twice; goldens unmoved apart from the
+deliberate `mobile-comic.png` recapture; `readings.json` 125.0 KB, artifact
+4.15 MB. Review found and fixed a defect the gates could not see: phrase
+times went backwards in 25 of 123 comics, stalling the highlight — see
+`docs/VALIDATION.md` § 5e, and the general lesson, which is that a gate
+scoring boundaries *against the audio* is structurally blind to the ORDER
+they arrive in. Cheap absolute invariants belong alongside scored ones.
+
+**Two residuals, neither blocking E5b:**
+
+- **Defective audio tails.** `assets/audio/2b2110bb.mp3` is 182.8s long with
+  166.5s of pure silence after the speech (confirmed by `silencedetect`);
+  `51834c74.mp3` has a 25s tail. The bake handles both correctly, but at
+  runtime those vendors' looping busker lines are mostly silence, and the
+  virtual clock will usually join them mid-nothing. Retrim or regenerate —
+  a content job, and the only two in the corpus over 3s.
+- **Alignment quality is unverified by ear.** The gate proves boundaries sit
+  in pauses; it cannot prove the right phrase lights up at the right moment.
+  Dan listens to `2a0e56d4` (the worst former offender) and one clean comic
+  before the alignment itself is called settled.
+
 ### E5b — The journal, and the quarry
 
 - **The journal:** comics heard/found logged ("34 of 418"), localStorage.
