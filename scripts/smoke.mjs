@@ -59,6 +59,12 @@ const CLEAR_MORNING_HOUR = 8; // low sun — the one bookmark that must show a s
 const CLEAR_MORNING_BOOKMARK = 'mid-805-far'; // curved corner, both street sides in frame (see E2b notes)
 const CLIP_CHANNEL_THRESHOLD = 250; // out of 255 — "clipped" per the brief
 const CLIP_PCT_MAX = 0.1; // % of pixels allowed at/above the threshold on all 3 channels
+// E2d check 26b: floor for "the post effects actually reached the frame".
+// Measured across the seven gated states the authored strength moves 7.3%
+// (rain, 22:00 — a near-black frame where the vignette has almost nothing to
+// darken) up to 99.9% (haar/skyline) of pixels, so 3 sits well clear of the
+// weakest real case and miles above the 0% a silently-disabled pass gives.
+const POST_LIVE_MIN_PCT = 3;
 // >10s of stepped dt so a setWeather() transition is guaranteed complete
 // before a golden capture — see WEATHER_TRANSITION_SECONDS in atmosphere.js.
 const WEATHER_SETTLE_FRAMES = 700;
@@ -131,6 +137,7 @@ const TORCH_TOGGLE_LUMA_DROP_MIN_PCT = 10;
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
   'rain', 'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
+  'post',
 ];
 
 function getFreePort() {
@@ -247,6 +254,22 @@ function clippedHighlightPct(png) {
     }
   }
   return count ? (clipped / count) * 100 : 0;
+}
+
+// Exact per-channel comparison — deliberately NOT pixelmatch. pixelmatch at
+// PIXEL_THRESHOLD is nearly blind to broad uniform shifts (a pose once moved
+// 34% in mean luminance while reporting a 0.009% pixel diff), which is exactly
+// the kind of change the post chain could introduce. Counts any pixel with any
+// channel off by 1 or more.
+function exactChannelDiff(a, b) {
+  let pixels = 0, maxChannel = 0;
+  for (let i = 0; i < a.data.length; i += 4) {
+    let d = 0;
+    for (let c = 0; c < 3; c++) d = Math.max(d, Math.abs(a.data[i + c] - b.data[i + c]));
+    if (d > 0) pixels++;
+    if (d > maxChannel) maxChannel = d;
+  }
+  return { pixels, maxChannel, pct: (pixels / (a.width * a.height)) * 100 };
 }
 
 // Capture-or-compare for one golden. Captures (and passes trivially) only when
@@ -593,8 +616,8 @@ async function main() {
         const dbg = window.__mcgrotDebug;
         const torchLight = dbg.camera.children.find((c) => c.isPointLight);
         if (torchLight) torchLight.intensity = 0;
-        // E2d.1: composer-aware direct render (dbg.renderNow) — a raw
-        // dbg.renderer.render() would skip post-processing, making the
+        // Post-aware direct render (dbg.renderNow) — a raw
+        // dbg.renderer.render() would skip the post pass, making the
         // torch-on/torch-off shots compared below no longer like-for-like.
         dbg.renderNow();
       });
@@ -1168,6 +1191,84 @@ async function main() {
       console.log(`[smoke] wrote budget baseline to ${budgetPath}`);
     }
 
+    // --- E2d (check 26): the post chain is transparent at neutral, and live
+    // as authored. Two assertions per state, deliberately pointing opposite
+    // ways, because this project has shipped a gate that passed BECAUSE a bug
+    // existed (E2d.1a's per-weather bloom contribution check, which measured
+    // post-on vs post-off and so would have gone red once the bug was fixed):
+    //
+    //   26a  strength 0 -> BIT-identical to renderer.render(scene, camera).
+    //        Not "within tolerance" — every channel of every pixel equal.
+    //        This is what makes the post pass provably free of the colour
+    //        management damage that cost E2d.1 and E2d.1a. See src/post.js.
+    //   26b  strength 1 -> measurably NOT identical, at every state. Without
+    //        this, 26a would pass just as happily on a post pass that had been
+    //        accidentally disabled, which is the dead-gate failure mode.
+    //
+    // Run across all five weathers AND two night hours: the artefact class
+    // this guards against is far larger on dark frames than bright ones, so a
+    // daytime-only check would have passed throughout E2d.1a.
+    const POST_CASES = [
+      { weather: 'overcast', hour: SMOKE_HOUR, bookmark: 'mid-805-far' },
+      { weather: 'clear', hour: SMOKE_HOUR, bookmark: 'mid-805-far' },
+      { weather: 'rain', hour: SMOKE_HOUR, bookmark: 'mid-805-far' },
+      { weather: 'drizzle', hour: SMOKE_HOUR, bookmark: 'mid-805-far' },
+      { weather: 'haar', hour: SMOKE_HOUR, bookmark: 'skyline' },
+      { weather: 'rain', hour: 22, bookmark: 'mid-805-far' },
+      { weather: 'overcast', hour: 22, bookmark: 'north-250-far' },
+    ];
+    const postNeutralBad = [];
+    const postLiveBad = [];
+    const shippedPostStrength = await page1.evaluate(() => window.__mcgrotDebug.post.getStrength());
+    for (const pc of POST_CASES) {
+      await page1.evaluate((w) => window.__mcgrotDebug.setWeather(w), pc.weather);
+      await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), pc.hour);
+      await page1.evaluate((frames) => window.__mcgrotDebug.stepFrames(frames), WEATHER_SETTLE_FRAMES);
+      await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), pc.bookmark);
+      // renderNow draws WITHOUT running updaters, so a forced post state
+      // survives the frame — the isolation technique that separated bloom's
+      // real 0.0% contribution from its 42.6% artefact at the E2d.1a review.
+      const shot = async (enabled, strength) => {
+        await page1.evaluate(([e, s]) => {
+          window.__mcgrotDebug.setPostProcessing(e);
+          window.__mcgrotDebug.setPostStrength(s);
+          window.__mcgrotDebug.renderNow();
+        }, [enabled, strength]);
+        return page1.screenshot();
+      };
+      const direct = PNG.sync.read(await shot(false, 0));
+      const neutral = PNG.sync.read(await shot(true, 0));
+      const authored = PNG.sync.read(await shot(true, 1));
+
+      const label = `${pc.weather}@${pc.hour}/${pc.bookmark}`;
+      const neutralDiff = exactChannelDiff(direct, neutral);
+      if (neutralDiff.pixels !== 0) {
+        postNeutralBad.push(`${label}: ${neutralDiff.pixels}px differ (max channel ${neutralDiff.maxChannel})`);
+      }
+      const authoredDiff = exactChannelDiff(direct, authored);
+      if (authoredDiff.pct < POST_LIVE_MIN_PCT) {
+        postLiveBad.push(`${label}: only ${authoredDiff.pct.toFixed(2)}% of pixels changed`);
+      }
+    }
+    // Leave the page as the rest of the run expects to find it.
+    await page1.evaluate((s) => window.__mcgrotDebug.setPostStrength(s), shippedPostStrength);
+    await page1.evaluate(() => window.__mcgrotDebug.setPostProcessing(true));
+
+    results.push({
+      name: 'post: neutral strength is bit-identical to a direct render',
+      pass: postNeutralBad.length === 0,
+      detail: postNeutralBad.length === 0
+        ? `${POST_CASES.length}/${POST_CASES.length} states exactly equal (5 weathers, 2 night hours)`
+        : postNeutralBad.join('; '),
+    });
+    results.push({
+      name: 'post: authored strength reaches the frame',
+      pass: postLiveBad.length === 0,
+      detail: postLiveBad.length === 0
+        ? `all ${POST_CASES.length} states changed >=${POST_LIVE_MIN_PCT}% of pixels`
+        : postLiveBad.join('; '),
+    });
+
     await ctx1.close();
 
     // --- boot #2: determinism ---
@@ -1533,7 +1634,7 @@ async function main() {
         await page.evaluate(() => {
           const dbg = window.__mcgrotDebug;
           dbg.torch.update(9 / 60); // same t the settle loop's last frame used
-          // E2d.1: composer-aware direct render — see the E2b torch A/B note above.
+          // Post-aware direct render — see the E2b torch A/B note above.
           dbg.renderNow();
         });
         const torchOffShot = await page.screenshot();

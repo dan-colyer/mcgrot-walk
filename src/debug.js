@@ -201,7 +201,7 @@ export function createDebugApi(ctx) {
   const {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
-    DPR_CAP, ambience, composer, renderNow, setPostProcessing,
+    DPR_CAP, ambience, post, renderNow, setPostProcessing,
   } = ctx;
 
   const consoleErrors = [];
@@ -458,9 +458,14 @@ export function createDebugApi(ctx) {
     torch,
     DPR_CAP,
     ambience,
-    composer,
+    post,
     renderNow,
     setPostProcessing,
+    // 0 = every effect provably neutral, 1 = as authored. The invariant gate
+    // needs both ends: at 0 the post frame must be BIT-identical to a
+    // post-off frame (the plumbing is transparent), at 1 it must not be (the
+    // effects actually reach the frame). See src/post.js.
+    setPostStrength: (v) => post.setStrength(v),
     invariants,
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),

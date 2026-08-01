@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { loadAssets } from './assets.js';
 import { buildWorld, createPlayerTorch } from './world.js';
 import { createControls } from './controls.js';
@@ -26,6 +24,7 @@ import { buildLitter } from './litter.js';
 import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
+import { createPost } from './post.js';
 import { createDebugApi } from './debug.js';
 
 const DPR_CAP = 2;
@@ -46,23 +45,22 @@ async function main() {
   // Filmic tone mapping lifts the murk into readable values without losing the grim mood
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.46;
-  // E2d.1: composer passes draw through FullScreenQuad, each an internal
-  // renderer.render() call. renderer.info resets at the start of every
-  // renderer.render() by default (autoReset), which would collapse the
-  // draw-call count every invariants()/budget gate reads down to ~1 (the
-  // final pass only). Disabled here; runFrame calls info.reset() itself,
-  // once, before the composer runs — see docs/VALIDATION.md.
+  // The post pass draws through a second renderer.render() call, and
+  // renderer.info resets at the start of every one of them by default
+  // (autoReset), which would collapse the draw-call count every
+  // invariants()/budget gate reads down to 1 (the post quad only). Disabled
+  // here; renderNow calls info.reset() itself, once, before the frame starts
+  // — see docs/VALIDATION.md.
   renderer.info.autoReset = false;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
   scene.add(camera); // needed so the camera-attached torch light (below) renders
 
-  // E2d.1: RenderPass only for now (a provable no-op — see docs/VALIDATION.md).
-  // Post-processing effects land as additional passes in later milestones.
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  let postEnabled = true; // mobile fallback toggle, see setPostProcessing below
+  // E2d: vignette, grain and colour grade, applied to the finished frame after
+  // tone mapping rather than through an EffectComposer — post.js explains at
+  // length why a composer cannot be used here without re-authoring the fog.
+  const post = createPost(renderer);
 
   const assets = await loadAssets();
   const world = buildWorld(assets.leith);
@@ -196,8 +194,7 @@ async function main() {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setPixelRatio(renderer.getPixelRatio());
-    composer.setSize(window.innerWidth, window.innerHeight);
+    post.resize();
   }
 
   // Single registered update list, consumed by BOTH animate() and stepFrame —
@@ -219,6 +216,12 @@ async function main() {
     { name: 'interact', update: (dt) => interact.update(dt) },
     { name: 'proximityAudio', update: () => proximityAudio.update() },
     { name: 'torch', update: (dt, t) => torch.update(t) },
+    // Not a simulation step — it hands the post shader the same stepped `t`
+    // the rest of the list runs on, so film grain resamples off the sim clock
+    // and never off wall time. Registered here rather than called from
+    // renderNow so that a settle of N frames lands on the same grain field
+    // every run; renderNow deliberately draws without updating.
+    { name: 'post', update: (dt, t) => post.setTime(t) },
   ];
   // Simulation only, no draw. Settling the world costs the same updater work
   // either way, but headless Chromium rasterises in SOFTWARE (SwiftShader —
@@ -234,14 +237,14 @@ async function main() {
   }
   function renderNow() {
     renderer.info.reset();
-    if (postEnabled) composer.render(); else renderer.render(scene, camera);
+    post.render(scene, camera);
   }
   function runFrame(dt, t) {
     updateFrame(dt, t);
     renderNow();
   }
   function setPostProcessing(v) {
-    postEnabled = !!v;
+    post.setEnabled(v);
   }
 
   // THREE.Clock is deprecated in r185 and its getDelta() yields 0 here,
@@ -272,7 +275,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
-      sky, atmosphere, torch, DPR_CAP, ambience, composer,
+      sky, atmosphere, torch, DPR_CAP, ambience, post,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

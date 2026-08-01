@@ -36,10 +36,18 @@ Decisions taken:
 - **TTS:** `set -a; source .env.local; set +a; node scripts/generate-tts.mjs`
   (~14/day measured before free-tier 429s; resumable; completed clips skip; the
   run now stops on the first quota error rather than grinding the remainder).
-  **117/418 voiced, 124/418 transcribed** (2026-07-31). Runs unattended at 09:30
+  **123/418 voiced, 124/418 transcribed** (2026-08-01). Runs unattended at 09:30
   via `scripts/daily-tts.sh` + `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`.
   Transcription, not the API, is the bottleneck: 294 comics still have no script,
   and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`).
+
+  ⚠ **The trickle moves the goldens.** Newly transcribed entries are not inert
+  data — each gives its NPC a name, a blurb and a readable comic, so more NPCs
+  render a nameplate and a subtitle. Going from 103 to 124 transcribed moved 23
+  goldens by 0.8–5.6% and `skyline` from 954 to 1109 draw calls, and nobody
+  noticed because smoke had not been run since. Recaptured at `7f6a3de`. Run
+  `npm run smoke` after a batch of transcriptions lands, not only after engine
+  work.
 - **Handmade shopfronts:** Dan feeds real-shop reference photos to ChatGPT,
   drops results in `assets/shopfronts/handmade/`, ingest script does the rest.
   Wishlist: `docs/shopfront-wishlist.md`.
@@ -657,11 +665,15 @@ runs. 3 goldens recaptured for the conversion itself — `skyline-clear`,
   two files: **a golden that moved materially wants recapturing even when it
   still passes** — tolerance is the flake budget, not a target to spend.
 
-### E2d — Post-processing
+### E2d — Post-processing — DONE (2026-08-01), NOT YET DEPLOYED
 
-AO, bloom, vignette, film grain, colour grade. Budgeted and toggleable (mobile
-fallback). Split in two, because the first effect through a new render path
-costs far more than the fourth.
+Shipped: vignette, film grain, colour grade. Dropped: bloom (inert — E2d.1a),
+AO (needs the render path this deliberately avoids), and the user-facing
+on/off toggle. Took four attempts; the first two shipped nothing and the third was
+refuted before it was written. What made the difference was reading three's
+source for how it decides tone mapping and colour space, instead of inferring a
+mechanism from the symptom — see E2d.2 below, and read that entry before E2d.1
+/ E2d.1a, which are kept as history and contain a superseded explanation.
 
 - **E2d.1 — The composer, and bloom. PLUMBING ACCEPTED (review 2026-07-29);
   bloom itself retuned in E2d.1a below.** Introduced
@@ -740,7 +752,56 @@ costs far more than the fourth.
   never approaches the 0.95 threshold at any strength — that ends the
   "bloom will make the wet night read" theory for good.
 
-- **E2d.0 — Composer colour management. THE REAL PREREQUISITE, NEXT.** No
+- **E2d.2 — Post-processing without a composer. SHIPPED (2026-08-01).**
+  Vignette, film grain and a colour grade (gentle S-curve + cool-shadow /
+  warm-highlight split tone), in a new `src/post.js`, applied to the finished
+  frame after tone mapping. `EffectComposer` is **out of the build entirely**.
+
+  The rethink that produced this read three r185's source instead of inferring
+  from symptoms, and found that **E2d.0's proposed route cannot work**:
+  `WebGLPrograms.getParameters` disables tone mapping and forces the working
+  (linear) colour space for *any* material drawn into a render target, and
+  ignores that target's own `colorSpace` tag on write. So a composer with two
+  or more passes draws the scene un-tone-mapped, and — because `fog_fragment`
+  runs after both `tonemapping_fragment` and `colorspace_fragment` — composites
+  fog in linear space instead of the post-tone-map sRGB space every weather
+  palette was authored against. That is not a bug in a pass and no render-target
+  format fixes it; it is what a composer does here. E2d.1's HDR route hit the
+  same wall and misattributed it to the route.
+
+  The replacement copies the finished canvas into a `FramebufferTexture` and
+  redraws it through one full-screen `RawShaderMaterial` triangle, which gets no
+  injected shader chunks at all — so the zero-contribution invariant holds by
+  construction rather than by tuning.
+
+  **Measured.** At `uStrength` 0 the post frame is **bit-identical** to
+  `renderer.render(scene, camera)` across five weathers and two night hours
+  (7/7 states, zero pixels differing on any channel); at the shipped strength it
+  moves 7.3%–99.9% of pixels. Both directions are gated as check 26a/26b —
+  deliberately opposed, so neither can pass on a broken build. Cost is **exactly
+  +1 draw call at every pose**. Every `clip%` in the suite reads 0.000% (the
+  grade darkens rather than lifts), so no ceiling was raised anywhere. 35
+  goldens recaptured after their movement was measured one by one; 4 that did
+  not move were left alone. Suite green. Full account in `docs/VALIDATION.md`'s
+  "Post-processing without a composer".
+
+  **No `#post-toggle` button.** E2d.1's mobile fallback went out with bloom and
+  was not rebuilt. The fallback existed because bloom's multi-mip blur was
+  genuinely expensive; this pass is one full-screen quad running a trivial
+  shader — negligible against an 1100-draw-call frame — so there is nothing to
+  fall back from. The stronger reason not to add it: the torch toggle is one of
+  two open iOS bugs and has never been debugged on a device, so a second button
+  wired the same way would be shipping an unverified copy of a known-broken
+  pattern. `dbg.setPostProcessing(bool)` remains, and check 26 exercises both
+  states. Revisit alongside the iOS round, not before it.
+
+  **AO is dropped, not deferred.** It needs scene depth and normals in linear
+  space — the composer path this design exists to avoid — and its payoff on
+  merged OSM geometry under this much fog is the smallest of the four effects.
+  Reopening it means reopening the fog authoring, which is an E3-or-later
+  decision, not a post-processing one.
+
+- **E2d.0 — Composer colour management. SUPERSEDED, and its route refuted.** No
   post-processing pass can be trusted in this pipeline until a pass that
   contributes nothing is provably invisible. That invariant is cheap and strong,
   and it is testable with no effect present at all:
@@ -755,20 +816,14 @@ costs far more than the fourth.
   which has no hardware sRGB decode, so the copy's encode chunk fires a second
   time on already-encoded output.
 
-  A scoped route exists that E2d.1a did not try and that is **not** the reverted
-  HDR route: `EffectComposer`'s constructor takes a caller-supplied render target
-  (`constructor(renderer, renderTarget)`). Supplying an `UnsignedByteType` target
-  tagged `SRGBColorSpace` gives the intermediate buffer a real hardware decode
-  path, so the read decodes and the write encodes exactly once — no change to
-  `renderer.toneMapping`, no `OutputPass`, and fog stays authored in post-tonemap
-  space exactly as it is today. The cost is an 8-bit intermediate (banding), which
-  is the correct trade for an LDR chain. Untested; the invariant above is how to
-  test it.
-
-- **E2d.2 — the rest.** AO, vignette, film grain, colour grade, once the render
-  path is settled and the harness has been repaired around it. Film grain is
-  the determinism trap of the group: it must be driven off the same seeded,
-  stepped `t` the updaters use, never wall time or `Math.random()`.
+  This milestone proposed supplying `EffectComposer` an `UnsignedByteType` target
+  tagged `SRGBColorSpace`, on the theory that the default `HalfFloatType` target
+  lacked a hardware sRGB decode path and so double-encoded. **That theory was
+  wrong and the route is impossible** — three ignores a non-XR render target's
+  `colorSpace` tag on write and always writes the working (linear) space, and the
+  damage was never a double-encode in the first place. Refuted from source at the
+  E2d rethink; superseded by E2d.2 above. Kept here because the invariant it
+  articulated is the one durable thing to come out of E2d, and E2d.2 gates it.
 
 ### E2e — Mobile and sharing — DONE, DEPLOYED (2026-07-28, with E2e.1)
 

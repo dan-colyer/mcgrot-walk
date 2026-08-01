@@ -243,12 +243,26 @@ tells you which check and why.
     style golden passes would reach for if the schedule's own multi-hour
     minimum interval (already far longer than any capture pass takes at the
     standing clock rate) ever stopped being enough on its own.
-*(There is deliberately no check 26. E2d.1's "post-processing is provably in
-the render path" gate was removed with bloom at the E2d.1a review — with
-`RenderPass` as the only pass, a post-on frame is pixel-identical to a post-off
-one by construction, so the gate could only ever fail. The composer is inert
-plumbing until E2d.0 lands a pass that legitimately changes the frame; the gate
-comes back then. See "The composer's colour management" below.)*
+26. **The post chain is transparent at neutral, and live as authored** (E2d) —
+    two assertions per state, deliberately pointing in opposite directions,
+    because this project has already shipped a gate that passed *because* a bug
+    existed (E2d.1a's per-weather bloom check measured post-on vs post-off, so
+    it would have gone red the moment anyone fixed the bug it was masking).
+    - **26a** with `uStrength` forced to 0, the post frame must be
+      **bit-identical** to `renderer.render(scene, camera)` — every channel of
+      every pixel equal, not "within tolerance". This is what makes the post
+      pass provably free of the colour-management damage that cost two
+      milestones.
+    - **26b** with `uStrength` at its shipped 1, the frame must differ by at
+      least `POST_LIVE_MIN_PCT` (3%) of pixels. Without this, 26a would pass
+      just as happily on a post pass that had been accidentally disabled.
+
+    Run across all five weathers **and two night hours**, because the artefact
+    class 26a guards against is far larger on dark frames than bright ones — a
+    daytime-only check would have passed throughout E2d.1a. Both use an exact
+    per-channel comparison (`exactChannelDiff`), never `pixelmatch`. Measured:
+    7/7 states exactly equal at neutral; 7.3% (rain, 22:00) to 99.9%
+    (haar/skyline) of pixels changed as authored.
 
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
@@ -364,6 +378,115 @@ passes, though not load-bearing in practice — the schedule's own multi-hour
 minimum is already far longer than any capture pass takes at the standing
 clock rate (~0.2h for a full 8-bookmark pass at `WEATHER_SETTLE_FRAMES`).
 
+### Post-processing without a composer (E2d)
+
+Vignette, film grain and colour grade ship in `src/post.js`, applied to the
+finished frame **after** tone mapping and sRGB encoding. There is no
+`EffectComposer` in the build any more. That is not a preference; a composer
+cannot carry this scene's look without re-authoring the fog.
+
+**The finding, read out of three r185's source rather than inferred.**
+`WebGLPrograms.getParameters` picks a material's tone-mapping and output
+colour-space chunks from *whether a render target is bound*, and from nothing
+else:
+
+```js
+// three.module.js — tone mapping
+let toneMapping = NoToneMapping;
+if ( material.toneMapped ) {
+  if ( currentRenderTarget === null || currentRenderTarget.isXRRenderTarget === true ) {
+    toneMapping = renderer.toneMapping;
+  }
+}
+// three.module.js — output colour space
+outputColorSpace: ( currentRenderTarget === null )
+  ? renderer.outputColorSpace
+  : ( currentRenderTarget.isXRRenderTarget === true
+      ? currentRenderTarget.texture.colorSpace
+      : ColorManagement.workingColorSpace ),
+```
+
+Two consequences, both fatal to the composer route here:
+
+1. The instant a composer chain has a second pass — the instant `RenderPass`
+   writes to a buffer instead of the canvas — **the whole scene is drawn
+   un-tone-mapped and un-encoded**. ACES is simply not in the shader.
+2. A non-XR render target's own `texture.colorSpace` is **ignored on write**;
+   the write is always in the working (linear) space. So the E2d.0 brief's
+   proposed fix — hand `EffectComposer` an `UnsignedByteType` target tagged
+   `SRGBColorSpace` — could never have worked. Tagging the texture would only
+   change how a later pass *reads* it, and that read would then be decoding
+   linear data as if it were sRGB, which is worse than doing nothing.
+
+And three's fragment chunk order is
+
+```
+opaque_fragment -> tonemapping_fragment -> colorspace_fragment -> fog_fragment
+```
+
+so **fog is composited after both**. Routing the scene through a composer buffer
+therefore moves fog mixing out of post-tone-map sRGB space and into linear
+space. Every weather palette in `src/atmosphere.js` was authored against the
+former. That is the same breakage E2d.1 saw when it tried the HDR/`OutputPass`
+route and blamed the route — the fog damage is not specific to that route, it
+is what *any* multi-pass composer chain does here.
+
+Two milestones (E2d.1, E2d.1a) were spent treating symptoms of this as bugs
+inside a pass.
+
+**The design that replaces it.** The scene renders straight to the canvas,
+exactly as it does with post off. The finished 8-bit sRGB frame is copied into a
+`FramebufferTexture` (`renderer.copyFramebufferToTexture`) and redrawn through
+one full-screen triangle carrying a `RawShaderMaterial`. `RawShaderMaterial`
+gets **no** injected chunks at all, so there is no tone mapping and no
+colour-space conversion in the post pass to double up on — the invariant holds
+by construction rather than by tuning. Vignette, grain and grade are operations
+a colourist applies to a displayed image anyway, not to scene-referred linear
+light, so LDR is the right space for them on the merits too.
+
+**Measured** (check 26, and reproduced twice by an ad hoc probe before it became
+a gate). Mean frame luminance, 1280×800, at a settled state:
+
+| weather | hour | pose | post off | strength 0 | strength 1 | A vs B | A vs C |
+|---|---|---|---|---|---|---|---|
+| overcast | 13 | mid-805-far | 58.86 | 58.86 | 54.24 | **identical** | 99.3% px, −7.9% |
+| clear | 13 | mid-805-far | 68.56 | 68.56 | 63.66 | **identical** | 93.2% px, −7.2% |
+| rain | 13 | mid-805-far | 24.51 | 24.51 | 22.28 | **identical** | 70.8% px, −9.1% |
+| drizzle | 13 | mid-805-far | 41.81 | 41.81 | 38.26 | **identical** | 98.1% px, −8.5% |
+| haar | 13 | skyline | 129.81 | 129.81 | 124.18 | **identical** | 99.9% px, −4.3% |
+| rain | 22 | mid-805-far | 1.67 | 1.67 | 1.60 | **identical** | 7.3% px, −4.0% |
+| overcast | 22 | north-250-far | 1.07 | 1.07 | 1.01 | **identical** | 10.3% px, −5.5% |
+
+"identical" means zero pixels differ on any channel, not a tolerance.
+
+Note the direction of travel: the grade **darkens** every state. Every `clip%`
+check in the suite reads **0.000%** with post on, against the standard 0.1%
+ceiling — so none of the `CLIP_PCT_MAX_HAAR`-style ceiling raises E2d.1 and
+E2d.1a needed are required here, and none were added.
+
+**Cost: exactly +1 draw call, at every pose.** Measured with the effects neutral
+so the only variable was the pass itself: 28→29, 54→55, 75→76, 28→29, 72→73,
+27→28, 68→69, 1109→1110. The baselines in `docs/smoke/budget.json` carry the +1.
+
+**Determinism.** Grain is driven off the same stepped `t` the updaters run on
+(`post` is registered in `main.js`'s single updater list, so `stepFrames(n)`
+lands on the same grain field every run) and resamples on a 24fps step rather
+than per frame. The hash is all `fract`/`dot`/multiply — no `sin`, whose
+precision varies between drivers, since the goldens are captured under
+SwiftShader.
+
+**Not shipped: ambient occlusion.** AO needs scene depth and normals in linear
+space, which is exactly the composer path this module exists to avoid. Its
+payoff on merged OSM building geometry under this much fog is also the smallest
+of the four effects. Recorded in `docs/ROADMAP.md` rather than faked.
+
+**A recapture wrinkle worth knowing.** On a run where a golden is missing, the
+bookmark loop writes the file and `continue`s — which skips the `clip-control`
+check that follows it. So a run that recaptures the eight bookmark goldens
+reports 158 checks rather than 166, silently. The green run that matters is the
+*next* one, with every golden present. Always re-run after a recapture; don't
+read the capture run as a pass.
+
 ### The composer's colour management — why bloom is not in the build (E2d.1a)
 
 **Bloom was reverted at the E2d.1a review (2026-07-30). `src/main.js` ships
@@ -410,19 +533,16 @@ about +1% to +42.6% by day.
 `RenderPass` alone satisfies it — measured 0.0000% across three poses and two
 weathers — because as the last enabled pass it renders straight to the canvas
 and no intermediate buffer is ever read back. It breaks the moment any pass
-composites *from* a buffer, because `EffectComposer`'s default render target is
-`HalfFloatType`, which has no hardware sRGB decode path, so the copy's encode
-chunk fires a second time on already-encoded output. Setting
-`.texture.colorSpace` does not help: GL cannot sRGB-decode a float format
-whatever the tag says.
+composites *from* a buffer.
 
-The untried, scoped route — **not** the reverted HDR route — is that
-`EffectComposer`'s constructor takes a caller-supplied target
-(`constructor(renderer, renderTarget)`). An `UnsignedByteType` target tagged
-`SRGBColorSpace` has a real hardware decode path, so the read decodes and the
-write encodes exactly once, with no change to `renderer.toneMapping`, no
-`OutputPass`, and fog left authored in post-tonemap space as it is today. The
-cost is an 8-bit intermediate (banding), the correct trade for an LDR chain.
+> **Correction (E2d, 2026-08-01).** The paragraph that used to sit here blamed
+> `EffectComposer`'s `HalfFloatType` target for having no hardware sRGB decode
+> path, and proposed supplying an `UnsignedByteType` target tagged
+> `SRGBColorSpace` instead. That reasoning was wrong, and the route it proposed
+> cannot work — three ignores a render target's `colorSpace` tag on write. The
+> real mechanism, read out of r185's source rather than inferred, is in "Post-
+> processing without a composer" below. The table, the isolation method and the
+> gate lessons in this section are unaffected and still stand.
 
 **Two gate lessons worth keeping.** First, a contribution gate written as
 post-on vs post-off measures the *artefact plus the effect*, not the effect —
@@ -526,10 +646,13 @@ the frame to begin with. Fixing this needs a bookmark (or a dedicated capture
 pose) that actually frames the ground near the torch at night, which is a
 smaller follow-up, not a reason to hold this milestone.
 
-**Mobile toggle.** `#post-toggle` mirrors `#torch-toggle` exactly — touch-only,
-on by default, persisted to `localStorage['mcgrot-post-on']` — and
-`setPostProcessing(bool)` swaps `renderNow()` between `composer.render()` and
-a direct `renderer.render()`. Check 26 above is the proof it's load-bearing.
+**Mobile toggle.** `#post-toggle` mirrored `#torch-toggle` exactly — touch-only,
+on by default, persisted to `localStorage['mcgrot-post-on']`. *(Gone: the button
+and its wiring were reverted with bloom at E2d.1a and were **not** reinstated at
+E2d.2. `setPostProcessing(bool)` survives as a debug-API hook only — see E2d.2's
+note in `docs/ROADMAP.md` for why the button was not worth rebuilding. Its
+absence is also why the mobile goldens no longer carry the ~0.48% residual this
+milestone's own button introduced.)*
 
 ### `elm-row-hero` was bimodal, and it was the harness's fault (E2c.3b review, fixed E2c.3b.1)
 
@@ -771,6 +894,10 @@ dbg.setRate(1);                         // E2c.1, TEST-ONLY: un-freeze the clock
                                          //   drive a wraparound under stepFrame, since setTime() always freezes it
 dbg.pauseAuto(); dbg.resumeAuto();      // stop/restart the live rAF loop (see "Determinism")
 dbg.stepFrame(1/60, t);                 // manually advance one frame (back-compat, pre-E0.2 probe)
+dbg.renderNow();                        // draw WITHOUT running the updaters — how a forced state survives a frame
+dbg.setPostProcessing(false);           // E2d: post pass on/off (what #post-toggle does on mobile)
+dbg.setPostStrength(0);                 // E2d: 0 = every effect provably neutral, 1 = as authored (check 26a/26b)
+dbg.post;                               // the post module itself: setTime/resize/getStrength/isEnabled
 
 dbg.world.groundHeight(x, z);           // E1: metres of elevation at a world XZ point
 dbg.world.setExaggeration(k);           // E1: live vertical multiplier on the terrain profile (default 1.0)
