@@ -1667,6 +1667,31 @@ Its touch affordance must be wired on `pointerdown`/`pointerup`, not `click` —
 see the open E2f torch-toggle bug, where a `click`-only listener appears to be
 exactly what fails on iOS.
 
+**E5b.1 landed 2026-08-01 (`25e550f`), reviewed and corrected. Not yet
+deployed — Dan has not seen the journal in the browser.** All checks green,
+artifact 4.15 MB. Three review findings, all fixed in the landing commit:
+
+- **`mobile-hud` and `mobile-street` were stale.** The touch toggle renders
+  into every mobile street capture and changes 0.118% of the frame (measured
+  by self-diff, bbox `[20,20,67,67]`) — under the 0.5% tolerance, so it passed
+  against images that predate it. Both recaptured; `mobile-hud` fell 0.208% →
+  0.019%, `mobile-street` 0.114% → 0.000%.
+- **The "derived denominator" gate could not fail.** Every built vendor has
+  audio today, so the derived count is indistinguishable from `npcs.length`
+  or from a typed `124`. Now fault-injected and proven red.
+- **`journal-toggle` had no mobile coverage** — added to the tap-target and
+  safe-area gates.
+
+Two lessons worth carrying forward:
+
+- **A brief that adds an always-visible control must name the goldens it
+  expects to recapture.** This one said "panel closed by default, so no golden
+  can move" — true of the panel, false of the toggle beside it.
+- **Nothing intentional may live under the golden tolerance.** It exists for
+  renderer jitter; every element parked beneath it shrinks the budget left for
+  detecting real regressions. New visible element ⇒ delete and recapture the
+  specific goldens.
+
 ### E5c — Moments are links
 
 - **Position + heading (+ nearest reader) in the URL hash**, so "look at this
