@@ -1638,6 +1638,35 @@ they arrive in. Cheap absolute invariants belong alongside scored ones.
   reader. No markers, no compass — one straight street is already legible
   (cf. Bernband's no-UI thesis).
 
+**Planned 2026-08-01; split in two. Brief for the first half at
+`~/.claude/plans/mcgrot-e5b-brief.md`.**
+
+- **E5b.1 — the journal.** DOM, localStorage, counting. No placement, no
+  render path. Medium, as the tiering table has it.
+- **E5b.2 — the dozen anchor readers.** Staging twelve vendors at real
+  landmarks moves NPC placement, which moves every golden with a vendor in
+  frame. It needs its own flag-first landing and its own gates, and it is
+  **high-effort review**, not medium. Bundling it with the journal would turn
+  a DOM milestone into a recapture milestone.
+
+Three decisions taken at planning:
+
+- **The denominator is computed at runtime from the built cast**, never
+  hardcoded — so it rises on its own as transcription lands. Today: 124
+  vendors with audio (123 with an E5a reading; `5c5f0c9c` is catalogued with
+  no mp3 on disk).
+- **Nothing goes in `#hud`.** Its copy is in all 27 desktop goldens, which is
+  why E5c is already marked high-effort. The journal is a panel opened with
+  **J**, closed by default, and a gate now asserts the HUD string is
+  unchanged — that gate protects the golden set from every later milestone
+  too, not just this one.
+- **Passive listening does not count.** Only a reading you opened, and a
+  litter comic you read. The ambient murmur is atmosphere, not a collection.
+
+Its touch affordance must be wired on `pointerdown`/`pointerup`, not `click` —
+see the open E2f torch-toggle bug, where a `click`-only listener appears to be
+exactly what fails on iOS.
+
 ### E5c — Moments are links
 
 - **Position + heading (+ nearest reader) in the URL hash**, so "look at this
