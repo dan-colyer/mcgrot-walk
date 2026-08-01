@@ -39,7 +39,17 @@ Decisions taken:
   **123/418 voiced, 124/418 transcribed** (2026-08-01). Runs unattended at 09:30
   via `scripts/daily-tts.sh` + `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`.
   Transcription, not the API, is the bottleneck: 294 comics still have no script,
-  and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`).
+  and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`;
+  **read `scripts/catalog-batches/RESUME.md` first** — batches 5/7/8 hold partial
+  JSONs that must be extended, never overwritten; the last wave died on a monthly
+  spend limit).
+
+  ⚠ **Promoted at the E2 phase gate: transcription is the project's content
+  critical path, not a background nicety.** E5's journal denominator, reader
+  nameplates, litter readability and the Leither comment corpus all scale with
+  it directly. Resume the batch factory as spend allows — it is the cheapest
+  way to make the shipped street bigger, and every batch that lands wants an
+  `npm run smoke` after it (see the golden warning below).
 
   ⚠ **The trickle moves the goldens.** Newly transcribed entries are not inert
   data — each gives its NPC a name, a blurb and a readable comic, so more NPCs
@@ -931,11 +941,15 @@ timing table while item 8 of the same brief said not to add per-phase timing.
 Item 8 was written after the smoke fix landed and criterion 7 was not updated.
 Skipping it was right. Re-read the criteria against late edits before sending.
 
-### iOS bugs — OPEN (found 2026-07-28, deferred by Dan)
+### iOS bugs — OPEN (found 2026-07-28; promoted to E2f at the E2 phase gate)
 
 Found by Dan on **iOS Chrome** (WebKit underneath, so read this as Safari's
-engine) against the deployed E2e + E2e.1 build. Deferred deliberately: recorded
-here, not being fixed in the next milestone.
+engine) against the deployed E2e + E2e.1 build. Originally deferred; the E2
+phase gate (2026-08-01) promotes fixing them to the next phase — see **E2f**
+below. Status update at the gate: the "cheapest first move" this section
+recommends (fail-soft `onEnter`) **already shipped** as E2c.3a item 0
+(`c70ba9b`, fault-injection-tested in smoke) and is in the live build
+(`gh-pages 4f9c55a`) — so the next action is a device retest, not code.
 
 **1. All audio is silent — and this one is a REGRESSION.** No NPC voices *and
 no ambience bed*. The bed worked on the same device before this deploy; that is
@@ -1046,7 +1060,125 @@ the below was measured in a 375×812 viewport rather than inferred:
   a phone viewport is not a phone GPU. The milestone instruments and reports;
   Dan makes the final call on the DPR cap.
 
-## E3 — The Folk (character system v2)
+## E2 — phase-gate audit (2026-08-01): PASSED
+
+Audited by Fable at the phase boundary, claims re-verified independently, not
+quoted: smoke **166 checks, 0 failures** across two fresh runs (the second also
+exercising the fixed recapture path, with `fascia-close` recapturing
+byte-identical — SwiftShader determinism holding exactly); the live site serves
+exactly the `gh-pages 4f9c55a` bundle (md5-matched); the shipped bundle contains
+the `FramebufferTexture`/`uStrength` post path and **zero** references to
+`EffectComposer`/`UnrealBloomPass`; voiced/transcribed/golden counts on disk
+match the recorded 123/124/39.
+
+**Architecture: sound, and E1's "sound for E2–E5" verdict survives — with one
+scope note.** `src/atmosphere.js` is still the sole authority for time, weather
+and light state: the only writers outside it are the boot wiring in `main.js`,
+the torch, and the three arc-flash lights — all deliberate, all documented. At
+1,180 lines it is ~550 lines of palette data over a compact core; it scales fine
+as long as new columns stay data. `src/post.js` deliberately sits *outside*
+atmosphere (vignette/grain/grade are lens and stock, not weather), which is the
+right boundary. The scope note: the E1 verdict was given before E7's
+presence/multiplayer ambitions existed and says nothing about them — it holds
+for E3–E5 content work; E6/E7 each get their own architectural look when
+planned.
+
+**The E2d finding — what actually went wrong, and whether it can recur.** Three
+of E2d's four attempts failed, and the failure was never tuning: it was
+**measurement against the wrong control**. E2d.1a's gate measured post-on vs
+post-off, a comparison that bundles the effect with a colour-management
+artefact; the +42.5% it read as "the axis working" was 0.0% axis and 42.6% bug,
+and the gate was *inverted* — it passed because the bug existed. Two mechanism
+theories (threshold-crossing blur, HalfFloat double-encode) were inferred from
+symptoms and were both wrong; what ended the loop was reading three r185's
+source. Worth stating plainly: **the review layer worked** — nothing wrong was
+ever deployed; the cost was two burned milestones, not a broken live build.
+
+Two rules from this, binding on future briefs:
+
+1. **Every acceptance measurement must name its control, and the control must
+   isolate the system's own contribution.** "On vs off" is not isolation when
+   the plumbing itself can contribute. The shape that works is check 26's:
+   a neutral-element invariant (identity in → bit-identical out) opposed to a
+   liveness check (authored in → measurably moved), so neither can pass on a
+   broken build.
+2. **When a symptom implicates the framework, read the framework's source
+   before theorising.** Both wrong E2d theories were refutable in an hour of
+   reading `WebGLPrograms.getParameters`; the source is vendored in
+   `node_modules` and is ground truth.
+
+Would today's gates catch a recurrence? For the post chain, yes — 26a/26b run
+across seven states including the dark frames where the artefact class is
+largest. For the *next* new visual system (E3's characters, E6's tram), no gate
+exists yet by definition — which is why rule 1 above is a brief requirement,
+not a smoke check.
+
+**Harness fix landed at the gate:** the desktop bookmark loop `continue`d past
+`clip-control` after capturing a missing golden, so a recapture run reported
+158 checks instead of 166 and could be mistaken for a full pass. Now routed
+through the same `checkGolden` helper the weather passes already use; a
+recapture run reports the full check count.
+
+**Residuals carried forward:** the two iOS bugs (→ E2f, below); transcription
+at 124/418 as the content-side critical path (see Standing trickles); the
+tram contradiction (resolved in E6b/E∞ below); `CLAUDE.md`'s stale "exhibit
+spots 60" (fixed at the gate).
+
+## Sequencing decision (E2 phase gate, 2026-08-01)
+
+Phase numbers are stable labels, not an order. The order is now:
+
+**E2f (device round) → E5 (comic layer) → E3 (characters) → E4 (opinions) →
+E6 (collision/tram) → E7 (ship-readiness, presence)**, with E∞ continuous.
+
+Why E5 jumps E3 and E4:
+
+- **E5 is the headline interaction and the cheapest phase left** — overlay UI,
+  a localStorage journal, wayfinding cues. No new render systems, no asset
+  pipeline, no golden churn beyond a handful of HUD-adjacent poses.
+- **E3 is the riskiest phase left** (pipeline spike, rigged models, LOD for
+  hundreds) and its payoff is aesthetic upgrade of interactions that E5 makes
+  matter in the first place. Collection pressure from the journal also tells
+  E3 exactly which readers deserve hero treatment.
+- **E4's behaviours want E5's data** — stances reacting to what the player has
+  heard/collected are far richer than stances in a vacuum, and the journal is
+  where "what the player has heard" becomes state.
+
+And why E2f jumps everything: sharing a link is the project's whole
+distribution model (Dan's call, E2e), the piece is *voice-led*, and today every
+iOS visitor gets silence. Nothing else on this roadmap matters to a visitor
+who cannot hear it.
+
+## E2f — The Device Round (iOS)
+
+*The two open iOS bugs, plus the device-verification protocol whose absence
+caused them. Small phase, hard rule: **no fix ships without a device console
+read first** — the last unverified fix for bug 1 is what broke the music.*
+
+- **Step 0 — retest the live build on Dan's phone.** The fail-soft (`c70ba9b`)
+  and the shared-context rework (`bcddd8a`) are both in the live build now,
+  and no phone has seen either. Plausible outcomes: (a) everything works —
+  close both bugs, phase over; (b) music returns, readers still silent — the
+  fail-soft caught a throw; read the console warning it now emits and fix the
+  named cause; (c) still fully silent — the throw theory is wrong, stop
+  theorising and read the console.
+- **The console read is Safari remote inspection** (iPhone → Mac Safari,
+  Develop menu) against the live site or a LAN-served dev build. Record what
+  is seen in `docs/VALIDATION.md` — the point of the protocol is that the
+  *next* mobile round starts from evidence, not hypothesis.
+- **Torch toggle** (`wireTorchToggle`, `src/title.js`): reproduce on device,
+  then fix. Desktop gating already proves the render path; the failure is
+  between an iOS tap and `setToggle`.
+- **While a phone is in hand:** the E7a mobile frame-rate question (995
+  buildings + 400 NPCs on a real GPU) gets its first measured data point for
+  free. Ten minutes of walking with the FPS meter is enough; write the number
+  down.
+- **Optional rider if the round goes fast:** the E7a Cloudflare Pages
+  migration is independent, mechanical, and removes the standing
+  bandwidth-takedown risk before any share push that a working iOS build
+  makes tempting. It does not need to wait for E7.
+
+## E3 — The Folk (character system v2) — AFTER E5 (see Sequencing decision)
 
 *Direction locked: grotesque semi-realism. Realistic proportions and materials;
 readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
@@ -1065,6 +1197,32 @@ readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
 - The cast of Leith archetypes seeds E4: the preacher at the Foot, the gull
   feeder, dog walkers, the man outside the pub who kens everything.
 
+Added at the E2 phase gate (survey-fed, attributions inline) — the cheap
+aliveness techniques that do NOT need the pipeline spike, and so can land
+even if the spike goes badly:
+
+- **The static-NPC playbook** (cf. FromSoft's hub NPCs): stillness works when
+  it is *posed* stillness plus one micro-behaviour on a long randomised
+  period — a cough, a page turn, shifted weight — at 20–60s intervals,
+  desynchronised across neighbours, so stillness reads as patience rather
+  than death. This is animation-light and worth prototyping on the *current*
+  paper dolls before the spike, as its own proof.
+- **Being noticed beats being busy** (cf. RDR2, Hitman crowds): a
+  proximity-tiered acknowledgement on readers — head tracks at 10m, a one-line
+  Scots grunt at 3m, a pointed "you readin' or buyin'?" if the player lingers.
+  One event rippling through two or three nearby Leithers with a 200–400ms
+  stagger reads as a society; thirty independent wanderers read as
+  screensavers.
+- **Density in pockets, silence between** (cf. A Short Hike, Sable,
+  NaissanceE): cluster readers into micro-markets with genuinely dead
+  boarded stretches between — wind, tape rattle, one gull. Uniform density
+  is the enemy; the quiet is what makes the next cluster land. (This is a
+  *placement* decision — revisit reader distribution here, not just their
+  models.)
+- Budget rule from the same survey: spend behaviour budget on **reaction,
+  not motion** — the tier list is (1) acknowledge the player, (2) micro-idles,
+  (3) locomotion quality, in that order.
+
 ## E4 — Opinions (the McGrot society)
 
 *Leithers hold stances on McGrot and act on them.*
@@ -1076,20 +1234,98 @@ readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
 - Dialogue: pre-generated Scots line corpus per stance (extend
   `extract-comic-lines.mjs` pattern) shown in bubbles — free at any scale.
   TTS reserved for a small hero cast via the daily trickle.
+- **Freshness at scale = context-keyed, rationed lines, not more lines** (cf.
+  Dishonored's Heart, Hello Lamp Post): key comments to reader + weather +
+  hour + what the player just heard, keep each under ~8 seconds, never
+  repeat a line within a session. Specificity masks finiteness. Build the
+  corpus as **archetype templates with slots** (the sceptic, the weeper, the
+  heckler, the one who's heard this one before) filled from local context,
+  rather than unique scripts per Leither.
+- **Memory is the cheapest affection** (cf. Hello Lamp Post's most-loved
+  feature): a reader or Leither who says "you again" on a second approach —
+  one localStorage flag E5's journal already keeps — is disproportionately
+  effective.
+- **Events, not agents** (cf. AC Unity's crowd events): when more life is
+  needed, author five-to-eight tiny two-actor street events (a haggle, an
+  argument about the trams, gull-feeding) spawned at slots on long
+  randomised timers. Stances pick which event fires — this is what the
+  stance system selects between, not per-NPC cleverness.
 - Verbatim rule holds absolutely: comic text is quoted garbled, never fixed.
 
-## E5 — The Comic Layer (McGrot UX)
+## E5 — The Comic Layer (McGrot UX) — NEXT AFTER E2f
 
-*The headline interaction: explore the Walk while hearing AND reading McGrot.*
+*The headline interaction: explore the Walk while hearing AND reading McGrot.
+Fleshed out at the E2 phase gate with attributed ideas from a six-axis survey
+of comparable work (audio walks, walking sims, web-3D places, procedural
+worlds); attributions inline so the reasoning survives.*
 
-- **Read-along overlay:** approach a reader, press E — the actual comic art
-  fills the view while the voice reads it, panels highlighted in sync where
-  timing allows.
-- **The journal:** comics heard/found are logged ("34 of 418"), turning the
-  whole street into a gentle collection game. Persisted in localStorage.
-- Wayfinding: subtle cues toward unheard comics (a distant voice carried on
-  the wind, a gull circling a reader).
-- Stretch: one enterable interior — a McGrot gallery/shop as a hub.
+### E5a — The reading, staged
+
+- **Read-along overlay:** approach a reader, press E / tap — the actual comic
+  art fills the view while the voice reads it. **Sync the transcript
+  phrase-by-phrase** where timing allows (word-level is not needed): seeing
+  the garble *as it is spoken* is what proves the voice really reads the
+  verbatim text — the sync is the verbatim rule made visible (cf. Firewatch's
+  phrase-timed subtitles).
+- **A ritual before the reading** (cf. Cardiff's audio walks, Rapture's
+  tune-in): a beat of eye contact, the comic raised, a half-second hush with
+  ambience ducked — the small ceremony is what converts walking-past into
+  listening. One foreground voice at a time is already the interact.js model;
+  make the *mixer* enforce it (duck ambience and Leither murmur hard while a
+  reading holds focus — cf. Cosmo D's one-voice-owns-the-mix zoning).
+- **Readings degrade gracefully with distance** rather than binary stop:
+  trail off toward muttering as the player leaves earshot, resume on return
+  (cf. Firewatch). Verbatim rule untouched — attenuation is presentation.
+- **Vendors are already mid-read as you approach** some of the time — joining
+  a reading in progress implies it continues whether anyone listens (cf. The
+  Infinite Conversation), and is cheap: start the clip at a seeded offset.
+
+### E5b — The journal, and the quarry
+
+- **The journal:** comics heard/found logged ("34 of 418"), localStorage.
+  Every surveyed web piece that holds visitors past two minutes gives the
+  wanderer a quarry (Bruno Simon's achievements, Summer Afternoon's five
+  secrets); the journal is ours, and it is also the state E4's stances will
+  react to.
+- **Journal counts only what exists:** the denominator is the *transcribed*
+  count, not 418, until transcription completes — an honest "34 of 124 (more
+  being unearthed)" beats a fake 418. This makes transcription visibly the
+  content critical path (see Standing trickles).
+- **A dozen anchor readers** at real landmarks get staging — approach
+  sightline, framing, light (cf. the Zium galleries' curation-over-coverage
+  thesis: tiers, not 418 equal tiles). The journal marks anchors distinctly;
+  finding all twelve is the "completed" feeling without demanding 418.
+- Wayfinding stays diegetic: a distant voice on the wind, a gull circling a
+  reader. No markers, no compass — one straight street is already legible
+  (cf. Bernband's no-UI thesis).
+
+### E5c — Moments are links
+
+- **Position + heading (+ nearest reader) in the URL hash**, so "look at this
+  one outside the pie shop" is a pasteable link (cf. noclip.website's
+  deep-linkable camera — its whole share culture rides on this). Near-zero
+  code, and it composes with the date seed: a shared link reproduces the
+  street *and* the spot.
+- **Surface the date seed as a name** on the HUD/title ("Leith Walk —
+  1 August 2026, dreich"): a daily variation nobody can describe is a daily
+  variation nobody shares (cf. Spelunky daily / Kate Compton's oatmeal
+  problem — spend the entropy on a few loud nameable differences).
+- Stretch: a photo/share button that stamps date-seed + weather onto the
+  screenshot (cf. No Man's Sky's glyph-stamped portal shots — the image
+  carries both the proof and the reproduction key).
+
+### E5d — Turning back, and leaving
+
+- **The turnaround is a state hinge** (cf. Lieve Oma's return leg): reaching
+  either end of the Walk nudges the clock/weather roll, so the walk back down
+  is a different street — some readers now shuttered, others lit. The
+  down-walk must not replay the up-walk; this is the whole answer to "why
+  walk one street twice".
+- **An opt-in diegetic ending at the Foot** (cf. Proteus's circle): step into
+  the haar coming off the Forth — or the impossible tram, once E6b exists —
+  for a short close (voices merging, street receding). Never forced; closing
+  the tab stays a valid exit.
+- Stretch (unchanged): one enterable interior as a hub gallery.
 
 ## E6 — Getting About (collision, and a tram that runs)
 
@@ -1129,9 +1365,15 @@ moment available.* Its own phase-sized piece of work, not a milestone.
 - NPCs boarding and alighting is an E4 behaviour in disguise — leithers with
   somewhere to be. Worth deferring the NPC half until E4's stance system exists,
   and shipping a rideable tram with a static waiting crowd first.
-- **Conflicts with an E∞ delight:** "the tram ghost on the dead rails" assumes the
-  rails stay dead. Pick one; a working service and a ghost of the old one can
-  coexist if the ghost runs at night.
+- **The tram contradiction — RESOLVED at the E2 phase gate.** "The tram ghost
+  on the dead rails" (E∞) and a living tram (this milestone) are now one
+  design, staged: the **ghost ships first**, as an E∞ delight that needs no
+  collision and no riding — a translucent tram sliding the dead rails at
+  night, gone by dawn. If and when E6b lands, the ghost is not retired but
+  becomes the **night service**: the real tram runs by day, and after dark
+  only its ghost runs. The day service is real; the night service is a
+  memory of it. Nothing to un-ship, and the delight gets stranger, not
+  stale, when the living tram arrives.
 
 ## E7 — The Walk, Shared (ship-readiness, then presence)
 
@@ -1250,8 +1492,40 @@ Two or three ship per session, forever; date-seeded variation so no two visits
 match. Seed ideas: a windowsill cat that tracks the player; washing lines
 between closes; a gull that steals a litter comic and must be chased; a rat
 dragging a chip; Hibs graffiti whose scoreline changes by real date; the dock
-fog horn at night; a slippable close; silhouettes in lit windows; the tram
-ghost on the dead rails.
+fog horn at night; a slippable close; silhouettes in lit windows; **the tram
+ghost on the dead rails — ships before E6b, then becomes the night service
+when the living tram exists (see E6b for the resolution)**.
+
+Survey-fed additions (E2 phase gate, attributions inline):
+
+- **Windows that change while you watch** (cf. Pixel City, Shadertoy's
+  night-city pieces): per-window lit/dark state hashed on
+  `(windowID, floor(simTime/interval))` so lights come on and go off during a
+  walk — the temporal half is what turns "texture with bright spots" into
+  "someone's in". `src/windows.js` already owns the spatial half; this is a
+  hash tweak, possibly the cheapest delight on the list.
+- **Sourceless distant one-shots** (cf. L.A. Noire's ambient design): a door
+  slamming up a side street, a dropped bottle, shouting in Scots two streets
+  over — direct signal cut, reverb kept, long randomised timers. The
+  inhabited world extends past the geometry precisely because the source is
+  never findable.
+- **Interrupted-moment vignettes** (cf. Don Carson's theme-park
+  environmental storytelling): a kettle on a camp stove by a stall, a
+  half-played dominoes game on a crate, a chalked price list corrected three
+  times — each prop cluster implies a person who stepped away thirty seconds
+  ago. Population without polygons.
+- **Coherent per-block history, not per-building noise** (cf. Dwarf
+  Fortress): roll "what happened here" per block from the seed (this block
+  burned, that one's looted-but-standing) and let dressing follow. "Today
+  the chippy survived" is a shareable sentence; independent per-building
+  noise is not.
+- **One true voice — Dan's call, flagged not decided** (cf. Pine Point,
+  the Kowloon shop captures: mundane specificity carries the grief): amid
+  417 readers of garbled comics, one vendor who says something real and
+  ordinary about their actual shop would be the loudest moment in the piece.
+  It does not touch the verbatim rule (no garble is corrected — this is new
+  speech, not a fixed comic), but it is an art-direction decision about the
+  piece's heart, so it is recorded here for Dan rather than scheduled.
 
 ## Standing constraints
 

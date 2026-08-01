@@ -98,7 +98,9 @@ npm run smoke     # validation rig — the pre-deploy gate; see docs/VALIDATION.
 ## Gotchas
 
 - three.js physical light units: intensities that "look right" are ~10-100× the legacy
-  scale (torch 18, exhibit spots 60). Tone mapping is ACESFilmic, exposure 1.15.
+  scale (torch 18; there are no NPC exhibit spotlights — the only other lights are
+  the three arc-flash PointLights, peak-driven from intensity 0). Tone mapping is
+  ACESFilmic, exposure 1.46, driven per-frame by `src/atmosphere.js`.
 - ACES lifts everything: procedural texture tones must be picked far darker than
   looks right on paper, and canvas bakes must write RAW sRGB hex bytes (THREE.Color
   components are linear; an SRGB-tagged canvas converts AGAIN → silhouettes).
