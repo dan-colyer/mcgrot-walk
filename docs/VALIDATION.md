@@ -480,12 +480,17 @@ space, which is exactly the composer path this module exists to avoid. Its
 payoff on merged OSM building geometry under this much fog is also the smallest
 of the four effects. Recorded in `docs/ROADMAP.md` rather than faked.
 
-**A recapture wrinkle worth knowing.** On a run where a golden is missing, the
-bookmark loop writes the file and `continue`s — which skips the `clip-control`
-check that follows it. So a run that recaptures the eight bookmark goldens
-reports 158 checks rather than 166, silently. The green run that matters is the
-*next* one, with every golden present. Always re-run after a recapture; don't
-read the capture run as a pass.
+**A recapture wrinkle — FIXED at the E2 phase gate (2026-08-01).** On a run
+where a golden was missing, the bookmark loop used to write the file and
+`continue` — skipping the `clip-control` check that follows, so a run that
+recaptured the eight bookmark goldens reported 158 checks rather than 166,
+silently. The loop is now routed through the same `checkGolden` helper the
+weather passes use, and `clip-control` runs on the freshly captured frame too:
+a recapture run reports the full check count. Verified by deleting one golden
+(`fascia-close`) and watching the run report all 166 checks including
+`clip-control:fascia-close`. A recapture run is still not a *diff* pass for the
+recaptured pose (a just-written golden trivially matches itself) — the
+follow-up run with every golden present remains the one that proves stability.
 
 ### The composer's colour management — why bloom is not in the build (E2d.1a)
 

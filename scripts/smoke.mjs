@@ -481,31 +481,15 @@ async function main() {
 
       const shot = await page1.screenshot();
       shotsByBookmark[bm.id] = shot;
-      const goldenPath = join(goldenDir, `${bm.id}.png`);
-      if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
-        writeFileSync(goldenPath, shot);
-        results.push({ name: `golden:${bm.id}`, pass: true, detail: 'captured' });
-        continue;
-      }
-
-      const actual = PNG.sync.read(shot);
-      const expected = PNG.sync.read(readFileSync(goldenPath));
-      if (actual.width !== expected.width || actual.height !== expected.height) {
-        results.push({ name: `golden:${bm.id}`, pass: false, detail: `size mismatch ${actual.width}x${actual.height} vs ${expected.width}x${expected.height}` });
-        continue;
-      }
-      const diffPng = new PNG({ width: actual.width, height: actual.height });
-      const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
-      const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
-      results.push({
-        name: `golden:${bm.id}`,
-        pass: diffPct <= DIFF_PCT_TOLERANCE,
-        detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
-      });
+      // Routed through checkGolden so a recapture run (golden file absent)
+      // still falls through to the clip-control check below — the old inline
+      // capture branch `continue`d past it, silently dropping 8 checks from
+      // any recapture run and making 158/158 look like a full pass.
+      const bookmarkPng = checkGolden(results, `golden:${bm.id}`, shot, join(goldenDir, `${bm.id}.png`));
 
       // E2c.1 acceptance criterion 3's control figure — overcast should
       // never clip; reported alongside the 'clear' figure below.
-      const controlClipPct = clippedHighlightPct(actual);
+      const controlClipPct = clippedHighlightPct(bookmarkPng);
       results.push({
         name: `clip-control:${bm.id}`,
         pass: controlClipPct < CLIP_PCT_MAX,
