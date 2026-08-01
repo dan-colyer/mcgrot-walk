@@ -16,10 +16,17 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { assetUrl } from './assets.js';
 import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
+import { ANCHORS_ENABLED, anchorsById } from './anchors.js';
 
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
 const END_MARGIN = 60;        // leave this much clear at the south end
+// E5b.2: no NPC spotlights exist (the render-path/draw-call budget forbids
+// adding twelve) — an anchor reads brighter through its own unlit
+// materials instead. Applied to the comic and face MeshLambertMaterials,
+// which are already unique per vendor (never shared like clothMat's cache),
+// so this cannot leak onto a non-anchor vendor sharing a coat colour.
+const ANCHOR_GLOW = 1.35;
 // At the 0.0095 density this was tuned against, fog only obscures ~35% of
 // contrast at 70m and ~50% at 90m — nowhere near opaque — so a comic held at
 // head height is legible well beyond the old 34m range. 85m loads it while
@@ -157,6 +164,56 @@ export function paperPlaceholder() {
   return paperTex;
 }
 
+// Pure placement math — no THREE, no scene, no DOM — so it can run
+// identically inside buildNpcs and from the smoke harness (window.__mcgrotDebug
+// .anchorLayout) to compare the anchors flag's on/off output without a second
+// scene build. Chainage, side and coat index are ALWAYS index-derived
+// (`i * spacing`, `i % 2`, `i % COAT_COLORS.length`); only an anchor's `dist`
+// (and, if it ever needs one, its offset) is overridden when `anchorsEnabled`
+// is true — see the E5b.2 brief's warning about the sequence being load-bearing.
+export function computeVendorLayout(list, streetLine, anchorsEnabled) {
+  const anchorMap = anchorsById();
+  const streetLen = streetLength(streetLine);
+  const usable = Math.max(1, streetLen - START_DIST - END_MARGIN);
+  const spacing = list.length > 1 ? usable / (list.length - 1) : 0;
+
+  const out = [];
+  list.forEach((comic, i) => {
+    const baseDist = START_DIST + i * spacing;
+    const anchor = anchorsEnabled ? anchorMap.get(comic.id) : null;
+    const dist = anchor ? anchor.chainage : baseDist;
+    const side = i % 2 === 0 ? 1 : -1;
+    const offset = (anchor && anchor.offset != null) ? anchor.offset : STREET_OFFSET;
+    const sample = sampleStreet(streetLine, dist);
+    if (!sample) return;
+
+    const [tx, tz] = sample.tangent;
+    const perpX = -tz;
+    const perpZ = tx;
+    const px = sample.point[0] + perpX * offset * side;
+    const pz = sample.point[1] + perpZ * offset * side;
+
+    // Face back toward the centreline (character built facing +Z; θ maps +Z to
+    // (sinθ, cosθ), so θ = atan2(dir.x, dir.z)).
+    const dirX = sample.point[0] - px;
+    const dirZ = sample.point[1] - pz;
+    const baseY = Math.atan2(dirX, dirZ);
+
+    out.push({
+      id: comic.id,
+      index: i,
+      dist,
+      baseDist,
+      side,
+      coatIndex: i % COAT_COLORS.length,
+      px, pz, baseY,
+      isAnchor: !!anchor,
+      landmark: anchor ? anchor.landmark : null,
+    });
+  });
+  return out;
+}
+
 export function buildNpcs(assets, world, scene, camera) {
   // Prefer the full catalog (site/dev); fall back to the 3-comic manifest
   // (single-file artifact). Only entries with an npc identity become vendors.
@@ -174,34 +231,26 @@ export function buildNpcs(assets, world, scene, camera) {
     faceMats.get(path).push(mat);
   };
 
-  const streetLen = streetLength(streetLine);
-  const usable = Math.max(1, streetLen - START_DIST - END_MARGIN);
-  const spacing = list.length > 1 ? usable / (list.length - 1) : 0;
+  // localhost-only override (mirrors __mcgrotForceDaySeed etc — see debug.js)
+  // so scripts/smoke.mjs can drive both flag states from one boot without
+  // touching the shipped default.
+  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
+  const anchorsEnabled = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceAnchors != null)
+    ? !!window.__mcgrotForceAnchors
+    : ANCHORS_ENABLED;
 
-  list.forEach((comic, i) => {
-    const dist = START_DIST + i * spacing;
-    const side = i % 2 === 0 ? 1 : -1;
-    const sample = sampleStreet(streetLine, dist);
-    if (!sample) return;
+  const layout = computeVendorLayout(list, streetLine, anchorsEnabled);
 
-    const [tx, tz] = sample.tangent;
-    const perpX = -tz;
-    const perpZ = tx;
-    const px = sample.point[0] + perpX * STREET_OFFSET * side;
-    const pz = sample.point[1] + perpZ * STREET_OFFSET * side;
-
-    // Face back toward the centreline (character built facing +Z; θ maps +Z to
-    // (sinθ, cosθ), so θ = atan2(dir.x, dir.z)).
-    const dirX = sample.point[0] - px;
-    const dirZ = sample.point[1] - pz;
-    const baseY = Math.atan2(dirX, dirZ);
-
-    const npc = buildNpc(assets, comic, COAT_COLORS[i % COAT_COLORS.length], registerFace);
-    const py = world.groundHeight ? world.groundHeight(px, pz) : 0;
-    npc.group.position.set(px, py, pz);
-    npc.group.rotation.y = baseY;
-    npc.baseY = baseY;
-    npc.phase = i * 2.1;
+  layout.forEach((placement) => {
+    const comic = list[placement.index];
+    const npc = buildNpc(assets, comic, COAT_COLORS[placement.coatIndex], registerFace, placement.isAnchor);
+    const py = world.groundHeight ? world.groundHeight(placement.px, placement.pz) : 0;
+    npc.group.position.set(placement.px, py, placement.pz);
+    npc.group.rotation.y = placement.baseY;
+    npc.baseY = placement.baseY;
+    npc.phase = placement.index * 2.1;
+    npc.isAnchor = placement.isAnchor;
+    npc.anchorLandmark = placement.landmark;
 
     scene.add(npc.group);
     npcs.push(npc);
@@ -210,7 +259,7 @@ export function buildNpcs(assets, world, scene, camera) {
   // Load each unique face once, apply to every material that registered it.
   for (const [path, mats] of faceMats) {
     loadSRGB(assetUrl(assets, path), (tex) => {
-      for (const m of mats) { m.map = tex; m.color.setScalar(LIT_ALBEDO_GAIN); m.needsUpdate = true; }
+      for (const m of mats) { m.map = tex; m.color.setScalar(m.userData.anchorGlow || LIT_ALBEDO_GAIN); m.needsUpdate = true; }
     });
   }
 
@@ -227,14 +276,15 @@ export function buildNpcs(assets, world, scene, camera) {
     }
   }
 
-  return { npcs, update };
+  return { npcs, update, list, anchorsEnabled };
 }
 
 // ---------------------------------------------------------------------------
 // Single character
 // ---------------------------------------------------------------------------
 
-function buildNpc(assets, comic, coatColor, registerFace) {
+function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
+  const glow = isAnchor ? ANCHOR_GLOW : 1;
   const build = comic.npc.build || { height: 1.9, girth: 1.0, headScale: 1.5 };
   const H = build.height;
   const G = build.girth;
@@ -294,7 +344,10 @@ function buildNpc(assets, comic, coatColor, registerFace) {
   // knitted hood (darker than the coat) instead of bare coat colour, so the
   // head reads as a hooded person rather than a coat-coloured block.
   const hoodMat = clothMat(new THREE.Color(coatColor).multiplyScalar(0.62).getHex(), true);
-  const faceMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x8a8472).multiplyScalar(LIT_ALBEDO_GAIN) });
+  const faceMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x8a8472).multiplyScalar(LIT_ALBEDO_GAIN * glow) });
+  // Read by buildNpcs' shared-face loader (below), which resets .color after
+  // the JPEG loads and doesn't otherwise know which vendors are anchors.
+  faceMat.userData.anchorGlow = LIT_ALBEDO_GAIN * glow;
   registerFace(comic.npc.face, faceMat);
   // BoxGeometry material order: +X,-X,+Y,-Y,+Z,-Z — index 4 is the front.
   const headMats = [hoodMat, hoodMat, hoodMat, hoodMat, faceMat, hoodMat];
@@ -315,7 +368,8 @@ function buildNpc(assets, comic, coatColor, registerFace) {
 
   // Comic plane — unlit, grubby-newsprint placeholder until its texture loads.
   const comicH = bodyH * 0.55;
-  const comicMat = new THREE.MeshLambertMaterial({ map: paperPlaceholder(), color: new THREE.Color(LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN, LIT_ALBEDO_GAIN), side: THREE.DoubleSide });
+  const comicGain = LIT_ALBEDO_GAIN * glow;
+  const comicMat = new THREE.MeshLambertMaterial({ map: paperPlaceholder(), color: new THREE.Color(comicGain, comicGain, comicGain), side: THREE.DoubleSide });
   const comicMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), comicMat);
   comicMesh.position.set(0, legTopY + bodyH * 0.55, bodyD * 0.5 + 0.17);
   comicMesh.scale.set(comicH * 0.7, comicH, 1);
@@ -350,7 +404,7 @@ function buildNpc(assets, comic, coatColor, registerFace) {
       npc.comicLoaded = true; // set first so we never double-load
       loadSRGB(assetUrl(assets, comic.image), (tex) => {
         comicMat.map = tex;
-        comicMat.color.setScalar(LIT_ALBEDO_GAIN);
+        comicMat.color.setScalar(comicGain);
         comicMat.needsUpdate = true;
         const img = tex.image;
         if (img && img.width && img.height) {

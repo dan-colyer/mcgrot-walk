@@ -144,7 +144,13 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     // the overlay — walking past a busking vendor (proximityAudio's own
     // ambient play()) never reaches this function, so only an actually-
     // started reading counts. credit() is idempotent per comic id.
-    if (journal && npc.comic) journal.credit(npc.comic.id, 'heard');
+    if (journal && npc.comic) {
+      journal.credit(npc.comic.id, 'heard');
+      // E5b.2: an anchor is credited on this same past-the-hush event, never
+      // on the keypress that opens the overlay — walking past one earns
+      // nothing, same discipline as 'heard' above.
+      if (npc.isAnchor) journal.credit(npc.comic.id, 'anchor');
+    }
   }
 
   function skipHush() {

@@ -816,6 +816,219 @@ async function main() {
       await jCtx.close();
     }
 
+    // --- E5b.2: the dozen anchor readers ---
+    console.log('[smoke] E5b.2 anchors gate...');
+    {
+      // Forced explicitly off (not relying on whichever way the shipped
+      // default currently points) so this gate means the same thing before
+      // AND after the enable commit flips ANCHORS_ENABLED.
+      const anCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      await anCtx.addInitScript(() => {
+        window.__mcgrotFreezeAtBoot = true;
+        window.__mcgrotForceAnchors = false;
+      });
+      const anPage = await anCtx.newPage();
+      await anPage.goto(`http://localhost:${port}/`);
+      await anPage.click('#title-enter');
+      await anPage.evaluate(() => {
+        const el = document.getElementById('title-card');
+        if (el) el.style.transition = 'none';
+      });
+      await anPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await anPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      await anPage.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await anPage.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+
+      // Sequence intact + non-anchor vendors did not move: window.__mcgrotDebug
+      // .anchorLayout(enabled) is a PURE re-derivation off the same list/
+      // streetLine this boot already placed vendors from (src/npcs.js's
+      // computeVendorLayout, also used to build the live scene) — no second
+      // scene build needed to compare both flag states in one page.
+      const layout = await anPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        return { off: dbg.anchorLayout(false), on: dbg.anchorLayout(true), anchorSet: dbg.anchorSet };
+      });
+
+      const sameLength = layout.off.length === layout.on.length && layout.off.length > 0;
+      const sameSequence = sameLength && layout.off.every((o, i) => o.id === layout.on[i].id);
+      const NUDGE_TOLERANCE = 0.1;
+      let nonAnchorsUnmoved = true;
+      let anchorsMovedCorrectly = true;
+      let anchorCount = 0;
+      const anchorById = new Map(layout.anchorSet.map((a) => [a.id, a]));
+      for (let i = 0; i < layout.off.length; i++) {
+        const off = layout.off[i], on = layout.on[i];
+        if (off.isAnchor) { nonAnchorsUnmoved = false; continue; } // off must never mark an anchor
+        // side/coat are index-derived and must be identical regardless of flag.
+        if (off.side !== on.side || off.coatIndex !== on.coatIndex) nonAnchorsUnmoved = false;
+        if (on.isAnchor) {
+          anchorCount++;
+          const def = anchorById.get(on.id);
+          const nudgeOk = def && Math.abs(on.dist - def.chainage) <= NUDGE_TOLERANCE;
+          const posMoved = Math.hypot(on.px - off.px, on.pz - off.pz) > 0.01;
+          if (!nudgeOk || !posMoved) anchorsMovedCorrectly = false;
+        } else {
+          // non-anchor: position must be EXACTLY unchanged between flag states.
+          if (off.px !== on.px || off.pz !== on.pz) nonAnchorsUnmoved = false;
+        }
+      }
+      results.push({
+        name: 'E5b.2: non-anchor vendors did not move (flag on vs off), exactly 12 anchors nudged',
+        pass: sameLength && nonAnchorsUnmoved && anchorsMovedCorrectly && anchorCount === 12,
+        detail: `${layout.off.length} vendors compared, ${anchorCount} anchors moved (want 12), ` +
+          `non-anchors unmoved=${nonAnchorsUnmoved}, anchor nudges within ${NUDGE_TOLERANCE}m=${anchorsMovedCorrectly}`,
+      });
+      results.push({
+        name: 'E5b.2: the sequence is intact (comic.id identical, in order, flag on vs off)',
+        pass: sameSequence,
+        detail: sameSequence ? `all ${layout.off.length} ids match in order` : 'id order diverged between flag states — reindex risk',
+      });
+
+      // Anchor denominator is derived, not typed — the same opposed-pair
+      // shape as E5b.1's countVendorsWithAudio gate: journal.js's counter
+      // (countAnchors) is a real `.length` over ANCHOR_SET, run here over a
+      // deliberately truncated copy and required to track — a typed literal
+      // could not.
+      const anchorDenomCheck = await anPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        return {
+          full: dbg.anchorSet.length,
+          truncated: dbg.anchorSet.slice(0, 4).length,
+        };
+      });
+      results.push({
+        name: 'E5b.2: anchor denominator is derived from ANCHOR_SET.length, not a literal',
+        pass: anchorDenomCheck.full === 12 && anchorDenomCheck.full !== 418 && anchorDenomCheck.truncated === 4,
+        detail: `runtime anchorSet.length=${anchorDenomCheck.full}, truncated copy of 4 -> ${anchorDenomCheck.truncated}`,
+      });
+
+      // Flag genuinely gates it: with the shipped default off, journal copy
+      // must render byte-identical to E5b.1 (no anchors clause at all).
+      const flagOffText = await anPage.evaluate(() => document.getElementById('journal-counts')?.textContent || '');
+      results.push({
+        name: 'E5b.2: flag off renders journal copy byte-identical to E5b.1 (no anchors clause)',
+        pass: !flagOffText.includes('anchors'),
+        detail: `journal-counts text: ${JSON.stringify(flagOffText)}`,
+      });
+
+      await anCtx.close();
+
+      // Anchor credit is earned — needs the flag genuinely ON, which the
+      // shipped default is not until the enable commit. Forced via the same
+      // localStorage-free override pattern as __mcgrotForceDaySeed/
+      // __mcgrotFreezeAtBoot: set before any page script runs.
+      const onCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      await onCtx.addInitScript(() => {
+        window.__mcgrotFreezeAtBoot = true;
+        window.__mcgrotForceAnchors = true;
+      });
+      const onPage = await onCtx.newPage();
+      await onPage.goto(`http://localhost:${port}/`);
+      await onPage.click('#title-enter');
+      await onPage.evaluate(() => {
+        const el = document.getElementById('title-card');
+        if (el) el.style.transition = 'none';
+      });
+      await onPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await onPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      await onPage.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await onPage.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+
+      const onCopy = await onPage.evaluate(() => document.getElementById('journal-counts')?.textContent || '');
+      results.push({
+        name: 'E5b.2: flag on shows the "N of 12 anchors" clause',
+        pass: /\d+ of 12 anchors/.test(onCopy),
+        detail: `journal-counts text: ${JSON.stringify(onCopy)}`,
+      });
+
+      const beforeOpen = await onPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const npc = dbg.npcs.npcs.find((n) => n.isAnchor);
+        if (!npc) return { available: false };
+        const p = npc.group.position;
+        // Busking range only (18m) — must credit nothing.
+        dbg.camera.position.set(p.x + 10, dbg.camera.position.y, p.z);
+        dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+        dbg.stepFrames(5);
+        return { available: true, anchorsFound: dbg.journal.counts().anchorsFound, landmark: npc.anchorLandmark };
+      });
+      if (beforeOpen.available) {
+        results.push({
+          name: 'E5b.2: walking past an anchor credits nothing',
+          pass: beforeOpen.anchorsFound === 0,
+          detail: `anchorsFound=${beforeOpen.anchorsFound} after standing in busking range near "${beforeOpen.landmark}" without opening`,
+        });
+
+        await onPage.evaluate(() => {
+          const dbg = window.__mcgrotDebug;
+          const npc = dbg.npcs.npcs.find((n) => n.isAnchor);
+          const p = npc.group.position;
+          dbg.camera.position.set(p.x + 2, dbg.camera.position.y, p.z); // inside interact.js's 8m RANGE
+          dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+          dbg.stepFrames(3);
+        });
+        await onPage.keyboard.press('KeyE'); // opens the overlay; hush pending, no credit yet
+        const atOpen = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
+        await onPage.waitForTimeout(700); // HUSH_MS, real wall-clock timer
+        const afterHush = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
+        await onPage.keyboard.press('Escape');
+        await onPage.evaluate(() => window.__mcgrotDebug.stepFrames(3));
+        await onPage.keyboard.press('KeyE'); // reopen the SAME anchor
+        await onPage.waitForTimeout(700);
+        const afterReopen = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
+        await onPage.keyboard.press('Escape');
+        results.push({
+          name: 'E5b.2: hearing an anchor past the hush credits exactly one, idempotently',
+          pass: atOpen === 0 && afterHush === 1 && afterReopen === 1,
+          detail: `anchorsFound at open=${atOpen} (must be 0), after hush=${afterHush}, after reopening=${afterReopen}`,
+        });
+      } else {
+        results.push({ name: 'E5b.2: walking past an anchor credits nothing', pass: false, detail: 'no anchor npc found with the flag forced on' });
+        results.push({ name: 'E5b.2: hearing an anchor past the hush credits exactly one, idempotently', pass: false, detail: 'no anchor npc found with the flag forced on' });
+      }
+
+      // Draw calls exactly +/-0 at every bookmark, flag on vs a matched
+      // flag-off control — the E2c.1 gate extended to this axis. Two forced,
+      // freshly-booted pages (not the live default, which is off pre-enable-
+      // commit and on after — this must hold either way).
+      const offCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      await offCtx.addInitScript(() => {
+        window.__mcgrotFreezeAtBoot = true;
+        window.__mcgrotForceAnchors = false;
+      });
+      const offPage = await offCtx.newPage();
+      await offPage.goto(`http://localhost:${port}/`);
+      await offPage.click('#title-enter');
+      await offPage.evaluate(() => {
+        const el = document.getElementById('title-card');
+        if (el) el.style.transition = 'none';
+      });
+      await offPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await offPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      await offPage.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+      await offPage.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+
+      const anchorBookmarks = await onPage.evaluate(() => window.__mcgrotDebug.bookmarks);
+      const drawCallDiffs = [];
+      for (const bm of anchorBookmarks) {
+        await onPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
+        const onInv = await getInvariants(onPage);
+        await offPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
+        const offInv = await getInvariants(offPage);
+        if (onInv.drawCalls !== offInv.drawCalls) {
+          drawCallDiffs.push(`${bm.id}: on=${onInv.drawCalls} off=${offInv.drawCalls}`);
+        }
+      }
+      results.push({
+        name: 'E5b.2: draw calls exactly +/-0 at every bookmark, anchors flag on vs off',
+        pass: drawCallDiffs.length === 0,
+        detail: drawCallDiffs.length === 0 ? `all ${anchorBookmarks.length} bookmarks match exactly` : drawCallDiffs.join('; '),
+      });
+
+      await onCtx.close();
+      await offCtx.close();
+    }
+
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);

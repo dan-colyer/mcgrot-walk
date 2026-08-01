@@ -915,6 +915,62 @@ measurably desynced `skyline`'s draw-call count from the frozen
   increments, with zero console errors (`journal.js`'s fail-soft is a plain
   try/catch, not a caught-and-logged one).
 
+## The dozen anchor readers (E5b.2)
+
+`src/anchors.js` — twelve of the 124 vendors (keyed by comic id, never by
+list index — see the brief's reindex warning) nudged onto real Leith Walk
+landmarks, staged behind `ANCHORS_ENABLED`. `src/npcs.js`'s
+`computeVendorLayout(list, streetLine, anchorsEnabled)` is the pure
+placement math (no THREE, no scene) both `buildNpcs` and
+`window.__mcgrotDebug.anchorLayout(enabled)` call — the latter lets
+`scripts/smoke.mjs` compare both flag states from ONE booted page, no
+second scene build required. `window.__mcgrotForceAnchors` (checked at
+`buildNpcs` time, localhost-only) overrides the shipped default the same
+way `__mcgrotForceDaySeed`/`__mcgrotFreezeAtBoot` already do, so the gates
+below can force either state regardless of which way `ANCHORS_ENABLED`
+currently points.
+
+Landed flag-first (`ANCHORS_ENABLED = false`): the full 187-check suite
+passed byte-identical (every golden 0.000%, `geomHash` unchanged, draw
+calls exactly matching `budget.json`) before the enable commit flipped the
+flag. Six checks in `scripts/smoke.mjs`, run right after the E5b.1 journal
+block:
+
+- **Non-anchor vendors did not move, exactly 12 anchors nudged.** Compares
+  `anchorLayout(false)` against `anchorLayout(true)` for all 124 vendors:
+  side and coat index (both index-derived, `i % 2` / `i % COAT_COLORS.length`)
+  must be identical regardless of flag; a non-anchor's `px`/`pz` must be
+  EXACTLY unchanged; an anchor's new chainage must land within 0.1m of its
+  tabled target and its position must actually have moved. The load-bearing
+  half of this gate is the opposed check — a build that shifted the whole
+  street rather than nudging twelve vendors would still show "12 moved" if
+  the gate only checked the anchors; it does not, because it also asserts
+  the other 112 didn't.
+- **The sequence is intact.** `anchorLayout(false)` and `anchorLayout(true)`
+  must yield comic ids in the identical order — the reindex tripwire the
+  brief warns about.
+- **Anchor denominator is derived, not typed.** `journal.js`'s
+  `countAnchors` run over a truncated 4-entry copy of `ANCHOR_SET` must
+  return 4, mirroring E5b.1's `countVendorsWithAudio` opposed-pair shape.
+- **Flag genuinely gates it**, in both directions. Forced off: `#journal-counts`
+  renders byte-identical to E5b.1 (no anchors clause at all — the copy
+  change is gated by the same flag as placement, not just left dark).
+  Forced on: the panel shows `"N of 12 anchors"`.
+- **Anchor credit is earned**, same discipline as E5b.1's heard credit:
+  standing in busking range near an anchor without opening credits nothing;
+  opening it and waiting past the hush (`HUSH_MS`, real wall-clock timer)
+  credits exactly one; reopening the same anchor stays at one. Credited in
+  `interact.js`'s `beginReading`, the same call that credits `'heard'`, via
+  `npc.isAnchor` (set at placement time) — so it can never fire when the
+  flag is off, since every `isAnchor` is `false` in that case.
+- **Draw calls exactly +/-0 at every bookmark, flag on vs off.** Two
+  independently forced, freshly-booted pages (not the live default, which
+  points a different way before vs after the enable commit) visit all 8
+  bookmarks; anchors move geometry that already exists (no new lights, no
+  new meshes — the "brighter reading" is an unlit material-colour bump on
+  each vendor's already-per-vendor-unique face/comic materials, never the
+  shared `clothMat` cache), so this is expected to hold trivially and does.
+
 ## Mobile pass (E2e / E2e.1)
 
 A second smoke pass at a phone-shaped viewport (390×844), with touch mode

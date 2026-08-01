@@ -202,6 +202,7 @@ export function createDebugApi(ctx) {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
+    vendorList, anchorsEnabled, anchorSet, computeVendorLayout,
   } = ctx;
 
   const consoleErrors = [];
@@ -449,6 +450,16 @@ export function createDebugApi(ctx) {
     window.__mcgrotForceDaySeed = v == null ? undefined : (v >>> 0);
   }
 
+  // E5b.2: pure re-derivation of the vendor layout for either flag state,
+  // using the SAME list/streetLine this boot already placed vendors from —
+  // no scene rebuild, so the smoke gate can compare on/off in one run. The
+  // live scene itself was built under `anchorsEnabled` (below), whichever
+  // way window.__mcgrotForceAnchors (read at buildNpcs time, before this API
+  // exists) or the shipped ANCHORS_ENABLED default decided.
+  function anchorLayout(enabled) {
+    return computeVendorLayout(vendorList, world.streetLine, !!enabled);
+  }
+
   return {
     // --- back-compat: existing probe fields keep working unchanged ---
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
@@ -467,6 +478,9 @@ export function createDebugApi(ctx) {
     setRate,
     setReadAlong,
     setDaySeed,
+    anchorsEnabled,
+    anchorSet,
+    anchorLayout,
     setTouchMode,
     setPixelRatio,
     measureFrameTiming,

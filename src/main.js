@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { loadAssets } from './assets.js';
 import { buildWorld, createPlayerTorch } from './world.js';
 import { createControls } from './controls.js';
-import { buildNpcs } from './npcs.js';
+import { buildNpcs, computeVendorLayout } from './npcs.js';
+import { ANCHOR_SET } from './anchors.js';
 import { buildShopfronts } from './shopfronts.js';
 import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
@@ -134,7 +135,7 @@ async function main() {
   // both exist (in response to a J-press or a tap), so the closure over this
   // `let` is safe despite the declaration order.
   let interact;
-  const journal = createJournal({ assets, npcs: npcs.npcs, litter, canOpen: () => !interact.isOpen() });
+  const journal = createJournal({ assets, npcs: npcs.npcs, litter, canOpen: () => !interact.isOpen(), anchorsEnabled: npcs.anchorsEnabled });
 
   interact = createInteract({
     assets,
@@ -284,6 +285,7 @@ async function main() {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
+      vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

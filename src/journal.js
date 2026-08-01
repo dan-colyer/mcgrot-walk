@@ -13,6 +13,8 @@
 // its own as transcription lands (see proximity-audio.js's own `if
 // (!npc.comic.audio) continue`, the same test used here).
 
+import { ANCHOR_SET, countAnchors } from './anchors.js';
+
 const STORAGE_KEY = 'mcgrot.journal.v1';
 
 // Every read AND write goes through try/catch (item 4) — Safari private mode
@@ -56,11 +58,15 @@ export function countVendorsWithAudio(npcs) {
   return n;
 }
 
-export function createJournal({ assets, npcs, litter, canOpen }) {
+export function createJournal({ assets, npcs, litter, canOpen, anchorsEnabled }) {
   const entries = loadEntries(); // [{id, kind}], oldest first
   const seen = new Set(entries.map((e) => `${e.kind}:${e.id}`));
   const denominator = countVendorsWithAudio(npcs);
   const foundTotal = (litter && Array.isArray(litter.items)) ? litter.items.length : 0;
+  // E5b.2: a second, smaller, achievable target alongside heard/found — see
+  // countAnchors' own note for why this is a real counter over ANCHOR_SET,
+  // not a typed 12.
+  const anchorsTotal = countAnchors(ANCHOR_SET);
 
   const catalogById = new Map(
     ((assets && assets.catalog && assets.catalog.comics) || []).map((c) => [c.id, c])
@@ -80,9 +86,12 @@ export function createJournal({ assets, npcs, litter, canOpen }) {
 
   // Idempotent per (id, kind) — the same comic can be re-credited any number
   // of times (E5a's hush, play/pause, reopening the overlay all pass through
-  // here) without inflating the count.
+  // here) without inflating the count. 'anchor' is credited on the SAME call
+  // as 'heard' (see interact.js's beginReading — past the hush, never on the
+  // keypress that opens the overlay), it just gets its own kind so it can be
+  // tallied and denominated separately from the heard/found pair.
   function credit(id, kind) {
-    if (!id || (kind !== 'heard' && kind !== 'found')) return false;
+    if (!id || (kind !== 'heard' && kind !== 'found' && kind !== 'anchor')) return false;
     const key = `${kind}:${id}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -93,19 +102,30 @@ export function createJournal({ assets, npcs, litter, canOpen }) {
   }
 
   function counts() {
-    let heard = 0, found = 0;
-    for (const e of entries) { if (e.kind === 'heard') heard++; else if (e.kind === 'found') found++; }
-    return { heard, found, denominator, foundTotal };
+    let heard = 0, found = 0, anchorsFound = 0;
+    for (const e of entries) {
+      if (e.kind === 'heard') heard++;
+      else if (e.kind === 'found') found++;
+      else if (e.kind === 'anchor') anchorsFound++;
+    }
+    return { heard, found, denominator, foundTotal, anchorsFound, anchorsTotal };
   }
 
+  // Reading history feed — anchor credits are a silent tally alongside
+  // 'heard' for the same comic, not a separate row (the vendor was already
+  // heard; the anchor state is a property of that same event, not a new one).
   function list() {
-    return entries.slice().reverse(); // newest first
+    return entries.filter((e) => e.kind !== 'anchor').slice().reverse(); // newest first
   }
 
   function render() {
     if (countEl) {
-      const { heard, found } = counts();
-      countEl.textContent = `${heard} of ${denominator} heard — more being unearthed  ·  ${found}${foundTotal ? ` of ${foundTotal}` : ''} found`;
+      const { heard, found, anchorsFound } = counts();
+      // Flag off must render BYTE-IDENTICAL to E5b.1 — the anchors clause is
+      // gated by the same flag that gates placement, not just left dark.
+      countEl.textContent = anchorsEnabled
+        ? `${heard} of ${denominator} heard — more being unearthed  ·  ${found}${foundTotal ? ` of ${foundTotal}` : ''} found  ·  ${anchorsFound} of ${anchorsTotal} anchors`
+        : `${heard} of ${denominator} heard — more being unearthed  ·  ${found}${foundTotal ? ` of ${foundTotal}` : ''} found`;
     }
     if (!listEl) return;
     listEl.textContent = '';
