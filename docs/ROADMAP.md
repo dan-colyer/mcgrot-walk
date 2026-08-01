@@ -1610,10 +1610,11 @@ they arrive in. Cheap absolute invariants belong alongside scored ones.
   runtime those vendors' looping busker lines are mostly silence, and the
   virtual clock will usually join them mid-nothing. Retrim or regenerate —
   a content job, and the only two in the corpus over 3s.
-- **Alignment quality is unverified by ear.** The gate proves boundaries sit
-  in pauses; it cannot prove the right phrase lights up at the right moment.
-  Dan listens to `2a0e56d4` (the worst former offender) and one clean comic
-  before the alignment itself is called settled.
+- ~~**Alignment quality is unverified by ear.**~~ **Settled 2026-08-01** —
+  Dan listened through `2a0e56d4` (the worst former offender, 4.0s of wrong
+  highlight before the fix) and a clean comic: the highlight tracks the voice
+  line by line, no stall, no backwards jump. The sync is the one thing no
+  gate here can prove, so this listen is the acceptance, not the 0.9599.
 
 ### E5b — The journal, and the quarry
 
