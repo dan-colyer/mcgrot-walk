@@ -10,6 +10,35 @@ inhabited by a living population of Leithers, where the player explores the stre
 while hearing and reading McGrot comics, and the Leithers themselves hold opinions
 about McGrot that drive how they behave.
 
+## Direction — the delight arc (Dan-directed, 2026-08-01)
+
+The organising idea, from looking at the comics themselves: **the game is the
+street the comics describe.** The McGrot comics are set on Leith Walk (one is
+literally titled "The Leith Walk Drop", Elm Row tenements in frame); their
+world and the game's world are the same place. Every system should pull toward
+"you are walking through a McGrot comic about Leith":
+
+- **The Look** — the render converges on the comics' printed page: aged cream
+  paper, flat muted fills (olive, teal, brick-red, ochre), warm dark-brown
+  ink, dreich skies the weather system already delivers. → E8.
+- **The Life** — the cast becomes the street's real people (see
+  `docs/LEITH.md`, the Leith bible), and the comics leak back into the world:
+  fragments spreading through the crowd, comic props appearing on the street,
+  animals in the game. → E3/E4.
+- **The Shared Street** — the tram finally runs (and ends where the rails
+  stop dead), and other real walkers hide among the NPCs. → E6/E7.
+
+Two standing rules join the constraints: the **Central Bar test** (every joke
+must get a laugh in the Central Bar, said aloud, with Leithers present — punch
+at institutions with letterheads, never at Leith), and **Scots is the prestige
+register** (the language of wit and authority; the RP students are the ones
+out of their depth).
+
+**Sequence: E2f → E5 → E8 → E3 → E4 → E6 → E7**, E∞ continuous. E8 (style)
+goes before E3 (characters) deliberately: the character pipeline spike must
+evaluate candidates *under the McGrot grade*, because the grade changes what
+character fidelity is worth buying.
+
 ## Phase D retrospective (why the roadmap changed)
 
 Six milestone cycles (D4–D9) pursued façade quality measured by a 76-pose blind
@@ -1126,10 +1155,12 @@ spots 60" (fixed at the gate).
 
 ## Sequencing decision (E2 phase gate, 2026-08-01)
 
-Phase numbers are stable labels, not an order. The order is now:
+Phase numbers are stable labels, not an order. The order is now (E8 inserted
+2026-08-01 with the delight-arc direction — see "Direction" at the top):
 
-**E2f (device round) → E5 (comic layer) → E3 (characters) → E4 (opinions) →
-E6 (collision/tram) → E7 (ship-readiness, presence)**, with E∞ continuous.
+**E2f (device round) → E5 (comic layer) → E8 (the McGrot grade) → E3
+(characters) → E4 (opinions) → E6 (collision/tram) → E7 (ship-readiness,
+presence)**, with E∞ continuous.
 
 Why E5 jumps E3 and E4:
 
@@ -1178,7 +1209,72 @@ read first** — the last unverified fix for bug 1 is what broke the music.*
   bandwidth-takedown risk before any share push that a working iOS build
   makes tempting. It does not need to wait for E7.
 
-## E3 — The Folk (character system v2) — AFTER E5 (see Sequencing decision)
+## E8 — The Look (the McGrot grade) — BETWEEN E5 AND E3
+
+*The defined style, taken from the comics themselves: aged cream paper, flat
+muted fills, warm dark-brown ink, halftone-printed photographs. Not realism —
+the street as a printed page. Survey-fed (comic-print rendering across Obra
+Dinn, Cuphead, Borderlands, Void Bastards, Sable, Hi-Fi Rush); attributions
+inline. The architecture already fits: `src/post.js`'s single
+full-screen pass is exactly where a print look lives, and check 26's
+neutral/live gate pattern extends to every new style axis by construction.*
+
+**The style bible comes first, and it is five mechanical rules** (cf. Sable —
+a two-person team enforcing Moebius coherence by making the rules few enough
+to hard-code): paper colour (sample it from the comics' cream), one halftone
+screen-angle set and cell size, the palette pull per tonal band, what never
+gets halftoned, and line-weight rules for any outlined mesh. Encode them as
+shader constants — the renderer then physically cannot go off-style. Write it
+as `docs/STYLE.md` with swatches pulled from actual comic panels.
+
+**The candidate stack, in the existing single pass** (all colour-buffer-only,
+deterministic, ordered):
+
+1. **Luminance dot-screen halftone, shadow/mid bands only** — quantise
+   luminance into 3–4 bands; dots live in the shadows and mids, highlights
+   stay clean paper (cf. Hi-Fi Rush's shadow-gated halftone — this gating is
+   what makes it read as printing, not a filter). ~3–4px cells,
+   `fwidth`-smoothstepped dot edges (anti-swim), lerped ~50% with the source
+   so the photo façades read as *printed photographs* — which is literally
+   what newsprint halftone was for. Precomputed Bayer/blue-noise texture, no
+   hashes (cf. Obra Dinn's pattern discipline).
+2. **Ink misregistration** — ±1px channel offsets easing up toward frame
+   edges. One tap per channel, unconditionally stable.
+3. **Paper + grain** — constant warm paper tint; the existing grain gains a
+   Cuphead-style artefact layer (spots/streaks re-seeded every 8–10 frames —
+   low-rate reseed reads as *film*, not noise; amplitude stays a setting).
+4. **Gentle palette pull, not posterise** — per-band warm/cool tint, mild
+   saturation compression. Hard quantisation stays off the photos.
+
+**Outside the pass, the two cheapest levers** (cf. Void Bastards — the comic
+read is mostly sold by furniture, not shading): comic **caption boxes and
+lettering in the HUD/DOM** (location captions in the comics' hand-lettered
+style; the title card restyled as a cover), and an **offline comic-ising
+pre-pass over the rectified façade photos** (slight posterise, edge-darken,
+paper tint, baked once — deterministic by construction, zero runtime cost,
+survives all camera motion). Optional per-material adjunct: inverted-hull
+outlines on NPC/prop meshes only — never on the photo façades.
+
+**Boundary markers — do not chase** (no depth/normals in this pipeline, by
+E2d's own design): true contour/silhouette outlines, surface-orientation
+cross-hatching, depth-graded line weight. Colour-Sobel ink over photos turns
+brick and mullions to mush; if screen-space ink is used at all it is an
+accent, hard-gated, and probably not worth it.
+
+**Containment, learned from E2c.3a:** the whole grade lands behind a
+`uStyleStrength`-like axis pinned to 0 first — all goldens unmoved, gates
+green — then turns on in one commit that recaptures everything deliberately.
+Check 26 already gates the pass's neutrality in both directions; a style
+milestone extends the same opposed pair to the new uniforms.
+
+**The tension this phase must settle (Dan's call, set up here, decided with
+E3):** the comics argue for round, outlined, flat-shaded characters; the
+locked E3 direction says grotesque semi-realism. These pull apart. E8 ends by
+rendering 2–3 candidate character styles under the finished grade — the grade
+may make a simple toon character read *better* than a semi-realist one, and
+the decision should be made looking at renders, not adjectives.
+
+## E3 — The Folk (character system v2) — AFTER E8 (see Sequencing decision)
 
 *Direction locked: grotesque semi-realism. Realistic proportions and materials;
 readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
@@ -1251,6 +1347,101 @@ even if the spike goes badly:
   randomised timers. Stances pick which event fires — this is what the
   stance system selects between, not per-NPC cleverness.
 - Verbatim rule holds absolutely: comic text is quoted garbled, never fixed.
+
+### The cast — actual Leithers (2026-08-01, Dan-directed; dossier in `docs/LEITH.md`)
+
+The generic walker crowd becomes a cast. Fifteen researched archetypes with
+dialect kit, texture list and sensitivity rules live in the Leith bible —
+headline entries: the Foot-of-the-Walk Auld Boy, the Queen of Leith, the
+Hibee, the Persevere Pensioner, the Save Leith Walk Veteran, the Tram Works
+Shop Owner (the street's Cassandra: "Was that the war?" "Naw, that's been
+like that since 2019"), the Polish Deli Owner, the Banana Flats Sentinel, the
+Posh Students, the Gentrifier, the Central Bar Regular, the Gala Day
+Organiser, the Street Drinker Philosopher (write him as the wisest NPC or not
+at all), the Oral History Lady. Hero-cast TTS voices come from the daily
+trickle; the students get RP voices — and are the ones out of their depth.
+
+**The street is a social gradient**: spawn distributions keyed to chainage.
+Students, tourists and gentrifiers thin out doon the Walk; the Foot belongs
+to the auld boys. Geography does the class comedy silently.
+
+### The comic engine — put the intelligence in the comics (survey-fed)
+
+The Sims inversion (cf. smart objects): with 418 stations and ~30 walkers,
+**comics broadcast, agents score**. Each comic gets a pre-tagged advert
+vector at build time (doom, absurdity, food-mention, animal-mention — cheap
+keyword tagging over the transcripts, seeded). Leithers score adverts against
+their stance (feart avoids doom, devotees seek it, profiteers seek existing
+crowds); gulls score the food axis; rats score ground-level stations. New
+interplay = a new advert axis, zero new agent code. This is also why
+transcription is the critical path: an untranscribed comic has no advert.
+
+**One knowledge-token struct powers everything social**:
+`{textFragment, sourceComicId, hopCount, stanceFlavour, tick}` — moving
+between heads, beaks and burrows:
+
+- **Catchphrase contagion** (cf. Animal Crossing's catchphrase spread): a
+  Leither who hears a reading carries a fragment; on Leither–Leither
+  proximity (a 1D distance check on this street) it transfers. The player
+  hears the same broken line echoing further down the Walk. **Fragments
+  travel VERBATIM — no mutation.** The survey suggested mutation-per-hop;
+  it is ruled out here: the verbatim rule is the point, and the spread is
+  the dynamism. (If Dan ever wants drift, that is his call to reopen.)
+- **Thought logs** (cf. RimWorld): a 3–5 entry ring buffer per Leither
+  drives the comment picker — the one who heard a doom comic two minutes ago
+  mutters about it to the next Leither they pass.
+- **Belief pressure** (cf. Crusader Kings' secrets-as-tokens): devotee
+  fragments heard +1, sceptic mutters −1; thresholds flip stances slowly.
+  The contagion stops being decoration and becomes ideological weather along
+  the street, biased by which comics sit on which stretch.
+- **Player memory** (cf. the Nemesis system, one slot): each Leither
+  remembers one thing about the player — "You're the one that stood gawping
+  at the Dalmeny Street comic." One remembered fact, spoken, reads as deep
+  simulation.
+
+**Crowd events as attractors** (cf. AC Unity): advert score × listener count
+crossing a threshold recruits passing Leithers into a semicircle audience,
+holds them a seeded duration, disperses them carrying fragments.
+Congregations forming and breaking are the most legible aliveness signal per
+CPU cycle this street can buy.
+
+**Groups as units** (cf. Reynolds' leader-following): the posh students are
+ONE leader FSM (walk / stop-and-listen / recoil / photograph) plus 3–5
+followers steering to seeded offsets, copying the leader's state with a
+300–800ms stagger — the ripple of heads turning is what makes a group read
+as social. No pathfinding; the leader is a 1D position.
+
+**Engineering shape**: AI LOD (full sim only within ~40m of the player; husks
+beyond), and precomputed day-timelines from the world seed (cf. Shadows of
+Doubt — compute each Leither's whole walk at load, play it back, interrupt
+locally). Fully deterministic, and coincidences become authorable: two
+rival-stance Leithers scheduled to meet outside the same comic. Every roll is
+`hash32(seed, actorId, tick)` — the determinism constraint is untouched.
+
+### Animals in the play
+
+Gulls get a three-state FSM (circle / perch-near-crowd / swoop) driven by the
+same advert table — food-mention comics and formed crowds raise
+gull-attractiveness. **Gull page-theft** (Dan's call before it ships, flagged
+at the gate): a gull steals a physical comic page mid-reading — vendor
+shouts, audience scatters, the page blows up the Walk, a rat drags it to a
+burrow. The reading thereafter *skips the missing page's lines* — omission,
+not correction, so the verbatim rule survives — but it grazes the rule's
+spirit, so it is Dan's decision, not a brief's. Rats mirror below: gathering
+under high-food stations, scattering radially when a group passes — which
+couples groups and animals visually for free.
+
+### The Leith calendar (date-seeded, real dates)
+
+- **Match day**: on real home-fixture Saturdays (or a seeded stand-in), the
+  whole crowd flows east toward Easter Road; scarves in windows; the vendors
+  lose their entire audience for 90 minutes; distant crowd roar carries.
+  Hibs fandom is hope as a discipline — "persevere" in football form.
+  Gentle Hearts slagging only; no sectarian texture, ever (see the bible).
+- **Gala Day** (second Saturday of June, since 1907): bunting, a pageant
+  doon the Walk to the Links, the Organiser drafting the player as a float.
+- These are exactly the "loud, nameable daily differences" the date-seed
+  sharing thesis (E5c) wants — a visitor can say "I was there on Gala Day".
 
 ## E5 — The Comic Layer (McGrot UX) — NEXT AFTER E2f
 
@@ -1365,6 +1556,41 @@ moment available.* Its own phase-sized piece of work, not a milestone.
 - NPCs boarding and alighting is an E4 behaviour in disguise — leithers with
   somewhere to be. Worth deferring the NPC half until E4's stance system exists,
   and shipping a rideable tram with a static waiting crowd first.
+
+**The ride design (survey-fed, 2026-08-01).** Riding is a *protected
+observation frame*, not transport (cf. Cyberpunk's begged-for metro,
+Half-Life's opening): the player finally sits still and looks at the street
+the game spent every phase building. Concretely:
+
+- **Ritual bookends** (cf. Spider-Man's subway): waiting at the stop, doors,
+  a seat, a bell, cosine-ease deceleration into each stop. Fifteen seconds of
+  ceremony at each end does more place-making than the ride.
+- **The tram is a proscenium** (cf. Black Mesa Inbound): the route is
+  deterministic, so vignettes are authorable by distance-along-curve —
+  scenes only riders ever see. The interior is a diorama too (cf. Umurangi):
+  rotting 2019 adverts, tram-works safety notices, someone's abandoned
+  messages.
+- **The strip of voices**: at speed, proximity-triggered readers would fire
+  in sequence — tamed with one-voice-at-a-time crossfade and a distance
+  window, the ride becomes vendors handing off down the Walk like stations
+  on a dial. The cacophony risk IS the best audio moment in the piece.
+- **The ending is the thesis**: the line terminates **where the rails stop
+  dead** — deceleration, doors, silence, and the player steps off into the
+  unfinished half. Riding the tram that never ran, as far as it ever got.
+- Optional: an RDR2-style cinematic exterior cut of the derelict-liveried
+  tram gliding past a landmark — a second camera on an offset of the same
+  curve.
+
+**The technique (no physics, and that is correct** — cf. Fallout 3's train
+being a hat): board → `tram.attach(cameraRig)` (preserves world transform, no
+snap), **suspend ground-follow AND corridor clamp** (they would yank the
+camera off the tram every frame — the single most likely bug); tram advances
+by arc-length parameter on a `CatmullRomCurve3` built from the street
+polyline with Y baked from `groundHeight` at authoring time; alight →
+`scene.attach(cameraRig)`, re-enable follows. Traps: strict update order
+(tram → camera → render); every system reading `camera.position` must switch
+to `getWorldPosition()`; pre-warm asset paging along the route (it is known
+and deterministic — precompute the whole ride's load schedule).
 - **The tram contradiction — RESOLVED at the E2 phase gate.** "The tram ghost
   on the dead rails" (E∞) and a living tram (this milestone) are now one
   design, staged: the **ghost ships first**, as an E∞ delight that needs no
@@ -1477,6 +1703,39 @@ watches is what gets screenshotted.
 - **No chat, and no user-entered names.** Moderating user text is a whole job
   nobody has volunteered for. Assign preset Leither names — funnier anyway.
 
+**Presence design (survey-fed, 2026-08-01). Design for zero concurrency
+first** — the street will usually hold 0–1 live players, so asynchronous
+traces are the multiplayer most visitors actually meet:
+
+- **Traces** (cf. Death Stranding's strand system, NetHack bones): fading
+  footprints in the ash, a comic left open on a doorstep where a session
+  ended, a per-vendor ember ("last listened 3h ago"), and — Souls-style
+  constrained vocabulary — a walker can pin one of ~20 preset garbled-comic
+  quotes to a spot. Preset-only kills the moderation problem dead; storage is
+  `{chainage, presetId, timestamp}` tuples in the Durable Object, decayed
+  over days, **sampled per client** so the street never clutters. Close the
+  loop with counters: "three walkers stopped at your quote."
+- **Stage the reveal; never nameplate it** (cf. Journey, Sky's silhouettes):
+  a real walker renders like an NPC — no floating name, no green diamond.
+  Realness is discovered: they stop when you stop, they turn to face you, a
+  vendor addresses the two of you ("two of ye, eh?"). The doubt-then-certainty
+  IS the delight, and 418 deterministic NPCs are the perfect crowd to hide a
+  human in.
+- **One expressive verb, no channel** (cf. Journey's chirp, cursor-party's
+  duets): a wave or a torch-raise, that NPCs also react to so the verb is fun
+  alone. Emergent duets do the rest.
+- **Shared determinism is free intimacy**: two walkers at the same vendor
+  hear the identical garbled reading in sync with zero extra netcode — make
+  the game acknowledge it (audio duck, an NPC aside) and the seeded-world
+  constraint becomes the emotional payoff.
+- **Netcode stays dumb** (cf. fly.pieter.com's permission slip, Gambetta for
+  the one needed chapter): 10Hz `{id, chainage, sideOffset, heading,
+  animState}` — tens of bytes on a 1D street — fanned out by the Durable
+  Object, rendered ~150ms behind via two-snapshot interpolation, never
+  extrapolated. No prediction, no authority, no reconciliation. Hard room cap
+  (~8) with silent sharding; silent fallback to single-player remains
+  absolute.
+
 ### E7c — Shared moments
 
 *The bit that makes having done it worthwhile.*
@@ -1519,6 +1778,26 @@ Survey-fed additions (E2 phase gate, attributions inline):
   burned, that one's looted-but-standing) and let dressing follow. "Today
   the chippy survived" is a shareable sentence; independent per-building
   noise is not.
+Delight-arc additions (2026-08-01, from the comics themselves):
+
+- **McGrot sightings.** The man in the beret is in the comics — so, rarely,
+  he is on the street: a date-seeded cryptid, glimpsed at distance, gone
+  when approached, one or two days a month. Players comparing sightings is
+  the daily-seed share thesis in its purest form.
+- **The dug.** Both sample comics feature the same wee dog. It exists: a
+  recurring dog that follows vendors, sometimes the player, and appears in
+  the background of McGrot sightings. The mascot agent bridging comics and
+  street.
+- **Comic prophecy.** Transcribed comics reference events and objects ("The
+  Leith Walk Drop"'s zipline fondraiser, Top of Leith Walk to Dockside) —
+  some days, the props appear: a zipline rig on the roofline, a "GRAVYTHON
+  5000" banner. The comics stop being exhibits and become the street's own
+  mythology, and NPCs point at the evidence. Build as a small
+  comic-derived-prop library, date-seeded like everything else.
+- **Meeting at the statue.** NPCs arrange to meet "at the statue" (Queen
+  Victoria, the Foot — Leith's meeting point since 1907), and are found
+  waiting there. "PERSEVERE" signage, "Leithers Don't Litter" stickers and
+  the boundary plaque join the set-dressing trickle (`docs/LEITH.md` §2).
 - **One true voice — Dan's call, flagged not decided** (cf. Pine Point,
   the Kowloon shop captures: mundane specificity carries the grief): amid
   417 readers of garbled comics, one vendor who says something real and
