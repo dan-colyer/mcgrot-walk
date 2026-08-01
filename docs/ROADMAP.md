@@ -70,6 +70,38 @@ E2c.3a two-step) and **opposed-pair gates** (neutral input → bit-identical,
 authored input → measurably moved — check 26's shape, reused for every new
 axis).
 
+### Model and effort per unit
+
+**The rule:** Opus runs **medium** by default — the design here is
+pre-chewed, so briefing and routine review are assembly, not derivation.
+Escalate the **review pass** to **high** whenever a milestone's gates
+mention goldens, a recapture, the render path, or an opposed-pair axis —
+every failure this project has had (E2d ×2, D6–D8's over-claims, E2b's
+substituted metric) happened at review of exactly that class of work.
+**Opus: tell Dan which effort to run before starting each unit.** Units not
+listed inherit the rule.
+
+| Unit | Opus (brief + review) | Implementer | Why |
+|---|---|---|---|
+| E2f device round | medium | Sonnet (fixes only after console read) | evidence-driven; no golden risk |
+| E5a staged reading | medium | Sonnet | overlay/audio; escalate if HUD copy changes (HUD is in all 27 goldens) |
+| E5b journal | medium | Sonnet | DOM + localStorage |
+| E5c moment links + seed HUD | **high (review)** | Sonnet | HUD copy change moves every desktop golden |
+| E5d turnaround + ending | medium | Sonnet | state machine + weather nudge |
+| E8 prototype loop | medium | Sonnet builds presets; Dan judges | no golden may move during the loop |
+| E8 keeper landing | **high (review)** | Sonnet | wholesale recapture + new opposed-pair axis |
+| E9a the shop | **high (review)** | Sonnet | render-path scene swap, boot change, transition gates |
+| E3 pipeline spike | medium | Sonnet | disposable evaluation |
+| E3 landing | **high (review)** | Sonnet | every character-bearing golden moves |
+| E4 systems, flag-first | medium | Sonnet | street behaviour behind flags |
+| E4 enable commits | **high (review)** | Sonnet | walker changes move leither-bearing goldens |
+| E9b visitor theatre | medium | Sonnet; Dan curates corpus | interior-only; corpus gated by Central Bar test |
+| E6a collision | medium | Sonnet | player-only clamp; bookmarks unaffected |
+| E6b the tram | **high (review)** | Sonnet | camera parenting, update order, suspended clamps |
+| E7a hosting move | medium | Sonnet | mechanical migration |
+| E7b presence | medium | Sonnet | plus a hard verify of the silent single-player fallback |
+| Phase gates | — | — | Fable, at every phase boundary |
+
 ## Phase D retrospective (why the roadmap changed)
 
 Six milestone cycles (D4–D9) pursued façade quality measured by a 76-pose blind
