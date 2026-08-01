@@ -1219,13 +1219,27 @@ inline. The architecture already fits: `src/post.js`'s single
 full-screen pass is exactly where a print look lives, and check 26's
 neutral/live gate pattern extends to every new style axis by construction.*
 
-**The style bible comes first, and it is five mechanical rules** (cf. Sable —
-a two-person team enforcing Moebius coherence by making the rules few enough
-to hard-code): paper colour (sample it from the comics' cream), one halftone
-screen-angle set and cell size, the palette pull per tonal band, what never
-gets halftoned, and line-weight rules for any outlined mesh. Encode them as
-shader constants — the renderer then physically cannot go off-style. Write it
-as `docs/STYLE.md` with swatches pulled from actual comic panels.
+**This phase is a prototype loop, not a one-shot landing (Dan's call,
+2026-08-01: "keep iterating until we find a prototype style we like" — the
+style needs a lot of fleshing out before committing).** The shape:
+
+1. Build the stack below behind **live-tunable uniforms plus named preset
+   slots** (`dbg.setStylePreset('a'|'b'|…)`) — candidates differ in cell
+   size, band gating, palette pull, paper warmth, misregistration amount.
+2. Each iteration renders a fixed **judging set** — the eight bookmarks ×
+   {noon overcast, 22:00 rain, 08:00 clear} × each preset — into
+   `docs/smoke/captures/style/` as contact sheets. Dan judges pictures, not
+   adjectives; rejected presets get one line saying why (the D-line lesson:
+   keep the grader's reasons or drift).
+3. Iterate until a keeper. **Only then** write `docs/STYLE.md` — the
+   five-rule style bible (cf. Sable: paper colour sampled from the comics'
+   cream, one screen-angle set and cell size, palette pull per tonal band,
+   what never gets halftoned, line-weight rules) — and harden the winning
+   preset into shader constants, so the renderer physically cannot go
+   off-style from then on.
+4. The containment landing (below) happens once, for the keeper only. The
+   prototype loop itself never touches a golden: presets render to captures,
+   the shipped strength stays 0 throughout.
 
 **The candidate stack, in the existing single pass** (all colour-buffer-only,
 deterministic, ordered):
@@ -1267,17 +1281,22 @@ green — then turns on in one commit that recaptures everything deliberately.
 Check 26 already gates the pass's neutrality in both directions; a style
 milestone extends the same opposed pair to the new uniforms.
 
-**The tension this phase must settle (Dan's call, set up here, decided with
-E3):** the comics argue for round, outlined, flat-shaded characters; the
-locked E3 direction says grotesque semi-realism. These pull apart. E8 ends by
-rendering 2–3 candidate character styles under the finished grade — the grade
-may make a simple toon character read *better* than a semi-realist one, and
-the decision should be made looking at renders, not adjectives.
+**Character style joins the same loop (Dan, 2026-08-01: iterate prototypes
+until one is liked — this supersedes the earlier "grotesque semi-realism
+locked" note in E3).** Each E8 iteration includes 2–3 candidate character
+treatments (toon-flat with outlines, semi-realist grotesque, paper-doll
+evolved) rendered *under the current grade candidate* in the same judging
+set. The grade and the characters are chosen together, from renders — the
+grade may make a simple toon character read better than an expensive
+semi-realist one, which changes what E3's pipeline spike should even buy.
 
 ## E3 — The Folk (character system v2) — AFTER E8 (see Sequencing decision)
 
-*Direction locked: grotesque semi-realism. Realistic proportions and materials;
-readers get sculpted caricature grotesquerie. The photo-collage faces retire.*
+*Direction updated 2026-08-01: the earlier "grotesque semi-realism locked"
+call is superseded — character style is now decided in E8's prototype loop,
+judged from renders under the McGrot grade (Dan: iterate until a keeper).
+What stands: the photo-collage faces retire, and the readers stay grotesque
+in spirit whatever the rendering treatment.*
 
 - **Opens with a pipeline spike** (the risk lives here): evaluate rigged-model
   sources — Mixamo characters + animation retarget, AI 3D generation
@@ -1422,12 +1441,13 @@ rival-stance Leithers scheduled to meet outside the same comic. Every roll is
 
 Gulls get a three-state FSM (circle / perch-near-crowd / swoop) driven by the
 same advert table — food-mention comics and formed crowds raise
-gull-attractiveness. **Gull page-theft** (Dan's call before it ships, flagged
-at the gate): a gull steals a physical comic page mid-reading — vendor
+gull-attractiveness. **Gull page-theft — APPROVED (Dan, 2026-08-01, "go with
+your gut")**: a gull steals a physical comic page mid-reading — vendor
 shouts, audience scatters, the page blows up the Walk, a rat drags it to a
 burrow. The reading thereafter *skips the missing page's lines* — omission,
-not correction, so the verbatim rule survives — but it grazes the rule's
-spirit, so it is Dan's decision, not a brief's. Rats mirror below: gathering
+never rewording, which is the boundary that keeps the verbatim rule intact:
+what is spoken is always exactly what is printed on the pages the vendor
+still holds. Rats mirror below: gathering
 under high-food stations, scattering radially when a group passes — which
 couples groups and animals visually for free.
 
@@ -1784,27 +1804,32 @@ Delight-arc additions (2026-08-01, from the comics themselves):
   he is on the street: a date-seeded cryptid, glimpsed at distance, gone
   when approached, one or two days a month. Players comparing sightings is
   the daily-seed share thesis in its purest form.
-- **The dug.** Both sample comics feature the same wee dog. It exists: a
-  recurring dog that follows vendors, sometimes the player, and appears in
-  the background of McGrot sightings. The mascot agent bridging comics and
-  street.
-- **Comic prophecy.** Transcribed comics reference events and objects ("The
-  Leith Walk Drop"'s zipline fondraiser, Top of Leith Walk to Dockside) —
-  some days, the props appear: a zipline rig on the roofline, a "GRAVYTHON
-  5000" banner. The comics stop being exhibits and become the street's own
-  mythology, and NPCs point at the evidence. Build as a small
-  comic-derived-prop library, date-seeded like everything else.
+- **Pomple.** The dug — both sample comics feature the same wee dog, and
+  his name is Pomple (Dan, 2026-08-01). He exists: a recurring dog that
+  follows vendors, sometimes the player, and appears in the background of
+  McGrot sightings. The mascot agent bridging comics and street. NPCs know
+  him by name ("that's Pomple, he's fine").
+- **Comic prophecy — zipline approved as the first prop (Dan, 2026-08-01).**
+  Transcribed comics reference events and objects — "The Leith Walk Drop"'s
+  GRAVYTHON 5000 zipline fondraiser ran "Top of Leith Walk to Dockside", so
+  some days the rig is simply there: a cable off the roofline, a banner, a
+  ladle on a pulley. NPCs point at the evidence. Build as a small
+  comic-derived-prop library, date-seeded like everything else; the zipline
+  is prop #1.
 - **Meeting at the statue.** NPCs arrange to meet "at the statue" (Queen
   Victoria, the Foot — Leith's meeting point since 1907), and are found
   waiting there. "PERSEVERE" signage, "Leithers Don't Litter" stickers and
   the boundary plaque join the set-dressing trickle (`docs/LEITH.md` §2).
-- **One true voice — Dan's call, flagged not decided** (cf. Pine Point,
-  the Kowloon shop captures: mundane specificity carries the grief): amid
-  417 readers of garbled comics, one vendor who says something real and
-  ordinary about their actual shop would be the loudest moment in the piece.
-  It does not touch the verbatim rule (no garble is corrected — this is new
-  speech, not a fixed comic), but it is an art-direction decision about the
-  piece's heart, so it is recorded here for Dan rather than scheduled.
+- **One true voice — APPROVED (Dan, 2026-08-01)** (cf. Pine Point, the
+  Kowloon shop captures: mundane specificity carries the grief): amid 417
+  readers of garbled comics, ONE vendor says something real and ordinary
+  about their actual shop — the loudest moment in the piece. Verbatim rule
+  untouched (new speech, not corrected garble). Scope: pick the shop with
+  Dan (a real, photographed one with a documented history — Valvona &
+  Crolla territory), write the lines from true detail (opening hours, what
+  the shop sold, a real name), hero-cast TTS voice from the daily trickle.
+  Lands with E4's cast work; unmarked, undiscoverable by UI — found only by
+  listening.
 
 ## Standing constraints
 
