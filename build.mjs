@@ -21,6 +21,9 @@ const dataUri = relPath => {
 
 const manifest = JSON.parse(readFileSync(join(root, 'assets/manifest.json'), 'utf8'));
 const leith = JSON.parse(readFileSync(join(root, 'assets/leith.json'), 'utf8'));
+const readings = existsSync(join(root, 'assets/readings.json'))
+  ? JSON.parse(readFileSync(join(root, 'assets/readings.json'), 'utf8'))
+  : {};
 
 // Dispatch AFTER manifest/tagRe exist — buildSite() closes over both.
 if (process.argv.includes('--site')) {
@@ -35,7 +38,7 @@ for (const c of manifest.comics) {
   audio[c.audio] = dataUri(c.audio);
 }
 
-const prelude = `window.MCGROT_ASSETS=${JSON.stringify({ manifest, leith, images, audio })};`;
+const prelude = `window.MCGROT_ASSETS=${JSON.stringify({ manifest, leith, readings, images, audio })};`;
 
 const bundle = await build({
   entryPoints: [join(root, 'src/main.js')],
@@ -62,7 +65,7 @@ const headInner = html.match(/<head>([\s\S]*?)<\/head>/)[1]
 const bodyInner = html.match(/<body>([\s\S]*?)<\/body>/)[1];
 writeFileSync(join(root, 'dist/mcgrot-walk-artifact.html'), headInner + '\n' + bodyInner);
 
-console.log(`dist/mcgrot-walk.html — ${(html.length / 1024 / 1024).toFixed(2)} MB (js ${(js.length / 1024).toFixed(0)}KB, images ${(Object.values(images).join('').length / 1024 / 1024).toFixed(2)}MB, audio ${(Object.values(audio).join('').length / 1024 / 1024).toFixed(2)}MB)`);
+console.log(`dist/mcgrot-walk.html — ${(html.length / 1024 / 1024).toFixed(2)} MB (js ${(js.length / 1024).toFixed(0)}KB, images ${(Object.values(images).join('').length / 1024 / 1024).toFixed(2)}MB, audio ${(Object.values(audio).join('').length / 1024 / 1024).toFixed(2)}MB, readings ${(JSON.stringify(readings).length / 1024).toFixed(1)}KB)`);
 
 // ---------------------------------------------------------------------------
 // --site: the full 418-comic build for GitHub Pages. Nothing is inlined; the
@@ -92,7 +95,7 @@ async function buildSite() {
     const src = join(root, 'assets', rel);
     if (existsSync(src)) cpSync(src, join(out, 'assets', rel), { recursive: true });
   };
-  ['manifest.json', 'leith.json', 'catalog.json', 'comics', 'audio', 'faces'].forEach(copy);
+  ['manifest.json', 'leith.json', 'catalog.json', 'readings.json', 'comics', 'audio', 'faces'].forEach(copy);
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
   ['shopfronts/manifest.json', 'shopfronts/atlas-pages.json', 'shopfronts/atlas-pages', 'shopfronts/credits.json',
    'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',

@@ -214,7 +214,7 @@ async function main() {
     { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
     { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
     { name: 'interact', update: (dt) => interact.update(dt) },
-    { name: 'proximityAudio', update: () => proximityAudio.update() },
+    { name: 'proximityAudio', update: (dt, t) => proximityAudio.update(dt, t) },
     { name: 'torch', update: (dt, t) => torch.update(t) },
     // Not a simulation step — it hands the post shader the same stepped `t`
     // the rest of the list runs on, so film grain resamples off the sim clock
@@ -274,7 +274,7 @@ async function main() {
   // otherwise make every reload's leither/bird/vermin positions diverge.
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
-      camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
+      camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post,
       stepFrame: runFrame,
       renderNow,

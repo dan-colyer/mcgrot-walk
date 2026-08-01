@@ -12,7 +12,7 @@
 //   node scripts/smoke.mjs                  # run the gate
 //   node scripts/smoke.mjs --update-goldens # recapture goldens + budget baseline
 
-import { spawn, execSync } from 'child_process';
+import { spawn, execSync, spawnSync } from 'child_process';
 import { createServer } from 'net';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -129,6 +129,16 @@ const DPR_TIMING_BOOKMARK = 'skyline'; // heaviest pose in the goldens (954 draw
 // toggling off — far above the 0.000-0.133% capture-jitter band, so this
 // leaves an enormous margin against false negatives.
 const TORCH_TOGGLE_LUMA_DROP_MIN_PCT = 10;
+
+// E5a gate 5a: phrase-alignment opposed pair. Independent of the bake's own
+// ffmpeg silencedetect call — this decodes raw PCM and computes its own RMS
+// envelope at a different window/hop, so the gate isn't measuring itself.
+const ALIGN_SAMPLE_IDS_COUNT = 12;
+const ALIGN_SAMPLE_RATE = 8000;
+const ALIGN_WINDOW = 400; // samples = 50ms
+const ALIGN_HOP = 200;    // samples = 25ms
+const ALIGN_SHIFT_SEC = 1.5;
+const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's by at least this much
 
 // Hardcoded so a new subsystem added to only ONE of animate()/stepFrame (a
 // D0-era bug class, see src/main.js) is caught deliberately rather than by
@@ -322,6 +332,51 @@ async function measureTapTarget(page, id) {
   }, id);
 }
 
+// E5a gate 5a helpers — decode an mp3 to raw mono PCM via ffmpeg (build/test
+// tooling only, per project convention) and score how well a set of boundary
+// times lands in the RMS envelope's low-energy troughs.
+function decodePCM(mp3Path) {
+  const r = spawnSync('ffmpeg', [
+    '-v', 'error', '-i', mp3Path, '-f', 'f32le', '-ar', String(ALIGN_SAMPLE_RATE), '-ac', '1', '-',
+  ], { encoding: 'buffer', maxBuffer: 1024 * 1024 * 64 });
+  if (r.status !== 0 || !r.stdout || !r.stdout.length) {
+    throw new Error(`ffmpeg PCM decode failed for ${mp3Path}: ${r.stderr}`);
+  }
+  const buf = r.stdout;
+  const n = Math.floor(buf.length / 4);
+  const samples = new Float32Array(n);
+  for (let i = 0; i < n; i++) samples[i] = buf.readFloatLE(i * 4);
+  return samples;
+}
+
+function rmsEnvelope(samples) {
+  const envelope = [];
+  for (let i = 0; i + ALIGN_WINDOW <= samples.length; i += ALIGN_HOP) {
+    let sum = 0;
+    for (let j = 0; j < ALIGN_WINDOW; j++) { const v = samples[i + j]; sum += v * v; }
+    envelope.push({ t: (i + ALIGN_WINDOW / 2) / ALIGN_SAMPLE_RATE, rms: Math.sqrt(sum / ALIGN_WINDOW) });
+  }
+  return envelope;
+}
+
+// 1 = boundary sits exactly at the envelope's quietest point in this clip, 0 = at its loudest.
+function troughnessAt(envelope, min, range, t) {
+  let best = envelope[0], bestD = Infinity;
+  for (const e of envelope) {
+    const d = Math.abs(e.t - t);
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  const norm = range > 0 ? (best.rms - min) / range : 0;
+  return 1 - Math.min(1, Math.max(0, norm));
+}
+
+function scoreBoundaries(envelope, min, range, boundaries) {
+  if (!boundaries.length) return null;
+  let sum = 0;
+  for (const t of boundaries) sum += troughnessAt(envelope, min, range, t);
+  return sum / boundaries.length;
+}
+
 function meanLuminanceUpperHalf(png) {
   const { width, height, data } = png;
   const halfH = Math.floor(height / 2);
@@ -345,6 +400,57 @@ async function main() {
   try {
     console.log('[smoke] bundling...');
     execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
+
+    // --- E5a gate 5a: phrase-alignment opposed pair ---
+    // No server/browser needed — pure Node, straight off assets/readings.json
+    // and assets/audio/*.mp3. Independent of the bake's own silencedetect
+    // call (see decodePCM/rmsEnvelope above).
+    console.log('[smoke] E5a alignment gate (5a)...');
+    {
+      const readingsPath = join(root, 'assets/readings.json');
+      if (!existsSync(readingsPath)) {
+        results.push({ name: 'E5a: phrase alignment beats flat + shifted controls', pass: false, detail: 'assets/readings.json missing — run scripts/build-readings.mjs' });
+      } else {
+        const readings = JSON.parse(readFileSync(readingsPath, 'utf8'));
+        const ids = Object.keys(readings).sort().slice(0, ALIGN_SAMPLE_IDS_COUNT);
+        let shippedSum = 0, flatSum = 0, shiftedSum = 0, n = 0;
+        for (const id of ids) {
+          const reading = readings[id];
+          const mp3Path = join(root, 'assets/audio', `${id}.mp3`);
+          if (!existsSync(mp3Path) || !reading.phrases || reading.phrases.length < 2) continue;
+          const samples = decodePCM(mp3Path);
+          const envelope = rmsEnvelope(samples);
+          if (!envelope.length) continue;
+          const rmss = envelope.map((e) => e.rms);
+          const min = Math.min(...rmss), max = Math.max(...rmss);
+          const range = max - min;
+          const duration = reading.duration;
+          const N = reading.phrases.length;
+
+          // Interior boundaries only — transitions BETWEEN phrases, not the
+          // clip's own start/end (which trivially sit at silence for every
+          // control alike and would inflate all three scores equally).
+          const shippedB = reading.phrases.slice(1).map((p) => p.start);
+          const flatB = Array.from({ length: N - 1 }, (_, i) => ((i + 1) / N) * duration);
+          const shiftedB = shippedB.map((t) => Math.min(duration, t + ALIGN_SHIFT_SEC));
+
+          shippedSum += scoreBoundaries(envelope, min, range, shippedB);
+          flatSum += scoreBoundaries(envelope, min, range, flatB);
+          shiftedSum += scoreBoundaries(envelope, min, range, shiftedB);
+          n++;
+        }
+        const shippedScore = n ? shippedSum / n : 0;
+        const flatScore = n ? flatSum / n : 0;
+        const shiftedScore = n ? shiftedSum / n : 0;
+        console.log(`[smoke] E5a alignment (mean troughness, 0-1, higher=better; n=${n} comics): ` +
+          `shipped=${shippedScore.toFixed(4)}  flat=${flatScore.toFixed(4)}  shifted=${shiftedScore.toFixed(4)}`);
+        results.push({
+          name: 'E5a: phrase alignment beats flat + shifted controls',
+          pass: n > 0 && shippedScore >= flatScore + ALIGN_MARGIN && shippedScore >= shiftedScore + ALIGN_MARGIN,
+          detail: `shipped=${shippedScore.toFixed(4)} flat=${flatScore.toFixed(4)} shifted=${shiftedScore.toFixed(4)} (margin ${ALIGN_MARGIN}, n=${n} comics)`,
+        });
+      }
+    }
 
     const port = await getFreePort();
     console.log(`[smoke] starting server on :${port}`);
@@ -1357,6 +1463,134 @@ async function main() {
       await context.close();
     }
 
+    // --- E5a gate 5b: one voice, opposed pair ---
+    // Every catalog vendor with an npc identity also has audio (124/124, per
+    // scripts/build-readings.mjs), and the ~1600m street divided by 124
+    // vendors puts several neighbours within PLAY_RANGE of npcs[0] — a
+    // natural cluster, no special placement needed.
+    console.log('[smoke] E5a one-voice gate (5b)...');
+    {
+      const { context, page } = await bootPage(browser, port);
+      // Positions are static/seeded — the set of neighbours within
+      // PLAY_RANGE of npcs[0] is the same on every boot. Waiting for THIS
+      // specific, known set to finish loading (rather than "some" voice)
+      // avoids racing on which vendor's mp3 fetch happens to resolve first.
+      const nearbyIds = await page.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const p = dbg.npcs.npcs[0].group.position;
+        dbg.camera.position.set(p.x, dbg.camera.position.y, p.z);
+        const PLAY_RANGE = 18;
+        return dbg.npcs.npcs
+          .filter((n) => Math.hypot(n.group.position.x - p.x, n.group.position.z - p.z) < PLAY_RANGE)
+          .map((n) => n.comic.id);
+      });
+      await page.evaluate(() => window.__mcgrotDebug.stepFrames(10));
+      // Opposed half: overlay closed, proximity management should have
+      // started every neighbour within PLAY_RANGE.
+      await page.waitForFunction(
+        (ids) => {
+          const dbg = window.__mcgrotDebug;
+          return ids.every((id) => {
+            const n = dbg.npcs.npcs.find((x) => x.comic.id === id);
+            return n && n.voice && n.voice.isPlaying;
+          });
+        },
+        nearbyIds,
+        { timeout: 8000 },
+      );
+      const closedCount = await page.evaluate(() =>
+        window.__mcgrotDebug.npcs.npcs.filter((n) => n.voice && n.voice.isPlaying).length);
+
+      // Open the overlay on the nearest NPC. First E starts the ritual's
+      // hush (and — the invariant under test — stops every other voice via
+      // setOverlayOpen); second E skips the hush so the focused reading
+      // actually starts without a real 600ms wait.
+      await page.keyboard.press('KeyE');
+      await page.keyboard.press('KeyE');
+      await page.evaluate(() => window.__mcgrotDebug.stepFrame(1 / 60, 0));
+      await page.waitForFunction(
+        () => window.__mcgrotDebug.npcs.npcs.some((n) => n.voice && n.voice.isPlaying),
+        { timeout: 8000 },
+      );
+      const openCount = await page.evaluate(() =>
+        window.__mcgrotDebug.npcs.npcs.filter((n) => n.voice && n.voice.isPlaying).length);
+
+      await context.close();
+      // Asserted on the mixer's own state (isPlaying), not measured audio
+      // output — headless audio timing isn't reliable enough to gate on
+      // directly (see docs/VALIDATION.md).
+      results.push({
+        name: 'E5a: overlay open enforces exactly one voice (opposed pair)',
+        pass: closedCount > 1 && openCount === 1,
+        detail: `${nearbyIds.length} vendors within PLAY_RANGE; closed=${closedCount} voices playing, open=${openCount} voice(s) playing (want closed>1, open===1)`,
+      });
+    }
+
+    // --- E5a gate 5c: virtual reading clock determinism ---
+    // Same day seed -> identical join offsets for the same vendors; a
+    // different seed -> different ones. __mcgrotDebug.setDaySeed overrides
+    // src/proximity-audio.js's date-derived seed so this doesn't have to
+    // wait for the calendar to turn over.
+    console.log('[smoke] E5a determinism gate (5c)...');
+    {
+      async function bootWithDaySeed(seed) {
+        const { context, page } = await bootPage(browser, port);
+        await page.evaluate((s) => window.__mcgrotDebug.setDaySeed(s), seed);
+        // Positions are static/seeded — the neighbour set is identical on
+        // every boot, so waiting for this exact set (rather than "some"
+        // voice) means the offsets snapshot below never races on which
+        // vendor's mp3 fetch happens to resolve first.
+        const nearbyIds = await page.evaluate(() => {
+          const dbg = window.__mcgrotDebug;
+          const p = dbg.npcs.npcs[0].group.position;
+          dbg.camera.position.set(p.x, dbg.camera.position.y, p.z);
+          const PLAY_RANGE = 18;
+          return dbg.npcs.npcs
+            .filter((n) => Math.hypot(n.group.position.x - p.x, n.group.position.z - p.z) < PLAY_RANGE)
+            .map((n) => n.comic.id);
+        });
+        // Fixed stepFrame recipe — the sim-time value used by the join-offset
+        // formula (see src/proximity-audio.js) is frozen the moment this
+        // returns, so the async buffer loads below all resolve against the
+        // SAME simTime regardless of real network/decode timing.
+        await page.evaluate(() => window.__mcgrotDebug.stepFrames(10));
+        await page.waitForFunction(
+          (ids) => {
+            const dbg = window.__mcgrotDebug;
+            return ids.every((id) => {
+              const n = dbg.npcs.npcs.find((x) => x.comic.id === id);
+              return n && n.voice && n.voice.isPlaying;
+            });
+          },
+          nearbyIds,
+          { timeout: 8000 },
+        );
+        const offsets = await page.evaluate((ids) => ids.map((id) => {
+          const n = window.__mcgrotDebug.npcs.npcs.find((x) => x.comic.id === id);
+          return [id, Math.round(n.voice.offset * 1000) / 1000];
+        }), nearbyIds);
+        await context.close();
+        return offsets;
+      }
+      function offsetsEqual(a, b) {
+        if (a.length !== b.length) return false;
+        const mapB = new Map(b);
+        return a.every(([id, off]) => mapB.has(id) && mapB.get(id) === off);
+      }
+      const DAY_SEED_A = 0x1234abcd;
+      const DAY_SEED_B = 0x9f9f1111;
+      const seedA1 = await bootWithDaySeed(DAY_SEED_A);
+      const seedA2 = await bootWithDaySeed(DAY_SEED_A);
+      const seedB = await bootWithDaySeed(DAY_SEED_B);
+      const sameSeedIdentical = offsetsEqual(seedA1, seedA2);
+      const diffSeedIdentical = offsetsEqual(seedA1, seedB);
+      results.push({
+        name: 'E5a: virtual reading clock determinism (opposed pair)',
+        pass: seedA1.length > 0 && sameSeedIdentical && !diffSeedIdentical,
+        detail: `n=${seedA1.length} voices; same seed identical=${sameSeedIdentical} (want true); different seed identical=${diffSeedIdentical} (want false)`,
+      });
+    }
+
     // --- E2e: mobile pass — touch mode forced at a phone viewport ---
     console.log('[smoke] mobile pass...');
     {
@@ -1509,6 +1743,19 @@ async function main() {
       for (const id of ['comic-close', 'comic-playpause']) {
         tapTargets[id] = await measureTapTarget(page, id);
       }
+      // E5a gate 5d: the read-along flag is off by default — the transcript
+      // panel must not render, so this golden (and every golden) is exactly
+      // what it was before E5a. checkGolden below is the pixel half of this
+      // gate; this is the structural half.
+      const transcriptHiddenByDefault = await page.evaluate(() => {
+        const el = document.getElementById('comic-transcript');
+        return !el || getComputedStyle(el).display === 'none';
+      });
+      results.push({
+        name: 'E5a: read-along panel off by default (flag neutrality)',
+        pass: transcriptHiddenByDefault,
+        detail: transcriptHiddenByDefault ? '#comic-transcript not rendered' : '#comic-transcript rendered with the flag untouched',
+      });
       const comicShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:comic', comicShot, join(goldenDir, 'mobile-comic.png'));
 

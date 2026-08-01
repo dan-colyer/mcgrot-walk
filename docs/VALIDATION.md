@@ -761,6 +761,74 @@ the `skyline` pose) only shows up as wall-clock runtime, never in this table.
 Treat it as a rough sanity log, not a real-device benchmark. What IS gated is
 check 15 above: the cap itself is applied correctly after a resize.
 
+## The read-along overlay and mixer (E5a)
+
+`scripts/build-readings.mjs` bakes `assets/readings.json` offline (phrase text
+from `scripts/tts-prompts/<id>.txt`, timing anchored via `ffprobe`/`ffmpeg
+silencedetect`) — it is not part of the smoke run itself, but `smoke.mjs`
+gates the checked-in result. Four checks, all in `scripts/smoke.mjs`:
+
+- **5a — phrase alignment (opposed pair).** Pure Node, no browser: over a
+  fixed sample of the first 12 comic ids (sorted) in `readings.json`, decodes
+  each mp3 to raw PCM via `ffmpeg -f f32le` and computes its own RMS envelope
+  (50ms window / 25ms hop) — deliberately NOT calling `silencedetect` again,
+  or the gate would just be re-asserting the bake's own segmentation. Scores
+  how well each phrase boundary (the transition between two phrases, not the
+  clip's own start/end) lands in a low-energy trough: 1 = quietest point in
+  the clip, 0 = loudest. Three variants scored per comic, then averaged
+  across the 12:
+  - **shipped** — the baked boundaries;
+  - **flat control** — the same phrase count, evenly spaced;
+  - **shifted control** — shipped boundaries displaced by +1.5s.
+
+  Pass requires shipped to beat BOTH controls by `ALIGN_MARGIN` (0.03). The
+  flat control isolates the model's contribution over a naive schedule; the
+  shifted control catches a dead gate that would score anything highly (e.g.
+  a bug that always returns 1). All three numbers are logged every run
+  (`console.log`, not just the pass/fail row) — they're the evidence, not
+  just the verdict.
+- **5b — one voice (opposed pair).** Stands the camera exactly at `npcs[0]`'s
+  position — the ~1600m street split across 124 vendors (every catalog
+  vendor has audio) puts several neighbours within `PLAY_RANGE` naturally, no
+  special placement needed. Closed half: proximity management is left to run,
+  asserts more than one voice is playing. Open half: presses `E` twice (the
+  second press skips the ritual's hush — see below — so the focused reading
+  starts without a real 600ms wait) and asserts exactly one voice plays.
+  Asserted on the mixer's own state (`npc.voice.isPlaying`), not measured
+  audio output — headless audio timing isn't reliable enough to gate on
+  directly. Without the closed-half assertion, an audio pipeline that was
+  broken outright (nothing ever plays) would trivially pass the open half.
+- **5c — virtual reading clock determinism.**
+  `dbg.setDaySeed(n)` overrides `src/proximity-audio.js`'s date-derived day
+  seed (`window.__mcgrotForceDaySeed`, hostname-gated to localhost like every
+  other debug override) so this doesn't have to wait for the calendar to turn
+  over. Three boots: same seed twice, one different seed. Each boot runs the
+  identical `stepFrames(10)` recipe before any voice starts — the join-offset
+  formula reads a *simulated* clock (`simTime`, the same `t` value
+  `main.js`'s updaters run on), not `AudioContext.currentTime`, specifically
+  so this is reproducible: two page loads never resolve their async buffer
+  fetches at the same real AudioContext time even with identical seeds, but
+  they DO see the same frozen `simTime` if no further `stepFrame` runs
+  between issuing the joins and the buffers resolving (see the note in
+  `proximity-audio.js`). Pass requires the two same-seed boots' offsets to
+  match exactly and the different-seed boot's to differ.
+- **5d — flag neutrality.** The existing `mobile-comic.png` golden capture
+  (untouched — the read-along flag is off by default) plus an explicit
+  structural check that `#comic-transcript` doesn't render at all with the
+  flag untouched. This is what let item 1 land in the same commit as every
+  other E5a item without moving any of the 39 existing goldens.
+
+**The ritual's hush is real wall-clock (`setTimeout`, 600ms), not
+stepFrame-driven** — safe for goldens because the comic overlay is a
+full-screen fixed-position panel (`inset: 0`), so the NPC underneath (whose
+mouth mesh toggles when its voice actually starts) is never in frame while
+it's open. The play/pause icon and ambience ducking are set immediately in
+`open()`, before the hush, specifically so a screenshot taken right after
+pressing `E` (as the mobile-comic golden does, with a single `stepFrame` and
+no wait) is pixel-identical to the pre-E5a behaviour — only the actual
+`proximityAudio.restart()` call, and the mouth animation it drives, is
+delayed behind the hush.
+
 ## Mobile pass (E2e / E2e.1)
 
 A second smoke pass at a phone-shaped viewport (390×844), with touch mode

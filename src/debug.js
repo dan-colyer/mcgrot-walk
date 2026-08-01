@@ -199,7 +199,7 @@ function waitForPagesLoaded(shopfronts, timeoutMs) {
 
 export function createDebugApi(ctx) {
   const {
-    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio,
+    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing,
   } = ctx;
@@ -437,9 +437,20 @@ export function createDebugApi(ctx) {
     };
   }
 
+  // E5a item 1: read-along transcript panel, off by default. E5a item 3:
+  // overrides the per-NPC virtual reading clock's day seed (see
+  // src/proximity-audio.js) so scripts/smoke.mjs can assert determinism
+  // without waiting for the calendar to turn over.
+  function setReadAlong(v) {
+    if (interact) interact.setReadAlong(v);
+  }
+  function setDaySeed(v) {
+    window.__mcgrotForceDaySeed = v == null ? undefined : (v >>> 0);
+  }
+
   return {
     // --- back-compat: existing probe fields keep working unchanged ---
-    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, renderer, scene,
+    camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
     stepFrame,
     stepFrames,
 
@@ -452,6 +463,8 @@ export function createDebugApi(ctx) {
     setWeather,
     setWeatherSchedule,
     setRate,
+    setReadAlong,
+    setDaySeed,
     setTouchMode,
     setPixelRatio,
     measureFrameTiming,

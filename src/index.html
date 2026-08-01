@@ -119,6 +119,42 @@
     height: auto;
     image-rendering: auto;
   }
+  /* E5a item 1: read-along transcript panel — flag-gated (off by default),
+     populated/toggled from src/interact.js. Sits below the comic image and
+     above #comic-meta; a bounded scroll box so it never pushes the art off
+     a small screen (see the narrow-width rules below). */
+  #comic-transcript {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    max-height: 110px;
+    overflow-y: auto;
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(120, 114, 86, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+  }
+  #comic-transcript .phrase {
+    margin: 0 0 5px;
+    opacity: 0.5;
+    color: #9a9678;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  #comic-transcript .phrase.comic {
+    font-style: italic;
+    color: #b7b295;
+  }
+  #comic-transcript .phrase.current {
+    opacity: 1;
+    color: #d8d4c0;
+  }
+  #comic-transcript .phrase.comic.current {
+    color: #f2edd4;
+  }
   #comic-meta {
     margin: 12px 0 4px;
     font-size: 14px;
@@ -299,6 +335,7 @@
     #comic-title { font-size: 16px; padding: 0 46px; }
     #comic-image { max-width: 96vw; }
     #comic-meta { font-size: 13px; }
+    #comic-transcript { max-height: 76px; font-size: 12px; padding: 6px 10px; }
   }
 </style>
 </head>
@@ -312,6 +349,7 @@
   <button id="comic-close" type="button" aria-label="Close">✕</button>
   <h2 id="comic-title"></h2>
   <div id="comic-scroll"><img id="comic-image" alt="" /></div>
+  <div id="comic-transcript"></div>
   <div id="comic-meta"></div>
   <div id="comic-controls">
     <button id="comic-playpause" type="button" aria-label="Play or pause">▶</button>
@@ -330,6 +368,6 @@
   </div>
 </div>
 
-<script src="dev-bundle.js?v=3278221edd"></script>
+<script src="dev-bundle.js?v=b5e9f77ecc"></script>
 </body>
 </html>

@@ -39,7 +39,13 @@ export async function loadAssets() {
   const comicLines = await fetch('assets/comic-lines.json')
     .then((res) => (res.ok ? res.json() : null)).catch(() => null);
 
-  return { manifest, leith, catalog, facadeManifest, facadeAtlas, comicLines, images: null, audio: null };
+  // E5a: phrase-level read-along transcripts, keyed by catalog comic id.
+  // Absent (or a comic id missing from it) → the read-along overlay panel
+  // just doesn't render for that comic.
+  const readings = await fetch('assets/readings.json')
+    .then((res) => (res.ok ? res.json() : null)).catch(() => null);
+
+  return { manifest, leith, catalog, facadeManifest, facadeAtlas, comicLines, readings, images: null, audio: null };
 }
 
 // Single source of truth for resolving an asset path to a usable URL.
