@@ -85,7 +85,8 @@ listed inherit the rule.
 |---|---|---|---|
 | E2f device round | medium | Sonnet (fixes only after console read) | evidence-driven; no golden risk |
 | E5a staged reading | medium | Sonnet | overlay/audio; escalate if HUD copy changes (HUD is in all 27 goldens) |
-| E5b journal | medium | Sonnet | DOM + localStorage |
+| E5b.1 journal | medium | Sonnet | DOM + localStorage |
+| E5b.2 anchor readers | **high (review)** | Sonnet | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | Sonnet | HUD copy change moves every desktop golden |
 | E5d turnaround + ending | medium | Sonnet | state machine + weather nudge |
 | E8 prototype loop | medium | Sonnet builds presets; Dan judges | no golden may move during the loop |
@@ -1691,6 +1692,34 @@ Two lessons worth carrying forward:
   renderer jitter; every element parked beneath it shrinks the budget left for
   detecting real regressions. New visible element ⇒ delete and recapture the
   specific goldens.
+
+**Deployed 2026-08-01 — gh-pages `088bc0f`, md5-verified against the live URL
+(`bundle.js` and `index.html` both match; journal markup and storage key
+confirmed in the live payload).**
+
+**E5b.2 planned 2026-08-01. Brief at `~/.claude/plans/mcgrot-e5b2-brief.md`.
+High-effort review.**
+
+Measured at planning, and the reason this is high-effort:
+
+- Vendors sit every **12.33 m**, placed from a single loop index that also
+  derives pavement (`i % 2`), coat colour and animation phase. **Inserting or
+  reordering one entry reindexes everything downstream.**
+- **44 of the 124 vendors are within 40 m of a golden bookmark**, and all
+  seven chainage bookmarks have 6–7 vendors that close, the nearest 0.3–4.8 m
+  from the camera. A reindex is a wholesale recapture of all 39 goldens.
+
+So anchors are **selected, not relocated**: each of the twelve is the vendor
+whose existing chainage is already nearest its landmark (max nudge **5.6 m**),
+and none of the twelve is bookmark-adjacent. Landmarks come from
+`assets/businesses.json` projected onto `streetLine` — 59 candidates within
+25 m of the centreline, 30 of them clear of every bookmark.
+
+One question deliberately left to the implementer's judgement: pavement is
+`i % 2`, so nine of the twelve land west, and some anchors will stand across
+the road from the premises they anchor. Keeping the parity is the cheap
+default; matching the real side costs a bigger nudge and a different vendor
+for some rows. Sonnet reports its judgement rather than choosing silently.
 
 ### E5c — Moments are links
 
