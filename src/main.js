@@ -25,6 +25,7 @@ import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 import { createPost } from './post.js';
+import { createJournal, countVendorsWithAudio } from './journal.js';
 import { createDebugApi } from './debug.js';
 
 const DPR_CAP = 2;
@@ -129,7 +130,13 @@ async function main() {
     onActiveChange: (n) => { proxDuck = n > 0; applyDuck(); },
   });
 
-  const interact = createInteract({
+  // `interact` is assigned below — journal's canOpen only ever runs after
+  // both exist (in response to a J-press or a tap), so the closure over this
+  // `let` is safe despite the declaration order.
+  let interact;
+  const journal = createJournal({ assets, npcs: npcs.npcs, litter, canOpen: () => !interact.isOpen() });
+
+  interact = createInteract({
     assets,
     npcs: npcs.npcs,
     camera,
@@ -138,6 +145,7 @@ async function main() {
     onReadingChange: (reading) => { readingDuck = reading; applyDuck(); },
     litter,
     leithers,
+    journal,
   });
 
   createTitleCard({
@@ -275,7 +283,7 @@ async function main() {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) {
     window.__mcgrotDebug = createDebugApi({
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
-      sky, atmosphere, torch, DPR_CAP, ambience, post,
+      sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

@@ -853,6 +853,68 @@ no wait) is pixel-identical to the pre-E5a behaviour — only the actual
 `proximityAudio.restart()` call, and the mouth animation it drives, is
 delayed behind the hush.
 
+## The journal (E5b.1)
+
+`src/journal.js` — comics heard/found, `localStorage`-backed (key
+`mcgrot.journal.v1`), closed by default, opened with `J` or the touch toggle.
+Eight checks in `scripts/smoke.mjs`, all run on their own fresh boot
+(`jPage`/`jCtx`), never on `page1`: they deliberately step real-time frames
+(leithers/birds/vermin) to bring a vendor or litter comic into interact range,
+and those subsystems are the ones `computeGeomHash` excludes because they move
+under `stepFrame` — doing that to `page1` before its own first bookmark visit
+measurably desynced `skyline`'s draw-call count from the frozen
+`budget.json` baseline (1101 vs 1110) before this was split into its own boot.
+
+- **HUD copy unchanged.** `#hud`'s textContent asserted byte-identical to
+  today's string — the gate that protects 27 desktop goldens from this
+  milestone and every one after it.
+- **Panel closed by default.** Note that the *panel* moving no golden is not
+  the same as the milestone moving no golden: `#journal-toggle` is a
+  `html.touch`-only control at the top-left, so it is present in every mobile
+  street capture. Measured by self-diff (same page, toggle shown vs hidden) it
+  covers `[20,20,67,67]` and changes **0.118%** of a 390×844 frame — under the
+  0.5% golden tolerance, so it slipped through as a pass on stale images
+  (`golden-mobile:hud` 0.208%, `golden-mobile:street` 0.114%). `mobile-hud.png`
+  and `mobile-street.png` were deleted and recaptured; `mobile-title.png` and
+  `mobile-comic.png` were untouched because the title card (z 50) and the
+  comic overlay (z 20) both cover the toggle (z 15). **A new always-visible
+  control must recapture its goldens, not hide inside the noise tolerance** —
+  that tolerance exists for renderer jitter, and every element parked under it
+  permanently shrinks the budget left for detecting real regressions.
+- **The toggle is covered by the mobile gates.** `journal-toggle` added to
+  both the tap-target list (≥44×44 and reachable by `elementFromPoint`) and
+  the simulated safe-area list, which it shipped missing from.
+- **Denominator is derived, not literal (opposed pair).** The runtime value is
+  compared against a Node-side count off `assets/catalog.json` (comics with
+  both `.npc` and `.audio` — the same test `proximity-audio.js` uses to decide
+  whether a voice can ever play). That half alone proves nothing: every built
+  vendor currently has audio, so the derived number collides with
+  `npcs.length` and with a hardcoded `124` alike, and all three pass
+  (measured). The isolating half runs `journal.js`'s own exported
+  `countVendorsWithAudio` over a deliberately truncated cast of five and
+  requires the result to track that cast and to differ from the full count —
+  which a typed literal cannot do (fault-injected: a hardcoded `124` returns 124
+  against a wanted 5, and the gate goes red). It then feeds the counter a
+  synthetic three-vendor cast with one silent member and requires 2 — because
+  a truncated *real* cast still cannot separate the derived count from a plain
+  `npcs.length` while every built vendor has audio, and that is precisely the
+  assumption that breaks the day a vendor ships without a voice. An earlier
+  `!== 418` check did not do this job: 418 is the aspirational full cast, a
+  number no plausible implementation produces.
+- **Counting is earned.** Standing within `proximityAudio`'s `PLAY_RANGE`
+  (busking active) without opening the overlay credits nothing; pressing `E`
+  and waiting past the ritual's hush credits exactly one; reopening the same
+  vendor stays at one.
+- **Litter credits as found**, immediately (no hush ritual for litter).
+- **Persistence round-trip**, in a second page sharing the first's browser
+  context (same `localStorage`): reload restores counts and the newest
+  entry's id; clearing the key first restores to zero.
+- **Storage failure is survivable.** `Storage.prototype.setItem` patched to
+  throw (an `addInitScript`, same idiom as the AudioContext fault-injection
+  test above) — the reading still opens and the session-local count still
+  increments, with zero console errors (`journal.js`'s fail-soft is a plain
+  try/catch, not a caught-and-logged one).
+
 ## Mobile pass (E2e / E2e.1)
 
 A second smoke pass at a phone-shaped viewport (390×844), with touch mode

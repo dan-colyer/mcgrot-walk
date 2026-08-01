@@ -329,6 +329,102 @@
   html.touch #npc-prompt { padding: 15px 18px; }
   html.touch #title-enter { padding: 15px 28px; }
 
+  /* --- Journal (E5b.1) — comics heard/found, closed by default, opened
+     with J or the touch toggle. Styled like #comic-overlay: same font,
+     same palette, no new visual language. --------------------------------- */
+  #journal-toggle {
+    display: none;
+    position: fixed;
+    left: calc(20px + var(--safe-left));
+    top: calc(20px + var(--safe-top));
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(20, 22, 14, 0.55);
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    color: #d8d4c0;
+    font-size: 20px;
+    line-height: 48px;
+    text-align: center;
+    z-index: 15;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.55;
+  }
+  html.touch #journal-toggle { display: block; }
+  #journal-panel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 21;
+    background: rgba(6, 7, 4, 0.94);
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    font-family: "Courier New", ui-monospace, monospace;
+    color: #d8d4c0;
+  }
+  #journal-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #e6e1c8;
+    text-align: center;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  }
+  #journal-counts {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #b7b295;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+  #journal-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: 640px;
+    overflow-y: auto;
+    border: 1px solid rgba(120, 114, 86, 0.35);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 8px 12px;
+    box-sizing: border-box;
+  }
+  .journal-entry {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(120, 114, 86, 0.2);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .journal-entry:last-child { border-bottom: none; }
+  .journal-entry-kind {
+    flex: 0 0 auto;
+    color: #9a9678;
+    letter-spacing: 0.04em;
+  }
+  .journal-entry-text { color: #d8d4c0; }
+  #journal-close {
+    position: absolute;
+    top: calc(14px + var(--safe-top));
+    right: calc(16px + var(--safe-right));
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    line-height: 1;
+    background: rgba(20, 22, 14, 0.85);
+    color: #d8d4c0;
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #journal-close:active { background: rgba(60, 30, 24, 0.95); }
+  html.touch #journal-close { width: 44px; height: 44px; }
+
   /* --- Comic overlay narrow-width layout (E2e item 6) -------------------- */
   @media (max-width: 480px) {
     #comic-overlay { padding: 16px 10px; }
@@ -357,6 +453,14 @@
   </div>
 </div>
 
+<button id="journal-toggle" type="button" aria-label="Open journal">📔</button>
+<div id="journal-panel">
+  <button id="journal-close" type="button" aria-label="Close journal">✕</button>
+  <h2 id="journal-title">Journal</h2>
+  <div id="journal-counts"></div>
+  <div id="journal-list"></div>
+</div>
+
 <div id="touch-forward" aria-hidden="true">▲</div>
 <button id="torch-toggle" type="button" aria-label="Toggle torch">🔦</button>
 
@@ -369,6 +473,6 @@
   </div>
 </div>
 
-<script src="dev-bundle.js?v=c6bb18c7b6"></script>
+<script src="dev-bundle.js?v=96374b1cff"></script>
 </body>
 </html>

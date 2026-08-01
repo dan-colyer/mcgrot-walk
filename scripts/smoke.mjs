@@ -586,6 +586,224 @@ async function main() {
       await faultContext.close();
     }
 
+    // --- E5b.1: the journal ---
+    // Entirely on its own fresh boot (jPage/jCtx), NOT page1: these tests
+    // deliberately step real-time frames (leithers/birds/vermin) to bring a
+    // vendor/litter comic into interact range, and those subsystems are
+    // excluded from computeGeomHash precisely because they move under
+    // stepFrame — doing that to page1 before its own FIRST bookmark visit
+    // would desync the 'draw calls +/-0 (E2c.1)' gate below from its frozen
+    // budget.json baseline (measured: it did, on skyline, before this was
+    // split out — see docs/VALIDATION.md's note on that gate).
+    console.log('[smoke] E5b.1 journal gate...');
+    {
+      const { context: jCtx, page: jPage } = await bootPage(browser, port);
+
+      // HUD copy unchanged — the gate that protects 27 desktop goldens from
+      // this milestone and every one after it (see the brief's own warning:
+      // a counter is the obvious place to put in #hud, and it is the one
+      // place that costs a recapture).
+      const hudText = await jPage.evaluate(() => document.getElementById('hud').textContent);
+      results.push({
+        name: 'E5b.1: #hud copy unchanged',
+        pass: hudText === 'WASD — move, drag — look',
+        detail: `#hud textContent: ${JSON.stringify(hudText)}`,
+      });
+
+      // Panel closed by default — no golden can move.
+      const panelClosed = await jPage.evaluate(() => {
+        const el = document.getElementById('journal-panel');
+        return !!el && getComputedStyle(el).display === 'none';
+      });
+      results.push({
+        name: 'E5b.1: journal panel closed by default',
+        pass: panelClosed,
+        detail: `#journal-panel closed=${panelClosed}`,
+      });
+
+      // Denominator is derived, not literal. Computed independently here
+      // straight off assets/catalog.json (the same test proximity-audio.js
+      // uses to decide whether a voice can ever play: npc.comic.audio
+      // truthy), then compared against the runtime value. Opposed half:
+      // must not be 418 (the aspirational full cast) — the number a
+      // hardcoded denominator would most plausibly carry.
+      const catalogPath = join(root, 'assets/catalog.json');
+      const catalog = existsSync(catalogPath) ? JSON.parse(readFileSync(catalogPath, 'utf8')) : { comics: [] };
+      const expectedDenominator = catalog.comics.filter((c) => c.npc && c.audio).length;
+      const runtimeCounts = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts());
+      // The opposed half. Asserting runtime === catalog-count proves nothing
+      // on its own: every built vendor currently has audio, so the derived
+      // value collides with npcs.length AND with a hardcoded 124 — all three
+      // pass (measured). `!== 418` only rules out a number no plausible
+      // implementation produces. So run the module's own counter over a
+      // deliberately truncated cast and require it to track: a literal cannot.
+      const truncated = await jPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const short = dbg.npcs.npcs.slice(0, 5);
+        return {
+          got: dbg.countVendorsWithAudio(short),
+          want: short.filter((n) => n.comic && n.comic.audio).length,
+          full: dbg.countVendorsWithAudio(dbg.npcs.npcs),
+          // Every vendor built today has audio, so a truncated real cast
+          // cannot tell the derived count apart from a plain `npcs.length`
+          // (verified: both pass). A synthetic cast with one silent vendor
+          // is the only input that separates them — and it is exactly the
+          // case that arrives the day a vendor ships without a voice.
+          synthetic: dbg.countVendorsWithAudio([
+            { comic: { audio: 'a.mp3' } }, { comic: {} }, { comic: { audio: 'b.mp3' } },
+          ]),
+        };
+      });
+      const derives = truncated.got === truncated.want && truncated.got !== truncated.full &&
+        truncated.synthetic === 2;
+      results.push({
+        name: 'E5b.1: denominator is derived from the built cast, not a literal (opposed pair)',
+        pass: runtimeCounts.denominator === expectedDenominator && derives,
+        detail: `runtime=${runtimeCounts.denominator}, expected (from catalog.json)=${expectedDenominator}; ` +
+          `truncated cast of 5 -> ${truncated.got} (want ${truncated.want}, and must differ from the full ${truncated.full}); ` +
+          `synthetic cast of 3 with one silent vendor -> ${truncated.synthetic} (want 2)`,
+      });
+
+      // Counting is earned: standing near a busking vendor (in range, never
+      // opened) must credit nothing; opening it (E, past the hush) must
+      // credit exactly one, and idempotently — reopening the same vendor
+      // must not inflate the count.
+      const beforeOpen = await jPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const npc = dbg.npcs.npcs[2]; // a fresh id, untouched by the AudioContext check above
+        const p = npc.group.position;
+        // Well inside proximityAudio's PLAY_RANGE (18m) so the ambient
+        // busking voice actually starts — walking past must not count.
+        dbg.camera.position.set(p.x + 10, dbg.camera.position.y, p.z);
+        dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+        dbg.stepFrames(5);
+        return { heard: dbg.journal.counts().heard, id: npc.comic.id };
+      });
+      results.push({
+        name: 'E5b.1: walking past a busking vendor credits nothing',
+        pass: beforeOpen.heard === 0,
+        detail: `heard=${beforeOpen.heard} after standing in busking range without opening`,
+      });
+
+      await jPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const npc = dbg.npcs.npcs[2];
+        const p = npc.group.position;
+        dbg.camera.position.set(p.x + 2, dbg.camera.position.y, p.z); // inside interact.js's 8m RANGE
+        dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+        dbg.stepFrames(3);
+      });
+      await jPage.keyboard.press('KeyE'); // opens the overlay; hush is still pending, no credit yet
+      const atOpen = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().heard);
+      // Real wall-clock wait for HUSH_MS (interact.js's setTimeout, not
+      // stepFrame-driven) — same reasoning as the E5a hush tests elsewhere
+      // in this file: the ritual's beat runs on a real timer.
+      await jPage.waitForTimeout(700);
+      const afterHush = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().heard);
+      // Reopen: close, walk back in range, press E again — must stay at 1.
+      await jPage.keyboard.press('Escape');
+      await jPage.evaluate(() => window.__mcgrotDebug.stepFrames(3));
+      await jPage.keyboard.press('KeyE');
+      await jPage.waitForTimeout(700);
+      const afterReopen = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().heard);
+      await jPage.keyboard.press('Escape');
+      results.push({
+        name: 'E5b.1: opening a reading credits exactly one comic, past the hush, idempotently',
+        pass: atOpen === 0 && afterHush === 1 && afterReopen === 1,
+        detail: `heard at open=${atOpen} (must be 0, credit lands past the hush), after hush=${afterHush}, after reopening same vendor=${afterReopen}`,
+      });
+
+      // Found: reading a litter comic off the ground credits it immediately
+      // (no hush ritual for litter).
+      const litterResult = await jPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const item = dbg.litter.items[0];
+        if (!item) return { available: false };
+        const before = dbg.journal.counts().found;
+        dbg.camera.position.set(item.x, dbg.camera.position.y, item.z);
+        dbg.camera.lookAt(item.x + 1, dbg.camera.position.y, item.z);
+        dbg.stepFrames(3);
+        return { available: true, before, id: item.comic.id };
+      });
+      if (litterResult.available) {
+        await jPage.keyboard.press('KeyE');
+        const afterFound = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().found);
+        await jPage.keyboard.press('Escape');
+        results.push({
+          name: 'E5b.1: reading a litter comic credits it as found',
+          pass: litterResult.before === 0 && afterFound === 1,
+          detail: `found before=${litterResult.before}, after reading=${afterFound}`,
+        });
+      } else {
+        results.push({ name: 'E5b.1: reading a litter comic credits it as found', pass: false, detail: 'no litter items in this build' });
+      }
+
+      // Persistence round-trip, in a fresh page sharing page1's context (same
+      // localStorage). Opposed half: cleared storage restores to zero.
+      const heardIdBeforeReload = await jPage.evaluate(() => window.__mcgrotDebug.journal.list()[0].id);
+      const page1b = await jCtx.newPage();
+      await page1b.goto(`http://localhost:${port}/`);
+      await page1b.click('#title-enter');
+      await page1b.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.journal));
+      const restored = await page1b.evaluate(() => window.__mcgrotDebug.journal.counts());
+      const restoredTopId = await page1b.evaluate(() => {
+        const list = window.__mcgrotDebug.journal.list();
+        return list.length ? list[0].id : null;
+      });
+      await page1b.evaluate(() => localStorage.removeItem('mcgrot.journal.v1'));
+      const page1c = await jCtx.newPage();
+      await page1c.goto(`http://localhost:${port}/`);
+      await page1c.click('#title-enter');
+      await page1c.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.journal));
+      const afterClear = await page1c.evaluate(() => window.__mcgrotDebug.journal.counts());
+      results.push({
+        name: 'E5b.1: localStorage persistence round-trip (and cleared storage restores to zero)',
+        pass: restored.heard >= 1 && restored.found >= 1 && restoredTopId === heardIdBeforeReload &&
+          afterClear.heard === 0 && afterClear.found === 0,
+        detail: `reload: heard=${restored.heard} found=${restored.found} topId=${restoredTopId} (expected ${heardIdBeforeReload}); ` +
+          `after clearing storage: heard=${afterClear.heard} found=${afterClear.found}`,
+      });
+      await page1b.close();
+      await page1c.close();
+
+      // Storage failure is survivable — force setItem to throw (Safari
+      // private-mode's actual behaviour) and assert the reading still
+      // opens, plays, and the session-local count still increments. Same
+      // fault-injection idiom as the AudioContext throw above, but patching
+      // Storage.prototype rather than a debug flag, since journal.js's
+      // fail-soft is a plain try/catch around localStorage itself.
+      const faultCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      await faultCtx.addInitScript(() => {
+        Storage.prototype.setItem = function () { throw new Error('[debug] forced storage failure'); };
+      });
+      const faultPage = await faultCtx.newPage();
+      const faultConsole = [];
+      faultPage.on('console', (msg) => { if (msg.type() === 'error') faultConsole.push(msg.text()); });
+      faultPage.on('pageerror', (err) => faultConsole.push(String(err)));
+      await faultPage.goto(`http://localhost:${port}/`);
+      await faultPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.journal));
+      await faultPage.click('#title-enter');
+      const faultOpen = await faultPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const npc = dbg.npcs.npcs[3];
+        const p = npc.group.position;
+        dbg.camera.position.set(p.x + 2, dbg.camera.position.y, p.z);
+        dbg.camera.lookAt(p.x, dbg.camera.position.y, p.z);
+        dbg.stepFrames(3);
+      });
+      await faultPage.keyboard.press('KeyE');
+      const faultOverlayOpen = await faultPage.evaluate(() => document.getElementById('comic-overlay').style.display === 'flex');
+      await faultPage.waitForTimeout(700);
+      const faultCounts = await faultPage.evaluate(() => window.__mcgrotDebug.journal.counts());
+      results.push({
+        name: 'E5b.1: a throwing localStorage.setItem does not break the reading or the session count',
+        pass: faultOverlayOpen && faultCounts.heard === 1 && faultConsole.length === 0,
+        detail: `overlay opened=${faultOverlayOpen}, session heard=${faultCounts.heard}, console errors=${faultConsole.length}`,
+      });
+      await faultCtx.close();
+      await jCtx.close();
+    }
+
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);
@@ -1711,7 +1929,7 @@ async function main() {
       });
 
       const tapTargets = { 'title-enter': titleEnterRect };
-      for (const id of ['touch-forward', 'torch-toggle']) {
+      for (const id of ['touch-forward', 'torch-toggle', 'journal-toggle']) {
         tapTargets[id] = await measureTapTarget(page, id);
       }
 
@@ -1858,7 +2076,7 @@ async function main() {
         root.style.removeProperty('--safe-top');
         root.style.removeProperty('--safe-bottom');
         return bad;
-      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['hud', 'touch-forward', 'torch-toggle', 'npc-prompt'] });
+      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['hud', 'touch-forward', 'torch-toggle', 'journal-toggle', 'npc-prompt'] });
       const allOverlaps = [...comicOverlaps, ...hudOverlaps];
       results.push({
         name: 'mobile: no target intrudes on simulated safe area',

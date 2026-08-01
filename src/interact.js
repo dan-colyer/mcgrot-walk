@@ -17,7 +17,7 @@ import { assetUrl } from './assets.js';
 const RANGE = 8; // metres — NPCs stand ~6m off the centreline, so walking the road must still trigger
 const HUSH_MS = 600; // the ritual's beat of attention between overlay-open and reading-start
 
-export function createInteract({ assets, npcs, camera, controls, proximityAudio, onReadingChange, litter, leithers }) {
+export function createInteract({ assets, npcs, camera, controls, proximityAudio, onReadingChange, litter, leithers, journal }) {
   const promptEl = document.getElementById('npc-prompt');
   const promptLabel = document.getElementById('npc-prompt-label');
   const overlayEl = document.getElementById('comic-overlay');
@@ -140,6 +140,11 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     // already set from open() — the overlay is visually committed to
     // playing throughout the hush, only the audio itself is delayed.
     proximityAudio.restart(npc);
+    // E5b.1: credited here, past the hush, not on the keypress that opened
+    // the overlay — walking past a busking vendor (proximityAudio's own
+    // ambient play()) never reaches this function, so only an actually-
+    // started reading counts. credit() is idempotent per comic id.
+    if (journal && npc.comic) journal.credit(npc.comic.id, 'heard');
   }
 
   function skipHush() {
@@ -150,6 +155,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
 
   function open(npc) {
     if (!npc || openNpc) return;
+    if (journal && journal.isOpen()) return; // one full-screen panel at a time
     openNpc = npc;
     hidePrompt();
 
@@ -201,6 +207,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   // summon a passing Leither who takes it upon themselves to read it aloud.
   function openLitterComic(item) {
     if (openNpc || openLitter) return;
+    if (journal && journal.isOpen()) return; // one full-screen panel at a time
     openLitter = item;
     hidePrompt();
     if (titleEl) titleEl.textContent = item.comic.title || 'McGrot';
@@ -214,6 +221,9 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     if (overlayEl) overlayEl.style.display = 'flex';
     controls.setEnabled(false);
     proximityAudio.setOverlayOpen(true);
+    // E5b.1: a litter comic has no hush ritual — credited as "found" as soon
+    // as it's opened, idempotent per comic id.
+    if (journal && item.comic) journal.credit(item.comic.id, 'found');
     if (leithers && Math.random() < 0.7) leithers.summonReader(item);
   }
 
@@ -314,5 +324,11 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     if (openNpc) renderTranscript(openNpc);
   }
 
-  return { update, dispose, setReadAlong };
+  // Lets journal.js's canOpen guard keep the journal panel and this overlay
+  // from ever being open at once (see createJournal's own note).
+  function isOpen() {
+    return !!(openNpc || openLitter);
+  }
+
+  return { update, dispose, setReadAlong, isOpen };
 }
