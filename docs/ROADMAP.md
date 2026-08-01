@@ -1560,6 +1560,39 @@ worlds); attributions inline so the reasoning survives.*
   a reading in progress implies it continues whether anyone listens (cf. The
   Infinite Conversation), and is cheap: start the clip at a seeded offset.
 
+**Planned 2026-08-01; brief at `~/.claude/plans/mcgrot-e5a-brief.md`.** Five
+findings from reading the code changed the milestone's shape, and they are
+recorded here because they outlive the brief:
+
+- **No transcript ships today.** The spoken text exists only in
+  `scripts/tts-prompts/<id>.txt`, interleaved with `[stage directions]` and
+  `"quoted"` comic text, one speaker line per file (consistent across all
+  124). E5a therefore *starts* with an offline bake —
+  `scripts/build-readings.mjs` → `assets/readings.json` — and the quoted /
+  unquoted distinction is carried into the data, so the overlay can render
+  sacred comic text differently from the vendor's own wrapper speech.
+- **Phrase times are audio-anchored, not estimated.** `ffmpeg silencedetect`
+  segments each clip; phrases are fitted to the runs by length weighting.
+  The gate must therefore score alignment against an *independently computed*
+  RMS envelope — scoring against `silencedetect` would be the metric
+  measuring itself. Opposed pair: shipped alignment must beat both a flat
+  equal-duration control and a +1.5 s shifted control.
+- **One foreground voice is not actually enforced.**
+  `proximityAudio.update()` returns early while the overlay is open, so
+  neighbours already playing keep going underneath the focused reading. The
+  ritual item now includes making the invariant explicit.
+- **The busker offset is `Math.random()`** (`src/proximity-audio.js:89`) —
+  the last nondeterminism in the audio path. A per-NPC virtual reading clock
+  seeded on `hash32(id + day seed)` replaces it and delivers both the
+  join-mid-read and the resume-on-return bullets from one mechanism.
+- **Leithers have no audio.** "Duck the Leither murmur" above is a no-op —
+  the murmur is behavioural, not sonic. Out of scope until leithers speak.
+
+Landing is flag-first: everything lands with the read-along off and all 39
+goldens unmoved, then one enable commit recaptures `mobile-comic.png`
+deliberately. **That enable commit is the high-effort review**, per the
+tiering table's golden rule, even though no HUD copy changes.
+
 ### E5b — The journal, and the quarry
 
 - **The journal:** comics heard/found logged ("34 of 418"), localStorage.
