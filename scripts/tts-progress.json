@@ -122,6 +122,6 @@
     "61a16f6a"
   ],
   "failed": {
-    "5c5f0c9c": "The operation was aborted due to timeout"
+    "5c5f0c9c": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
   }
 }
