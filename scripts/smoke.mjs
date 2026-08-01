@@ -496,6 +496,18 @@ async function main() {
       cwd: join(root, 'src'),
       stdio: 'ignore',
     });
+    // The `finally` below covers every ordinary exit, but an interrupted run
+    // (Ctrl-C, a harness timeout) never reaches it and leaves the server
+    // holding its port — nine strays had piled up from earlier runs before
+    // this was added. serve.py also reaps itself when orphaned, which is the
+    // only thing that survives a SIGKILL of this process; these handlers just
+    // make the common cases immediate rather than waiting on its poll.
+    for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+      process.on(sig, () => {
+        if (server) server.kill();
+        process.exit(130);
+      });
+    }
     await waitForServer(`http://localhost:${port}/`);
 
     browser = await chromium.launch();
