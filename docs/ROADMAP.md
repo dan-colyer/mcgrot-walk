@@ -1593,8 +1593,11 @@ goldens unmoved, then one enable commit recaptures `mobile-comic.png`
 deliberately. **That enable commit is the high-effort review**, per the
 tiering table's golden rule, even though no HUD copy changes.
 
-**LANDED 2026-08-01** — `d74b330` (flag off), `9e54896` (enable), `35fac9b`
-(review fix). Smoke 171 checks green, twice; goldens unmoved apart from the
+**LANDED AND DEPLOYED 2026-08-01** — `d74b330` (flag off), `9e54896`
+(enable), `35fac9b` (review fix); gh-pages `fccd158`, bundle md5
+`4ee660ef…` matched against the live URL, `readings.json` served at 127,973 B
+(byte-for-byte the local file). Payload 96 MB — still inside the Pages
+bandwidth risk E7a exists to remove. Smoke 171 checks green, twice; goldens unmoved apart from the
 deliberate `mobile-comic.png` recapture; `readings.json` 125.0 KB, artifact
 4.15 MB. Review found and fixed a defect the gates could not see: phrase
 times went backwards in 25 of 123 comics, stalling the highlight — see
