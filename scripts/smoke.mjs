@@ -1743,18 +1743,28 @@ async function main() {
       for (const id of ['comic-close', 'comic-playpause']) {
         tapTargets[id] = await measureTapTarget(page, id);
       }
-      // E5a gate 5d: the read-along flag is off by default — the transcript
-      // panel must not render, so this golden (and every golden) is exactly
-      // what it was before E5a. checkGolden below is the pixel half of this
-      // gate; this is the structural half.
-      const transcriptHiddenByDefault = await page.evaluate(() => {
+      // E5a gate 5d: the read-along flag now defaults ON — the transcript
+      // panel renders for this comic (it has a baked reading), so this
+      // golden was deliberately recaptured with the panel visible (see the
+      // enable commit). Structural check first (panel present with the
+      // flag untouched); then prove the flag genuinely gates it by turning
+      // it off and back on, WITHOUT re-screenshotting in between, so the
+      // golden capture below still reflects the default-on state.
+      const transcriptShownByDefault = await page.evaluate(() => {
         const el = document.getElementById('comic-transcript');
-        return !el || getComputedStyle(el).display === 'none';
+        return !!el && getComputedStyle(el).display !== 'none' && el.children.length > 0;
+      });
+      const transcriptHidesWhenDisabled = await page.evaluate(() => {
+        window.__mcgrotDebug.setReadAlong(false);
+        const el = document.getElementById('comic-transcript');
+        const hidden = !el || getComputedStyle(el).display === 'none';
+        window.__mcgrotDebug.setReadAlong(true); // restore the default before the golden capture below
+        return hidden;
       });
       results.push({
-        name: 'E5a: read-along panel off by default (flag neutrality)',
-        pass: transcriptHiddenByDefault,
-        detail: transcriptHiddenByDefault ? '#comic-transcript not rendered' : '#comic-transcript rendered with the flag untouched',
+        name: 'E5a: read-along panel defaults on and the flag genuinely gates it',
+        pass: transcriptShownByDefault && transcriptHidesWhenDisabled,
+        detail: `shown by default=${transcriptShownByDefault}, hides when disabled=${transcriptHidesWhenDisabled}`,
       });
       const comicShot = await page.screenshot();
       checkGolden(results, 'golden-mobile:comic', comicShot, join(goldenDir, 'mobile-comic.png'));

@@ -812,11 +812,15 @@ gates the checked-in result. Four checks, all in `scripts/smoke.mjs`:
   between issuing the joins and the buffers resolving (see the note in
   `proximity-audio.js`). Pass requires the two same-seed boots' offsets to
   match exactly and the different-seed boot's to differ.
-- **5d — flag neutrality.** The existing `mobile-comic.png` golden capture
-  (untouched — the read-along flag is off by default) plus an explicit
-  structural check that `#comic-transcript` doesn't render at all with the
-  flag untouched. This is what let item 1 land in the same commit as every
-  other E5a item without moving any of the 39 existing goldens.
+- **5d — flag neutrality.** Landed off by default first (proving item 1
+  could sit in the same commit as every other E5a item without moving any of
+  the 39 existing goldens — the state this check asserted at the time), then
+  flipped on in a second, deliberate commit that recaptured
+  `mobile-comic.png` with the panel visible. What the check asserts today:
+  the panel renders by default (it has content for the golden's NPC) AND
+  `dbg.setReadAlong(false)` genuinely hides it — toggled off and back on
+  around the structural check, never around the golden screenshot itself, so
+  the capture always reflects the shipped default.
 
 **The ritual's hush is real wall-clock (`setTimeout`, 600ms), not
 stepFrame-driven** — safe for goldens because the comic overlay is a

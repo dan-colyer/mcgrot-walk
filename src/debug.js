@@ -437,7 +437,8 @@ export function createDebugApi(ctx) {
     };
   }
 
-  // E5a item 1: read-along transcript panel, off by default. E5a item 3:
+  // E5a item 1: read-along transcript panel, on by default since the enable
+  // commit (landed off first). E5a item 3:
   // overrides the per-NPC virtual reading clock's day seed (see
   // src/proximity-audio.js) so scripts/smoke.mjs can assert determinism
   // without waiting for the calendar to turn over.

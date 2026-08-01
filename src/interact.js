@@ -33,7 +33,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   let nearLitter = null;   // litter comic in range (only when no NPC is nearer)
   let openLitter = null;   // litter comic being read in the overlay
 
-  let readAlongEnabled = false; // dbg-settable, default off — see setReadAlong below
+  let readAlongEnabled = true; // dbg-settable via setReadAlong — E5a enable commit
   let hushTimer = null;
   let hushPending = false;
   let currentPhrases = null;    // the open reading's phrase list, or null
@@ -299,9 +299,10 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     if (hushTimer) clearTimeout(hushTimer);
   }
 
-  // dbg-settable (see src/debug.js) — off by default, per the E5a brief's
-  // flag-first landing. Re-renders the currently open reading's panel
-  // immediately so the harness can flip it without reopening the overlay.
+  // dbg-settable (see src/debug.js) — on by default since the E5a enable
+  // commit (landed off first, per the brief's flag-first sequencing).
+  // Re-renders the currently open reading's panel immediately so the
+  // harness can flip it without reopening the overlay.
   function setReadAlong(v) {
     readAlongEnabled = !!v;
     if (openNpc) renderTranscript(openNpc);
