@@ -1,8 +1,8 @@
 {
   "meta": {
     "total": 418,
-    "done": 103,
-    "pending": 315,
+    "done": 124,
+    "pending": 294,
     "sourceDirs": [
       "/Users/dan/Desktop/screenshots/mcgrot",
       "/Users/dan/Desktop/screenshots/mcgrot/other"
@@ -2041,12 +2041,12 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "2db7525f70655a723139fc4f0bc69abc",
       "done": false,
-      "title": "McGrot — The Scottish Grotonials",
+      "title": "McGrot — Wrong Page (mismatched source image)",
       "audio": "audio/2db7525f.mp3",
       "promptFile": "2db7525f.txt",
       "npc": {
         "name": "Malky Fyfe",
-        "blurb": "Preacher o’ the Fried Harvest",
+        "blurb": "Ex-Projectionist o' the Wrong Reel",
         "voiceName": "Sulafat",
         "accent": "soft Highland lilt",
         "build": {
@@ -2056,7 +2056,7 @@
         },
         "face": "faces/grunchlk.jpg"
       },
-      "sparse": false,
+      "sparse": true,
       "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
@@ -2516,10 +2516,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other",
       "md5": "37a51ef9452459aa03dc86d8b9132a0b",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Daily Bishop",
+      "audio": "audio/37a51ef9.mp3",
+      "promptFile": "37a51ef9.txt",
+      "npc": {
+        "name": "Senga Strang",
+        "blurb": "Deliverer o' the Last Paper Round",
+        "voiceName": "Leda",
+        "accent": "sharp Leith newsagent bark with a thin Morningside veneer she cannot hold for more than a sentence",
+        "build": {
+          "height": 1.55,
+          "girth": 0.6,
+          "headScale": 1.35
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "37d5a9ae",
@@ -2528,10 +2540,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "37d5a9ae634d3d60f8af97a9973dfc34",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — Main Character Energy",
+      "audio": "audio/37d5a9ae.mp3",
+      "promptFile": "37d5a9ae.txt",
+      "npc": {
+        "name": "Boaby Stobie",
+        "blurb": "Continuity Announcer tae the Damned",
+        "voiceName": "Orus",
+        "accent": "Leith vowels dressed up in a soft old-BBC-Scotland announcer polish that keeps slipping",
+        "build": {
+          "height": 2,
+          "girth": 1.5,
+          "headScale": 1.5
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "38edcb41",
@@ -2540,10 +2564,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "38edcb41ad268f30faf9a76b3d5cdd20",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Bonspiel of Leith",
+      "audio": "audio/38edcb41.mp3",
+      "promptFile": "38edcb41.txt",
+      "npc": {
+        "name": "Isa Struthers",
+        "blurb": "Caretaker o' the Drowned Rink",
+        "voiceName": "Aoede",
+        "accent": "broad Leith docker's growl, hard consonants, breath steaming",
+        "build": {
+          "height": 1.6,
+          "girth": 1.5,
+          "headScale": 1.4
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "39199870",
@@ -2552,10 +2588,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot/other",
       "md5": "39199870fc4f6f8dd81b499e631e536c",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Archive Vault",
+      "audio": "audio/39199870.mp3",
+      "promptFile": "39199870.txt",
+      "npc": {
+        "name": "Wilma Skaithe",
+        "blurb": "Clerk o' Records Nobody Requested",
+        "voiceName": "Callirrhoe",
+        "accent": "papery Leith clerk's mutter, precise and clipped",
+        "build": {
+          "height": 1.65,
+          "girth": 0.7,
+          "headScale": 1.25
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "39dd1c74",
@@ -2564,10 +2612,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "39dd1c748094f9bb485e28663041fde6",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Monk of the Grot Order",
+      "audio": "audio/39dd1c74.mp3",
+      "promptFile": "39dd1c74.txt",
+      "npc": {
+        "name": "Peem Sloan",
+        "blurb": "Pilgrim o' the Unnamed Road",
+        "voiceName": "Autonoe",
+        "accent": "soft Highland lilt worn thin, with long reverent vowels",
+        "build": {
+          "height": 1.85,
+          "girth": 0.55,
+          "headScale": 1.3
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "3ad6421b",
@@ -2576,10 +2636,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "3ad6421b9ca3b4ebc086114ae15e9888",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — Into the Mirrorpot",
+      "audio": "audio/3ad6421b.mp3",
+      "promptFile": "3ad6421b.txt",
+      "npc": {
+        "name": "Rena Stagg",
+        "blurb": "Proprietrix o' the Bottomless Cup",
+        "voiceName": "Enceladus",
+        "accent": "fast, clattering Dundonian, vowels flattened, consonants fired off",
+        "build": {
+          "height": 1.7,
+          "girth": 1,
+          "headScale": 1.45
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "3c52a22c",
@@ -2996,10 +3068,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "4f6010440ce112d36dbf2449c866dc30",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Grot Loompas",
+      "audio": "audio/4f601044.mp3",
+      "promptFile": "4f601044.txt",
+      "npc": {
+        "name": "Wullie Thrapple",
+        "blurb": "Foreman o' the Boilt Sugar Works",
+        "voiceName": "Achernar",
+        "accent": "broad Leith with a badly-fumbled French flourish",
+        "build": {
+          "height": 1.9,
+          "girth": 1.45,
+          "headScale": 1.5
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "4fe127d1",
@@ -3008,10 +3092,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "4fe127d1e3b28eadb54465ca8ec1be26",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Sphere of Sauce",
+      "audio": "audio/4fe127d1.mp3",
+      "promptFile": "4fe127d1.txt",
+      "npc": {
+        "name": "Morag Tannock",
+        "blurb": "Street Cosmologist an' Dinner Lady",
+        "voiceName": "Alnilam",
+        "accent": "nasal Central Belt, Coatbridge-ish, with pulpit stretches on the vowels",
+        "build": {
+          "height": 1.45,
+          "girth": 0.85,
+          "headScale": 1.55
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "50f0b324",
@@ -3020,10 +3116,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "50f0b32455d9c4431d9a9946f5892dae",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Endless Pull-Up",
+      "audio": "audio/50f0b324.mp3",
+      "promptFile": "50f0b324.txt",
+      "npc": {
+        "name": "Deek Thirlwall",
+        "blurb": "Scaffolder o' the Uneven Reach",
+        "voiceName": "Schedar",
+        "accent": "hard Dundonian, clipped and grinding",
+        "build": {
+          "height": 1.95,
+          "girth": 0.5,
+          "headScale": 1.2
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "51256a62",
@@ -3032,10 +3140,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "51256a62c80c613ec04b6d7fbe6d4e88",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Santa Condition",
+      "audio": "audio/51256a62.mp3",
+      "promptFile": "51256a62.txt",
+      "npc": {
+        "name": "Senga Threipland",
+        "blurb": "Porter o' the Tinsel Ward",
+        "voiceName": "Gacrux",
+        "accent": "flat, unamused Edinburgh scheme, Craigmillar-ish, with a rattling smoker's laugh",
+        "build": {
+          "height": 1.75,
+          "girth": 0.6,
+          "headScale": 1.3
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "51834c74",
@@ -3044,10 +3164,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "51834c74aa47a6d16ac2e1b2256bbe93",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Endless Pull-Up",
+      "audio": "audio/51834c74.mp3",
+      "promptFile": "51834c74.txt",
+      "npc": {
+        "name": "Ishbel Tarbolton",
+        "blurb": "Reciter o' Devotional Overdues",
+        "voiceName": "Pulcherrima",
+        "accent": "soft Perthshire burr, precise and old-fashioned, dentures whistling on the sibilants",
+        "build": {
+          "height": 1.4,
+          "girth": 0.65,
+          "headScale": 1.45
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "52ce12ef",
@@ -3056,10 +3188,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "52ce12ef6969781a2affebb0af469af3",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — Imported Authentic",
+      "audio": "audio/52ce12ef.mp3",
+      "promptFile": "52ce12ef.txt",
+      "npc": {
+        "name": "Hamish Tosh",
+        "blurb": "Customs Clerk o' Nae Border",
+        "voiceName": "Achird",
+        "accent": "prim clipped Morningside straining to sound like a hard man, slipping when he gets excited",
+        "build": {
+          "height": 1.8,
+          "girth": 0.9,
+          "headScale": 1.35
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "53088e97",
@@ -3068,10 +3212,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "53088e97f288f0a60029a8670eb530df",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Deconstructed Meatscape",
+      "audio": "audio/53088e97.mp3",
+      "promptFile": "53088e97.txt",
+      "npc": {
+        "name": "Bella Twaddle",
+        "blurb": "Trader Wha Disnae Take Questions",
+        "voiceName": "Zubenelgenubi",
+        "accent": "enormous Leith market bellow, flattened vowels, mock-genteel when imitating the shoppers",
+        "build": {
+          "height": 1.65,
+          "girth": 1.6,
+          "headScale": 1.4
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "5494ce23",
@@ -3236,10 +3392,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "5c5f0c9c39f4eab0b801b5bc2260d808",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Pie That Dreamed",
+      "audio": "audio/5c5f0c9c.mp3",
+      "promptFile": "5c5f0c9c.txt",
+      "npc": {
+        "name": "Wullie Whanlan",
+        "blurb": "Night-Shift Man o' the Fryer",
+        "voiceName": "Vindemiatrix",
+        "accent": "flat Leith with long lazy vowels, tired and low",
+        "build": {
+          "height": 1.85,
+          "girth": 1.35,
+          "headScale": 1.3
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "5d49e093",
@@ -3248,10 +3416,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "5d49e093d44ba7fde99a94242640e2b3",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — Isle of Misdirrection",
+      "audio": "audio/5d49e093.mp3",
+      "promptFile": "5d49e093.txt",
+      "npc": {
+        "name": "Senga Whillans",
+        "blurb": "Tannoy Voice o' the Empty Aisles",
+        "voiceName": "Sadachbia",
+        "accent": "sharp Edinburgh retail-prim with the vowels slipping Leith-ward when she's annoyed",
+        "build": {
+          "height": 1.7,
+          "girth": 0.8,
+          "headScale": 1.4
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "5d715a3c",
@@ -3260,10 +3440,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "5d715a3cc56c43f60b75932696044ebc",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot in Exile",
+      "audio": "audio/5d715a3c.mp3",
+      "promptFile": "5d715a3c.txt",
+      "npc": {
+        "name": "Hamish Whitecross",
+        "blurb": "Trawlerman o' the One Lung",
+        "voiceName": "Sadaltager",
+        "accent": "deep North-East fishing burr, hard rolling Rs, chesty and wet",
+        "build": {
+          "height": 2.15,
+          "girth": 1.55,
+          "headScale": 1.55
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "5eeec173",
@@ -3272,10 +3464,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "5eeec173a748b256610f28c9d101af5d",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Wiimblendon Wobble",
+      "audio": "audio/5eeec173.mp3",
+      "promptFile": "5eeec173.txt",
+      "npc": {
+        "name": "Fiona Whimbrel",
+        "blurb": "Umpire o' Games Nobody Entered",
+        "voiceName": "Sulafat",
+        "accent": "strained Morningside-posh that keeps slipping into flat Leith on the swearier vowels",
+        "build": {
+          "height": 1.75,
+          "girth": 0.75,
+          "headScale": 1.25
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "5f1b8828",
@@ -3284,10 +3488,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "5f1b882821a20aeaa0d54b6646f71533",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot Activity Board",
+      "audio": "audio/5f1b8828.mp3",
+      "promptFile": "5f1b8828.txt",
+      "npc": {
+        "name": "Doreen Whampie",
+        "blurb": "Keeper o' the Last Laminated Board",
+        "voiceName": "Zephyr",
+        "accent": "warm Falkirk-ish sing-song, over-bright, thinning at the edges",
+        "build": {
+          "height": 1.6,
+          "girth": 1.15,
+          "headScale": 1.5
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "6075cdd0",
@@ -3296,10 +3512,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "6075cdd0e8bdae84b384604febe805f8",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — the Bun-Lord o' the North",
+      "audio": "audio/6075cdd0.mp3",
+      "promptFile": "6075cdd0.txt",
+      "npc": {
+        "name": "Tam Whitrick",
+        "blurb": "Bun-Lord, Self-Appointed",
+        "voiceName": "Puck",
+        "accent": "big daft Highland lilt for the adventurer, grim monotone Leith for the vendor",
+        "build": {
+          "height": 1.8,
+          "girth": 1.4,
+          "headScale": 1.6
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "60ee906a",
@@ -3308,10 +3536,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "60ee906aab68255d6e343ae5cf8d9cc9",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Loaf-Rites",
+      "audio": "audio/60ee906a.mp3",
+      "promptFile": "60ee906a.txt",
+      "npc": {
+        "name": "Baldy Whangie",
+        "blurb": "Captain o' Something Important",
+        "voiceName": "Charon",
+        "accent": "clipped RP badly disguising a Leith accent underneath, prim consonants, hard glottal slips",
+        "build": {
+          "height": 1.9,
+          "girth": 0.95,
+          "headScale": 1.75
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "61a16f6a",
@@ -3320,10 +3560,22 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "61a16f6ab10ca2283d1ae4f8aea9f6c1",
       "done": false,
-      "title": null,
-      "audio": null,
-      "promptFile": null,
-      "npc": null
+      "title": "McGrot — The Pothole Cure",
+      "audio": "audio/61a16f6a.mp3",
+      "promptFile": "61a16f6a.txt",
+      "npc": {
+        "name": "Rab Whustler",
+        "blurb": "Foreman o' the Tarmac Wounds",
+        "voiceName": "Kore",
+        "accent": "thick Leith with a hard council-depot bark, glottal stops, tar in the throat",
+        "build": {
+          "height": 1.85,
+          "girth": 1.3,
+          "headScale": 1.35
+        }
+      },
+      "sparse": false,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "6261442b",
