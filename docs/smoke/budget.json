@@ -5,16 +5,16 @@
       "drawCalls": 28
     },
     "north-250-far": {
-      "drawCalls": 80
+      "drawCalls": 54
     },
     "elm-row-hero": {
-      "drawCalls": 49
+      "drawCalls": 75
     },
     "mid-550-close": {
       "drawCalls": 28
     },
     "mid-805-far": {
-      "drawCalls": 47
+      "drawCalls": 72
     },
     "fascia-close": {
       "drawCalls": 27
@@ -23,7 +23,7 @@
       "drawCalls": 68
     },
     "skyline": {
-      "drawCalls": 954
+      "drawCalls": 1109
     }
   }
 }
