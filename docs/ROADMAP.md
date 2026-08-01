@@ -27,6 +27,9 @@ world and the game's world are the same place. Every system should pull toward
   animals in the game. → E3/E4.
 - **The Shared Street** — the tram finally runs (and ends where the rails
   stop dead), and other real walkers hide among the NPCs. → E6/E7.
+- **The Role** (added 2026-08-02, Dan-directed) — you are not a tourist. You
+  wake behind the counter of a shop on the Walk; Leithers come in and deal
+  with you; the street is your street. → E9.
 
 Two standing rules join the constraints: the **Central Bar test** (every joke
 must get a laugh in the Central Bar, said aloud, with Leithers present — punch
@@ -34,10 +37,38 @@ at institutions with letterheads, never at Leith), and **Scots is the prestige
 register** (the language of wit and authority; the RP students are the ones
 out of their depth).
 
-**Sequence: E2f → E5 → E8 → E3 → E4 → E6 → E7**, E∞ continuous. E8 (style)
-goes before E3 (characters) deliberately: the character pipeline spike must
-evaluate candidates *under the McGrot grade*, because the grade changes what
-character fidelity is worth buying.
+**Sequence: E2f → E5 → E8 → E9a → E3 → E4 → E9b → E6 → E7** (E9c rides with
+E7), E∞ continuous. E8 (style) goes before E3 (characters) deliberately: the
+character pipeline spike must evaluate candidates *under the McGrot grade*,
+because the grade changes what character fidelity is worth buying. E9a (the
+shop, the role) goes before the character/social phases because it is pure
+build with no cast dependency; E9b (the visitor theatre) comes after E4
+because the visitors ARE E4's cast performing in your doorway.
+
+## How this roadmap is used (the three tiers)
+
+- **Fable** thinks: phase design, decomposition, audits at phase gates,
+  re-planning. Each near-term phase below is already decomposed into
+  milestone-sized units with scope boundaries, dependencies, acceptance
+  shapes and named risks — so the design does not need re-deriving
+  downstream.
+- **Opus** briefs and verifies: takes the NEXT milestone unit, turns it into
+  a Sonnet brief (objective, files, constraints, acceptance criteria,
+  risks), reviews the diff against the brief with independent measurement,
+  deploys. The two E2d rules bind every brief: **every acceptance
+  measurement names a control that isolates the system's own contribution**,
+  and **when a symptom implicates three.js, read the vendored source before
+  theorising**. Where a unit below says "gate:", that is the acceptance
+  shape the brief should elaborate — not replace.
+- **Sonnet** implements a milestone end-to-end against the brief and reports
+  honestly, deviations flagged.
+
+Containment conventions that recur below, named once: **flag-first** (a
+behaviour-changing feature lands behind a localhost/debug flag, gates green
+and goldens untouched, then one deliberate enable+recapture commit — the
+E2c.3a two-step) and **opposed-pair gates** (neutral input → bit-identical,
+authored input → measurably moved — check 26's shape, reused for every new
+axis).
 
 ## Phase D retrospective (why the roadmap changed)
 
@@ -90,6 +121,12 @@ Decisions taken:
 - **Handmade shopfronts:** Dan feeds real-shop reference photos to ChatGPT,
   drops results in `assets/shopfronts/handmade/`, ingest script does the rest.
   Wishlist: `docs/shopfront-wishlist.md`.
+- **A second voice stream is coming (E9b):** the shopkeeper visitor corpus
+  (~250 archetype × category lines, then growth) shares the same daily TTS
+  quota as comic readings. Text bubbles ship without waiting; voices trickle.
+  When both streams contend, comic readings keep priority — they are the
+  piece. If the trickle becomes the binding constraint on E9b, the options
+  are a paid Gemini tier or a second key: Dan's call, parked until it binds.
 
 ## E0 — Close the ledger + the validation rig
 
@@ -1158,9 +1195,9 @@ spots 60" (fixed at the gate).
 Phase numbers are stable labels, not an order. The order is now (E8 inserted
 2026-08-01 with the delight-arc direction — see "Direction" at the top):
 
-**E2f (device round) → E5 (comic layer) → E8 (the McGrot grade) → E3
-(characters) → E4 (opinions) → E6 (collision/tram) → E7 (ship-readiness,
-presence)**, with E∞ continuous.
+**E2f (device round) → E5 (comic layer) → E8 (the McGrot grade) → E9a (the
+shop) → E3 (characters) → E4 (opinions) → E9b (the visitor theatre) → E6
+(collision/tram) → E7 (ship-readiness, presence, E9c)**, with E∞ continuous.
 
 Why E5 jumps E3 and E4:
 
@@ -1748,6 +1785,10 @@ traces are the multiplayer most visitors actually meet:
   hear the identical garbled reading in sync with zero extra netcode — make
   the game acknowledge it (audio duck, an NPC aside) and the seeded-world
   constraint becomes the emotional payoff.
+- **Identity update (2026-08-02, E9):** a live player is not just a walker —
+  they are **the keeper of a different shop** (their daily-seeded
+  assignment). Meeting another player can now happen indoors: you walk into
+  a shop and someone real is behind the counter. See E9c.
 - **Netcode stays dumb** (cf. fly.pieter.com's permission slip, Gambetta for
   the one needed chapter): 10Hz `{id, chainage, sideOffset, heading,
   animState}` — tens of bytes on a 1D street — fanned out by the Durable
@@ -1763,6 +1804,120 @@ traces are the multiplayer most visitors actually meet:
 - Peers visibly gathered around the same reader, hearing the same comic.
 - A peer's speech bubble when they trigger a comic — verbatim rule holds.
 - Feeds E4: a leither's stance reacting to a *crowd* of players, not just one.
+
+## E9 — The Keeper (player perspective) — Dan-directed, 2026-08-02
+
+*The reframe: when the game starts, you inhabit the body of a shopkeeper on
+the Walk. You wake behind your counter; Leithers come in and deal with you
+according to what you sell, who you are, and who they are; you can step out
+the door and the whole existing game — the street, the readers, the weather —
+is your street. The player stops being a tourist and becomes a Leither with
+an address. Decomposed into three milestone-sized units; dependencies and
+gates stated per unit so Opus can brief each directly.*
+
+**Design decisions taken here (Fable), so briefs don't relitigate them:**
+
+- **Interiors are staged sets, not carved geometry.** Each enterable shop is
+  its own small interior scene (own lighting rig, no fog, sky off), entered
+  through a door prompt on the façade with a comic-panel wipe transition.
+  The street's merged mesh, paging and goldens are untouched — an interior
+  is additive content, and rendering swaps the active scene handed to
+  `post.render(scene, camera)`. Weather stays audible (rain on the glass,
+  gulls on the roof); ambience ducks to a muffled bed indoors.
+- **Movement bounds, not collision.** A shop room is a rectangle with a
+  counter: an AABB clamp on the camera does the whole job. E9a does NOT wait
+  for E6a and must not grow a physics system.
+- **Your shop is seeded.** The daily seed assigns you a shop from the
+  curated enterable set (starts at one, grows). "Who did you get today?" is
+  the daily-variation share thesis (E5c) applied to identity. The business
+  is real — its actual name, its category decides what you sell.
+- **The player is silent.** No player TTS, no text entry. The keeper speaks
+  in GESTURES — a small verb set (nod / shake / point-at-stock / offer),
+  keys 1–4 and a touch radial. Every visitor line is written so a gesture
+  is a meaningful reply. This is the one-expressive-verb presence philosophy
+  (E7b) applied single-player, and it keeps the moderation surface at zero.
+- **Visitors are the E4 cast on your doorstep.** The shop is the venue where
+  the archetypes perform at close range. E9b therefore depends on E4's
+  engine (adverts, thought tokens, archetype corpus) and not the reverse —
+  E4 ships street-first and loses nothing if E9b slips.
+- **Reputation is contagion.** A visitor leaves your shop carrying a thought
+  token about it (served well / ignored / pointed at the wrong shelf), which
+  spreads through the existing E4 propagation. Your keeping style becomes
+  street opinion without any new system.
+- **Relationship memory lives in localStorage** beside E5's journal: one
+  slot per archetype ("the Auld Boy remembers you nodded"). The E5 journal
+  itself reframes as the shop's ledger/scrapbook once E9a lands — E5 builds
+  it street-first; E9a is a reskin, not a rebuild.
+
+### E9a — The Shop (the room and the role) — after E8
+
+Pure build, no cast dependency. One hero interior proves everything:
+
+1. **The room**: one shop interior set (pick a photographed business with a
+   strong identity, category with obvious stock — deli territory), built
+   from a small module kit (counter, shelving, stock props, door, glass)
+   under the E8 grade. Seeded layout via `hash32`.
+2. **The transition**: door prompt on the façade → panel-wipe → interior;
+   reverse on exit. Deterministic, and the street outside continues (time,
+   weather, walkers) — stepping out must never feel like a level load.
+3. **The role boot**: title card → wake behind your counter (flag-first:
+   keeper boot behind a debug flag until the enable+recapture commit, since
+   it moves the spawn and therefore the mobile street golden).
+4. **The first visitor, scripted**: the Queen of Leith arrives once per
+   fresh boot, welcomes the new keeper, and teaches the four gestures by
+   asking questions a nod can answer. Onboarding as theatre; no tutorial UI.
+5. **Gestures v1** wired and reactive: she responds distinctly to each.
+
+Gates: interior bookmark set + goldens (opposed-pair on the transition:
+wipe at strength 0 bit-identical to no wipe); draw-call budget per interior
+pose; determinism (interior layout in `geomHash`); boot-path flag
+containment; audio — one `AudioContext`, ambience ducking measured indoors
+vs out. Risks, named: the door prompt colliding with the existing NPC
+proximity prompt at the same façade (`interact.js` priority needs a rule);
+scene-swap interaction with `FramebufferTexture` resize; mobile safe-area
+for the gesture radial.
+
+### E9b — Open for Business (the visitor theatre) — after E4
+
+The interaction engine, using E4's machinery end to end:
+
+1. **Visit loop**: Leithers score shop adverts (category axes join the comic
+   advert table) → enter → browse beat → address the keeper with a line
+   from the archetype × category corpus → await gesture (or leave on a
+   timeout, muttering) → 2–3 reaction branches per line → depart carrying a
+   thought token. Visit schedule precomputed from the seed (Shadows-of-Doubt
+   pattern, already E4's shape) so a shop session is deterministic.
+2. **The corpus**: ~250 lines to open — per-archetype packs (slot-free
+   phrasing so lines work in any shop) plus per-category packs, drafted
+   against `docs/LEITH.md`'s register and the Central Bar test, curated by
+   Dan before any TTS is spent. **Text bubbles ship first**; voices trickle
+   in per archetype voice-profile through the daily TTS run (students RP,
+   everyone else Scots). This adds a second stream to the TTS trickle —
+   see Standing trickles.
+3. **Regulars**: the per-archetype memory slot pays off — repeat visitors
+   reference last time. The Central Bar Regular gets a fixed daily visit
+   time; missing him matters to him.
+4. **Pomple** wanders in, can be fed (the offer gesture), sleeps by the
+   counter if fed twice. NPCs entering later greet him by name.
+5. **Match-day and Gala Day** reach indoors: the shop empties or floods on
+   the calendar (E4) — the street's rhythm felt from behind the counter.
+
+Gates: N distinct visits per settled session with zero within-session line
+repeats (control: same seed replays the identical schedule); the one-voice
+mixer rule holds indoors; corpus lines pass a scripted Central-Bar-test
+review step before merge; reputation tokens measurably alter street
+mutterings (opposed pair: contagion off → no drift).
+
+### E9c — Keepers of the Walk (scale; rides with E7)
+
+Grow the enterable set with the module kit (a Townscaper-sized vocabulary
+recombined per category beats bespoke rooms); the other 417 shops' keepers
+gain one line of context each (they know you're the new one); and the E7
+presence layer upgrades: **every live player is the keeper of a different
+shop** — you can walk into a shop and find a real person behind the counter,
+hiding among NPC keepers exactly as walkers hide among walkers. Async
+traces extend indoors (a tended shop shows it). Scope deliberately thin
+here: it inherits its design from E7b + E9a/b rather than adding new ideas.
 
 ## E∞ — The Delight Ledger (continuous)
 
