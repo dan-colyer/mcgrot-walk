@@ -933,7 +933,7 @@ currently points.
 Landed flag-first (`ANCHORS_ENABLED = false`): the full 187-check suite
 passed byte-identical (every golden 0.000%, `geomHash` unchanged, draw
 calls exactly matching `budget.json`) before the enable commit flipped the
-flag. Six checks in `scripts/smoke.mjs`, run right after the E5b.1 journal
+flag. Eight checks in `scripts/smoke.mjs`, run right after the E5b.1 journal
 block:
 
 - **Non-anchor vendors did not move, exactly 12 anchors nudged.** Compares
@@ -946,9 +946,19 @@ block:
   street rather than nudging twelve vendors would still show "12 moved" if
   the gate only checked the anchors; it does not, because it also asserts
   the other 112 didn't.
-- **The sequence is intact.** `anchorLayout(false)` and `anchorLayout(true)`
-  must yield comic ids in the identical order — the reindex tripwire the
-  brief warns about.
+- **The BUILT scene matches the layout function**, both flag states. This is
+  the gate the block was missing: `anchorLayout()` is pure, so comparing
+  `anchorLayout(false)` against `anchorLayout(true)` is two calls to one
+  function and passes whether or not `buildNpcs` ever uses the result. The
+  flag-off page's `npc.group.position` must equal `anchorLayout(false)` (and
+  nothing may be flagged `isAnchor`); the flag-on page's must equal
+  `anchorLayout(true)`, with exactly 12 flagged AND exactly 12 actually
+  displaced from their index-derived position. Without these two, every other
+  check in this block is a tautology about a calculator.
+- **The sequence is intact.** The built scene's comic-id order must equal
+  `catalog.json`'s own order, read independently in Node — plus the flag-state
+  comparison. On-vs-off alone cannot catch a reindex: reordering `list`
+  reorders both sides identically and still passes.
 - **Anchor denominator is derived, not typed.** `journal.js`'s
   `countAnchors` run over a truncated 4-entry copy of `ANCHOR_SET` must
   return 4, mirroring E5b.1's `countVendorsWithAudio` opposed-pair shape.
@@ -970,6 +980,19 @@ block:
   new meshes — the "brighter reading" is an unlit material-colour bump on
   each vendor's already-per-vendor-unique face/comic materials, never the
   shared `clothMat` cache), so this is expected to hold trivially and does.
+
+**The skyline goldens are in this milestone's blast radius.** Seven anchors
+sit inside `skyline`'s view frustum (nearest 25.1m) — measured, not assumed —
+and flipping the flag changes that pose by 0.029% on a direct on/off diff.
+Against the frozen images all four variants read non-zero (`skyline` 0.101%,
+`-clear` 0.168%, `-haar` 0.165% — up from 0.040% — and `-rain` 0.081%), all
+under the 0.5% tolerance and so all *passing* while stale. They were deleted
+and recaptured. The seven chainage bookmarks are genuinely unaffected: they
+look across the street, so a vendor tens of metres along it falls outside a
+70° frustum. `skyline` is elevated and sees the length of the Walk, which is
+exactly why "no anchor is near a bookmark" was the wrong test — **distance
+along the street is not the same as absence from frame, and only the diff
+settles it.**
 
 ## Mobile pass (E2e / E2e.1)
 

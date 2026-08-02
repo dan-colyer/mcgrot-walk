@@ -849,6 +849,34 @@ async function main() {
         return { off: dbg.anchorLayout(false), on: dbg.anchorLayout(true), anchorSet: dbg.anchorSet };
       });
 
+      // anchorLayout() is PURE — comparing anchorLayout(false) against
+      // anchorLayout(true) is two calls to one function, and passes whether
+      // or not buildNpcs ever uses the result. This page booted with the flag
+      // forced OFF, so its scene must equal anchorLayout(false) exactly; the
+      // flag-on page below is checked against anchorLayout(true) the same way.
+      // Without this the whole anchor gate block is a tautology.
+      const sceneMatchOff = await anPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const byId = new Map(dbg.anchorLayout(false).map((p) => [p.id, p]));
+        let worst = 0, worstId = null, anchorsFlagged = 0;
+        for (const npc of dbg.npcs.npcs) {
+          if (npc.isAnchor) anchorsFlagged++;
+          const p = byId.get(npc.comic.id);
+          if (!p) return { missing: npc.comic.id };
+          const d = Math.hypot(npc.group.position.x - p.px, npc.group.position.z - p.pz);
+          if (d > worst) { worst = d; worstId = npc.comic.id; }
+        }
+        return { worst, worstId, anchorsFlagged, n: dbg.npcs.npcs.length };
+      });
+      results.push({
+        name: 'E5b.2: the BUILT scene matches the layout function (flag off)',
+        pass: !sceneMatchOff.missing && sceneMatchOff.worst < 0.001 && sceneMatchOff.anchorsFlagged === 0,
+        detail: sceneMatchOff.missing
+          ? `vendor ${sceneMatchOff.missing} absent from the layout`
+          : `${sceneMatchOff.n} vendors, max |built - layout(false)| = ${sceneMatchOff.worst.toFixed(4)}m, ` +
+            `${sceneMatchOff.anchorsFlagged} flagged isAnchor (want 0 with the flag off)`,
+      });
+
       const sameLength = layout.off.length === layout.on.length && layout.off.length > 0;
       const sameSequence = sameLength && layout.off.every((o, i) => o.id === layout.on[i].id);
       const NUDGE_TOLERANCE = 0.1;
@@ -878,10 +906,23 @@ async function main() {
         detail: `${layout.off.length} vendors compared, ${anchorCount} anchors moved (want 12), ` +
           `non-anchors unmoved=${nonAnchorsUnmoved}, anchor nudges within ${NUDGE_TOLERANCE}m=${anchorsMovedCorrectly}`,
       });
+      // Comparing on-vs-off cannot catch a reindex: reordering `list` reorders
+      // BOTH sides identically and this still passes. The real tripwire is the
+      // built scene's order against catalog.json's own order, read in Node.
+      const catalogOrder = (existsSync(join(root, 'assets/catalog.json'))
+        ? JSON.parse(readFileSync(join(root, 'assets/catalog.json'), 'utf8')).comics
+        : []).filter((c) => c.npc).map((c) => c.id);
+      const sceneOrder = await anPage.evaluate(() => window.__mcgrotDebug.npcs.npcs.map((n) => n.comic.id));
+      const orderMatchesCatalog = sceneOrder.length === catalogOrder.length &&
+        sceneOrder.every((id, i) => id === catalogOrder[i]);
+      const firstDivergence = sceneOrder.findIndex((id, i) => id !== catalogOrder[i]);
       results.push({
-        name: 'E5b.2: the sequence is intact (comic.id identical, in order, flag on vs off)',
-        pass: sameSequence,
-        detail: sameSequence ? `all ${layout.off.length} ids match in order` : 'id order diverged between flag states — reindex risk',
+        name: 'E5b.2: the sequence is intact (built scene order === catalog order, and stable across flag states)',
+        pass: sameSequence && orderMatchesCatalog,
+        detail: orderMatchesCatalog
+          ? `all ${sceneOrder.length} ids match catalog.json order, and are identical flag on vs off`
+          : `scene order diverges from catalog.json at index ${firstDivergence} ` +
+            `(scene=${sceneOrder[firstDivergence]}, catalog=${catalogOrder[firstDivergence]}) — REINDEX`,
       });
 
       // Anchor denominator is derived, not typed — the same opposed-pair
@@ -933,6 +974,36 @@ async function main() {
       await onPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
       await onPage.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
       await onPage.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+
+      // The flag-on half of the built-scene check: the twelve must actually be
+      // standing at their landmark chainages in the SCENE, not merely in the
+      // layout function's return value.
+      const sceneMatchOn = await onPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const byId = new Map(dbg.anchorLayout(true).map((p) => [p.id, p]));
+        const anchorIds = new Set(dbg.anchorSet.map((a) => a.id));
+        let worst = 0, flagged = 0, movedFromBase = 0;
+        const base = new Map(dbg.anchorLayout(false).map((p) => [p.id, p]));
+        for (const npc of dbg.npcs.npcs) {
+          const p = byId.get(npc.comic.id);
+          if (!p) continue;
+          const d = Math.hypot(npc.group.position.x - p.px, npc.group.position.z - p.pz);
+          if (d > worst) worst = d;
+          if (npc.isAnchor) {
+            flagged++;
+            const b = base.get(npc.comic.id);
+            if (b && Math.hypot(npc.group.position.x - b.px, npc.group.position.z - b.pz) > 0.01) movedFromBase++;
+          }
+          if (npc.isAnchor !== anchorIds.has(npc.comic.id)) worst = Infinity; // wrong vendor flagged
+        }
+        return { worst, flagged, movedFromBase };
+      });
+      results.push({
+        name: 'E5b.2: the BUILT scene matches the layout function (flag on), and the twelve really moved',
+        pass: sceneMatchOn.worst < 0.001 && sceneMatchOn.flagged === 12 && sceneMatchOn.movedFromBase === 12,
+        detail: `max |built - layout(true)| = ${sceneMatchOn.worst.toFixed(4)}m, ` +
+          `${sceneMatchOn.flagged} flagged isAnchor (want 12), ${sceneMatchOn.movedFromBase} actually displaced from their index position (want 12)`,
+      });
 
       const onCopy = await onPage.evaluate(() => document.getElementById('journal-counts')?.textContent || '');
       results.push({
