@@ -51,7 +51,11 @@ export function buildScenery(world, scene) {
   const smoke = buildSmoke(streetLine, group, groundHeight);
   const arcSites = buildArcFlashes(poles, group);
 
-  const api = { group, onArcFlash: null };
+  // `poles` are the wire-attachment points, pushed as (left, right) per
+  // station. Exposed because lamps.js hangs street-light fittings off them —
+  // reusing these positions is what keeps E2g from needing a second placement
+  // PRNG, and this module's seeded draw order stays untouched.
+  const api = { group, poles, onArcFlash: null };
 
   api.update = function update(dt, time) {
     updateSmoke(smoke, dt, time);

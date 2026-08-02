@@ -202,7 +202,7 @@ export function createDebugApi(ctx) {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
-    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi,
+    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps,
   } = ctx;
 
   const consoleErrors = [];
@@ -486,6 +486,7 @@ export function createDebugApi(ctx) {
     // and not the scene.
     moments,
     shareUi,
+    lamps,
     setTouchMode,
     setPixelRatio,
     measureFrameTiming,

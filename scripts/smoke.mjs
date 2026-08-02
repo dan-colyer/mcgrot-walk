@@ -195,7 +195,7 @@ const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's b
 // script needs a conscious update, not a silent pass.
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
-  'rain', 'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
+  'rain', 'birds', 'vermin', 'scenery', 'lamps', 'interact', 'proximityAudio', 'torch',
   'post', 'moments',
 ];
 

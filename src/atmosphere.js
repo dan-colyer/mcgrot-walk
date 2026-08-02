@@ -730,6 +730,11 @@ function copyPalette(src, dst) {
 }
 
 export function createAtmosphere({ scene, renderer, world, sky, torch, windows, rain, ambience }) {
+  // Late-bound: lamps.js needs scenery.js's pole positions, and scenery is
+  // built after this. A setter rather than a constructor argument keeps
+  // atmosphere the sole authority for light-by-hour, which a consumer
+  // sampling state() itself would not.
+  let lamps = null;
   const hemi = world.lights && world.lights.hemi;
   const sun = world.lights && world.lights.sun;
   const ambient = world.lights && world.lights.ambient;
@@ -983,6 +988,11 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
 
     if (torch) torch.setDarkness(p.torch);
     if (windows) windows.setGlow(p.windowGlow);
+    // E2g: street lamps read the SAME scalar as the windows rather than a
+    // curve of their own. The roadmap asked for windowGlow's shape copied;
+    // sharing the value outright is the strongest form of that — there is no
+    // second clock to drift, and no 28 keyframes to keep in step.
+    if (lamps) lamps.setGlow(p.windowGlow);
     if (rain) rain.setIntensity(p.rain);
     if (ambience) ambience.setRain(p.rain);
     applyWetness(p.wetness);
@@ -1159,5 +1169,12 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     };
   }
 
-  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state };
+  function setLamps(v) {
+    lamps = v || null;
+    // Adopt immediately so the lamps are correct on the frame they appear,
+    // not one palette update later.
+    if (lamps) lamps.setGlow(sLastApplied.windowGlow);
+  }
+
+  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps };
 }
