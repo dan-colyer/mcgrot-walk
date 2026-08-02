@@ -1608,12 +1608,18 @@ they arrive in. Cheap absolute invariants belong alongside scored ones.
 
 **Two residuals, neither blocking E5b:**
 
-- **Defective audio tails.** `assets/audio/2b2110bb.mp3` is 182.8s long with
-  166.5s of pure silence after the speech (confirmed by `silencedetect`);
-  `51834c74.mp3` has a 25s tail. The bake handles both correctly, but at
-  runtime those vendors' looping busker lines are mostly silence, and the
-  virtual clock will usually join them mid-nothing. Retrim or regenerate —
-  a content job, and the only two in the corpus over 3s.
+- ~~**Defective audio tails.**~~ **Fixed 2026-08-02**, before the E5b.2
+  deploy — `51834c74` had become the Guajira anchor, so the defect was about
+  to ship as one of the twelve showcase readers. `2b2110bb` ran 182.8s for a
+  reading ending at 16.2s; `51834c74` ran 77.6s against 52.6s. One correction
+  to the original note: the tails are **not** pure silence but a low hiss
+  (mean −44 to −47dB, peaks to −30dB), which is exactly why the first −45dB
+  `silencedetect` pass reported no trailing run on `2b2110bb` at all. Trimmed
+  to 16.8s and 53.1s at the source encoding, `readings.json` rebaked.
+  Verified: speech regions still measure −16 to −19dB while the new tails sit
+  at −61 and −72dB; the rebake changed exactly those two entries and left the
+  other 121 byte-identical; the corpus alignment score is unmoved at 0.9599.
+  1.52MB smaller.
 - ~~**Alignment quality is unverified by ear.**~~ **Settled 2026-08-01** —
   Dan listened through `2a0e56d4` (the worst former offender, 4.0s of wrong
   highlight before the fix) and a clean comic: the highlight tracks the voice
@@ -1720,6 +1726,37 @@ One question deliberately left to the implementer's judgement: pavement is
 the road from the premises they anchor. Keeping the parity is the cheap
 default; matching the real side costs a bigger nudge and a different vendor
 for some rows. Sonnet reports its judgement rather than choosing silently.
+
+**E5b.2 landed 2026-08-02** (`1a4a055` flag-off, `bf4fed8` enable), reviewed
+and corrected in `55dcdf1`. The placement itself was right — all twelve ids
+resolve to the intended vendors and the built scene matches the layout
+function to 0.0000m — but both review findings were in the verification:
+
+- **Four stale `skyline` goldens.** The enable commit claimed every golden
+  still read 0.000% because no anchor sits near a bookmark. Seven anchors are
+  inside `skyline`'s frustum (nearest 25.1m) and the flag changes that pose
+  by 0.029% on a direct on/off diff; against the frozen images the variants
+  read 0.101%, 0.168% (clear), 0.165% (haar, up from 0.040%) and 0.081%
+  (rain) — all passing only by fitting under the 0.5% tolerance. Recaptured.
+  The seven chainage bookmarks genuinely are unaffected because they look
+  *across* the street; `skyline` is elevated and sees the length of the Walk.
+  **Distance along the street is not absence from frame.**
+- **Two gates tested the calculator, not the product.** They compared
+  `anchorLayout(false)` against `anchorLayout(true)` — two calls to one pure
+  function — so they would have passed had `buildNpcs` ignored the layout
+  entirely, and the sequence gate could not catch a reindex at all. Now the
+  built `npc.group.position` is checked in both flag states and scene order
+  is compared against `catalog.json` read independently. Fault-injected red.
+
+Parity question: Sonnet kept the default and spot-checked two anchors. Ten
+anchors' approaches remain visually unverified — no gate covers occlusion by
+a wreck or skip, so it is a real if minor residual.
+
+**A standing rule, earned twice now (E5b.1's toggle, E5b.2's skyline):** when
+a milestone changes anything visible, the question is never "is it near a
+bookmark" but "what does the diff say" — run the suite, read the numbers, and
+recapture whatever is non-zero. Two milestones running, the reasoning was
+wrong and the measurement was right.
 
 **LANDED 2026-08-01** — `1a4a055` (flag off, landing commit), enabled in
 the following commit (flag on). Kept the parity default throughout: a spot
