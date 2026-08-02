@@ -89,7 +89,8 @@ exception left is E7a's mechanical hosting migration.
 | E5b.1 journal | medium | DOM + localStorage |
 | E5b.2 anchor readers | **high (review)** | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
-| E5d turnaround + ending | medium | state machine + weather nudge |
+| E2g street lights | **high (review)** | lamp heads move every daylight golden; two existing night gates change meaning |
+| E5d turnaround + ending | medium | state machine + weather nudge; wants E2g first |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
 | E9a the shop | **high (review)** | render-path scene swap, boot change, transition gates |
@@ -1874,6 +1875,73 @@ poses — only a delta against a same-day baseline is. `golden:skyline` spikes
 occasionally: one run read 0.174% against a 0.053% baseline, three more on
 the same build read 0.056/0.050/0.060. **Take three before believing an
 elevated skyline reading.**
+
+### E2g — Street lights, so the street is legible at night
+
+*Dan's call, 2026-08-02, on arriving at a date-derived 17:39 and being unable
+to see. Filed against E2 because it is a lighting unit, but read the
+dependency note — E5d needs this more than E2 does.*
+
+**The measurement that prompted it.** Mean luminance looking down the street:
+41.9 at 13:00, **14.0 at 17:39**, 3.5 at 20:00, 1.1 at 22:00. The torch is
+already on and already ramping with darkness (intensity 0.97 at midday, 4.26
+at 17:39, 16.2 at 22:00) and it is not enough — it lights a surface you are
+nose-to-nose with, not a street. And `HOURS_PER_REAL_MINUTE = 1` means a tab
+left open for ten minutes is at 03:00, so **roughly half of every 24-minute
+cycle is currently unusable**, not an occasional unlucky arrival.
+
+**Two things are wrong and only one of them is lighting.** On desktop there is
+no torch control at all: `#torch-toggle` is `display:none` outside
+`html.touch` and no key is bound. It defaults on, so nothing is broken, but a
+desktop visitor in the dark has no affordance and no way to learn one exists.
+Whatever else this unit does, bind a key.
+
+**The posts already exist.** `src/scenery.js` builds catenary poles at
+`POLE_SPACING = 35` m, `POLE_OFFSET = 11` m from the centreline, both sides —
+46 positions, 92 poles over the 1617 m. Hanging lamp heads off those needs no
+new street furniture and no new placement PRNG (**draw order is sacred** — do
+not insert draws into `buildCatenaryPoles`'s existing sequence; append).
+Roughly 46 lamps, alternating sides, is a plausible starting density.
+
+**The hard constraint is light count, not geometry.** The scene runs six
+lights total today (hemi, sun, ambient, torch, three arc-flash PointLights).
+Forty-six real `PointLight`s is not an option — per-material light limits and
+per-fragment cost both bite. The shape that works:
+- **Emissive lamp heads and glow are unlit geometry**, tinted by
+  `atmosphere.js`'s existing registry, so all 46 cost nothing per-fragment.
+  Remember the ACES gotcha: pick the sodium tone far darker than looks right
+  on paper, and bake raw sRGB hex.
+- **A small pool of real lights follows the camera** — three or four
+  `PointLight`s reassigned each frame to the nearest lamps, the same shape the
+  arc flashes already use. Pool size is the whole performance budget; measure
+  it, do not guess it.
+- **Intensity comes from `atmosphere.js` and nowhere else.** It is the sole
+  authority for light-by-hour, and `windowGlow` is the precedent to copy — 0
+  at noon, 1.0 at midnight. A second clock in a new module is how the sky and
+  the lamps end up disagreeing.
+
+**Golden consequences, and a natural flag-first split.**
+- Lamp *heads* are daylight-visible geometry: they move every 13:00 golden.
+  That is a deliberate wholesale recapture, same shape as E5c's.
+- Lamp *glow* should be 0 at noon (as `windowGlow` is), so enabling it moves
+  nothing — there are no night goldens, by design.
+- **Two existing gates change meaning and must be re-reasoned, not just
+  re-run.** `night darkens facades` asserts 22:00 sits at or below 45% of
+  13:00 and currently reads 3.4%; lit streets will raise that, and the gate
+  needs a threshold that still means "night is night". `torch lights a
+  readable surface` asserts a 36.4x on/off ratio, which falls once there is
+  ambient lamp light — that is the gate becoming *more* honest, but the
+  number has to be re-derived rather than relaxed until it passes.
+- Add the opposed pair this unit actually needs: **the street is legible at
+  the darkest hour**. A luminance floor down the street at 03:00 with lamps
+  on, against the same pose with lamps off as the control. Without the
+  control it is a gate that passes on moonlight.
+
+**Dependency: E5d wants this first.** E5d's premise is that reaching the end
+of the Walk nudges the clock so the return leg is a different street. That is
+only a feature if the different street can be seen; today it is a coin-flip
+between "different" and "black". Doing E2g first also gives E5d something to
+change *about* the lamps on the way back.
 
 ### E5d — Turning back, and leaving
 
