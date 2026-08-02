@@ -994,6 +994,150 @@ exactly why "no anchor is near a bookmark" was the wrong test — **distance
 along the street is not the same as absence from frame, and only the diff
 settles it.**
 
+## Moments are links, and the day has a name (E5c)
+
+Two modules and one HUD line. `src/moments.js` keeps the camera's position
+and heading in the URL hash (`#p=<x>,<z>,<deg>`, 0.1 m and 1°) and reads one
+back at boot; `src/day.js` is the single authority for "what day is it", read
+by the HUD, by `atmosphere.js`'s arrival hour and by `proximity-audio.js`'s
+per-vendor reading phase.
+
+**`src/day.js` exists because of the goldens, not because of tidiness.** The
+HUD now prints the calendar date. A golden screenshot containing a live date
+passes on the day it is captured and fails every day after — and it fails
+looking like a rendering regression, which is the worst kind of red. So the
+harness needs one lever that freezes the whole notion of "today", and every
+consumer has to be behind it. `window.__mcgrotForceDate` is that lever, and
+**every** context in `scripts/smoke.mjs` is created through a `newContext()`
+helper that sets it, so a context added later cannot quietly forget. The
+pinned day is `2026-01-01`, whose date-derived arrival hour is **06:55** —
+chosen to sit far from `SMOKE_HOUR`'s 13:00, so a label that regressed to
+printing the live clock could not hide behind a coincidence.
+
+`startHour()` was checked byte-identical to the two implementations it
+replaced, over 4000 consecutive dates.
+
+### The eleven gates (region `moments`)
+
+Everything here that steps frames runs on the region's own page, never on the
+shared `page1`. E5b.1 measured why: stepping real-time frames on `page1`
+before its first bookmark visit moves leithers, birds and vermin — all
+excluded from `computeGeomHash` precisely because they do — and desyncs the
+`draw calls +/-0` gate from `budget.json` on `skyline`. An earlier draft of
+this region stepped 30 frames on `page1` and every draw-call gate still read
+exactly its baseline. That was luck, not a licence. Only the two HUD reads
+touch `page1`, and reading `textContent` steps nothing.
+
+- **Moving rewrites the hash.** Pose at chainage 700, step 30 frames (0.5 s of
+  sim time, past the 0.4 s write throttle), match the hash against its format.
+- **Standing still writes nothing, and no walk adds history entries.** 300
+  still frames must leave the write count untouched, and `history.length` must
+  never grow: `replaceState`, never `pushState`, so the back button keeps
+  meaning "leave the page" rather than "undo a footstep". Both were verified
+  by hand in a real browser first and gated afterwards.
+- **A link reproduces the spot it was made at**, within 0.15 m / 1° —
+  measured 0.038 m / 0.41°. The **control** is a boot with no hash at all,
+  which must land >50 m away; it lands 700.0 m away. Without that control the
+  gate is satisfied by a build that ignores links entirely and spawns
+  everyone at the same place, which is exactly how a link feature fails.
+- **Six malformed hashes all fall back to the Foot**, silently. One input per
+  rejection branch: wrong arity, wrong arity with plausible numbers, nothing
+  finite, one bad number, finite but outside the world, and not a moment at
+  all.
+- **The hash tracks only after the title card is dismissed.** Same page, same
+  movement, the only difference being the click.
+- **The HUD names the pinned day and the arrival hour, not the live clock.**
+  Asserts the literal `1 January 2026` and `06:55`, and asserts `13:00` never
+  appears while the clock is pinned there.
+- **The day name is frozen at arrival**: unchanged across `setTime(22)`.
+- **The day name is derived from the date, not baked in.** The **control** is
+  a second boot forced to `2026-04-05`, which must read `5 April 2026` and
+  `21:33`. Two dates fifteen hours apart, so a stuck hour shows up as well as
+  a stuck date.
+- **Sharing opens the toast**, checked on the same element before and after —
+  `none` then `block`.
+- **The shared URL reproduces the sharer's spot.** `moments.href()` is opened
+  as a fresh document and must arrive within tolerance; measured 0.000 m /
+  0.00° from a spot 1099.2 m off the default spawn. Asserting that `href()`
+  *looks* right would be checking the calculator; in the single-file artifact
+  `replaceState` throws inside the sandboxed iframe and there is no address
+  bar, so `href()` is the only route a link can take out of the page and it
+  has to be checked end to end. Headless Chromium denies clipboard access, so
+  the run exercises the manual (selectable field) path — which is the artifact
+  path too.
+
+### All eleven were fault-injected red
+
+Eleven injections, each reddening only the gates it should: writer disabled;
+reader disabled; a parser accepting non-finite input; the coordinate bounds
+check removed (spawn moved 1615 m); the `entered` gate removed; `pushState`
+substituted for `replaceState`; the movement threshold removed (writes went
+7 -> 19 while standing still); the label built from the live pinned hour; the
+date override ignored; the toast never opened; `href()` stripped of its
+moment.
+
+One honest limit that the injections exposed. The "frozen at arrival" gate's
+own before/after comparison catches a label that *re-reads* the clock on
+update. It does **not** catch a label built from the wrong hour at boot —
+under that fault both sides read `13:00` and compare equal. The `06:55`
+clause is what fails there, and the first gate catches it too. Two different
+faults, two different gates; neither gate covers both.
+
+### Two defects the injections found — in the gates, not the code
+
+Recorded because both were invisible while the gates were green.
+
+- **One malformed input tested one branch.** The check originally used only
+  `#p=banana`, which the arity check rejects before any other branch runs. A
+  parser with a broken numeric check, and one with no bounds check at all,
+  both passed it. Hence one input per branch.
+- **Fragment-to-fragment navigation does not reload.** Going from
+  `?…#p=banana` to `?…#p=x,y,z` differs only in the fragment, which Chromium
+  serves as a same-document navigation: no boot, no parse. Five of the six
+  malformed cases were never exercised. Every boot in this region now carries
+  a unique `?boot=N`, forcing a real document load. **A gate that navigates
+  between hashes of one URL is measuring nothing.**
+
+### What this region deliberately does not prove
+
+- That `replaceState` degrades correctly in a sandboxed iframe. The
+  `try`/`catch` is there and the manual share path is exercised, but the
+  actual artifact-in-an-iframe case is not booted by the suite.
+- Anything about the clipboard path — headless denies it, so only the manual
+  branch runs.
+
+### The live-browser check that the gates cannot do
+
+Worth doing once per milestone that adds an interaction, and worth knowing the
+trap. The Browser pane reports `document.visibilityState === 'hidden'` unless
+it is fronted, and **rAF does not tick while hidden** — screenshots still
+render on demand, so a scene that looks alive can be completely frozen. A
+first pass at this milestone read "the hash never updates when you walk" and
+that was the reason, not a bug. Drive `stepFrames()` instead and the same
+updater path runs deterministically. That pass is what produced the
+`history.length` and standing-still measurements now gated above, and it is
+where the mobile HUD overlap was caught.
+
+### Goldens: what the two commits cost
+
+Landed in two commits precisely so the second could not hide the first. The
+machinery commit (date authority, hash round-trip, no DOM) was measured
+against an **unmodified HEAD run captured for the purpose**: every pose within
+±0.024 pp, i.e. run-to-run noise. The HUD commit then moved goldens
+deliberately.
+
+**Goldens do not read 0.000% at rest.** Measured on unmodified HEAD, the
+overcast column alone reads `elm-row-hero` 0.095%, `mid-805-far` 0.093%,
+`skyline` 0.053%, `foot-1500-far` 0.050%, `north-250-far` 0.023%, with the
+close poses at a genuine 0.000%. That is the SwiftShader noise floor, and it
+is why "0.09% so it passed" is not evidence of anything on those poses — only
+a delta against a same-day baseline is.
+
+`golden:skyline` is the noisiest and occasionally spikes: one run read 0.174%
+against a 0.053% baseline, with three further runs at 0.056/0.050/0.060 on
+the same build. **A single elevated skyline reading is not a signal; take
+three.**
+
 ## Running the suite fast (and what that costs you)
 
 A full run is **412s**, measured. Two ways to cut it, both of which announce
@@ -1005,10 +1149,11 @@ exact failure this project keeps having.
   the 20 weather-pair transitions and the 24h sweeps) and the informational
   DPR timing table. Those are 274s and 59s of the 412s.
 - `npm run smoke -- --only=<region>[,<region>]` runs single regions:
-  `alignment`, `journal`, `anchors`, `render`, `determinism`, `dpr`,
-  `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs: journal
-  ~41s, anchors ~31s, onevoice+clock ~16s, mobile ~7s, on top of ~12s of fixed
-  overhead (bundle, server, browser, boot #1) that every run pays.
+  `alignment`, `journal`, `anchors`, `moments`, `render`, `determinism`,
+  `dpr`, `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs:
+  journal ~41s, anchors ~31s, moments ~35s (it boots eight documents),
+  onevoice+clock ~16s, mobile ~7s, on top of ~12s of fixed overhead (bundle,
+  server, browser, boot #1) that every run pays.
 
 `render` is the only region that captures desktop goldens; `mobile` captures
 the four mobile ones. **Neither `--quick` nor `--only` is a deploy gate.**
@@ -1298,8 +1443,17 @@ check.
 ## Golden diffs: `--update-goldens` vs a human look
 
 - **Intentional visual change** (you changed a texture, added geometry, moved
-  a bookmark) → `--update-goldens`, then eyeball the new PNG once before
-  committing. The tolerance isn't a substitute for that one look.
+  a bookmark) → `npm run goldens:audit`, delete exactly the files it names,
+  re-run the suite to recapture them, then eyeball the new PNGs once before
+  committing. The tolerance isn't a substitute for that one look. **Never
+  `--update-goldens`** — it absorbs every unrelated drift in the same stroke,
+  which is how a real regression gets baked into a baseline. (This bullet used
+  to recommend it; CLAUDE.md's verification contract does not.)
+- One trap in `goldens:audit` itself, hit and fixed during E5c: the printed
+  `rm ... && npm run smoke` is chained, so if a single filename is wrong `rm`
+  exits non-zero and the recapture silently never runs. The tool has to
+  reproduce the suite's filename composition exactly — including the 08:00
+  clear pose, which is `<id>-clear-08.png`, variant before the hour.
 - **Unexplained diff on unrelated work** → human eyes, always. The tolerance
   (0.5% changed pixels, per-pixel threshold 0.1) is sized to absorb
   antialiasing/compression jitter, not to wave through a real regression.

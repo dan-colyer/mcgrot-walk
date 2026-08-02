@@ -707,11 +707,20 @@ async function main() {
       // this milestone and every one after it (see the brief's own warning:
       // a counter is the obvious place to put in #hud, and it is the one
       // place that costs a recapture).
-      const hudText = await jPage.evaluate(() => document.getElementById('hud').textContent);
+      //
+      // E5c changed it on purpose and paid the recapture: #hud gained a
+      // #hud-day line above the controls hint, and 38 of the 40 goldens
+      // moved. The two that did not are mobile:title and mobile:comic, where
+      // the title card and the comic overlay cover the HUD — a useful sign
+      // the audit discriminates rather than blanket-flagging. The hint half
+      // is still asserted byte-for-byte here, so an accidental edit to it
+      // still goes red; the day half is covered by the E5c gates in the
+      // moments region, which check it is derived rather than literal.
+      const hudText = await jPage.evaluate(() => document.getElementById('hud-hint').textContent);
       results.push({
-        name: 'E5b.1: #hud copy unchanged',
+        name: 'E5b.1: #hud-hint copy unchanged',
         pass: hudText === 'WASD — move, drag — look',
-        detail: `#hud textContent: ${JSON.stringify(hudText)}`,
+        detail: `#hud-hint textContent: ${JSON.stringify(hudText)}`,
       });
 
       // Panel closed by default — no golden can move.
@@ -1221,20 +1230,18 @@ async function main() {
     const LINK_POS_TOLERANCE_M = 0.15;
     const LINK_DEG_TOLERANCE = 1.0;
 
-    // (a) the writer, on the shared page. 30 stepped frames is 0.5s of sim
-    // time, past moments.js's 0.4s write throttle.
-    const hashBeforePose = await page1.evaluate(() => location.hash);
-    await page1.evaluate(() => window.__mcgrotDebug.goto(700, 'east', 'close'));
-    await page1.evaluate(() => window.__mcgrotDebug.stepFrames(30));
-    const posed = await readPose(page1);
-    results.push({
-      name: 'E5c: moving rewrites the URL hash',
-      pass: /^#p=-?\d+\.\d,-?\d+\.\d,\d{1,3}$/.test(posed.hash) && posed.hash !== hashBeforePose,
-      detail: `hash "${hashBeforePose || '(empty)'}" -> "${posed.hash}" after posing at chainage 700`,
-    });
-
-    // One context, four navigations — each goto is a fresh document, which is
-    // what a shared link actually is, and far cheaper than four contexts.
+    // Everything that STEPS FRAMES in this region runs on its own page, never
+    // on the shared page1. E5b.1 measured the reason: stepping real-time
+    // frames on page1 before its first bookmark visit moves leithers, birds
+    // and vermin (all excluded from computeGeomHash precisely because they
+    // do) and desyncs the 'draw calls +/-0' gate from budget.json on skyline.
+    // An earlier draft of this region stepped 30 frames on page1 and every
+    // draw-call gate still read exactly its baseline — which is luck, not a
+    // licence. Only the two HUD reads below touch page1, and reading
+    // textContent steps nothing.
+    //
+    // One context, several navigations — each goto is a fresh document, which
+    // is what a shared link actually is, and far cheaper than a context each.
     const linkCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
     await linkCtx.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
     const linkPage = await linkCtx.newPage();
@@ -1260,6 +1267,42 @@ async function main() {
       await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
       return readPose(linkPage);
     };
+
+    // (a) the writer. 30 stepped frames is 0.5s of sim time, past moments.js's
+    // 0.4s write throttle.
+    await linkPage.goto(`http://localhost:${port}/?boot=${bootSeq++}`);
+    await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    await linkPage.click('#title-enter');
+    await linkPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+    const histAtBoot = await linkPage.evaluate(() => history.length);
+    const hashBeforePose = await linkPage.evaluate(() => location.hash);
+    await linkPage.evaluate(() => window.__mcgrotDebug.goto(700, 'east', 'close'));
+    await linkPage.evaluate(() => window.__mcgrotDebug.stepFrames(30));
+    const posed = await readPose(linkPage);
+    results.push({
+      name: 'E5c: moving rewrites the URL hash',
+      pass: /^#p=-?\d+\.\d,-?\d+\.\d,\d{1,3}$/.test(posed.hash) && posed.hash !== hashBeforePose,
+      detail: `hash "${hashBeforePose || '(empty)'}" -> "${posed.hash}" after posing at chainage 700`,
+    });
+
+    // Standing still must not rewrite, and the whole walk must cost ZERO
+    // history entries. Both were verified by hand in a real browser before
+    // being gated here: replaceState rather than pushState is what keeps the
+    // back button meaning "leave the page" instead of "undo a footstep", and
+    // it is a one-word regression away at any time.
+    const writesAfterMove = await linkPage.evaluate(() => window.__mcgrotDebug.moments.writeCount());
+    await linkPage.evaluate(() => window.__mcgrotDebug.stepFrames(300)); // 5s of sim time, perfectly still
+    const still = await linkPage.evaluate(() => ({
+      writes: window.__mcgrotDebug.moments.writeCount(),
+      hist: history.length,
+      hash: location.hash,
+    }));
+    results.push({
+      name: 'E5c: standing still writes nothing, and no walk adds history entries',
+      pass: writesAfterMove >= 1 && still.writes === writesAfterMove && still.hist === histAtBoot,
+      detail: `writes ${writesAfterMove} -> ${still.writes} across 300 still frames (want unchanged, and >=1); `
+        + `history.length ${histAtBoot} -> ${still.hist} (want unchanged — replaceState, never pushState)`,
+    });
 
     // (b) the reader.
     const arrived = await bootAt(posed.hash);
@@ -1330,6 +1373,103 @@ async function main() {
       name: 'E5c: the hash tracks only after the title card is dismissed (opposed pair)',
       pass: hashBeforeEnter === '' && hashAfterEnter !== '',
       detail: `before entering "${hashBeforeEnter || '(empty)'}" (want empty), after entering "${hashAfterEnter}" (want a moment)`,
+    });
+
+
+    // --- E5c: the day name on the HUD --------------------------------------
+    //
+    // Three separate ways this can be wrong, so three separate controls: the
+    // string could be hardcoded, it could be reading the LIVE clock instead
+    // of the arrival hour, or the date could still be coming from a real
+    // Date() (which would rot all 39 goldens overnight and look like a
+    // rendering regression when it did).
+    const readDay = (p) => p.evaluate(() => document.getElementById('hud-day').textContent);
+
+    // page1's clock is pinned at SMOKE_HOUR (13:00) while SMOKE_DATE's
+    // arrival hour is 06:55 — deliberately far apart, so "13:00" appearing
+    // here would be proof the label followed the wrong clock.
+    const dayText = await readDay(page1);
+    results.push({
+      name: 'E5c: the HUD names the pinned day and the arrival hour, not the live clock',
+      pass: dayText.includes('1 January 2026') && dayText.includes('06:55') && !dayText.includes('13:00'),
+      detail: `#hud-day = "${dayText}" with the clock pinned at ${SMOKE_HOUR}:00 (want the date and 06:55, never 13:00)`,
+    });
+
+    // ...and moving the clock must not move the label. Done on linkPage so
+    // page1's pinned time — which every later golden depends on — is never
+    // disturbed.
+    await linkPage.goto(`http://localhost:${port}/?boot=${bootSeq++}`);
+    await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    await linkPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+    const dayBeforeClock = await readDay(linkPage);
+    await linkPage.evaluate(() => window.__mcgrotDebug.setTime(22));
+    await linkPage.evaluate(() => window.__mcgrotDebug.stepFrames(10));
+    const dayAfterClock = await readDay(linkPage);
+    results.push({
+      name: 'E5c: the day name is frozen at arrival, not re-read from the clock',
+      pass: dayBeforeClock === dayAfterClock && dayAfterClock.includes('06:55'),
+      detail: `"${dayBeforeClock}" -> "${dayAfterClock}" after setTime(22)`,
+    });
+
+    // The control that separates "derived from the pinned date" from "a
+    // literal that happens to read correctly": a second boot on a different
+    // day must produce a different name. 2026-04-05's arrival hour is 21:33,
+    // fifteen hours from SMOKE_DATE's, so a stuck hour shows up too.
+    const altCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+    await altCtx.addInitScript(() => {
+      window.__mcgrotFreezeAtBoot = true;
+      window.__mcgrotForceDate = '2026-04-05';
+    });
+    const altPage = await altCtx.newPage();
+    await altPage.goto(`http://localhost:${port}/`);
+    await altPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    const altDayText = await readDay(altPage);
+    await altCtx.close();
+    results.push({
+      name: 'E5c: the day name is derived from the date, not baked in (opposed pair)',
+      pass: altDayText.includes('5 April 2026') && altDayText.includes('21:33') && altDayText !== dayText,
+      detail: `pinned 2026-01-01 -> "${dayText}"; control 2026-04-05 -> "${altDayText}"`,
+    });
+
+    // --- E5c: the share affordance ------------------------------------------
+    //
+    // In the single-file artifact there is no address bar and replaceState
+    // throws, so moments.href() is the ONLY route a link can take out of the
+    // page. Checking that href() is well-formed would be checking the
+    // calculator; the product-level claim is that a fresh document opened at
+    // that string arrives where the sharer stood.
+    await linkPage.goto(`http://localhost:${port}/?boot=${bootSeq++}`);
+    await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    await linkPage.click('#title-enter');
+    await linkPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+    await linkPage.evaluate(() => window.__mcgrotDebug.goto(1100, 'west', 'close'));
+    const toastBefore = await linkPage.evaluate(() => getComputedStyle(document.getElementById('link-toast')).display);
+    const sharedPose = await readPose(linkPage);
+    const sharedUrl = await linkPage.evaluate(async () => {
+      await window.__mcgrotDebug.shareUi.share();
+      return window.__mcgrotDebug.moments.href();
+    });
+    const shareState = await linkPage.evaluate(() => ({
+      toast: getComputedStyle(document.getElementById('link-toast')).display,
+      result: window.__mcgrotDebug.shareUi.lastResult(),
+    }));
+    results.push({
+      name: 'E5c: sharing opens the toast (opposed pair on the same element)',
+      pass: toastBefore === 'none' && shareState.toast === 'block',
+      detail: `#link-toast display before share=${toastBefore} (want none), after=${shareState.toast} (want block); path taken: ${shareState.result}`,
+    });
+
+    await linkPage.goto(sharedUrl.includes('?') ? `${sharedUrl}` : sharedUrl);
+    await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    const sharedArrival = await readPose(linkPage);
+    const shareGap = Math.hypot(sharedArrival.x - sharedPose.x, sharedArrival.z - sharedPose.z);
+    results.push({
+      name: 'E5c: the shared URL reproduces the sharer\'s spot',
+      pass: shareGap <= LINK_POS_TOLERANCE_M
+        && degGap(sharedArrival.yaw, sharedPose.yaw) <= LINK_DEG_TOLERANCE
+        && Math.hypot(sharedPose.x - plain.x, sharedPose.z - plain.z) > 50,
+      detail: `opening the shared URL landed ${shareGap.toFixed(3)}m / ${degGap(sharedArrival.yaw, sharedPose.yaw).toFixed(2)}deg from where it was made `
+        + `(max ${LINK_POS_TOLERANCE_M}m / ${LINK_DEG_TOLERANCE}deg), and that spot is ${Math.hypot(sharedPose.x - plain.x, sharedPose.z - plain.z).toFixed(1)}m from the default spawn`,
     });
 
     await linkCtx.close();
@@ -2483,7 +2623,7 @@ async function main() {
       });
 
       const tapTargets = { 'title-enter': titleEnterRect };
-      for (const id of ['touch-forward', 'torch-toggle', 'journal-toggle']) {
+      for (const id of ['touch-forward', 'torch-toggle', 'journal-toggle', 'link-toggle']) {
         tapTargets[id] = await measureTapTarget(page, id);
       }
 
@@ -2630,7 +2770,7 @@ async function main() {
         root.style.removeProperty('--safe-top');
         root.style.removeProperty('--safe-bottom');
         return bad;
-      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['hud', 'touch-forward', 'torch-toggle', 'journal-toggle', 'npc-prompt'] });
+      }, { top: SIMULATED_INSET.top, bottom: SIMULATED_INSET.bottom, ids: ['hud', 'touch-forward', 'torch-toggle', 'journal-toggle', 'link-toggle', 'npc-prompt'] });
       const allOverlaps = [...comicOverlaps, ...hudOverlaps];
       results.push({
         name: 'mobile: no target intrudes on simulated safe area',
@@ -2638,6 +2778,41 @@ async function main() {
         detail: allOverlaps.length === 0
           ? `clear of a simulated ${SIMULATED_INSET.top}px top / ${SIMULATED_INSET.bottom}px bottom inset`
           : allOverlaps.join('; '),
+      });
+
+      // ...and the HUD must not land on the touch controls either. The check
+      // above only ever compared elements against the SCREEN's insets, so two
+      // bits of UI could sit on top of each other and it would pass — which
+      // is exactly what E5c's second HUD line did, running the day name
+      // straight through the hold-to-walk button. Found by eye in
+      // golden-mobile:hud; this is the gate that would have found it first.
+      const uiCollisions = await page.evaluate((ids) => {
+        const box = (id) => {
+          const el = document.getElementById(id);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return (r.width === 0 || r.height === 0) ? null : r;
+        };
+        const hud = box('hud');
+        if (!hud) return ['#hud is not rendered'];
+        const bad = [];
+        for (const id of ids) {
+          const r = box(id);
+          if (!r) continue;
+          const overlapX = Math.min(hud.right, r.right) - Math.max(hud.left, r.left);
+          const overlapY = Math.min(hud.bottom, r.bottom) - Math.max(hud.top, r.top);
+          if (overlapX > 0 && overlapY > 0) {
+            bad.push(`#hud overlaps #${id} by ${Math.round(overlapX)}x${Math.round(overlapY)}px`);
+          }
+        }
+        return bad;
+      }, ['touch-forward', 'torch-toggle', 'journal-toggle', 'link-toggle']);
+      results.push({
+        name: 'mobile: the HUD does not sit under the touch controls',
+        pass: uiCollisions.length === 0,
+        detail: uiCollisions.length === 0
+          ? 'HUD box is clear of touch-forward, torch-toggle, journal-toggle and link-toggle'
+          : uiCollisions.join('; '),
       });
 
       // golden 4: a plain street view, touch mode still forced.

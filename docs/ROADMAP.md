@@ -1790,6 +1790,91 @@ exactly ±0 at every bookmark, both flag states) are untouched.
   screenshot (cf. No Man's Sky's glyph-stamped portal shots — the image
   carries both the proof and the reproduction key).
 
+**E5c LANDED 2026-08-02** — `9ae20e6` (machinery, no pixels) then the HUD
+commit (deliberate wholesale recapture). Two commits precisely so the second
+could not hide a regression from the first; the machinery half was measured
+against a purpose-captured run of unmodified HEAD and came in within
+±0.024 pp on every pose.
+
+**What shipped.** `#p=<x>,<z>,<deg>` in the URL hash, written on movement
+(`replaceState`, throttled to 0.4 s of sim time) and read at boot, clamped
+into the walkable corridor. A `#hud-day` line naming the visit — *"Leith Walk
+— 2 August 2026 · arrived 17:39, dreich"* — and a touch-only 🔗 button beside
+the journal's 📔, with `L` on desktop. Eleven gates in a new `moments`
+region, all eleven fault-injected red.
+
+**`src/day.js` was not in the plan and is the most useful thing here.** The
+calendar day was derived twice — `atmosphere.js` for the arrival hour,
+`proximity-audio.js` for each vendor's reading phase — by two copies of the
+same FNV-1a that agreed by coincidence, and neither was pinnable. Putting the
+date on the HUD turns that from untidy into a trap: a golden holding a live
+date passes the day it is captured and fails every day after, *looking like a
+rendering regression*. Every context in the suite now goes through a helper
+that pins `2026-01-01`, so one added later cannot forget. `startHour()` is
+byte-identical to what it replaced across 4000 consecutive dates.
+
+**Deliberately not done**, and both are cheap follow-ons rather than
+oversights:
+
+- **No day in the link.** The roadmap line says a shared link reproduces the
+  street *and* the spot; it reproduces the spot, and the day is whichever day
+  you open it. That is the better reading of "it composes with the date seed"
+  — a link is an invitation to come and look now. Putting `&d=` in the hash
+  would need `__mcgrotForceDate` to become a production input rather than a
+  harness lever, which is a real decision, not a line of code.
+- **No nearest-reader id.** Position and heading already reproduce the view
+  geometrically; the id would only let the link *name* itself, and that is
+  worth doing alongside the photo-stamp stretch, not before it.
+
+**Three defects, and all three were in the verification, not the code.** That
+is now four milestones running.
+
+- **A gate that navigated between two fragments of one URL was measuring
+  nothing.** Chromium serves fragment-to-fragment as a same-document
+  navigation: no reload, no boot, no parse. Five of six malformed-hash cases
+  never ran. Only a fault injection that *failed to go red* exposed it.
+  **A green gate that cannot be made to fail has told you nothing.**
+- **One malformed input tested one branch.** `#p=banana` is rejected on
+  arity before anything else runs, so a parser with a broken numeric check —
+  or no bounds check at all — sailed through. Now one input per branch; the
+  bounds injection moves the spawn 1615 m.
+- **`goldens:audit` printed a filename that does not exist.** The 08:00 clear
+  pose is `<id>-clear-08.png`, not `<id>-08-clear.png`. Because the printed
+  command is `rm … && npm run smoke`, one bad name means `rm` exits non-zero
+  and *the recapture never runs* — a stale golden survives and the run looks
+  merely skipped. Fixed, and worth remembering as a shape: **a chained
+  convenience command fails closed on the wrong step.**
+
+**And one defect in the product, caught by eye.** The second HUD line ran
+straight through the hold-to-walk button on mobile — a 76×18 px overlap. The
+existing safe-area gate compares elements against the *screen's* insets, so
+nothing was watching for two bits of UI landing on each other. The HUD is
+lifted clear on touch (one string, not two), and there is now a gate that
+compares the HUD's box against all four touch controls. It was found by
+opening `golden-mobile:hud` and looking at it — **the recapture eyeball is
+not ceremony.**
+
+**One more shape worth carrying forward: the region initially stepped frames
+on the shared `page1`,** which E5b.1 had already measured as the way to
+desync the draw-call gate from `budget.json` on `skyline`. Every draw-call
+gate read exactly its baseline anyway. Passing gates are not evidence that a
+known hazard was avoided — the region now owns its page.
+
+**Goldens.** 38 of 40 moved; `golden-mobile:hud` genuinely failed at 0.709%
+rather than sliding under tolerance. The two that did not move are
+`mobile:title` and `mobile:comic`, where the title card and comic overlay
+cover the HUD — a useful sign the audit discriminates rather than
+blanket-flagging.
+
+**Worth knowing for every future milestone: goldens do not read 0.000% at
+rest.** Measured on unmodified HEAD, the overcast column alone reads
+`elm-row-hero` 0.095%, `mid-805-far` 0.093%, `skyline` 0.053%. That is the
+SwiftShader noise floor, so "0.09%, so it passed" is not evidence on those
+poses — only a delta against a same-day baseline is. `golden:skyline` spikes
+occasionally: one run read 0.174% against a 0.053% baseline, three more on
+the same build read 0.056/0.050/0.060. **Take three before believing an
+elevated skyline reading.**
+
 ### E5d — Turning back, and leaving
 
 - **The turnaround is a state hinge** (cf. Lieve Oma's return leg): reaching

@@ -81,12 +81,22 @@ if (!moved.length) {
 //   golden:skyline        -> skyline.png
 //   golden-haar:skyline   -> skyline-haar.png     (weather suffixed, not prefixed)
 //   golden-mobile:hud     -> mobile-hud.png       (mobile prefixed, not suffixed)
+// The suite composes golden filenames itself; this has to reproduce that
+// mapping exactly, and one special case does not follow the rule. The
+// 08:00 clear pose is captured as `<id>-clear-08.png` (variant BEFORE the
+// hour suffix), not `<id>-08-clear.png`. Getting it wrong is quiet and
+// nasty: the printed `rm` names a file that does not exist, rm exits
+// non-zero, and the `&& npm run smoke` after it never runs — so a recapture
+// looks like it was skipped for no reason, and one stale golden survives.
 function goldenFile(name) {
   const m = name.match(/^golden(?:-([a-z0-9]+))?:(.+)$/);
   if (!m) return null;
   const [, variant, id] = m;
   if (!variant) return `${id}.png`;
-  return variant === 'mobile' ? `mobile-${id}.png` : `${id}-${variant}.png`;
+  if (variant === 'mobile') return `mobile-${id}.png`;
+  const hour = id.match(/^(.*)-(\d{2})$/);
+  if (hour) return `${hour[1]}-${variant}-${hour[2]}.png`;
+  return `${id}-${variant}.png`;
 }
 
 console.log(`\n${moved.length} golden(s) moved beyond the noise floor:`);

@@ -23,7 +23,9 @@ const TORCH_STORAGE_KEY = 'mcgrot-torch-on';
 // window.__mcgrotDebug exists, which is after this module's initial call.
 function swapTouchCopy() {
   if (!document.documentElement.classList.contains('touch')) return;
-  const hud = document.getElementById('hud');
+  // #hud-hint, not #hud — the HUD gained a second line at E5c (the day name),
+  // and writing textContent on the container would delete it.
+  const hud = document.getElementById('hud-hint');
   const hint = document.getElementById('title-hint');
   const enter = document.getElementById('title-enter');
   if (hud) hud.textContent = 'drag — look';
