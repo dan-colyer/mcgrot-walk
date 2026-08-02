@@ -1017,7 +1017,7 @@ printing the live clock could not hide behind a coincidence.
 `startHour()` was checked byte-identical to the two implementations it
 replaced, over 4000 consecutive dates.
 
-### The eleven gates (region `moments`)
+### The gates (region `moments`)
 
 Everything here that steps frames runs on the region's own page, never on the
 shared `page1`. E5b.1 measured why: stepping real-time frames on `page1`
@@ -1066,9 +1066,9 @@ touch `page1`, and reading `textContent` steps nothing.
   the run exercises the manual (selectable field) path — which is the artifact
   path too.
 
-### All eleven were fault-injected red
+### All were fault-injected red
 
-Eleven injections, each reddening only the gates it should: writer disabled;
+Eleven injections on the link and HUD gates, each reddening only the gates it should: writer disabled;
 reader disabled; a parser accepting non-finite input; the coordinate bounds
 check removed (spawn moved 1615 m); the `entered` gate removed; `pushState`
 substituted for `replaceState`; the movement threshold removed (writes went
@@ -1105,6 +1105,34 @@ Recorded because both were invisible while the gates were green.
   actual artifact-in-an-iframe case is not booted by the suite.
 - Anything about the clipboard path — headless denies it, so only the manual
   branch runs.
+
+### The desktop keyboard surface (two more gates, thirteen in the region)
+
+Filed under E5c because E5c caused it. `#link-field` is the first focusable
+text input in the app and every shortcut is bound on `window`, so selecting
+the URL and typing would fire E, J or T. `src/keys.js` is the shared guard.
+Escape deliberately stays live — it is the way out of a focused field.
+
+- **T toggles the torch on desktop, both directions.** `light.distance`
+  5.25 -> 0.05 -> 5.25, the `active` class following it, and localStorage
+  going `false` then `true`. The **control** is asserting `#torch-toggle` is
+  `display:none` in the same breath: the button is touch-only, so the key
+  provably did it.
+- **Shortcuts ignore keystrokes typed into the link field.** The same two
+  keystrokes twice, differing only in whether the field has focus. Without
+  the blurred half this passes on a build where the shortcuts are simply
+  broken.
+
+Three injections, each reddening only its own half: T's guard removed (torch
+moves while typing), J's guard removed (journal opens while typing), the T
+binding absent entirely (torch never moves).
+
+**And a process note that cost this milestone two rebuilds.** `git checkout`
+given a pathspec that includes an **untracked** file (a new module, mid-
+milestone) fails on that path and restores *nothing* — so a fault injection
+stays in the tree, and the next injection runs on top of it. It produced two
+readings that looked like one guard affecting another. **Commit before fault-
+injecting**; then `git checkout --` restores to a known state.
 
 ### The live-browser check that the gates cannot do
 

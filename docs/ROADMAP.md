@@ -1890,11 +1890,14 @@ nose-to-nose with, not a street. And `HOURS_PER_REAL_MINUTE = 1` means a tab
 left open for ten minutes is at 03:00, so **roughly half of every 24-minute
 cycle is currently unusable**, not an occasional unlucky arrival.
 
-**Two things are wrong and only one of them is lighting.** On desktop there is
-no torch control at all: `#torch-toggle` is `display:none` outside
-`html.touch` and no key is bound. It defaults on, so nothing is broken, but a
-desktop visitor in the dark has no affordance and no way to learn one exists.
-Whatever else this unit does, bind a key.
+**Two things are wrong and only one of them is lighting.** On desktop there
+was no torch control at all: `#torch-toggle` is `display:none` outside
+`html.touch` and no key was bound. It defaults on, so nothing was broken, but
+a desktop visitor in the dark had no affordance and no way to learn one
+existed. **Done ahead of this unit** (`97c4266`): T toggles the torch, the
+desktop title-card hint lists E/T/J/L — none of which was discoverable — and
+all three shortcuts now ignore keystrokes typed into E5c's link field. That
+is a stopgap for visibility, not a substitute for lighting the street.
 
 **The posts already exist.** `src/scenery.js` builds catenary poles at
 `POLE_SPACING = 35` m, `POLE_OFFSET = 11` m from the centreline, both sides —
