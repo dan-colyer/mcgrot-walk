@@ -1517,6 +1517,84 @@ these read, so both had to change. Neither number moved.
   done here — it wants its own bookmark and a deliberate capture.
 - **Nothing about a real GPU.** See the pool-sizing note above.
 
+## Turning back (E5d part 1)
+
+`src/legs.js` watches the player's chainage and fires a **hinge** on arriving
+at an end of the Walk that is not the end the last hinge fired at.
+`atmosphere.nudge()` decides what the street becomes. legs decides WHEN,
+atmosphere decides WHAT — a second clock or weather roller in a new module is
+how the sky and the street end up disagreeing.
+
+### The number the unit exists to beat
+
+A 1617 m leg at `WALK_SPEED` 14 m/s takes ~115 s, which at
+`HOURS_PER_REAL_MINUTE = 1` is **~1.9 sim hours of drift you get for free**.
+That is why the acceptance gate names a control: an out-and-back drifts 3.55 h
+on its own, measured, so "the return leg is a different street" without a
+hinge-disabled arm is a claim about having walked slowly. With the control,
+the hinge's own contribution is **10.00 h** (two turnarounds at
+`TURNAROUND_HOURS` 5).
+
+### The gates (region `legs`)
+
+Both arms walk the identical route over the identical number of stepped
+frames, so the free drift is common-mode and the difference is the hinge.
+
+- **The return leg is a different street (opposed pair).** The gate above.
+  It also requires the control to drift **more than 0.5 h** — if the control
+  reads zero, the comparison proves nothing and the gate should not be
+  believed.
+- **No hinge on boot, despite spawning inside the north end zone.**
+- **The hinge fires once per arrival, not once per frame in the zone.**
+- **The weather roll is deterministic in (day seed, leg).** Same seed twice,
+  identical; a different seed, different.
+- **The turnaround roll steps along the weather adjacency** — no downpour into
+  a clear sky.
+
+**Frames, and why the rate is cranked.** Reproducing 1.9 h literally costs
+~13,800 stepped frames for the pair. Hours are rate x minutes, so 12x rate
+over 9.5 s of stepped time gives the same 1.9 h in 570 frames. The hinge does
+not read the rate, so this changes the cost and not the measurement.
+
+### Two product defects the gates caught
+
+Both were in the product, not the harness, and neither was visible by reading.
+
+- **`nudge()` originally called `atmosphere.setTime()`**, which pins `rate` to
+  0 so the harness can hold a posed frame still. Correct there; in the product
+  path it stops the day/night cycle **permanently at the first turnaround** —
+  the street you walked back down would never change again. It surfaced only
+  as an arithmetic discrepancy: an 8.18 h hinge contribution where two 5 h
+  hinges owed 10 h. Nobody would have noticed by looking.
+- **The roll read `settledWeather`**, which lags a `setWeather` transition by
+  `WEATHER_TRANSITION_SECONDS`. A second hinge inside that window re-rolled
+  from the stale base and could walk straight back to the weather it had just
+  left. Reads the in-flight target instead.
+
+### And one gate that was decoration
+
+The boot gate read `legs.state()` **before any `legs.update()` had run** —
+`bootPage` never drives a frame — so it could not observe a boot hinge under
+any fault whatsoever. Found only because an injection that should have
+reddened it did not. It now steps frames first, and reddens correctly (1 hinge
+before the player has moved).
+
+The same injection corrected which line actually arms the machine: it is
+`zone` initialised from the start position, not `lastHingeZone`. The spawn is
+chainage 0, inside the north zone, so a machine starting at `zone = null` sees
+a null -> north transition on its first update and hinges before you move.
+
+### What this deliberately does not prove
+
+- **Nothing about the ending** — E5d part 2 is not built. No gate here touches
+  the Foot beyond treating it as a turnaround.
+- **Nothing about how a hinge feels in play.** The gates measure that the
+  clock and weather changed by the right amount; whether arriving back at a
+  five-hours-later street reads as intended is Dan's call, not a number.
+- **No golden covers it.** All 27 are captured at boot on leg 0, and no
+  bookmark sits inside either 40 m end zone — verified by the goldens holding
+  at the noise floor with the flag enabled.
+
 ## Invariants reference
 
 | Field | What it means | If it fails |
