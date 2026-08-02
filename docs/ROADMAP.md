@@ -90,7 +90,8 @@ exception left is E7a's mechanical hosting migration.
 | E5b.2 anchor readers | **high (review)** | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
 | E2g street lights | LANDED 2026-08-02 | no golden moved (no pose frames a lamp); both night gates isolated, not relaxed |
-| E5d turnaround + ending | medium | state machine + weather nudge; wants E2g first |
+| E2g.1 night golden | small | the lit street has no pictorial coverage; needs its own bookmark |
+| E5d turnaround + ending | **high (review)** | state machine + weather nudge; closes E5, Fable pass due after |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
 | E9a the shop | **high (review)** | render-path scene swap, boot change, transition gates |
@@ -1914,6 +1915,39 @@ lamps-on case. See `docs/VALIDATION.md`.
 post-apocalyptic and 46 working lamps is tidier than it should be), and the
 night golden above.
 
+### E2g.1 — A night golden (follow-on, small)
+
+*The gap E2g's landing measurement exposed: the golden suite has no coverage
+of the lit street at all.*
+
+Every golden held at the noise floor with the lamps enabled and the draw-call
+budget rose by exactly 2, which together say the fittings render and **no
+bookmark pose frames one**. All 27 desktop goldens are captured at 13:00, when
+the lamps are switched fully off by design. So the entire subsystem is watched
+by the `lamps` region's numeric gates and by nothing pictorial.
+
+- **Why it was impossible before and is possible now.** Night frames could not
+  clear the `goldens are usable diff substrates` contrast floor (luminance
+  stddev >= 8) — an unlit street is a flat black rectangle, and a golden with
+  no contrast cannot discriminate a regression from a re-render. A sodium-lit
+  street clears it comfortably; the 03:00 legibility pose measures mean 21.7
+  with plenty of local structure.
+- **Wants its own bookmark**, not a re-use. Existing bookmarks face a
+  frontage; the lamp fittings sit 7 m up and 11 m out, so a pose that frames
+  one has to look along and slightly up the street. `torchGroundPose` is the
+  closest thing and is deliberately evidence-only (writes to `captures/`,
+  never `goldenDir`).
+- **Pick the hour deliberately.** 03:00 is the darkest and makes the strongest
+  picture, but 22:00 exercises the same lamp state and is already the hour the
+  two night gates use — one hour for all three is less to keep in step.
+- **Watch the arc flashes.** `scenery.js` fires three randomised PointLight
+  pulses on timers; a night golden is far more sensitive to one landing
+  mid-capture than a daylight one. Check whether the settle count lands
+  deterministically before trusting the first capture, and take three.
+- **Cost:** one bookmark, one golden per weather column that is worth it
+  (probably overcast alone), one entry in `docs/VALIDATION.md`.
+
+
 
 *Dan's call, 2026-08-02, on arriving at a date-derived 17:39 and being unable
 to see. Filed against E2 because it is a lighting unit, but read the
@@ -1985,15 +2019,76 @@ change *about* the lamps on the way back.
 
 ### E5d — Turning back, and leaving
 
-- **The turnaround is a state hinge** (cf. Lieve Oma's return leg): reaching
-  either end of the Walk nudges the clock/weather roll, so the walk back down
-  is a different street — some readers now shuttered, others lit. The
-  down-walk must not replay the up-walk; this is the whole answer to "why
-  walk one street twice".
-- **An opt-in diegetic ending at the Foot** (cf. Proteus's circle): step into
-  the haar coming off the Forth — or the impossible tram, once E6b exists —
-  for a short close (voices merging, street receding). Never forced; closing
-  the tab stays a valid exit.
+*Planned to depth 2026-08-02, against the codebase as it stands after E2g.*
+
+**The number the hinge has to beat.** `WALK_SPEED` is 14 m/s and the Walk is
+~1617 m, so a full leg takes ~115 s — at `HOURS_PER_REAL_MINUTE = 1` that is
+**~1.9 sim hours of drift you get for free**. A hinge that nudges by an hour
+would be indistinguishable from just having walked. It has to be several times
+that to read as "the street changed while my back was turned", which is the
+whole point.
+
+#### Part 1 — the turnaround hinge
+
+- **Detection.** `chainageOfPoint(x, z, streetLine)` already exists in
+  `src/frontage.js` (shared with the atlas-page loader) — use it, do not write
+  a second one. An end zone is within `END_RADIUS` of chainage 0 (the Foot,
+  north, also the spawn) or of the street length (south).
+- **Hysteresis is the whole correctness problem.** Standing at an end must not
+  re-fire the hinge every frame, and neither must jitter at the boundary. The
+  state machine is: *in-zone* / *out-of-zone*, and a hinge fires only on a
+  transition into a zone that is **not the zone the last hinge fired at**. So
+  arriving at the south end hinges; walking two metres out and back does not;
+  returning to the Foot does.
+- **Spawn is inside the north zone**, so the first frame must arm the machine
+  as "already here", not fire a hinge on boot. This is the obvious bug and it
+  deserves a gate of its own.
+- **What the hinge does:** clock += `TURNAROUND_HOURS` (start at 5 and check
+  it against the 1.9 free hours), and roll the weather to one that is *not*
+  the current one. Both through `atmosphere`'s existing `setTime`/`setWeather`
+  — no second clock.
+- **The roll must be deterministic.** Seed it from the day seed (`src/day.js`)
+  and the leg index via `hash32`, so the same day walked twice gives the same
+  sequence. A `Math.random()` here would be untestable and would break the
+  determinism gates' premise.
+- **Weather scheduling interaction.** `atmosphere` runs an autonomous weather
+  scheduler with a multi-hour minimum interval; a forced `setWeather` starts a
+  transition and reschedules. Check the hinge does not fight it, and that
+  `setWeatherSchedule(false)` (which the suite uses) leaves the hinge working.
+
+#### Part 2 — the ending at the Foot
+
+- **Opt-in, and only once you have turned back.** Offered at the Foot on leg
+  >= 1, never on the spawn leg — an ending you can walk into in the first ten
+  seconds is a trapdoor, not a close.
+- **Diegetic prompt**, same shape as the vendor prompt (`#npc-prompt`): step
+  into the haar off the Forth. `src/forth.js` already builds the water and far
+  shore north of the Foot, so there is somewhere to walk into.
+- **The close is a scripted ~10 s sequence**, not a cut: fog density ramps,
+  exposure falls, the camera drifts north, ambience crossfades to a merged
+  wash of the voices. Then a quiet card. **Closing the tab stays a valid
+  exit** and the card must offer "keep walking" — this is a close, not a fail
+  state.
+- **It must not fight `atmosphere`.** Atmosphere owns fog/exposure per frame,
+  so the sequence needs an explicit hand-off (a suspend flag, or the sequence
+  driving atmosphere's own targets) rather than writing the same fields behind
+  its back. This is the main architectural risk in the unit.
+
+#### Gates this needs
+
+- **The hinge fires once per arrival** (opposed pair: frames spent in-zone vs
+  hinges fired), and **not at all on boot** despite spawning in a zone.
+- **The return leg is a different street.** Clock and weather before vs after,
+  with the **control** being the same walk with the hinge disabled — otherwise
+  the natural 1.9 h drift passes the gate on its own. This is the measurement
+  the unit lives or dies by.
+- **The roll is deterministic**: same day seed + leg index, same weather,
+  twice; different seed, different sequence.
+- **The ending is unreachable on leg 0** and reachable on leg 1.
+- **"Keep walking" restores play** — fog, exposure and controls all back under
+  atmosphere, provably (compare against a never-ended boot).
+- No golden may move: all 27 are captured at boot on leg 0.
+
 - Stretch (unchanged): one enterable interior as a hub gallery.
 
 ## E6 — Getting About (collision, and a tram that runs)
