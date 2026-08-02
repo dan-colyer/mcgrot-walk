@@ -119,9 +119,8 @@
     "5f1b8828",
     "6075cdd0",
     "60ee906a",
-    "61a16f6a"
+    "61a16f6a",
+    "5c5f0c9c"
   ],
-  "failed": {
-    "5c5f0c9c": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-  }
+  "failed": {}
 }
