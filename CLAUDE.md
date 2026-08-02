@@ -6,70 +6,99 @@ garbled text), plus an ambient crowd, wrecked vehicles and photo-derived façade
 
 ## Development workflow
 
-This project runs a three-tier workflow. Check which model you are and stay in lane.
+**Opus works the milestone end to end by default. Delegation is the exception,
+not the rule.** This reverses the earlier three-tier split — see "Why this
+changed" below before reinstating it.
 
-**Opus is the orchestrating architect.** It owns the persistent conversation:
-understanding the codebase, milestone planning against `docs/ROADMAP.md`,
-writing implementation briefs with acceptance criteria, reviewing completed
-work against the original brief (verify claims independently — measured
-numbers and renders, never the summary's word), and deploying. Opus avoids
-routine implementation unless there is a compelling architectural reason — and
-when it delegates, it delegates a complete milestone, not a small coding task.
+Opus owns the persistent conversation: the codebase, milestone planning against
+`docs/ROADMAP.md`, implementation, verification, and deploying.
 
-**Fable is the phase-gate reviewer.** At the end of each major roadmap phase
-(E1, E2, …) a Fable session audits the phase end-to-end: architecture drift,
-quality against the roadmap's intent, cross-cutting regressions, and whether
-the roadmap itself still holds. Fable adjusts the roadmap and hands the next
-phase back to Opus. Fable does not do routine milestone review — that is
-Opus's job.
+**Delegate to Sonnet only when the unit is large and mechanical** — a broad
+migration, a new subsystem, a sweep across many files, roughly 300+ lines of
+diff whose shape is already decided. The test is whether the implementation
+context (file reads, build output, browser QA) would crowd out the
+architectural conversation. Small and medium units, and anything where the
+hard part is a judgement rather than typing, stay here.
 
-**Sonnet is the implementer.** It owns the implementation loop for the current
-milestone end-to-end: reading and modifying code, running builds, browser QA via
-the preview harness, and iterating until the milestone is complete — fix issues
-rather than handing control back. It finishes with a concise implementation
-summary (what changed, what was verified, anything that deviated from the brief)
-— copy that summary to the clipboard (`/cb`) as the last step, so it's ready to
-paste into the Fable session for review.
+When delegating, delegate a complete milestone, never a small coding task.
 
-**Session boundaries.** Planning, implementation and review are separate phases:
+**Fable is the phase-gate reviewer**, unchanged. At the end of each major
+roadmap phase (E1, E2, …) a Fable session audits the phase end-to-end:
+architecture drift, quality against the roadmap's intent, cross-cutting
+regressions, and whether the roadmap itself still holds. Fable adjusts the
+roadmap and hands the next phase back to Opus. This is now the main
+independent read, so it matters more than it did — do not skip it.
 
-1. Opus plans the next milestone.
-2. Opus writes the brief to `~/.claude/plans/<project>-<milestone>-brief.md`,
-   updates and commits `docs/ROADMAP.md`, and copies the brief to the clipboard
-   — that is the implementation package.
-3. Sonnet implements the milestone in a separate Claude Code session.
-4. Sonnet returns a concise completion summary.
-5. Opus reviews the diff against its original brief and acceptance criteria —
-   not the implementation transcript — and deploys.
-6. Before compacting, Opus runs `/handoff` in DEFAULT mode — a post-compaction
-   nudge whose real payload is the "fragile assumptions" section — ending with a
-   heading and paste marker for Sonnet's report. Dan compacts, appends the
-   report, and pastes.
-7. At each phase boundary, a Fable session audits the whole phase before the
-   next one is planned.
+### The verification contract
 
-The implementation conversation is disposable; the architectural conversation is
-persistent.
+This is the load-bearing part of the workflow, and it holds whoever implements.
 
-**Brief contract.** Every milestone starts from a brief (step 2 above — not to be
-confused with the `/handoff` prompt of step 6, which carries the *architect*
-session across a compaction) containing at minimum: objective, scope, expected
-files to modify, constraints, acceptance criteria, risks, and notes for the
-implementer. It must be complete enough that Sonnet can execute largely
-autonomously without architectural clarification.
+**Never report a measurement you did not run.** Three milestones in a row
+landed with a summary asserting a number that was false — "every golden
+0.000%", "zero goldens moved" — while the actual suite output said otherwise.
+Someone who believes they already verified does not re-verify. With one agent
+doing both jobs there is no second pair of eyes to catch it, so the discipline
+has to be mechanical:
 
-**Reviews** prioritise correctness, architecture, maintainability, performance
-and unintended regressions — judged against the handoff, not the conversation.
-No stylistic rewrite requests unless they materially improve the codebase.
+- **Run the diff; don't reason about the blast radius.** Twice now the
+  reasoning was wrong and the measurement was right (E5b.1's touch toggle,
+  E5b.2's `skyline`). "It isn't near a bookmark" is not evidence. The suite
+  output is.
+- **Nothing intentional lives under the golden tolerance.** 0.5% is for
+  renderer jitter. A new visible element that changes 0.1% has not "passed" —
+  delete those specific goldens and recapture. Never `--update-goldens`.
+- **Every acceptance measurement names a control** that isolates the system's
+  own contribution. "On vs off" is not isolation if both sides derive from the
+  same function — that mistake shipped twice, in E5b.1's denominator gate and
+  E5b.2's anchor gates.
+- **Prove a new gate can go red.** Fault-inject it, watch it fail, restore.
+  An unfalsified gate is decoration.
+- **Gates test the product, not the calculator.** If a check compares two
+  calls to one pure function, it passes whether or not the scene ever uses it.
 
-**Planning** goes deep only on the NEXT milestone. Keep a high-level roadmap for
-the rest and re-plan from the actual state of the codebase after each milestone
-lands — detailed plans for far-future work go stale before they're used.
+The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
+a milestone adds a claim worth trusting later, and document each gate in
+`docs/VALIDATION.md` — including what it deliberately does *not* prove.
 
-**Context efficiency.** Prefer concise briefs, milestone-based delegation,
-autonomous implementation, diff-based review, and compaction after each review.
-Avoid long-lived sessions where architecture, implementation, debugging, QA and
-deployment all pile into one conversation.
+### When delegating
+
+1. Plan, then write the brief to `~/.claude/plans/<project>-<milestone>-brief.md`,
+   update and commit `docs/ROADMAP.md`, and copy the brief to the clipboard.
+2. Sonnet implements in a separate session and returns a concise summary.
+3. Review the diff against the brief — not the implementation transcript —
+   verifying claims independently with measured numbers and renders.
+4. **Send findings back rather than fixing them here**, unless the fix is
+   smaller than the round trip. Fixing the implementer's work in the architect
+   session pays the handoff cost and then does the work anyway, which is
+   exactly what collapsed the old six-step loop into three.
+
+**Brief contract.** Objective, scope, expected files, constraints, acceptance
+criteria, risks, notes for the implementer — complete enough to execute
+without architectural clarification. A brief that adds anything visible must
+name the goldens it expects to recapture; E5b.1's brief said "closed by
+default, so no golden can move", which was true of the panel and false of the
+toggle beside it.
+
+**Planning** goes deep only on the NEXT milestone. Keep the rest high-level and
+re-plan from the actual state of the codebase after each one lands — detailed
+plans for far-future work go stale before they're used.
+
+**Context.** Working here means implementation context accumulates in the
+architectural conversation, so expect to compact more often. Compact after each
+milestone lands, using `/handoff` in DEFAULT mode — the real payload is the
+"fragile assumptions" section, the things inferred mid-session that compaction
+would otherwise drop silently.
+
+### Why this changed
+
+The project ran a strict plan → implement → review split across three models.
+In practice the review step kept expanding into "review, fix, re-verify,
+deploy", so the handoff cost was paid and the architect did the implementation
+work regardless. The catches that justified the split turned out to come from
+*measuring* rather than from independence — the briefs had already asked for
+the measurements that were skipped. What independence genuinely bought was
+catching false claims in summaries, and that risk is now carried by the
+verification contract above plus the Fable phase gate.
 
 ## Commands
 
