@@ -64,7 +64,13 @@ const server = spawn('python3', [join(root, 'scripts/serve.py'), String(port)], 
 });
 const waitForServer = async () => {
   for (let i = 0; i < 100; i++) {
-    try { const r = await fetch(`http://localhost:${port}/`); if (r.ok) return; } catch { /* not up yet */ }
+    // 127.0.0.1, not `localhost`, and a per-attempt timeout — see the same
+    // note in scripts/smoke.mjs. serve.py is IPv4-only and a ::1 connect can
+    // hang for undici's full default timeout, eating the whole retry budget.
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(1500) });
+      if (r.ok) return;
+    } catch { /* not up yet */ }
     await new Promise((r) => setTimeout(r, 100));
   }
   throw new Error('server never came up');

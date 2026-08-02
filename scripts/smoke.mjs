@@ -71,7 +71,7 @@ const ONLY = (() => {
 // contexts rendering at once starve each other on a 10-core machine. A 20%
 // saving on two regions is not worth a suite that intermittently reports a
 // timeout looking like a real bug. --only is the fast path instead.
-const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 function region(name) {
   if (!ONLY) return true;
@@ -98,6 +98,25 @@ const SMOKE_HOUR = 13;
 // is 06:55 — chosen to sit far from SMOKE_HOUR so the two can't be confused.
 const SMOKE_DATE = '2026-01-01';
 const NIGHT_LUMINANCE_RATIO_MAX = 45; // % — the 6% dimming-test regression this milestone fixes
+// E2g. Measured 19.1% at mid-805-far with the lamps lit, against 2.4% on the
+// lamps-off control and 100% for a night that renders as daylight. The ceiling
+// leaves room for tuning without leaving room for a lit street that stops
+// reading as night; the lift floor is what stops a lamp-less build passing.
+const LIT_NIGHT_SKY_RATIO_MAX = 30;   // %
+const LIT_NIGHT_MIN_LIFT = 3;         // x the lamps-off control
+
+// E2g legibility pair. Measured at 03:00 overcast, torch off, centreline
+// ground pose: lamps on read 58.3% of the lower two-thirds at/above luminance
+// 12, mean 20.39; the lamps-off control read 0.0%, mean 0.00. The floor of 12
+// is "can make anything out at all" — below it the frame is the black screen
+// that prompted this milestone.
+const LAMP_DARKEST_HOUR = 3;
+const LEGIBLE_PIXEL_FLOOR = 12;
+const LEGIBLE_MIN_PCT = 40;
+const LEGIBLE_CONTROL_MAX_PCT = 5;
+// One lamp per catenary station (POLE_SPACING 35 m over ~1617 m), alternating
+// kerbs — see src/lamps.js.
+const EXPECTED_LAMP_COUNT = 46;
 const TORCH_HOUR = 3; // deep night — daylight ambient/hemi/sun are all near-zero here
 const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
 const TORCH_STAND_OFF = 2; // metres from the litter comic — well inside the ~6.5m torch reach at night
@@ -210,11 +229,27 @@ function getFreePort() {
   });
 }
 
-function waitForServer(url, timeoutMs = 10000) {
+// Probe 127.0.0.1, never `localhost`. serve.py binds IPv4 only, and resolving
+// `localhost` yields ::1 first on this machine: undici then sits on that dead
+// address for its own 10s connect timeout, which is the entire deadline here,
+// so the FIRST attempt consumes the budget and the suite dies reporting
+// "fetch failed" on a server that is up and serving. Cost an hour, and it
+// arrived as an environment change (a node point release) rather than a code
+// change, which is the worst way for it to arrive. Page URLs stay on
+// `localhost` — Chromium falls back between families sensibly, and both
+// hostnames satisfy the isLocal debug gate.
+// The deadline is 45s, not the original 10s, because serve.py now takes ~9s
+// to accept its first connection on this machine (measured; a homebrew python
+// 3.14 upgrade landed mid-session and interpreter startup got much slower).
+// 10s left no margin at all, and the failure mode was indistinguishable from
+// a server that never started.
+function waitForServer(url, timeoutMs = 45000) {
   const deadline = Date.now() + timeoutMs;
   return new Promise((resolve, reject) => {
     (function attempt() {
-      fetch(url).then(() => resolve()).catch((err) => {
+      // Per-attempt timeout well under the deadline, so a hung connect costs
+      // one retry rather than the whole budget.
+      fetch(url, { signal: AbortSignal.timeout(1500) }).then(() => resolve()).catch((err) => {
         if (Date.now() > deadline) reject(err);
         else setTimeout(attempt, 100);
       });
@@ -479,6 +514,24 @@ function meanLuminanceUpperHalf(png) {
   return count ? sum / count : 0;
 }
 
+// E2g: mean luminance over the TOP strip only — sky, above the rooflines at
+// every bookmark pose. Street lights cannot reach it, which is the whole
+// point: once the street is lit, upper-half luminance stops separating "night"
+// from "day", but the sky still does.
+function meanLuminanceTopStrip(png, frac = 0.15) {
+  const { width, height, data } = png;
+  const rows = Math.max(1, Math.floor(height * frac));
+  let sum = 0;
+  const count = rows * width;
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    }
+  }
+  return count ? sum / count : 0;
+}
+
 async function main() {
   const skipped = [];
   const results = []; // { name, pass, detail }
@@ -613,7 +666,7 @@ async function main() {
         process.exit(130);
       });
     }
-    await waitForServer(`http://localhost:${port}/`);
+    await waitForServer(`http://127.0.0.1:${port}/`);
 
     browser = await chromium.launch();
 
@@ -1551,6 +1604,162 @@ async function main() {
 
     await linkCtx.close();
     } // end region: moments
+
+    if (region('lamps')) {
+    // --- E2g: street lights ---------------------------------------------
+    // Its own boots, because LAMPS_ENABLED is read at build time and both
+    // states are needed. Each boot carries a unique ?boot= query: a
+    // fragment-only difference is served as a same-document navigation and
+    // would not re-run main.js at all (learned the hard way at E5c).
+    const lampBoot = async (mode) => {
+      const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+      const pg = await ctx.newPage();
+      await pg.addInitScript((on) => {
+        window.__mcgrotForceLamps = on;
+        window.__mcgrotFreezeAtBoot = true;
+      }, mode === 'on');
+      await pg.goto(`http://localhost:${port}/?boot=lamps-${mode}`);
+      await pg.click('#title-enter');
+      await pg.evaluate(() => {
+        const el = document.getElementById('title-card');
+        if (el) el.style.transition = 'none';
+      });
+      await pg.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await pg.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      await pg.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+      return { ctx, pg };
+    };
+
+    // Mean luminance of the lower two-thirds at the darkest hour, torch off,
+    // standing on the centreline looking forward and down — the only pose
+    // with near tarmac actually in frame, which is what "can I walk down
+    // this" means. Bookmark poses all face a frontage.
+    const legibility = async (pg) => pg.evaluate(async ({ hour, floor }) => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setTime(hour);
+      // Torch off. It is on by default and lights the near ground hard, so
+      // leaving it on puts the same large term on both sides of the pair and
+      // shrinks the lamps' own contribution to a rounding error.
+      dbg.torch.setToggle(false);
+      await dbg.torchGroundPose(700);
+      dbg.stepFrames(10);
+      dbg.renderNow();
+      const src = dbg.renderer.domElement;
+      const c = document.createElement('canvas');
+      c.width = src.width; c.height = src.height;
+      const cx = c.getContext('2d');
+      cx.drawImage(src, 0, 0);
+      const { data, width, height } = cx.getImageData(0, 0, c.width, c.height);
+      let sum = 0, n = 0, lit = 0;
+      for (let y = Math.floor(height / 3); y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          const l = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+          sum += l; n++;
+          if (l >= floor) lit++;
+        }
+      }
+      const L = dbg.lamps;
+      return {
+        mean: +(sum / n).toFixed(2),
+        pctLegible: +((lit / n) * 100).toFixed(1),
+        enabled: L.enabled,
+        count: L.count,
+        poolSize: L.poolSize,
+        active: L.activeCount(),
+        glow: +L.glow().toFixed(3),
+      };
+    }, { hour: LAMP_DARKEST_HOUR, floor: LEGIBLE_PIXEL_FLOOR });
+
+    const { ctx: lampsOnCtx2, pg: lampsOnPg } = await lampBoot('on');
+    const { ctx: lampsOffCtx2, pg: lampsOffPg } = await lampBoot('off');
+    const lit = await legibility(lampsOnPg);
+    const unlit = await legibility(lampsOffPg);
+
+    // THE acceptance pair for this milestone. The control is the identical
+    // pose on a lamps-off boot; without it the gate passes on moonlight, or
+    // on any future change that happens to raise the ambient floor.
+    results.push({
+      name: 'the street is legible at the darkest hour (opposed pair)',
+      pass: lit.pctLegible >= LEGIBLE_MIN_PCT && unlit.pctLegible <= LEGIBLE_CONTROL_MAX_PCT,
+      detail: `${LAMP_DARKEST_HOUR}:00 torch off — lamps ON: ${lit.pctLegible}% of the lower two-thirds at/above luminance ${LEGIBLE_PIXEL_FLOOR} (mean ${lit.mean}; want >=${LEGIBLE_MIN_PCT}%); ` +
+        `control lamps OFF: ${unlit.pctLegible}% (mean ${unlit.mean}; want <=${LEGIBLE_CONTROL_MAX_PCT}%)`,
+    });
+
+    results.push({
+      name: 'lamps hang off the catenary poles, one per station',
+      pass: lit.enabled && lit.count === EXPECTED_LAMP_COUNT && !unlit.enabled && unlit.count === 0,
+      detail: `lamps on: enabled=${lit.enabled} count=${lit.count} (want ${EXPECTED_LAMP_COUNT}, one per catenary station, alternating kerbs); ` +
+        `flag off: enabled=${unlit.enabled} count=${unlit.count} (want false/0)`,
+    });
+
+    // The pool must be FIXED. Changing the light count invalidates every
+    // material program in the scene and SwiftShader rebuilds them at seconds
+    // per frame, so a pool that grows or shrinks with proximity would hitch
+    // every time you walked past a lamp. Checked across the full day, since
+    // the tempting implementation is to add lights at dusk and remove them at
+    // dawn.
+    const poolAcrossDay = await lampsOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const counts = [];
+      for (let h = 0; h < 24; h += 3) {
+        dbg.setTime(h);
+        dbg.stepFrames(2);
+        let n = 0;
+        dbg.scene.traverse((o) => { if (o.isPointLight) n++; });
+        counts.push({ h, sceneLights: n, poolIntensity: +dbg.lamps.pool[0].intensity.toFixed(1) });
+      }
+      return counts;
+    });
+    const lightCounts = [...new Set(poolAcrossDay.map((r) => r.sceneLights))];
+    results.push({
+      name: 'the light pool is allocated once and never resized',
+      pass: lightCounts.length === 1,
+      detail: `PointLight count across 00:00-21:00: ${poolAcrossDay.map((r) => `${r.h}h:${r.sceneLights}`).join(' ')} ` +
+        `(want one distinct value; got ${lightCounts.join('/')})`,
+    });
+
+    // Daylight must not merely be dim — it must be OFF. windowGlow reads 0.02
+    // at 13:00 and 0.15 at 08:00, and taken literally that put 4 PointLights
+    // at intensity 30 into every daylight frame and moved
+    // golden-rain:fascia-close by 11.1% through wet-surface specular.
+    const dayNight = Object.fromEntries(poolAcrossDay.map((r) => [r.h, r.poolIntensity]));
+    const daylightHours = [9, 12].map((h) => dayNight[h] ?? dayNight[Math.floor(h / 3) * 3]);
+    results.push({
+      name: 'lamps are fully off in daylight, not merely dim',
+      pass: (dayNight[9] === 0 && dayNight[12] === 0) && dayNight[0] > 0 && dayNight[21] > 0,
+      detail: `pool intensity 09:00=${dayNight[9]} 12:00=${dayNight[12]} (want exactly 0) vs 00:00=${dayNight[0]} 21:00=${dayNight[21]} (want >0) ` +
+        `[${daylightHours.length} daylight samples]`,
+    });
+
+    // The pool follows the camera. Asserting only that the numbers changed
+    // would pass on a pool that jitters; this asserts it lands ON a named
+    // lamp it could not have been near before.
+    const followed = await lampsOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setTime(3);
+      const L = dbg.lamps;
+      const target = L.lamps[20].position;
+      dbg.camera.position.x = target.x;
+      dbg.camera.position.z = target.z;
+      dbg.stepFrames(4);
+      let best = Infinity;
+      for (const p of L.pool) {
+        best = Math.min(best, Math.hypot(p.position.x - target.x, p.position.z - target.z));
+      }
+      return { nearestPoolLightToLamp20: +best.toFixed(3), active: L.activeCount() };
+    });
+    results.push({
+      name: 'the light pool follows the camera',
+      pass: followed.nearestPoolLightToLamp20 < 0.01 && followed.active > 1,
+      detail: `stood under lamp 20: nearest pool light is ${followed.nearestPoolLightToLamp20}m from it (want <0.01m), ` +
+        `${followed.active} of ${lit.poolSize} lights active (want >1 — a pool where only one lamp is ever in range wastes the rest)`,
+    });
+
+    await lampsOnCtx2.close();
+    await lampsOffCtx2.close();
+    } // end region: lamps
+
     if (region('render')) {
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
@@ -1620,31 +1829,84 @@ async function main() {
       detail: invAfterBookmarks.skyFogLinked ? 'uFog uniform === scene.fog.color' : 'sky dome uFog uniform is NOT the same object as scene.fog.color — see "THE SEAM" in src/sky.js',
     });
 
+    // E2g split this in two. `night darkens facades` is E2a's regression
+    // detector — it exists to catch a build where dimming the lights leaves
+    // façades pixel-identical to daylight — and street lighting is a second
+    // light source landing on the very surfaces it reads. With the lamps lit
+    // the same pose reads 57.7% against a 45% ceiling, so the choice was to
+    // raise the ceiling (keeping it green while gutting what it detects) or
+    // to isolate the subsystem it was built to test. Isolated: it runs on a
+    // lamps-off boot with NIGHT_LUMINANCE_RATIO_MAX untouched.
+    //
+    // The lamps-on case is not thereby untested — it gets its own gate below,
+    // with a tighter instrument.
+    const { context: lampsOffCtx, page: lampsOffPage } = await bootPage(browser, port, { __mcgrotForceLamps: false });
+    await lampsOffPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
+    const dayShotOff = await lampsOffPage.screenshot();
+    await lampsOffPage.evaluate(() => window.__mcgrotDebug.setTime(22));
+    await lampsOffPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
+    const nightShotOff = await lampsOffPage.screenshot();
+    {
+      const dayLum = meanLuminanceUpperHalf(PNG.sync.read(dayShotOff));
+      const nightLum = meanLuminanceUpperHalf(PNG.sync.read(nightShotOff));
+      const ratio = dayLum > 0 ? (nightLum / dayLum) * 100 : 0;
+      results.push({
+        name: 'night darkens facades',
+        pass: ratio <= NIGHT_LUMINANCE_RATIO_MAX,
+        detail: `lamps OFF: 22:00 mean luminance is ${ratio.toFixed(1)}% of ${SMOKE_HOUR}:00's (${nightLum.toFixed(1)} vs ${dayLum.toFixed(1)}; must be <=${NIGHT_LUMINANCE_RATIO_MAX}%)`,
+      });
+    }
+
+    // E2g's own night gate, and the reason the one above could be isolated
+    // without losing coverage. Reads the TOP strip rather than the upper half:
+    // once the street is lit, upper-half luminance cannot separate "night" from
+    // "day" (57.7% vs a 100% failure leaves no usable ceiling), while the strip
+    // above the rooflines still can — 19.1% vs 100%.
+    //
+    // The strip is NOT beyond the lamps' reach; that was assumed and then
+    // measured false (lit façade tops intrude at this pose). That is what makes
+    // it the right instrument for E2g specifically: it responds to lamp
+    // brightness, so cranking LIGHT_PEAK until night reads as day fails here.
+    // The CONTROL is the same measurement on the lamps-off boot, which isolates
+    // the lamps' own contribution — without it a build with no lamps at all
+    // passes trivially at 2.4%.
     const dayShot = shotsByBookmark['mid-805-far'];
     if (dayShot) {
       await page1.evaluate(() => window.__mcgrotDebug.setTime(22));
       await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
       const nightShot = await page1.screenshot();
-      const dayLum = meanLuminanceUpperHalf(PNG.sync.read(dayShot));
-      const nightLum = meanLuminanceUpperHalf(PNG.sync.read(nightShot));
-      const ratio = dayLum > 0 ? (nightLum / dayLum) * 100 : 0;
+      const dayTop = meanLuminanceTopStrip(PNG.sync.read(dayShot));
+      const nightTop = meanLuminanceTopStrip(PNG.sync.read(nightShot));
+      const litRatio = dayTop > 0 ? (nightTop / dayTop) * 100 : 0;
+      const ctlDayTop = meanLuminanceTopStrip(PNG.sync.read(dayShotOff));
+      const ctlNightTop = meanLuminanceTopStrip(PNG.sync.read(nightShotOff));
+      const ctlRatio = ctlDayTop > 0 ? (ctlNightTop / ctlDayTop) * 100 : 0;
       results.push({
-        name: 'night darkens facades',
-        pass: ratio <= NIGHT_LUMINANCE_RATIO_MAX,
-        detail: `22:00 mean luminance is ${ratio.toFixed(1)}% of ${SMOKE_HOUR}:00's (${nightLum.toFixed(1)} vs ${dayLum.toFixed(1)}; must be <=${NIGHT_LUMINANCE_RATIO_MAX}%)`,
+        name: 'night stays night with the lamps lit (opposed pair)',
+        pass: litRatio <= LIT_NIGHT_SKY_RATIO_MAX && litRatio > ctlRatio * LIT_NIGHT_MIN_LIFT,
+        detail: `lamps ON: 22:00 top strip is ${litRatio.toFixed(1)}% of ${SMOKE_HOUR}:00's (must be <=${LIT_NIGHT_SKY_RATIO_MAX}%); ` +
+          `control lamps OFF reads ${ctlRatio.toFixed(1)}% (lit must exceed it by >=${LIT_NIGHT_MIN_LIFT}x, else the lamps are not reaching the street)`,
       });
     } else {
-      results.push({ name: 'night darkens facades', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
+      results.push({ name: 'night stays night with the lamps lit (opposed pair)', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
     }
 
     // --- E2b: the torch demonstrably lights a readable surface ---
-    // Stand close to a litter comic at deep night (daylight terms are all
-    // near-zero here, isolating the torch's own contribution), then compare
-    // against the identical pose with the torch light zeroed out. This is
-    // the one check in the suite that must be shown to fail if any of the
-    // six MeshLambertMaterial conversions is reverted — a lit comic close
-    // enough to read only if the torch is actually reaching it.
-    const torchPose = await page1.evaluate(({ hour, eyeHeight, standOff }) => {
+    // Runs on its own boot with the LAMPS FORCED OFF (E2g). The gate's job is
+    // to catch a reverted MeshLambertMaterial conversion, and it does that by
+    // asking whether the torch alone can light a comic to readability. Street
+    // lights are a second light source reaching the same surface, so leaving
+    // them on turns a torch measurement into a torch-plus-lamps one: the same
+    // pose reads 1.20x with them lit, against 2.5x required. Lowering the
+    // threshold to suit would have kept the gate green while deleting what it
+    // detects. Isolating the torch instead leaves TORCH_MIN_RATIO untouched
+    // and still meaning exactly what it meant.
+    // Reuses the lamps-off boot made for `night darkens facades` — same flag
+    // state, and a second full boot would cost ~20s to prove nothing extra.
+    // It arrives here posed at mid-805-far/22:00; the pose block below sets
+    // its own hour and camera, so that inherited state is overwritten.
+    const torchPage = lampsOffPage;
+    const torchPose = await torchPage.evaluate(({ hour, eyeHeight, standOff }) => {
       const dbg = window.__mcgrotDebug;
       dbg.setTime(hour);
       const items = dbg.litter.items;
@@ -1683,7 +1945,7 @@ async function main() {
       // last thing done before each screenshot. It's a fixed-brightness DOM
       // element on top of the canvas, untouched by any scene light, so left
       // visible it would swamp a centre-crop luminance read.
-      const hidePrompt = () => page1.evaluate(() => {
+      const hidePrompt = () => torchPage.evaluate(() => {
         const el = document.getElementById('npc-prompt');
         if (el) el.style.display = 'none';
       });
@@ -1693,10 +1955,10 @@ async function main() {
       // uploading (see settleAt's own note in src/debug.js for the same
       // race, found and fixed during this milestone).
       for (let i = 0; i < 40; i++) {
-        await page1.evaluate((i) => window.__mcgrotDebug.stepFrame(1 / 60, i / 60), i);
+        await torchPage.evaluate((i) => window.__mcgrotDebug.stepFrame(1 / 60, i / 60), i);
       }
       await hidePrompt();
-      const torchOnShot = await page1.screenshot();
+      const torchOnShot = await torchPage.screenshot();
       const torchOnLum = meanLuminanceCenterCrop(PNG.sync.read(torchOnShot), 0.3, 0.3);
 
       // Zero the torch and render directly (renderer.render, not stepFrame) —
@@ -1706,7 +1968,7 @@ async function main() {
       // before the next frame ever reached the screen. That also means the
       // 'interact' updater doesn't run either, so the prompt (hidden above)
       // can't be re-shown before this screenshot.
-      await page1.evaluate(() => {
+      await torchPage.evaluate(() => {
         const dbg = window.__mcgrotDebug;
         const torchLight = dbg.camera.children.find((c) => c.isPointLight);
         if (torchLight) torchLight.intensity = 0;
@@ -1715,7 +1977,7 @@ async function main() {
         // torch-on/torch-off shots compared below no longer like-for-like.
         dbg.renderNow();
       });
-      const torchOffShot = await page1.screenshot();
+      const torchOffShot = await torchPage.screenshot();
       const torchOffLum = meanLuminanceCenterCrop(PNG.sync.read(torchOffShot), 0.3, 0.3);
 
       const torchRatio = torchOffLum > 0 ? torchOnLum / torchOffLum : (torchOnLum > 0 ? Infinity : 0);
@@ -1727,6 +1989,8 @@ async function main() {
     } else {
       results.push({ name: 'torch lights a readable surface', pass: false, detail: 'no litter comic available to pose the camera at' });
     }
+    await lampsOffCtx.close();
+
 
     // --- E2c.1: exact draw-call parity for this milestone ---
     // The brief's own gate is stricter than the standing ±10% tolerance

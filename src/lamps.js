@@ -33,7 +33,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 // E2g lands with this off, so the milestone can be verified against unmoved
 // goldens before the pixels change. The enable commit flips it, and that is
 // the commit that recaptures the daylight goldens.
-const LAMPS_ENABLED = false;
+const LAMPS_ENABLED = true;
 
 const ARM_LENGTH = 1.7;      // metres the arm reaches from pole toward the street
 const ARM_DROP = 0.35;       // metres below the wire attachment the arm sits
@@ -71,6 +71,25 @@ const LIGHT_COLOUR = 0xffb45a;
 // otherwise clip to a white dot.
 const BULB_COLOUR = 0xc47a2a;
 const FITTING_COLOUR = 0x2f2a22;
+
+// windowGlow does NOT reach 0 in daylight — it reads 0.02 at 13:00 and 0.15
+// at 08:00, which is right for a window (a bulb left on behind glass) and
+// wrong for a street light. Taken literally it put 4 PointLights at intensity
+// 30 into every daylight frame — the same order as the torch's 18 — and the
+// wet-surface specular that produced moved golden-rain:fascia-close by 11.1%.
+//
+// So lamps switch rather than dim: below ON_LO they are simply off, and they
+// ramp to full by ON_HI. ON_LO sits above the 08:00 reading of 0.15 on
+// purpose, because a street light burning at breakfast is a bug you would
+// have to look at every morning.
+const ON_LO = 0.22;
+const ON_HI = 0.60;
+
+function lampOutput(windowGlow) {
+  const g = Number.isFinite(windowGlow) ? windowGlow : 0;
+  const t = Math.max(0, Math.min(1, (g - ON_LO) / (ON_HI - ON_LO)));
+  return t * t * (3 - 2 * t); // smoothstep — no visible switch-on step
+}
 
 export function lampsEnabled() {
   // localhost-only override (mirrors npcs.js's __mcgrotForceAnchors) so the
@@ -172,8 +191,11 @@ export function buildLamps({ scene, camera, poles }) {
   let glow = 0;
   let active = 0;
 
-  function setGlow(v) {
-    glow = Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+  // Takes atmosphere's raw windowGlow and applies the on/off curve. Both the
+  // emissive bulbs and the pool read the SAME post-curve value, so a lamp can
+  // never be a lit bulb throwing no light, or vice versa.
+  function setGlow(windowGlow) {
+    glow = lampOutput(windowGlow);
     bulbMaterial.opacity = glow;
   }
 
