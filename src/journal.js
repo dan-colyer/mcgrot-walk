@@ -14,6 +14,7 @@
 // (!npc.comic.audio) continue`, the same test used here).
 
 import { ANCHOR_SET, countAnchors } from './anchors.js';
+import { isTypingTarget } from './keys.js';
 
 const STORAGE_KEY = 'mcgrot.journal.v1';
 
@@ -167,8 +168,10 @@ export function createJournal({ assets, npcs, litter, canOpen, anchorsEnabled })
   }
 
   function onKeyDown(e) {
+    // Escape stays live while typing — it is the way out of a focused field.
+    if (e.code === 'Escape') { if (open) setOpen(false); return; }
+    if (isTypingTarget(e)) return; // E5c's #link-field is focusable (src/keys.js)
     if (e.code === 'KeyJ') toggle();
-    else if (e.code === 'Escape' && open) setOpen(false);
   }
 
   // Wired on pointerdown/pointerup rather than 'click' — #torch-toggle's

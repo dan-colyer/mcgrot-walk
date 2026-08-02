@@ -16,6 +16,8 @@
 //    strings are swapped for tap-oriented ones ONLY under html.touch, so the
 //    desktop strings (baked into 27 golden screenshots) stay byte-identical.
 
+import { isTypingTarget } from './keys.js';
+
 const TORCH_STORAGE_KEY = 'mcgrot-torch-on';
 
 // Re-run on 'mcgrot:touchmodechange' (src/debug.js's setTouchMode) as well as
@@ -33,18 +35,33 @@ function swapTouchCopy() {
   if (enter) enter.textContent = 'TAP TO ENTER';
 }
 
+// The button is touch-only (#torch-toggle is display:none outside
+// html.touch), so until E2g lights the street a desktop visitor arriving at a
+// dark hour had a torch, no control, and no way to learn one existed. T is
+// that control. Both paths run through one setTorch() so the class, the light
+// and localStorage cannot drift apart — the button used to own all three
+// inline, which is exactly the shape that grows a second, subtly different
+// copy the moment a key is added.
 function wireTorchToggle(torch) {
   const toggleEl = document.getElementById('torch-toggle');
-  if (!toggleEl || !torch) return;
+  if (!torch) return;
   const stored = localStorage.getItem(TORCH_STORAGE_KEY);
   let on = stored === null ? true : stored === 'true';
-  torch.setToggle(on);
-  toggleEl.classList.toggle('active', on);
-  toggleEl.addEventListener('click', () => {
-    on = !on;
+
+  function setTorch(v) {
+    on = !!v;
     torch.setToggle(on);
-    toggleEl.classList.toggle('active', on);
+    if (toggleEl) toggleEl.classList.toggle('active', on);
     localStorage.setItem(TORCH_STORAGE_KEY, String(on));
+  }
+
+  torch.setToggle(on);
+  if (toggleEl) toggleEl.classList.toggle('active', on);
+
+  if (toggleEl) toggleEl.addEventListener('click', () => setTorch(!on));
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'KeyT' || isTypingTarget(e)) return;
+    setTorch(!on);
   });
 }
 

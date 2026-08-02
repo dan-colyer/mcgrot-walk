@@ -1472,6 +1472,69 @@ async function main() {
         + `(max ${LINK_POS_TOLERANCE_M}m / ${LINK_DEG_TOLERANCE}deg), and that spot is ${Math.hypot(sharedPose.x - plain.x, sharedPose.z - plain.z).toFixed(1)}m from the default spawn`,
     });
 
+
+    // --- The desktop keyboard surface --------------------------------------
+    //
+    // Here rather than in its own region because E5c is what made it
+    // necessary: #link-field is the first focusable text input in the app, so
+    // every window-bound shortcut (E, J, T) could fire while someone selects
+    // the URL in it. T itself is new — the torch button is touch-only, so
+    // until E2g lights the street a desktop visitor arriving at a dark hour
+    // had a torch, no control and no way to learn one existed.
+    const torchState = () => linkPage.evaluate(() => ({
+      distance: window.__mcgrotDebug.torch.light.distance,
+      active: document.getElementById('torch-toggle').classList.contains('active'),
+      stored: localStorage.getItem('mcgrot-torch-on'),
+      buttonShown: getComputedStyle(document.getElementById('torch-toggle')).display !== 'none',
+    }));
+    const pressT = () => linkPage.evaluate(() => window.dispatchEvent(
+      new KeyboardEvent('keydown', { code: 'KeyT', bubbles: true })));
+
+    const torchBefore = await torchState();
+    await pressT();
+    const torchOff = await torchState();
+    await pressT();
+    const torchBackOn = await torchState();
+    results.push({
+      name: 'E5c: T toggles the torch on desktop, both directions',
+      pass: torchBefore.buttonShown === false
+        && torchBefore.distance > 0.05 && torchOff.distance <= 0.05 && torchBackOn.distance > 0.05
+        && torchBefore.active === true && torchOff.active === false && torchBackOn.active === true
+        && torchOff.stored === 'false' && torchBackOn.stored === 'true',
+      detail: `#torch-toggle is display:none on desktop (${torchBefore.buttonShown}), so the key is the only actor. `
+        + `light.distance ${torchBefore.distance.toFixed(2)} -> ${torchOff.distance.toFixed(2)} -> ${torchBackOn.distance.toFixed(2)}; `
+        + `stored ${torchBefore.stored} -> ${torchOff.stored} -> ${torchBackOn.stored}`,
+    });
+
+    // Opposed pair: the same two keystrokes, the only difference being where
+    // the focus is. Without the blurred half this passes on a build where the
+    // shortcuts are simply broken.
+    const pressTJ = (focusField) => linkPage.evaluate((focus) => {
+      const field = document.getElementById('link-field');
+      const toast = document.getElementById('link-toast');
+      if (focus) { toast.style.display = 'block'; field.style.display = 'block'; field.focus(); }
+      else { field.blur(); }
+      for (const code of ['KeyT', 'KeyJ']) {
+        (focus ? field : window).dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+      }
+      return {
+        focused: document.activeElement === field,
+        distance: window.__mcgrotDebug.torch.light.distance,
+        journalOpen: getComputedStyle(document.getElementById('journal-panel')).display !== 'none',
+      };
+    }, focusField);
+
+    const whileTyping = await pressTJ(true);
+    const whileNotTyping = await pressTJ(false);
+    results.push({
+      name: 'E5c: shortcuts ignore keystrokes typed into the link field (opposed pair)',
+      pass: whileTyping.focused === true
+        && Math.abs(whileTyping.distance - torchBackOn.distance) < 1e-9 && whileTyping.journalOpen === false
+        && whileNotTyping.distance <= 0.05 && whileNotTyping.journalOpen === true,
+      detail: `focused in #link-field: torch ${whileTyping.distance.toFixed(2)} (want unchanged from ${torchBackOn.distance.toFixed(2)}), journal open=${whileTyping.journalOpen} (want false); `
+        + `blurred: torch ${whileNotTyping.distance.toFixed(2)} (want off), journal open=${whileNotTyping.journalOpen} (want true)`,
+    });
+
     await linkCtx.close();
     } // end region: moments
     if (region('render')) {

@@ -13,6 +13,7 @@
 // land before the reading starts, with a skippable hush in between.
 
 import { assetUrl } from './assets.js';
+import { isTypingTarget } from './keys.js';
 
 const RANGE = 8; // metres — NPCs stand ~6m off the centreline, so walking the road must still trigger
 const HUSH_MS = 600; // the ritual's beat of attention between overlay-open and reading-start
@@ -248,6 +249,7 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
       if (openNpc || openLitter) close();
       return;
     }
+    if (isTypingTarget(e)) return; // E5c's #link-field is focusable (src/keys.js)
     if (e.code === 'KeyE') {
       if (hushPending) { skipHush(); return; }
       if (!openNpc && !openLitter) {
