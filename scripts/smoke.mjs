@@ -71,7 +71,7 @@ const ONLY = (() => {
 // contexts rendering at once starve each other on a 10-core machine. A 20%
 // saving on two regions is not worth a suite that intermittently reports a
 // timeout looking like a real bug. --only is the fast path instead.
-const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 function region(name) {
   if (!ONLY) return true;
@@ -122,6 +122,14 @@ const EXPECTED_LAMP_COUNT = 46;
 const LAMP_GAP_MIN = 30;
 const LAMP_GAP_MAX = 45;
 const LAMP_SPAN_MIN = 1400; // metres between the first and last lamp
+
+// E5d. END_RADIUS in src/legs.js, quoted in a gate's detail line only.
+const LEG_END_RADIUS_HINT = 40;
+// The hinge's own contribution must clear the ~1.9h-per-leg free drift by a
+// margin. Two hinges at TURNAROUND_HOURS 5 is 10h; the floor is set well
+// under that so tuning the constant does not require touching the gate, but
+// well over the 3.8h an out-and-back drifts by itself.
+const LEG_MIN_HINGE_HOURS = 8;
 const TORCH_HOUR = 3; // deep night — daylight ambient/hemi/sun are all near-zero here
 const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
 const TORCH_STAND_OFF = 2; // metres from the litter comic — well inside the ~6.5m torch reach at night
@@ -219,7 +227,7 @@ const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's b
 // script needs a conscious update, not a silent pass.
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
-  'rain', 'birds', 'vermin', 'scenery', 'lamps', 'interact', 'proximityAudio', 'torch',
+  'rain', 'birds', 'vermin', 'scenery', 'lamps', 'legs', 'interact', 'proximityAudio', 'torch',
   'post', 'moments',
 ];
 
@@ -1789,6 +1797,170 @@ async function main() {
     await lampsOnCtx2.close();
     await lampsOffCtx2.close();
     } // end region: lamps
+
+    if (region('legs')) {
+    // --- E5d: turning back ------------------------------------------------
+    // Walks the Walk end to end and back on two boots that differ ONLY in
+    // __mcgrotForceLegs, and compares what the street became.
+    //
+    // Frames, and why the rate is cranked. The premise of the whole unit is
+    // that a hinge must beat the drift you get for free: a 1617 m leg at
+    // WALK_SPEED 14 m/s takes ~115 s, which at HOURS_PER_REAL_MINUTE = 1 is
+    // ~1.9 sim hours. Reproducing that literally costs ~13,800 stepped frames
+    // for the pair. Hours are rate x minutes, so 12x rate over 9.5 s of
+    // stepped time gives the SAME 1.9 h in 570 frames. The hinge does not
+    // read the rate, so this changes the cost and not the measurement.
+    const LEG_RATE = 12;
+    const LEG_FRAMES = 570;   // 9.5s at 60fps -> 1.9 sim hours per leg
+
+    const walkLeg = async (pg) => pg.evaluate(({ frames }) => {
+      const dbg = window.__mcgrotDebug;
+      const line = dbg.world.streetLine;
+      const place = (chain) => {
+        let acc = 0;
+        for (let i = 0; i < line.length - 1; i++) {
+          const [ax, az] = line[i], [bx, bz] = line[i + 1];
+          const seg = Math.hypot(bx - ax, bz - az);
+          if (acc + seg >= chain) {
+            const t = seg > 0 ? (chain - acc) / seg : 0;
+            dbg.camera.position.x = ax + (bx - ax) * t;
+            dbg.camera.position.z = az + (bz - az) * t;
+            return;
+          }
+          acc += seg;
+        }
+      };
+      // Total stepped frames is identical in both arms, so the free drift is
+      // identical and the difference between them is the hinge alone.
+      const len = window.__mcgrotLegLength;
+      const steps = 40;
+      let t = 0;
+      const advance = (from, to) => {
+        for (let s = 0; s <= steps; s++) {
+          place(from + (to - from) * (s / steps));
+          for (let f = 0; f < Math.floor(frames / (steps + 1)); f++) {
+            dbg.stepFrame(1 / 60, t); t += 1 / 60;
+          }
+        }
+      };
+      advance(5, len - 5);   // out
+      advance(len - 5, 5);   // and back
+      const a = dbg.atmosphereState();
+      return {
+        clock: +a.hours.toFixed(3),
+        weather: a.weather,
+        transitionTarget: a.weatherTransition ? a.weatherTransition.target : null,
+        legs: dbg.legs.state(),
+        history: dbg.legs.history(),
+      };
+    }, { frames: LEG_FRAMES });
+
+    const prepLeg = async (pg) => pg.evaluate(({ rate }) => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setWeather('overcast');
+      dbg.setWeatherSchedule(false); // the autonomous roller is not under test here
+      dbg.setTime(10);
+      dbg.setRate(rate);             // setTime pins rate to 0; restore it after
+      window.__mcgrotLegLength = dbg.legs.state().length
+        || (() => { // legs-off boot reports no length; derive it the same way
+          const line = dbg.world.streetLine;
+          let L = 0;
+          for (let i = 1; i < line.length; i++) L += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+          return L;
+        })();
+      return { startClock: dbg.atmosphereState().hours, hingesAtBoot: dbg.legs.state().hinges };
+    }, { rate: LEG_RATE });
+
+    const { context: legsOnCtx, page: legsOnPg } = await bootPage(browser, port, { __mcgrotForceLegs: true });
+    const { context: legsOffCtx, page: legsOffPg } = await bootPage(browser, port, { __mcgrotForceLegs: false });
+    const onStart = await prepLeg(legsOnPg);
+    const offStart = await prepLeg(legsOffPg);
+
+    // The spawn sits INSIDE the north end zone, so an unarmed state machine
+    // hinges on frame one and the walk begins five hours after the HUD says.
+    // This is the obvious bug in the design and it gets its own gate.
+    results.push({
+      name: 'no hinge on boot, despite spawning inside the north end zone',
+      pass: onStart.hingesAtBoot === 0,
+      detail: `hinges after boot = ${onStart.hingesAtBoot} (want 0); the Foot is chainage 0 and the end zone is the first ${LEG_END_RADIUS_HINT}m of it`,
+    });
+
+    const onWalk = await walkLeg(legsOnPg);
+    const offWalk = await walkLeg(legsOffPg);
+
+    const onDelta = onWalk.clock - onStart.startClock;
+    const offDelta = offWalk.clock - offStart.startClock;
+    const hingeContribution = onDelta - offDelta;
+
+    // THE gate for this unit. The control is the identical walk with the
+    // hinge disabled — without it the ~1.9h-per-leg free drift passes on its
+    // own, and "the street changed" would be a claim about walking slowly.
+    results.push({
+      name: 'the return leg is a different street (opposed pair)',
+      pass: offDelta > 0.5
+        && hingeContribution >= LEG_MIN_HINGE_HOURS
+        && onWalk.legs.hinges === 2 && offWalk.legs.hinges === 0,
+      detail: `identical walk out-and-back, ${LEG_FRAMES * 2} stepped frames each: ` +
+        `hinge ON advanced the clock ${onDelta.toFixed(2)}h (${onWalk.legs.hinges} hinges), ` +
+        `control OFF ${offDelta.toFixed(2)}h (${offWalk.legs.hinges} hinges) — ` +
+        `the hinge itself contributed ${hingeContribution.toFixed(2)}h (want >=${LEG_MIN_HINGE_HOURS}h, ` +
+        `and the control must drift >0.5h or the comparison proves nothing)`,
+    });
+
+    // A hinge per arrival, not per frame spent standing at an end.
+    results.push({
+      name: 'the hinge fires once per arrival, not once per frame in the zone',
+      pass: onWalk.legs.hinges === 2 && onWalk.history.length === 2
+        && onWalk.history[0].arrivedAt === 'south' && onWalk.history[1].arrivedAt === 'north',
+      detail: `an out-and-back over ${LEG_FRAMES * 2} frames, most of them inside an end zone, fired ` +
+        `${onWalk.legs.hinges} hinges at [${onWalk.history.map((h) => h.arrivedAt).join(', ')}] (want exactly south then north)`,
+    });
+
+    // Determinism. A Math.random() roll here would be untestable and would
+    // break the premise the determinism gates rest on.
+    // Runs on the page already open, not a fresh boot per seed. Three more
+    // full boots to exercise a pure function timed the suite out at 30s on
+    // page.goto — the bundle is 1.7MB and every boot re-fetches the assets.
+    // Resetting the weather is enough isolation: the roll depends only on
+    // (current weather, seed, leg).
+    const rollFor = async (seed) => legsOnPg.evaluate((s) => {
+      const dbg = window.__mcgrotDebug;
+      dbg.setWeather('overcast');
+      dbg.stepFrames(2); // let the transition settle so `from` is overcast
+      // Drives atmosphere.nudge with an explicit seed: the roll is the thing
+      // under test, not the arrival detection above it.
+      return [1, 2, 3, 4].map((leg) => dbg.atmosphereNudge(5, s, leg).to);
+    }, seed);
+    const rollA = await rollFor(12345);
+    const rollA2 = await rollFor(12345);
+    const rollB = await rollFor(999);
+    results.push({
+      name: 'the weather roll is deterministic in (day seed, leg)',
+      pass: JSON.stringify(rollA) === JSON.stringify(rollA2) && JSON.stringify(rollA) !== JSON.stringify(rollB),
+      detail: `seed 12345 -> [${rollA.join(',')}] and again [${rollA2.join(',')}] (want identical); ` +
+        `seed 999 -> [${rollB.join(',')}] (want different, else the seed is ignored)`,
+    });
+
+    // Plausibility: the roll walks WEATHER_ADJACENCY, so a turnaround can
+    // never teleport a downpour into a clear sky.
+    const ADJ = {
+      overcast: ['clear', 'drizzle', 'haar'],
+      clear: ['overcast'],
+      drizzle: ['overcast', 'rain'],
+      rain: ['drizzle'],
+      haar: ['overcast'],
+    };
+    const chainOk = onWalk.history.every((h) => (ADJ[h.from] || []).includes(h.to));
+    results.push({
+      name: 'the turnaround roll steps along the weather adjacency',
+      pass: chainOk && onWalk.history.length > 0,
+      detail: onWalk.history.map((h) => `leg ${h.leg}: ${h.from} -> ${h.to}`).join('; ') +
+        ` (each must be an edge in WEATHER_ADJACENCY — no downpour into a clear sky)`,
+    });
+
+    await legsOnCtx.close();
+    await legsOffCtx.close();
+    } // end region: legs
 
     if (region('render')) {
     // --- bookmarks: draw-call budget + goldens ---

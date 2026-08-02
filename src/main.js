@@ -9,6 +9,7 @@ import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
 import { buildLamps } from './lamps.js';
+import { createLegs } from './legs.js';
 import { buildGables } from './gables.js';
 import { buildChimneys } from './chimneys.js';
 import { createSky } from './sky.js';
@@ -27,7 +28,7 @@ import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 import { readMoment, createMoments, createShareUi } from './moments.js';
-import { todayKey, startHour, dayName } from './day.js';
+import { todayKey, todaySeed, startHour, dayName } from './day.js';
 import { createPost } from './post.js';
 import { createJournal, countVendorsWithAudio } from './journal.js';
 import { createDebugApi } from './debug.js';
@@ -129,6 +130,11 @@ async function main() {
   // stays the sole authority for how lit the street is at a given hour.
   const lamps = buildLamps({ scene, camera, poles: scenery.poles });
   atmosphere.setLamps(lamps);
+
+  // E5d: reaching either end of the Walk nudges the clock and rolls the
+  // weather, so the way back is a different street. Seeded from the calendar
+  // day so the same day walked twice hinges the same way.
+  const legs = createLegs({ camera, world, atmosphere, seed: todaySeed() });
 
   // Duck the ambience bed whenever a comic is being read to camera OR a nearby
   // busker is audible — both feed one combined ducking state.
@@ -251,6 +257,7 @@ async function main() {
     { name: 'vermin', update: (dt, t) => vermin.update(dt, t) },
     { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
     { name: 'lamps', update: () => lamps.update() },
+    { name: 'legs', update: () => legs.update() },
     { name: 'interact', update: (dt) => interact.update(dt) },
     { name: 'proximityAudio', update: (dt, t) => proximityAudio.update(dt, t) },
     { name: 'torch', update: (dt, t) => torch.update(t) },
@@ -319,7 +326,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
-      moments, shareUi, lamps,
+      moments, shareUi, lamps, legs,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

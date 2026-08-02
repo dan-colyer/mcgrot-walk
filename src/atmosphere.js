@@ -1169,6 +1169,46 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     };
   }
 
+  // E5d: the turnaround hinge. legs.js decides WHEN the street should change;
+  // this decides WHAT it changes to, because atmosphere is the sole authority
+  // for the clock and the weather and a hinge that wrote either directly
+  // would be a second one.
+  //
+  // The weather roll walks WEATHER_ADJACENCY rather than picking freely, so a
+  // turnaround cannot teleport a downpour into a clear sky — the same
+  // plausibility rule the autonomous scheduler obeys. Deterministic in
+  // (seed, legIndex) via hash32: the same day walked twice gives the same
+  // sequence, which is what makes it gateable at all.
+  function nudge(deltaHours, seed, legIndex) {
+    // Roll from the weather we are heading TO, not the one we have left.
+    // setWeather starts a transition and `settledWeather` lags it by
+    // WEATHER_TRANSITION_SECONDS; hinging again inside that window would
+    // otherwise re-roll from the stale base and could walk backwards to where
+    // it just came from. Legs are ~115s apart so this is a narrow window, but
+    // a teleporting harness sits in it every time.
+    const from = transition ? transition.toWeather : settledWeather;
+
+    // Advance in place — deliberately NOT setTime(), which pins `rate` to 0
+    // to hold a posed frame still for the harness. Correct there, catastrophic
+    // here: the first turnaround would stop the day/night cycle for the rest
+    // of the session, so the street you walked back down would never change
+    // again. Caught by the opposed-pair gate reading an 8.18h hinge
+    // contribution where two 5h hinges owed 10h — the missing time was the
+    // clock dying at the first hinge. The parameter is `deltaHours` and not
+    // `hours` because `hours` is this module's own clock and shadowing it here
+    // is exactly how the first attempt went wrong.
+    hours = ((hours + deltaHours) % 24 + 24) % 24;
+    update(0, 0);
+
+    const options = WEATHER_ADJACENCY[from] || [];
+    let to = from;
+    if (options.length) {
+      to = options[hash32(seed >>> 0, legIndex >>> 0) % options.length];
+      setWeather(to);
+    }
+    return { hours: deltaHours, from, to };
+  }
+
   function setLamps(v) {
     lamps = v || null;
     // Adopt immediately so the lamps are correct on the frame they appear,
@@ -1176,5 +1216,5 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     if (lamps) lamps.setGlow(sLastApplied.windowGlow);
   }
 
-  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps };
+  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps, nudge };
 }

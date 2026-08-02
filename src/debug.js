@@ -202,7 +202,7 @@ export function createDebugApi(ctx) {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
-    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps,
+    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs,
   } = ctx;
 
   const consoleErrors = [];
@@ -487,6 +487,7 @@ export function createDebugApi(ctx) {
     moments,
     shareUi,
     lamps,
+    legs,
     setTouchMode,
     setPixelRatio,
     measureFrameTiming,
@@ -502,6 +503,12 @@ export function createDebugApi(ctx) {
     // effects actually reach the frame). See src/post.js.
     setPostStrength: (v) => post.setStrength(v),
     invariants,
+    // Cheap read of the clock and weather without invariants() cost (which
+    // steps a frame). E5d gates sample this a lot.
+    atmosphereState: () => atmosphere.state(),
+    // E5d: drives the weather roll directly with an explicit seed, so the
+    // determinism gate tests the roll rather than the arrival detection.
+    atmosphereNudge: (h, seed, leg) => atmosphere.nudge(h, seed, leg),
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),
     resumeAuto: () => setAutoAnimate(true),
