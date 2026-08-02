@@ -6,28 +6,24 @@ garbled text), plus an ambient crowd, wrecked vehicles and photo-derived façade
 
 ## Development workflow
 
-**Opus works the milestone end to end by default. Delegation is the exception,
-not the rule.** This reverses the earlier three-tier split — see "Why this
-changed" below before reinstating it.
+**Opus works the milestone end to end.** Planning against `docs/ROADMAP.md`,
+implementation, verification, deploying — one persistent conversation. There
+is no implementer tier; see "Why this changed" below before reinstating one.
 
-Opus owns the persistent conversation: the codebase, milestone planning against
-`docs/ROADMAP.md`, implementation, verification, and deploying.
+Delegation is an ad-hoc tool, not a role: reach for a Sonnet session only for
+a genuinely mechanical sweep too large to hold here (E7a's hosting migration
+is the one clear candidate left on the roadmap). If you delegate, brief the
+whole milestone, review the diff by measurement rather than by summary, and
+send findings back instead of fixing them here.
 
-**Delegate to Sonnet only when the unit is large and mechanical** — a broad
-migration, a new subsystem, a sweep across many files, roughly 300+ lines of
-diff whose shape is already decided. The test is whether the implementation
-context (file reads, build output, browser QA) would crowd out the
-architectural conversation. Small and medium units, and anything where the
-hard part is a judgement rather than typing, stay here.
-
-When delegating, delegate a complete milestone, never a small coding task.
-
-**Fable is the phase-gate reviewer**, unchanged. At the end of each major
-roadmap phase (E1, E2, …) a Fable session audits the phase end-to-end:
-architecture drift, quality against the roadmap's intent, cross-cutting
-regressions, and whether the roadmap itself still holds. Fable adjusts the
-roadmap and hands the next phase back to Opus. This is now the main
-independent read, so it matters more than it did — do not skip it.
+**Fable is the phase-gate reviewer**, and is now the only independent read.
+At the end of each major roadmap phase (E1, E2, …) a Fable session audits the
+phase end-to-end: architecture drift, quality against the roadmap's intent,
+cross-cutting regressions, and whether the roadmap itself still holds. Fable
+adjusts the roadmap and hands the next phase back to Opus. **Opus tells Dan
+when a Fable pass is due** — at a phase boundary, or earlier if the
+architecture has drifted enough that a fresh read is worth more than another
+milestone.
 
 ### The verification contract
 
@@ -60,25 +56,6 @@ The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
 a milestone adds a claim worth trusting later, and document each gate in
 `docs/VALIDATION.md` — including what it deliberately does *not* prove.
 
-### When delegating
-
-1. Plan, then write the brief to `~/.claude/plans/<project>-<milestone>-brief.md`,
-   update and commit `docs/ROADMAP.md`, and copy the brief to the clipboard.
-2. Sonnet implements in a separate session and returns a concise summary.
-3. Review the diff against the brief — not the implementation transcript —
-   verifying claims independently with measured numbers and renders.
-4. **Send findings back rather than fixing them here**, unless the fix is
-   smaller than the round trip. Fixing the implementer's work in the architect
-   session pays the handoff cost and then does the work anyway, which is
-   exactly what collapsed the old six-step loop into three.
-
-**Brief contract.** Objective, scope, expected files, constraints, acceptance
-criteria, risks, notes for the implementer — complete enough to execute
-without architectural clarification. A brief that adds anything visible must
-name the goldens it expects to recapture; E5b.1's brief said "closed by
-default, so no golden can move", which was true of the panel and false of the
-toggle beside it.
-
 **Planning** goes deep only on the NEXT milestone. Keep the rest high-level and
 re-plan from the actual state of the codebase after each one lands — detailed
 plans for far-future work go stale before they're used.
@@ -99,6 +76,14 @@ work regardless. The catches that justified the split turned out to come from
 the measurements that were skipped. What independence genuinely bought was
 catching false claims in summaries, and that risk is now carried by the
 verification contract above plus the Fable phase gate.
+
+Delegation is also a lossy context boundary, and a lossier one than
+compaction: a diff plus a summary is a worse way to acquire understanding than
+having written the code, and the summary has an incentive to report success.
+
+**The signal that this was wrong:** this conversation compacting mid-milestone
+often enough to lose the thread. If that happens twice, reinstate an
+implementer tier for the large units.
 
 ## Commands
 
