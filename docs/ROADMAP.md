@@ -89,7 +89,7 @@ exception left is E7a's mechanical hosting migration.
 | E5b.1 journal | medium | DOM + localStorage |
 | E5b.2 anchor readers | **high (review)** | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
-| E2g street lights | **high (review)** | lamp heads move every daylight golden; two existing night gates change meaning |
+| E2g street lights | LANDED 2026-08-02 | no golden moved (no pose frames a lamp); both night gates isolated, not relaxed |
 | E5d turnaround + ending | medium | state machine + weather nudge; wants E2g first |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
@@ -1877,6 +1877,43 @@ the same build read 0.056/0.050/0.060. **Take three before believing an
 elevated skyline reading.**
 
 ### E2g — Street lights, so the street is legible at night
+
+**E2g LANDED 2026-08-02** — `a2780bd` (rig behind a flag pinned off, no pixels
+moved) then `dbda7a1` (enable + gates). 46 lamps on the existing catenary
+poles, a fixed pool of 4 camera-following PointLights, intensity from
+`atmosphere.js` alone. At 03:00 with the torch off the street reads 63.9% of
+the lower two-thirds above the legibility floor, against **0.0%** on the
+lamps-off control — the black screen that prompted the milestone.
+
+**No golden moved, and that is a finding rather than a relief.** Draw calls
+rose by exactly 2 (the two merged meshes) at every bookmark, so the fittings
+render — but no bookmark pose frames one, so the golden suite gives the new
+geometry zero coverage. The planned "deliberate wholesale recapture of every
+13:00 golden" never happened because there was nothing to recapture. **A night
+golden is now possible for the first time** (a lit street clears the contrast
+floor that black frames could not) and is the natural follow-on.
+
+**Three things the plan got wrong, all caught by measuring:**
+
+- **The pool could not be sized by measurement.** `measureFrameTiming` times
+  command submission, not raster; with `gl.finish()` forcing the raster in,
+  per-light cost is still unresolvable (every configuration lands in a
+  235-490ms band, and the cheap row is always whichever is measured first).
+  Pool size 4 is reasoned, and wants re-checking at E2f.
+- **`windowGlow` is not 0 in daylight** (0.02 at 13:00, 0.15 at 08:00). Driven
+  literally it lit the street at noon and moved `golden-rain:fascia-close` by
+  11.1%. Lamps now switch rather than dim.
+- **The count-only layout gate was decoration** until fault injection clustered
+  all 46 lamps down half the street and it stayed green.
+
+**The two night gates were isolated, not relaxed** — both run on a lamps-off
+boot with their original thresholds, and a new top-strip gate covers the
+lamps-on case. See `docs/VALIDATION.md`.
+
+**Deferred:** lamp damage/flicker (some should be dead — the street is
+post-apocalyptic and 46 working lamps is tidier than it should be), and the
+night golden above.
+
 
 *Dan's call, 2026-08-02, on arriving at a date-derived 17:39 and being unable
 to see. Filed against E2 because it is a lighting unit, but read the

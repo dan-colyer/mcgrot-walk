@@ -1400,6 +1400,123 @@ camera in the open gap, looking down the corridor instead of at a wall.
 Verified visually per-bookmark; if you add one in that range, screenshot it
 before committing.
 
+## Street lights (E2g)
+
+`src/lamps.js` hangs a fitting, an emissive bulb and a share of a fixed
+PointLight pool off scenery.js's existing catenary pole positions — one lamp
+per station, alternating kerbs, 46 over the Walk. Intensity comes from
+`atmosphere.js` and nowhere else.
+
+### Lamps switch; they do not dim
+
+The single most consequential finding of the milestone, and it was not in the
+plan. `windowGlow` does not reach 0 in daylight — it reads **0.02 at 13:00**
+and **0.15 at 08:00**, which is correct for a bulb behind glass and wrong for
+a street light. Driving the lamps from it directly put four PointLights at
+intensity 30 (the torch is 18) into every daylight frame. The wet-surface
+specular that produced moved `golden-rain:fascia-close` by **11.1%** and
+`golden-clear:mid-805-far-08` by **4.1%**. A smoothstep whose floor sits above
+the 08:00 reading takes those to 0.000% and 0.116%.
+
+The earlier "four zero-intensity PointLights render a byte-identical frame"
+measurement did not catch this, and the reason is worth keeping: it used a
+literal zero, which is not what the scene was ever going to supply. **A
+measurement of the value you hope for is not a measurement of the value the
+system produces.**
+
+### Sizing the pool: the harness cannot do it
+
+The roadmap asked for the pool size to be measured with
+`__mcgrotDebug.measureFrameTiming`. That function times **command submission,
+not raster** — smoke.mjs's own DPR caveat says so — and reads ~5ms on frames
+SwiftShader spends ~250ms rastering. Its curve against light count is not even
+monotonic.
+
+Forcing the raster into the timed window with `gl.finish()` does not rescue
+it. Sweeps in both directions put every configuration in a 235-490ms band with
+no consistent ordering, and the apparently cheap row is always **whichever is
+measured first** (2-5ms) regardless of its light count. Up to 16 camera-local
+lights produce no step change at all.
+
+So the pool size is **reasoned, not measured**: 4, one more than the
+arc-flash trio that already ships. Re-check it at the E2f device round, where
+a real GPU and a real thermal budget can say something this harness cannot.
+
+Two things the sweep did establish, both load-bearing:
+
+- **Changing the light count invalidates every material program**, and
+  SwiftShader rebuilds them lazily at seconds per frame. The pool is allocated
+  once at boot and only ever has its intensity and position modulated. Gated.
+- `POOL_RANGE` and `LIGHT_DISTANCE` are set against `POLE_SPACING`, not picked
+  for feel. A first pass at 26 m / 24 m measured as exactly **one** active
+  light at any time — 35 m spacing means a second lamp is never in range — so
+  three of four pool lights were dead weight and the lit pools never met.
+
+### The gates (region `lamps`)
+
+- **The street is legible at the darkest hour.** 03:00, torch off, centreline
+  ground pose: 63.9% of the lower two-thirds at or above luminance 12. The
+  **control** is the identical pose on a lamps-off boot, which reads 0.0%.
+  Without it the gate passes on moonlight. The torch is off in *both* arms —
+  left on it puts the same large term on both sides and shrinks the lamps'
+  own contribution to a rounding error.
+- **Lamps hang off the catenary poles, one per station.** Count, median gap
+  (39.6 m) and span (1567 m). The gap and span clauses exist because fault
+  injection beat the count-only version: pointing every lamp at the wrong pole
+  clustered all 46 down half the street and left the gate green, since 46
+  comes from the loop bound and not from the geometry.
+- **The light pool is allocated once and never resized.** PointLight count
+  across 00:00-21:00 must be one distinct value.
+- **Lamps are fully off in daylight, not merely dim.** Pool intensity exactly
+  0 at 09:00 and 12:00, non-zero at 00:00 and 21:00. The 09:00 sample is the
+  one that earns its keep — an injection that restored the raw `windowGlow`
+  curve read 168.7 at 09:00 and a passing 0 at 12:00.
+- **The light pool follows the camera.** Stands under a named lamp and asserts
+  a pool light lands on it within 0.01 m, and that more than one light is
+  active. Asserting the numbers merely changed would pass on a pool that
+  jitters.
+
+### The two night gates were re-derived, not relaxed
+
+Street lighting is a second light source landing on the very surfaces both of
+these read, so both had to change. Neither number moved.
+
+- **`night darkens facades`** is E2a's detector for a night that renders like
+  daylight. With the lamps lit the same pose reads **57.7% against a 45%
+  ceiling**. Raising the ceiling would have kept it green while deleting what
+  it detects, so it runs on a **lamps-off boot** with
+  `NIGHT_LUMINANCE_RATIO_MAX` untouched, isolating the subsystem it was built
+  to test.
+- **`torch lights a readable surface`** likewise: 36.4x on/off becomes
+  **1.20x** once the street is lit, because the torch is no longer the only
+  light reaching the comic. Same isolation, `TORCH_MIN_RATIO` untouched. It
+  shares the lamps-off boot.
+
+- **`night stays night with the lamps lit`** is the new gate covering what
+  isolation gave up. It reads the **top strip** rather than the upper half:
+  with the lamps lit that is 19.1% of daylight against the upper half's 57.7%,
+  which is the difference between a usable ceiling and none. The **control**
+  is the same measurement on the lamps-off boot, at 2.4% — without it a build
+  with no lamps at all passes trivially.
+
+  The strip was **assumed** to be beyond the lamps' reach and measured
+  otherwise (lit façade tops intrude at this pose). That it responds to lamp
+  brightness is precisely what lets it catch a `LIGHT_PEAK` cranked until
+  night reads as day — injected at 25000, it fails at 41.6%.
+
+### What this deliberately does not prove
+
+- **No golden frames a lamp.** Every golden held at the noise floor with the
+  lamps enabled, and the draw-call budget rose by exactly 2 — so the fittings
+  are being drawn, and no bookmark pose has one in shot. The golden suite
+  therefore provides **zero** coverage of the new geometry; the `lamps` region
+  is the only thing watching it.
+- **A night golden is now possible for the first time**, and is the obvious
+  follow-on. Night frames previously failed the contrast floor (stddev >= 8)
+  for want of anything lit; a sodium-lit street clears it comfortably. Not
+  done here — it wants its own bookmark and a deliberate capture.
+- **Nothing about a real GPU.** See the pool-sizing note above.
+
 ## Invariants reference
 
 | Field | What it means | If it fails |
