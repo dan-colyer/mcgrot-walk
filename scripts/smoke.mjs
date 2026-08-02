@@ -117,6 +117,11 @@ const LEGIBLE_CONTROL_MAX_PCT = 5;
 // One lamp per catenary station (POLE_SPACING 35 m over ~1617 m), alternating
 // kerbs — see src/lamps.js.
 const EXPECTED_LAMP_COUNT = 46;
+// Layout bounds. POLE_SPACING is 35 m and the lamps alternate kerbs, so
+// consecutive heads sit slightly more than 35 m apart; the Walk is ~1617 m.
+const LAMP_GAP_MIN = 30;
+const LAMP_GAP_MAX = 45;
+const LAMP_SPAN_MIN = 1400; // metres between the first and last lamp
 const TORCH_HOUR = 3; // deep night — daylight ambient/hemi/sun are all near-zero here
 const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
 const TORCH_STAND_OFF = 2; // metres from the litter comic — well inside the ~6.5m torch reach at night
@@ -1686,10 +1691,35 @@ async function main() {
         `control lamps OFF: ${unlit.pctLegible}% (mean ${unlit.mean}; want <=${LEGIBLE_CONTROL_MAX_PCT}%)`,
     });
 
+    // The count alone is NOT enough, and that was found by fault injection
+    // rather than by thinking: pointing every lamp at the wrong pole left the
+    // count at 46 (it comes from the loop bound, not the geometry), clustered
+    // them down half the street, and both this gate and the legibility pair
+    // stayed green. So measure the layout — how far apart consecutive lamps
+    // are, and how much of the Walk they cover.
+    const layout = await lampsOnPg.evaluate(() => {
+      const L = window.__mcgrotDebug.lamps;
+      const gaps = [];
+      for (let i = 1; i < L.lamps.length; i++) {
+        const a = L.lamps[i - 1].position, b = L.lamps[i].position;
+        gaps.push(Math.hypot(b.x - a.x, b.z - a.z));
+      }
+      gaps.sort((x, y) => x - y);
+      const first = L.lamps[0].position, last = L.lamps[L.lamps.length - 1].position;
+      return {
+        medianGap: +gaps[Math.floor(gaps.length / 2)].toFixed(1),
+        span: +Math.hypot(last.x - first.x, last.z - first.z).toFixed(0),
+      };
+    });
     results.push({
       name: 'lamps hang off the catenary poles, one per station',
-      pass: lit.enabled && lit.count === EXPECTED_LAMP_COUNT && !unlit.enabled && unlit.count === 0,
-      detail: `lamps on: enabled=${lit.enabled} count=${lit.count} (want ${EXPECTED_LAMP_COUNT}, one per catenary station, alternating kerbs); ` +
+      pass: lit.enabled && lit.count === EXPECTED_LAMP_COUNT
+        && !unlit.enabled && unlit.count === 0
+        && layout.medianGap >= LAMP_GAP_MIN && layout.medianGap <= LAMP_GAP_MAX
+        && layout.span >= LAMP_SPAN_MIN,
+      detail: `lamps on: enabled=${lit.enabled} count=${lit.count} (want ${EXPECTED_LAMP_COUNT}), ` +
+        `median gap ${layout.medianGap}m (want ${LAMP_GAP_MIN}-${LAMP_GAP_MAX}, i.e. one per catenary station), ` +
+        `span ${layout.span}m (want >=${LAMP_SPAN_MIN}, i.e. the whole Walk not half of it); ` +
         `flag off: enabled=${unlit.enabled} count=${unlit.count} (want false/0)`,
     });
 
