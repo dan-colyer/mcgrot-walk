@@ -20,7 +20,7 @@ import { chainageOfPoint } from './frontage.js';
 
 // E5d lands with this off, so the machinery can be verified against unmoved
 // goldens before any behaviour changes.
-const LEGS_ENABLED = false;
+const LEGS_ENABLED = true;
 
 // Metres from either end that count as "arrived". Generous, because the
 // player is soft-clamped to the corridor rather than to the centreline and
