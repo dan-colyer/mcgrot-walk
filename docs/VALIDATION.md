@@ -994,6 +994,62 @@ exactly why "no anchor is near a bookmark" was the wrong test — **distance
 along the street is not the same as absence from frame, and only the diff
 settles it.**
 
+## Running the suite fast (and what that costs you)
+
+A full run is **412s**, measured. Two ways to cut it, both of which announce
+what they did not check — a partial run that reads like a full one is the
+exact failure this project keeps having.
+
+- `npm run smoke:quick` (**169s**) skips the weather matrix (the clear, rain,
+  drizzle and haar golden columns, the transition and midnight-wrap checks,
+  the 20 weather-pair transitions and the 24h sweeps) and the informational
+  DPR timing table. Those are 274s and 59s of the 412s.
+- `npm run smoke -- --only=<region>[,<region>]` runs single regions:
+  `alignment`, `journal`, `anchors`, `render`, `determinism`, `dpr`,
+  `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs: journal
+  ~41s, anchors ~31s, onevoice+clock ~16s, mobile ~7s, on top of ~12s of fixed
+  overhead (bundle, server, browser, boot #1) that every run pays.
+
+`render` is the only region that captures desktop goldens; `mobile` captures
+the four mobile ones. **Neither `--quick` nor `--only` is a deploy gate.**
+`npm run deploy` always runs the whole suite, because the weather columns are
+exactly where a golden regression hides.
+
+Regions were each checked to declare nothing referenced after them before
+being made skippable. If you add one, do the same check first — a region whose
+`const` escapes will break the *full* run, not the partial one.
+
+### Two speedups that were tried and rejected
+
+Recorded because both look obviously worth doing until measured.
+
+- **Shortening the hush for the harness.** A localhost override on
+  `interact.js`'s `HUSH_MS`, so the journal and anchor gates need not wait
+  600ms per assertion. It made an assertion vacuous: those gates read "was
+  anything credited at open?" over a Playwright round-trip that is *itself*
+  slower than an 80ms hush, so the read landed after the credit and
+  heard-at-open went 0 -> 1. Total saving would have been ~2s of 400s.
+- **Running the journal and anchor gates concurrently.** 85s -> 68s, but the
+  run failed: `page.click('#title-enter')` timed out at 30s because two
+  SwiftShader contexts rendering at once starve each other (10-core machine).
+  A timeout that looks like a real bug costs more than 17s saves.
+
+## Goldens as measuring instruments (the contrast floor)
+
+One aggregate check asserts every captured frame has luminance stddev >= 8
+(of 255). A near-flat frame cannot register a regression: with few
+distinguishable pixels a serious change still diffs under the 0.5% tolerance,
+so the pose would be a gate that cannot fail. Goldens are all captured at
+`SMOKE_HOUR` (13:00) precisely so they have contrast to lose — this check
+makes that a measured property rather than a convention someone might quietly
+break by adding a night pose. On a partial run that captures no goldens the
+check is skipped and says so, rather than reporting "all 0 frames pass".
+
+Note what this does *not* cover: the night checks (torch at 03:00, facade
+darkening at 22:00) are deliberately dark, and they assert luminance
+**ratios** — 36x torch-on vs off, 22:00 at 3.4% of 13:00 — never pixel diffs.
+That is the right instrument for a dark frame, and why they are not goldens.
+
 ## Mobile pass (E2e / E2e.1)
 
 A second smoke pass at a phone-shaped viewport (390×844), with touch mode

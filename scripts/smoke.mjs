@@ -41,6 +41,52 @@ const captureDir = join(smokeDir, 'captures');
 const budgetPath = join(smokeDir, 'budget.json');
 
 const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
+// --quick: the inner-loop suite. Skips the weather matrix (the four
+// non-overcast golden columns, the transition/midnight-wrap checks, the 20
+// weather-pair transitions and the 24h sweeps) and the informational DPR
+// timing table. Measured: those are 274s and 59s of a 412s run, so quick is
+// ~100s. Everything structural still runs — invariants, determinism, the
+// overcast goldens, the draw-call budget, the milestone gates and the mobile
+// pass. NOT a deploy gate: `npm run deploy` always runs the full suite, and
+// the weather columns are exactly where a golden regression hides.
+const QUICK = process.argv.includes('--quick');
+// src/interact.js's hush, shortened for the harness only. The gates still
+// assert the same thing (nothing credited at open, credited after), just
+// without burning 700ms of wall clock per assertion.
+// --only=<name>[,<name>] runs just those regions — the inner loop for
+// iterating on one gate (~20s) instead of the whole suite. Regions were
+// checked to declare nothing used outside themselves before being made
+// skippable; if you add one, check the same before wrapping it.
+const ONLY = (() => {
+  const hit = process.argv.find((a) => a.startsWith('--only='));
+  return hit ? new Set(hit.slice(7).split(',').map((s) => s.trim()).filter(Boolean)) : null;
+})();
+// 'render' is the draw-call budget, every golden column, E2a/E2b, the weather
+// matrix and the post chain — the bulk of the runtime, and the only region
+// that captures desktop goldens. Boot #1 itself is NOT skippable: its page
+// and invariants are shared, so ~12s of boot is paid by every --only run.
+// Concurrency was tried here and reverted. Running the journal and anchor
+// gates under Promise.all cut 85s to 68s, but the run FAILED: a
+// page.click('#title-enter') timed out at 30s because two SwiftShader
+// contexts rendering at once starve each other on a 10-core machine. A 20%
+// saving on two regions is not worth a suite that intermittently reports a
+// timeout looking like a real bug. --only is the fast path instead.
+const REGIONS = ['alignment', 'journal', 'anchors', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const regionsRun = [];
+function region(name) {
+  if (!ONLY) return true;
+  const want = ONLY.has(name);
+  if (want) regionsRun.push(name);
+  return want;
+}
+
+// The hush stays at its shipped 600ms in the harness. Shortening it through a
+// localhost override was tried and reverted: the gates read "was anything
+// credited at open?" over a Playwright round-trip, which is itself slower than
+// a short hush, so an 80ms hush made that read land AFTER the credit and turned
+// the assertion vacuous (measured: heard-at-open went 0 -> 1). The entire
+// saving was ~2s of a 400s run — not worth racing an assertion for.
+const HUSH_WAIT_MS = 700;
 const DRAW_CALL_TOLERANCE_PCT = 10;
 const PIXEL_THRESHOLD = 0.1;       // pixelmatch per-pixel colour-diff sensitivity (0-1)
 const DIFF_PCT_TOLERANCE = 0.5;    // max % of pixels allowed to differ before a golden fails
@@ -173,7 +219,11 @@ function waitForServer(url, timeoutMs = 10000) {
   });
 }
 
-async function bootPage(browser, port) {
+// `extras` sets localhost-gated overrides before any page script runs.
+// Deliberately opt-in per caller: shortening the hush globally would change
+// golden-mobile:comic, which is stable only because headless audio never
+// reaches playback inside the 600ms window (see docs/VALIDATION.md).
+async function bootPage(browser, port, extras = null) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
   const consoleMessages = [];
@@ -187,6 +237,7 @@ async function bootPage(browser, port) {
   // callbacks that slip through anyway (there should be none pre-freeze);
   // reading it after pauseAuto() below is the E2c.3b.1 acceptance gate on the
   // pre-pause frame count.
+  if (extras) await page.addInitScript((e) => { Object.assign(window, e); }, extras);
   await page.addInitScript(() => {
     window.__mcgrotFreezeAtBoot = true;
     window.__mcgrotRafCount = 0;
@@ -288,8 +339,31 @@ function exactChannelDiff(a, b) {
 // writeFileSync makes the gate mutate a tracked file on every run AND makes
 // that golden incapable of ever failing, which is a screenshot, not a gate.
 // Returns the parsed PNG so callers can run further measurements on it.
+// Is a golden a usable measuring instrument at all? A near-flat frame cannot
+// register a regression: with few distinguishable pixels, a serious change
+// still diffs under the 0.5% tolerance. Goldens are all captured at
+// SMOKE_HOUR (13:00) precisely so they have contrast to lose, but that is a
+// convention, and this project has twice shipped a real change hidden under
+// the tolerance. So measure the substrate rather than trusting the
+// convention: luminance stddev per captured frame, aggregated into one check.
+const goldenSubstrate = [];
+const SUBSTRATE_MIN_STDDEV = 8; // of 255. Below this the pose is too flat to gate anything.
+
+function measureSubstrate(name, png) {
+  let sum = 0, sumSq = 0;
+  const n = png.width * png.height;
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    const l = 0.2126 * png.data[o] + 0.7152 * png.data[o + 1] + 0.0722 * png.data[o + 2];
+    sum += l; sumSq += l * l;
+  }
+  const mean = sum / n;
+  goldenSubstrate.push({ name, stddev: Math.sqrt(Math.max(0, sumSq / n - mean * mean)), mean });
+}
+
 function checkGolden(results, name, shot, goldenPath) {
   const actual = PNG.sync.read(shot);
+  measureSubstrate(name, actual);
   if (UPDATE_GOLDENS || !existsSync(goldenPath)) {
     writeFileSync(goldenPath, shot);
     results.push({ name, pass: true, detail: 'captured' });
@@ -392,6 +466,7 @@ function meanLuminanceUpperHalf(png) {
 }
 
 async function main() {
+  const skipped = [];
   const results = []; // { name, pass, detail }
   let server;
   let browser;
@@ -401,6 +476,7 @@ async function main() {
     console.log('[smoke] bundling...');
     execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
 
+    if (region('alignment')) {
     // --- E5a gate 5a: phrase-alignment opposed pair ---
     // No server/browser needed — pure Node, straight off assets/readings.json
     // and assets/audio/*.mp3. Independent of the bake's own silencedetect
@@ -490,6 +566,7 @@ async function main() {
       }
     }
 
+    } // end region: alignment
     const port = await getFreePort();
     console.log(`[smoke] starting server on :${port}`);
     server = spawn('python3', [join(root, 'scripts/serve.py'), String(port)], {
@@ -598,6 +675,7 @@ async function main() {
       await faultContext.close();
     }
 
+    if (region('journal')) {
     // --- E5b.1: the journal ---
     // Entirely on its own fresh boot (jPage/jCtx), NOT page1: these tests
     // deliberately step real-time frames (leithers/birds/vermin) to bring a
@@ -710,13 +788,13 @@ async function main() {
       // Real wall-clock wait for HUSH_MS (interact.js's setTimeout, not
       // stepFrame-driven) — same reasoning as the E5a hush tests elsewhere
       // in this file: the ritual's beat runs on a real timer.
-      await jPage.waitForTimeout(700);
+      await jPage.waitForTimeout(HUSH_WAIT_MS);
       const afterHush = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().heard);
       // Reopen: close, walk back in range, press E again — must stay at 1.
       await jPage.keyboard.press('Escape');
       await jPage.evaluate(() => window.__mcgrotDebug.stepFrames(3));
       await jPage.keyboard.press('KeyE');
-      await jPage.waitForTimeout(700);
+      await jPage.waitForTimeout(HUSH_WAIT_MS);
       const afterReopen = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts().heard);
       await jPage.keyboard.press('Escape');
       results.push({
@@ -805,7 +883,7 @@ async function main() {
       });
       await faultPage.keyboard.press('KeyE');
       const faultOverlayOpen = await faultPage.evaluate(() => document.getElementById('comic-overlay').style.display === 'flex');
-      await faultPage.waitForTimeout(700);
+      await faultPage.waitForTimeout(HUSH_WAIT_MS);
       const faultCounts = await faultPage.evaluate(() => window.__mcgrotDebug.journal.counts());
       results.push({
         name: 'E5b.1: a throwing localStorage.setItem does not break the reading or the session count',
@@ -816,6 +894,8 @@ async function main() {
       await jCtx.close();
     }
 
+    } // end region: journal
+    if (region('anchors')) {
     // --- E5b.2: the dozen anchor readers ---
     console.log('[smoke] E5b.2 anchors gate...');
     {
@@ -1040,12 +1120,12 @@ async function main() {
         });
         await onPage.keyboard.press('KeyE'); // opens the overlay; hush pending, no credit yet
         const atOpen = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
-        await onPage.waitForTimeout(700); // HUSH_MS, real wall-clock timer
+        await onPage.waitForTimeout(HUSH_WAIT_MS);
         const afterHush = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
         await onPage.keyboard.press('Escape');
         await onPage.evaluate(() => window.__mcgrotDebug.stepFrames(3));
         await onPage.keyboard.press('KeyE'); // reopen the SAME anchor
-        await onPage.waitForTimeout(700);
+        await onPage.waitForTimeout(HUSH_WAIT_MS);
         const afterReopen = await onPage.evaluate(() => window.__mcgrotDebug.journal.counts().anchorsFound);
         await onPage.keyboard.press('Escape');
         results.push({
@@ -1100,6 +1180,8 @@ async function main() {
       await offCtx.close();
     }
 
+    } // end region: anchors
+    if (region('render')) {
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);
@@ -1291,6 +1373,10 @@ async function main() {
         : drawCallDrift.map((r) => `${r.id}: ${r.calls} vs ${r.baseline}`).join('; '),
     });
 
+    if (QUICK) {
+      console.log('[smoke] --quick: skipping the weather matrix (clear/rain/drizzle/haar columns, transitions, 24h sweeps)');
+      skipped.push('weather matrix (clear, rain, drizzle, haar columns + transition and sweep checks)');
+    } else {
     // --- E2c.1: the clear weather column ---
     // setWeather + a full WEATHER_SETTLE_FRAMES worth of stepped dt so the
     // 10s transition (WEATHER_TRANSITION_SECONDS, atmosphere.js) is
@@ -1749,6 +1835,13 @@ async function main() {
       });
     }
 
+    }
+    // Re-pin whatever the skipped region would have left set, so the blocks
+    // below start from the same state in both modes.
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+    await page1.evaluate((f) => window.__mcgrotDebug.stepFrames(f), WEATHER_SETTLE_FRAMES);
+
     // --- E2c.3c Part 3: autonomous weather scheduler ---
     // 3a: the load-bearing determinism guarantee — the scheduler must never
     // fire while a harness has pinned time via setTime() (rate=0). This is
@@ -1911,8 +2004,10 @@ async function main() {
         : postLiveBad.join('; '),
     });
 
+    } // end region: render
     await ctx1.close();
 
+    if (region('determinism')) {
     // --- boot #2: determinism ---
     const { context: ctx2, page: page2 } = await bootPage(browser, port);
     const inv2 = await getInvariants(page2);
@@ -1958,12 +2053,16 @@ async function main() {
       pass: invRain1.geomHash === invRain2.geomHash,
       detail: `boot1=${invRain1.geomHash} boot2=${invRain2.geomHash}, rain=${invRain1.rain.toFixed(2)}`,
     });
+    } // end region: determinism
 
     // --- E2e item 3 / acceptance criterion 8: DPR cap frame-timing table ---
     // Informational only — see docs/VALIDATION.md on why headless
     // SwiftShader command-submission timing isn't a real-device GPU
     // measurement (renderer.render only queues; raster happens at the next
     // await, so this doesn't capture actual frame cost). Logged, not gated.
+    if (QUICK || !region('dpr')) {
+      if (QUICK) skipped.push('DPR frame-timing table (informational, not gated)');
+    } else {
     console.log('[smoke] DPR timing...');
     {
       const { context, page } = await bootPage(browser, port);
@@ -2014,7 +2113,9 @@ async function main() {
 
       await context.close();
     }
+    }
 
+    if (region('onevoice')) {
     // --- E5a gate 5b: one voice, opposed pair ---
     // Every catalog vendor with an npc identity also has audio (124/124, per
     // scripts/build-readings.mjs), and the ~1600m street divided by 124
@@ -2078,6 +2179,8 @@ async function main() {
       });
     }
 
+    } // end region: onevoice
+    if (region('determinism-clock')) {
     // --- E5a gate 5c: virtual reading clock determinism ---
     // Same day seed -> identical join offsets for the same vendors; a
     // different seed -> different ones. __mcgrotDebug.setDaySeed overrides
@@ -2143,6 +2246,8 @@ async function main() {
       });
     }
 
+    } // end region: determinism-clock
+    if (region('mobile')) {
     // --- E2e: mobile pass — touch mode forced at a phone viewport ---
     console.log('[smoke] mobile pass...');
     {
@@ -2456,11 +2561,29 @@ async function main() {
 
       await context.close();
     }
+    } // end region: mobile
 
   } finally {
     if (browser) await browser.close();
     if (server) server.kill();
   }
+
+  const flat = goldenSubstrate.filter((g) => g.stddev < SUBSTRATE_MIN_STDDEV);
+  // A partial run (--only / --quick) may capture no goldens at all; reporting
+  // "all 0 frames pass" would be a check that cannot fail, which is exactly
+  // the kind of decoration this suite is supposed to be free of.
+  if (goldenSubstrate.length === 0) {
+    skipped.push('golden contrast floor (no goldens captured in this run)');
+  } else results.push({
+    name: 'goldens are usable diff substrates (contrast floor)',
+    pass: flat.length === 0,
+    detail: flat.length === 0
+      ? `all ${goldenSubstrate.length} captured frames have luminance stddev >= ${SUBSTRATE_MIN_STDDEV} ` +
+        `(min ${Math.min(...goldenSubstrate.map((g) => g.stddev)).toFixed(1)} on ` +
+        `${goldenSubstrate.reduce((a, b) => (a.stddev <= b.stddev ? a : b)).name})`
+      : `${flat.length} too flat to gate anything: ` +
+        flat.map((g) => `${g.name} stddev=${g.stddev.toFixed(1)} mean=${g.mean.toFixed(1)}`).join('; '),
+  });
 
   console.log('\n[smoke] results:');
   const nameWidth = Math.max(...results.map((r) => r.name.length), 10);
@@ -2468,7 +2591,21 @@ async function main() {
     console.log(`  ${r.pass ? 'PASS' : 'FAIL'}  ${r.name.padEnd(nameWidth)}  ${r.detail}`);
     if (!r.pass) exitCode = 1;
   }
-  console.log(`\n[smoke] ${exitCode === 0 ? 'all checks passed' : 'FAILED'}`);
+  if (ONLY) {
+    const unknown = [...ONLY].filter((n) => !REGIONS.includes(n));
+    if (unknown.length) console.log(`\n[smoke] --only: unknown region(s) ${unknown.join(', ')}. Known: ${REGIONS.join(', ')}`);
+    skipped.push(`--only=${[...ONLY].join(',')}: ran ${regionsRun.join(', ') || 'nothing'}; ` +
+      `skipped ${REGIONS.filter((r) => !ONLY.has(r)).join(', ')} AND every unregioned check (boot invariants, goldens, weather, post)`);
+  }
+  if (skipped.length) {
+    // Never let a quick run read like a full one. The whole failure mode this
+    // project keeps hitting is a green result that was never asked the hard
+    // question — so say plainly which questions went unasked.
+    console.log(`\n[smoke] --quick SKIPPED ${skipped.length} area(s):`);
+    for (const s of skipped) console.log(`  - ${s}`);
+    console.log('  Run the full suite before deploying (npm run deploy does this for you).');
+  }
+  console.log(`\n[smoke] ${exitCode === 0 ? (skipped.length ? 'quick checks passed (PARTIAL)' : 'all checks passed') : 'FAILED'}`);
   process.exit(exitCode);
 }
 

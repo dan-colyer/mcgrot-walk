@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "bundle": "esbuild src/main.js --bundle --outfile=src/dev-bundle.js && node scripts/stamp-bundle.mjs",
     "dev": "npm run bundle && cd src && python3 ../scripts/serve.py ${PORT:-5174}",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:quick": "node scripts/smoke.mjs --quick",
+    "probe": "node scripts/probe.mjs",
+    "goldens:audit": "node scripts/goldens-audit.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "keywords": [],
   "author": "",

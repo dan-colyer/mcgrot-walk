@@ -91,9 +91,27 @@ implementer tier for the large units.
 npm run dev      # bundle + static server on :5174 (preview via workspace launch.json "mcgrot-walk")
 npm run bundle   # esbuild src/main.js → src/dev-bundle.js (stamps index.html with the bundle hash)
 node build.mjs   # single-file dist/mcgrot-walk.html, all assets inlined (the shareable artifact)
-node build.mjs --site   # dist-site/ for GitHub Pages (secret-scan before pushing)
-npm run smoke     # validation rig — the pre-deploy gate; see docs/VALIDATION.md
+node build.mjs --site   # dist-site/ for GitHub Pages (npm run deploy does this and scans it)
+
+npm run smoke        # full validation rig, ~412s — the deploy gate; see docs/VALIDATION.md
+npm run smoke:quick  # ~169s inner loop: skips the weather matrix + DPR timing, and SAYS SO
+npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
+npm run deploy       # smoke -> build -> secret scan -> push gh-pages -> md5-verify live
+npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
 ```
+
+`smoke:quick` is for iterating, never for deploying — the weather columns are
+exactly where a golden regression hides, and `npm run deploy` always runs the
+full suite regardless.
+
+`probe` boots the scene the same way the suite does (freeze rAF, dismiss the
+title card, pin clock and weather) and evaluates an expression, so a one-off
+measurement is one line instead of thirty of boilerplate that is easy to get
+subtly wrong. `--anchors=on|off`, `--hour=`, `--weather=`, `--mobile`,
+`--shot=<path>`, `-f <module>` for anything bigger than an expression.
+
+`deploy` fails closed on a dirty tree, a red suite, or any secret-scan hit,
+and does not report success until every changed file md5-matches the live URL.
 
 ## Architecture
 
