@@ -264,6 +264,63 @@ tells you which check and why.
     7/7 states exactly equal at neutral; 7.3% (rain, 22:00) to 99.9%
     (haar/skyline) of pixels changed as authored.
 
+27. **Wrecks carry their palette maps** — every mesh under the `cars` group
+    has a `material.map` whose image has actually decoded, and the set of map
+    sizes across the group is exactly `256x256` (the bus's own map) plus
+    `512x512` (Kenney's shared `colormap.png`). `src/cars.js` loads both PNGs
+    itself and hands them to `GLTFLoader` through a plugin, so three things
+    can now break without anything else noticing: a build that forgets to
+    ship one (`dist-site` copies them by name), the plugin regressing to
+    GLTFLoader's own per-model fetch, or `wreckify` dropping the map. All
+    three leave flat tinted Lambert where the kit's colour should be, and the
+    tints were authored on top of the map, not instead of it.
+
+    Fault-injected red by moving `assets/cars/Textures/bus.png` aside:
+    `70/71 meshes mapped, maps [512x512]`. (The 404 also reddens **console
+    clean**, which is the second half of the same story — see below.)
+
+    **The goldens cannot cover this, which is why the gate exists.** Measured:
+    hide the `cars` group and re-capture every bookmark, and only one frame
+    changes at all — `mid-805-far`, by **0.240%** of pixels. Every other pose
+    is 0.000%. Deleting the wrecks outright is therefore *under* the 0.5%
+    golden tolerance, and losing only their map would be smaller still. The
+    wrecks are effectively invisible to the golden suite.
+
+    What the gate does not prove: that the map is the *right* map, or that it
+    is sampled correctly. Those were measured once, out of band, by
+    fingerprinting every distinct texture the wrecks carry — decoded pixels
+    plus `flipY`, colour space, wrapping, both filters and `generateMipmaps` —
+    under the old GLTFLoader path and the new one. Both maps came back
+    byte-identical (`89ddf585`, `541465c5`) with identical sampling state, and
+    the count of distinct texture objects dropped 4 → 2 as the three cars
+    stopped each fetching their own copy. Re-run that fingerprint by hand if
+    the loading path changes again; nothing in the suite watches it.
+
+#### The GLTFLoader texture noise, and why it was never a broken URL
+
+Every boot used to log `THREE.GLTFLoader: Couldn't load texture
+Textures/colormap.png` several times, plus a `blob:` variant from the bus's
+embedded map. The obvious reading — a relative path that does not resolve —
+is wrong, and worth writing down because it cost a diagnosis:
+
+- The dev server serves `assets/cars/Textures/colormap.png` fine (200,
+  12371 bytes), and `LoaderUtils.extractUrlBase` resolves the sibling path
+  correctly. In a boot left alone, all 71 wreck meshes end up mapped.
+- The errors appear only when a document is **abandoned mid-load**. The
+  wrecks are the last thing to arrive, so navigating away cancels their
+  in-flight image fetches and GLTFLoader logs the rejection with a bare
+  `console.error` no `LoadingManager` can intercept. Repro: eight
+  back-to-back `goto`s produced 13 errors; the same eight boots waiting for
+  the wrecks each time produced 0, with `71/71` meshes mapped every time.
+- That is why boot #1's **console clean** gate never saw it (its page lives
+  for the whole run) while the `moments` region did (it abandons eight
+  documents), and why that region carried a named filter for it.
+
+The fix is not a URL fix: `src/cars.js` owns the loads now, so a cancelled
+one resolves to `null` quietly instead of being reported by a library that
+cannot know the page is going away. The `moments` filter is gone — every
+console error in that region counts again.
+
 ### The fog-density axis, and why it landed in two commits (E2c.3a)
 
 `fog.density` is palette-driven (`fogDensity`, `src/atmosphere.js`) rather than

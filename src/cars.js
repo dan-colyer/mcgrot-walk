@@ -16,16 +16,51 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from './assets.js';
 import { sampleAt } from './road.js';
 
+// The palette maps, loaded once per boot and handed to GLTFLoader rather than
+// left for it to fetch per model.
+//
+// Two things go wrong if you let the loader do it. Kenney's three cars each
+// reference the same sibling `Textures/colormap.png` and GLTFLoader's texture
+// cache is per-parser, so one boot fetched the same PNG three times. Worse,
+// those fetches are still in flight long after the rest of the scene is up —
+// the wrecks are the last thing to arrive. Navigate away inside that window
+// and the browser cancels them, and GLTFLoader's catch logs "Couldn't load
+// texture ..." with a bare `console.error` that no LoadingManager can
+// intercept. Nothing is actually broken (the document is being destroyed),
+// but it reddens any console-clean assertion and it can't be silenced at the
+// source. Loading the maps here puts that failure path under our control: a
+// cancelled load resolves to null, the wreck renders map-less for the frame
+// or two the page has left, and the console stays quiet.
+//
+// `filters` mirrors each glb's own sampler block, because supplying the
+// texture through a loader plugin skips the code in GLTFLoader that would
+// otherwise apply it. Colour space still comes from GLTFLoader (assignTexture
+// stamps SRGB on whatever the plugin returns).
+const PALETTES = {
+  // Kenney: sampler { minFilter: 9987 }, everything else glTF defaults.
+  kit: {
+    path: 'cars/Textures/colormap.png',
+    filters: { minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter },
+  },
+  // poly.pizza bus: sampler { magFilter: 9729, minFilter: 9986, wrap 10497 }.
+  // Its map is embedded in the glb; scripts/extract-glb-texture.mjs lifted
+  // those exact bytes out to a sibling PNG so it loads like the others.
+  bus: {
+    path: 'cars/Textures/bus.png',
+    filters: { minFilter: THREE.NearestMipmapLinearFilter, magFilter: THREE.LinearFilter },
+  },
+};
+
 // Sourced assets (assets/cars/): sedan/hatchback/van from Kenney's Car Kit
 // (CC0, kenney.nl); bus from poly.pizza m/4CPpvEmrMoF, "Poly by Google",
 // CC-BY 3.0 — the one non-CC0 model, attributed on the credits page.
 // targetLen = real-world metres the model is scaled to (kits arrive in
 // arbitrary units).
 const MODELS = [
-  { file: 'cars/sedan.glb', kind: 'car', targetLen: 4.3 },
-  { file: 'cars/hatchback-sports.glb', kind: 'car', targetLen: 3.9 },
-  { file: 'cars/van.glb', kind: 'van', targetLen: 5.4 },
-  { file: 'cars/bus.glb', kind: 'bus', targetLen: 11 },
+  { file: 'cars/sedan.glb', kind: 'car', targetLen: 4.3, palette: 'kit' },
+  { file: 'cars/hatchback-sports.glb', kind: 'car', targetLen: 3.9, palette: 'kit' },
+  { file: 'cars/van.glb', kind: 'van', targetLen: 5.4, palette: 'kit' },
+  { file: 'cars/bus.glb', kind: 'bus', targetLen: 11, palette: 'bus' },
 ];
 
 const CAR_COUNT = 16;        // cars + vans down the parking lanes
@@ -52,9 +87,18 @@ export function buildCars(assets, world, scene) {
   group.name = 'cars';
   scene.add(group);
 
-  const loader = new GLTFLoader();
-  const load = (m) =>
-    loader.loadAsync(assetUrl(assets, m.file)).then((gltf) => prep(gltf.scene, m)).catch(() => null);
+  // Lazy and memoised: the first model to ask for a palette starts its load,
+  // the rest share the promise. Not started alongside the glbs, because in
+  // the single-file artifact no model parses at all — fetching a map nobody
+  // can use would just add two more 404s to a build that has no wrecks.
+  const loaded = {};
+  const palette = (name) => (loaded[name] ??= loadPalette(assets, PALETTES[name]));
+
+  const load = (m) => {
+    const loader = new GLTFLoader();
+    loader.register(() => new PalettePlugin(() => palette(m.palette)));
+    return loader.loadAsync(assetUrl(assets, m.file)).then((gltf) => prep(gltf.scene, m)).catch(() => null);
+  };
 
   Promise.all(MODELS.map(load)).then((prepped) => {
     const byKind = {};
@@ -66,6 +110,47 @@ export function buildCars(assets, world, scene) {
   });
 
   return { group };
+}
+
+// Answer every texture request with a map we already hold. GLTFLoader takes
+// the first non-null result from its plugins, and a pending promise counts —
+// so the parser never reads sourceDef.uri, never builds a blob from the
+// embedded copy, and never opens a request of its own. Each of these models
+// has exactly one texture, so answering unconditionally is correct.
+//
+// `get` is a thunk rather than the promise itself, so a model that never
+// parses never triggers a palette fetch.
+class PalettePlugin {
+  constructor(get) {
+    this.name = 'mcgrot_palette';
+    this.get = get;
+  }
+  loadTexture() {
+    return this.get();
+  }
+}
+
+// Resolves to a Texture, or to null if the image never arrived — a 404 in a
+// build that didn't ship it, or the page going away mid-flight. Both are
+// deliberately quiet: null propagates through GLTFLoader's assignTexture as
+// "no map", which is what the map-less fallback in wreckify already handles.
+function loadPalette(assets, spec) {
+  return new Promise((resolve) => {
+    new THREE.TextureLoader().load(
+      assetUrl(assets, spec.path),
+      (tex) => {
+        tex.flipY = false; // glTF convention; TextureLoader defaults to true
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping; // glTF default, not three's
+        tex.magFilter = spec.filters.magFilter;
+        tex.minFilter = spec.filters.minFilter;
+        tex.needsUpdate = true;
+        resolve(tex);
+      },
+      undefined,
+      () => resolve(null)
+    );
+  });
 }
 
 // Normalise scale, convert materials to tinted Lambert (the kit glbs come as

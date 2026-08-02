@@ -99,7 +99,9 @@ async function buildSite() {
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
   ['shopfronts/manifest.json', 'shopfronts/atlas-pages.json', 'shopfronts/atlas-pages', 'shopfronts/credits.json',
    'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',
-   'cars/Textures/colormap.png', 'comic-lines.json'].forEach(copy);
+   // Both palette maps are loaded by src/cars.js itself, not by GLTFLoader —
+   // bus.png is the bus glb's embedded map, extracted to a sibling file.
+   'cars/Textures/colormap.png', 'cars/Textures/bus.png', 'comic-lines.json'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
   for (const c of manifest.comics) copy(c.image);
 

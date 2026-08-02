@@ -35,6 +35,10 @@ node build.mjs     # → dist/mcgrot-walk.html (all assets inlined as data URIs)
 
 - `scripts/fetch-osm.mjs` — regenerates `assets/leith.json` from Overpass (only needed
   if you want a different street).
+- `scripts/extract-glb-texture.mjs` — lifts a model's embedded map out to a sibling
+  PNG, verbatim. Run once to produce `assets/cars/Textures/bus.png`; `src/cars.js`
+  loads both wreck palettes itself rather than letting GLTFLoader fetch them
+  (`node scripts/extract-glb-texture.mjs assets/cars/bus.glb 0 assets/cars/Textures/bus.png`).
 - `GEMINI_API_KEY` lives in `.env.local` (gitignored). TTS model:
   `gemini-3.1-flash-tts-preview`.
 - Faces: FLUX.2-pro via Together (`TOGETHER_API_KEY`, currently sourced from the

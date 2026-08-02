@@ -199,6 +199,33 @@ const EXPECTED_UPDATERS = [
   'post', 'moments',
 ];
 
+// The wrecks (src/cars.js) are the last thing in the scene to arrive: four
+// glbs plus two palette maps, all fetched after first render. The palette-map
+// gate reads state that only exists once that has finished, so it has to wait
+// for it rather than assume it.
+//
+// Measured, so the comment doesn't overclaim: the awaits between boot and
+// that gate already outlast the wrecks today — a console.error injected after
+// the models resolve reddens 'console clean' with or without this wait. It
+// makes the precondition explicit instead of incidental; it is not what
+// catches late errors. (The GLTFLoader texture noise never reached this gate
+// for a different reason: it only fires when a document is torn down
+// mid-load, and boot #1's page lives for the whole run. The moments region,
+// which abandons eight documents, is where it showed up.)
+//
+// 14 parked cars (16 draws minus the two the roadworks gap eats) + the bus,
+// all seeded, so the count is exact rather than a floor. Bounded and
+// swallowed on timeout: "the wrecks never arrived" is the palette-map gate's
+// finding to report, not a suite-wide hang.
+const WRECK_COUNT = 15;
+const EXPECTED_WRECK_MAPS = ['256x256', '512x512']; // the bus's own map, and Kenney's shared colormap
+async function waitForWrecks(page) {
+  await page.waitForFunction((n) => {
+    const g = window.__mcgrotDebug && window.__mcgrotDebug.scene.getObjectByName('cars');
+    return !!g && g.children.length >= n;
+  }, WRECK_COUNT, { timeout: 10000 }).catch(() => {});
+}
+
 function getFreePort() {
   return new Promise((resolve, reject) => {
     const srv = createServer();
@@ -616,11 +643,49 @@ async function main() {
       detail: `rAF callbacks before pauseAuto(): ${preFreezeRafCount1}`,
     });
 
+    // Precondition for the palette-map gate below; see waitForWrecks for what
+    // it does and does not buy the console read that follows.
+    await waitForWrecks(page1);
     const allConsoleErrors = summarizeConsole(pc1, inv1.consoleErrors);
     results.push({
       name: 'console clean',
       pass: allConsoleErrors.length === 0,
       detail: allConsoleErrors.length ? allConsoleErrors.join(' | ') : 'no errors',
+    });
+
+    // The wrecks' palette maps. src/cars.js loads both PNGs itself and hands
+    // them to GLTFLoader, so three separate things can now break quietly: a
+    // build that forgets to ship one (dist-site copies them explicitly), the
+    // loader plugin regressing to GLTFLoader's own fetch, or wreckify losing
+    // the map. Any of those leaves flat tinted Lambert where the kit's colour
+    // should be — a change the tint values were never authored against, and
+    // one nothing else here would notice.
+    const wrecks = await page1.evaluate(() => {
+      const g = window.__mcgrotDebug.scene.getObjectByName('cars');
+      if (!g) return null;
+      let meshes = 0, mapped = 0;
+      const dims = new Set();
+      g.traverse((o) => {
+        if (!o.isMesh) return;
+        meshes++;
+        const map = o.material && o.material.map;
+        // .image only becomes non-null once the PNG has actually decoded, so
+        // this distinguishes "has a map" from "has a map that loaded".
+        if (map && map.image && map.image.width) {
+          mapped++;
+          dims.add(`${map.image.width}x${map.image.height}`);
+        }
+      });
+      return { placed: g.children.length, meshes, mapped, dims: [...dims].sort() };
+    });
+    results.push({
+      name: 'wrecks carry their palette maps',
+      pass: !!wrecks && wrecks.placed === WRECK_COUNT && wrecks.meshes > 0 &&
+        wrecks.mapped === wrecks.meshes &&
+        wrecks.dims.join(',') === EXPECTED_WRECK_MAPS.join(','),
+      detail: wrecks
+        ? `${wrecks.placed}/${WRECK_COUNT} placed, ${wrecks.mapped}/${wrecks.meshes} meshes mapped, maps [${wrecks.dims.join(', ')}] (expected [${EXPECTED_WRECK_MAPS.join(', ')}])`
+        : 'no cars group in the scene',
     });
 
     const missingUpdaters = EXPECTED_UPDATERS.filter((n) => !inv1.updaterNames.includes(n));
@@ -1245,14 +1310,13 @@ async function main() {
     const linkCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
     await linkCtx.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
     const linkPage = await linkCtx.newPage();
-    // Pre-existing, unrelated, and loud: src/cars.js's kit .glbs reference a
-    // palette texture that fails to resolve, once per model per boot. It has
-    // nothing to do with links, and this region boots eight documents, so
-    // left unfiltered it drowns the assertion. Filtered by name rather than
-    // by silencing the list, so any OTHER error still fails the gate.
-    const IGNORED_CONSOLE = [/GLTFLoader: Couldn't load texture/];
+    // This region boots eight documents back to back, each abandoned while
+    // src/cars.js is still loading — which is what used to make GLTFLoader
+    // log a cancelled texture fetch here and nowhere else, and why this list
+    // was once filtered by name. cars.js owns those loads now and fails
+    // quietly, so nothing needs excusing: every error counts.
     const linkConsole = [];
-    const noteConsole = (t) => { if (!IGNORED_CONSOLE.some((re) => re.test(t))) linkConsole.push(t); };
+    const noteConsole = (t) => linkConsole.push(t);
     linkPage.on('console', (m) => { if (m.type() === 'error') noteConsole(m.text()); });
     linkPage.on('pageerror', (e) => noteConsole(String(e)));
     // The unique query string is load-bearing, not decoration. Navigating
