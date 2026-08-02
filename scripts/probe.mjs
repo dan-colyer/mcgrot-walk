@@ -71,6 +71,22 @@ const waitForServer = async () => {
 };
 
 let browser;
+// Same teardown handling as scripts/smoke.mjs: probe is the one you Ctrl-C
+// half way through, and the `finally` below never runs when you do. Measured
+// there as defence in depth, not a leak fix — Playwright's chromium already
+// dies with its control pipe. The re-entry guard is the part that earns its
+// keep, for the second Ctrl-C.
+let tearingDown = false;
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.on(sig, () => {
+    if (tearingDown) return;
+    tearingDown = true;
+    server.kill();
+    try { if (browser) browser.process()?.kill('SIGKILL'); } catch { /* already gone */ }
+    process.exit(130);
+  });
+}
+
 try {
   await waitForServer();
   browser = await chromium.launch();

@@ -593,9 +593,23 @@ async function main() {
     // this was added. serve.py also reaps itself when orphaned, which is the
     // only thing that survives a SIGKILL of this process; these handlers just
     // make the common cases immediate rather than waiting on its poll.
+    let tearingDown = false;
     for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
       process.on(sig, () => {
+        if (tearingDown) return; // a second Ctrl-C must not re-enter mid-teardown
+        tearingDown = true;
         if (server) server.kill();
+        // The browser too. process.exit() below skips the `finally` that
+        // would have awaited browser.close(), and close() is async so it
+        // cannot be awaited here — kill the process directly instead.
+        //
+        // MEASURED, and it is defence in depth rather than a fix: SIGTERMing
+        // this process with and without these two lines leaks zero browser
+        // pids either way, because Playwright's chromium exits when its
+        // control pipe closes. Kept because that is an implementation detail
+        // of Playwright's launcher, not a contract, and because the check
+        // costs nothing. Do not cite it as the reason there are no strays.
+        try { if (browser) browser.process()?.kill('SIGKILL'); } catch { /* already gone */ }
         process.exit(130);
       });
     }

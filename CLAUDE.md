@@ -129,6 +129,19 @@ and does not report success until every changed file md5-matches the live URL.
 
 ## Gotchas
 
+- **`git stash` is shared across worktrees.** Spawned background tasks run in
+  `.claude/worktrees/<name>/`, and a worktree has its own working tree but the
+  SAME `refs/stash`. A bare `git stash pop` here will happily pop the
+  background session's entry into this tree — hit while a "palette-fix" stash
+  was in flight, which merged another session's README/build.mjs/cars.js
+  changes in and conflicted. Check `git stash list` and pop by explicit index
+  (`git stash pop 'stash@{1}'`), or don't stash at all while a background task
+  is running: commit to a scratch commit instead.
+- **`git checkout <paths>` restores NOTHING if any path is untracked.** Mid-
+  milestone, a new module is untracked, so a restore command naming it fails
+  on that path and silently leaves everything else modified — a fault
+  injection then survives into the next run and looks like a second bug. Commit
+  before fault-injecting.
 - three.js physical light units: intensities that "look right" are ~10-100× the legacy
   scale (torch 18; there are no NPC exhibit spotlights — the only other lights are
   the three arc-flash PointLights, peak-driven from intensity 0). Tone mapping is
