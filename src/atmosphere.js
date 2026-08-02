@@ -28,6 +28,7 @@
 
 import * as THREE from 'three';
 import { DRY_ROUGHNESS, WET_ROUGHNESS } from './lighting-constants.js';
+import { startHour } from './day.js';
 
 // A full day/night cycle in 24 real minutes — long enough that a full walk
 // of the street (15-20 minutes) sees most of one, short enough to actually
@@ -758,7 +759,10 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     }
   }
 
-  let hours = todayStartHour(new Date());
+  // Date-derived arrival hour — see src/day.js, which is now the single
+  // authority for "today" so the harness can pin it (E5c puts the date on
+  // the HUD, and a golden containing a live date rots overnight).
+  let hours = startHour();
   let rate = HOURS_PER_REAL_MINUTE;
 
   // settledWeather: the weather fully arrived at (no transition pending).
@@ -783,7 +787,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   let schedClock = 0;
   let scheduleEnabled = true;
   // Seeded from the date-derived boot hour (already computed above via
-  // hashDateString) rather than a fresh Date() call — deterministic per
+  // day.js's startHour) rather than a fresh Date() call — deterministic per
   // calendar day, and draws are taken in a dedicated counter sequence
   // (scheduleSeedCounter) so they never interleave with any other hash32
   // call elsewhere in the project ("draw order is sacred").
@@ -1156,25 +1160,4 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   }
 
   return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state };
-}
-
-// FNV-1a over a short string — deterministic per calendar date, no PRNG
-// state, matching the hash32-only discipline this project holds seeded
-// placement to (see docs/ROADMAP.md / CLAUDE.md). Used only to pick a start
-// hour; setTime()/smoke's pin override it immediately when it matters.
-function hashDateString(str) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function todayStartHour(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const h = hashDateString(`${y}-${m}-${d}`);
-  return ((h % 10000) / 10000) * 24;
 }

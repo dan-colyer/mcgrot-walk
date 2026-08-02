@@ -11,7 +11,7 @@
 
 const WALK_SPEED = 14; // m/s
 const EYE_HEIGHT = 1.7;
-const MAX_OFFSET = 16; // metres from street centreline
+export const MAX_OFFSET = 16; // metres from street centreline (exported for src/moments.js's boot clamp)
 const LOOK_SENSITIVITY = 0.0035; // radians per pixel (drag)
 const POINTER_LOCK_SENSITIVITY = 0.0025;
 const MAX_PITCH = Math.PI / 2 - 0.05;

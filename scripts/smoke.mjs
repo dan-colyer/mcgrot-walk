@@ -71,7 +71,7 @@ const ONLY = (() => {
 // contexts rendering at once starve each other on a 10-core machine. A 20%
 // saving on two regions is not worth a suite that intermittently reports a
 // timeout looking like a real bug. --only is the fast path instead.
-const REGIONS = ['alignment', 'journal', 'anchors', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 function region(name) {
   if (!ONLY) return true;
@@ -94,6 +94,9 @@ const DIFF_PCT_TOLERANCE = 0.5;    // max % of pixels allowed to differ before a
 // goldens (and the facade-darkening pose below) every day. Pinned
 // immediately after pauseAuto(), before any capture.
 const SMOKE_HOUR = 13;
+// E5c: the pinned calendar day (see bootPage). Its date-derived arrival hour
+// is 06:55 — chosen to sit far from SMOKE_HOUR so the two can't be confused.
+const SMOKE_DATE = '2026-01-01';
 const NIGHT_LUMINANCE_RATIO_MAX = 45; // % — the 6% dimming-test regression this milestone fixes
 const TORCH_HOUR = 3; // deep night — daylight ambient/hemi/sun are all near-zero here
 const TORCH_EYE_HEIGHT = 1.7; // matches src/debug.js's EYE_HEIGHT
@@ -193,7 +196,7 @@ const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's b
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
   'rain', 'birds', 'vermin', 'scenery', 'interact', 'proximityAudio', 'torch',
-  'post',
+  'post', 'moments',
 ];
 
 function getFreePort() {
@@ -219,12 +222,23 @@ function waitForServer(url, timeoutMs = 10000) {
   });
 }
 
+// Every context in this file goes through here so the pinned calendar day
+// (E5c) can never be forgotten by a new one. The HUD prints the date and the
+// date-derived arrival hour, so an unpinned context would capture goldens
+// that go red overnight — and the failure would look like a rendering
+// regression, not a clock.
+async function newContext(browser, opts) {
+  const context = await browser.newContext(opts);
+  await context.addInitScript((d) => { window.__mcgrotForceDate = d; }, SMOKE_DATE);
+  return context;
+}
+
 // `extras` sets localhost-gated overrides before any page script runs.
 // Deliberately opt-in per caller: shortening the hush globally would change
 // golden-mobile:comic, which is stable only because headless audio never
 // reaches playback inside the 600ms window (see docs/VALIDATION.md).
 async function bootPage(browser, port, extras = null) {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await newContext(browser, { viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
   const consoleMessages = [];
   page.on('console', (msg) => {
@@ -648,7 +662,7 @@ async function main() {
     // script runs, so it's live for the title-card click below. A fresh
     // context/page — bootPage's shared page1 must never see this flag.
     {
-      const faultContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const faultContext = await newContext(browser, { viewport: { width: 1280, height: 800 } });
       await faultContext.addInitScript(() => { window.__mcgrotForceAudioContextError = true; });
       const faultPage = await faultContext.newPage();
       const faultConsole = [];
@@ -862,7 +876,7 @@ async function main() {
       // fault-injection idiom as the AudioContext throw above, but patching
       // Storage.prototype rather than a debug flag, since journal.js's
       // fail-soft is a plain try/catch around localStorage itself.
-      const faultCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const faultCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
       await faultCtx.addInitScript(() => {
         Storage.prototype.setItem = function () { throw new Error('[debug] forced storage failure'); };
       });
@@ -902,7 +916,7 @@ async function main() {
       // Forced explicitly off (not relying on whichever way the shipped
       // default currently points) so this gate means the same thing before
       // AND after the enable commit flips ANCHORS_ENABLED.
-      const anCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const anCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
       await anCtx.addInitScript(() => {
         window.__mcgrotFreezeAtBoot = true;
         window.__mcgrotForceAnchors = false;
@@ -1038,7 +1052,7 @@ async function main() {
       // shipped default is not until the enable commit. Forced via the same
       // localStorage-free override pattern as __mcgrotForceDaySeed/
       // __mcgrotFreezeAtBoot: set before any page script runs.
-      const onCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const onCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
       await onCtx.addInitScript(() => {
         window.__mcgrotFreezeAtBoot = true;
         window.__mcgrotForceAnchors = true;
@@ -1142,7 +1156,7 @@ async function main() {
       // flag-off control — the E2c.1 gate extended to this axis. Two forced,
       // freshly-booted pages (not the live default, which is off pre-enable-
       // commit and on after — this must hold either way).
-      const offCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const offCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
       await offCtx.addInitScript(() => {
         window.__mcgrotFreezeAtBoot = true;
         window.__mcgrotForceAnchors = false;
@@ -1181,6 +1195,145 @@ async function main() {
     }
 
     } // end region: anchors
+
+    if (region('moments')) {
+    // --- E5c: moments are links -------------------------------------------
+    //
+    // Three things must hold and each fails independently: the writer puts
+    // the camera into location.hash, the reader puts a hash into the camera
+    // at boot, and a page opened with NO hash still arrives at the Foot.
+    //
+    // The third is the control. Without it "the linked page is where I
+    // expected" is satisfied by a build that ignores links completely and
+    // spawns everyone at the same place — which is precisely the failure a
+    // link feature has.
+    const deg = (yaw) => ((yaw * 180 / Math.PI) % 360 + 360) % 360;
+    const degGap = (a, b) => { const d = Math.abs(deg(a) - deg(b)); return d > 180 ? 360 - d : d; };
+    const readPose = (p) => p.evaluate(() => ({
+      x: window.__mcgrotDebug.camera.position.x,
+      z: window.__mcgrotDebug.camera.position.z,
+      yaw: window.__mcgrotDebug.camera.rotation.y,
+      hash: location.hash,
+    }));
+    // The hash carries 0.1m and 1 degree, so a faithful round trip can still
+    // land half a step of each away. Anything looser would pass on a reader
+    // that only used two of the three numbers.
+    const LINK_POS_TOLERANCE_M = 0.15;
+    const LINK_DEG_TOLERANCE = 1.0;
+
+    // (a) the writer, on the shared page. 30 stepped frames is 0.5s of sim
+    // time, past moments.js's 0.4s write throttle.
+    const hashBeforePose = await page1.evaluate(() => location.hash);
+    await page1.evaluate(() => window.__mcgrotDebug.goto(700, 'east', 'close'));
+    await page1.evaluate(() => window.__mcgrotDebug.stepFrames(30));
+    const posed = await readPose(page1);
+    results.push({
+      name: 'E5c: moving rewrites the URL hash',
+      pass: /^#p=-?\d+\.\d,-?\d+\.\d,\d{1,3}$/.test(posed.hash) && posed.hash !== hashBeforePose,
+      detail: `hash "${hashBeforePose || '(empty)'}" -> "${posed.hash}" after posing at chainage 700`,
+    });
+
+    // One context, four navigations — each goto is a fresh document, which is
+    // what a shared link actually is, and far cheaper than four contexts.
+    const linkCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+    await linkCtx.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
+    const linkPage = await linkCtx.newPage();
+    // Pre-existing, unrelated, and loud: src/cars.js's kit .glbs reference a
+    // palette texture that fails to resolve, once per model per boot. It has
+    // nothing to do with links, and this region boots eight documents, so
+    // left unfiltered it drowns the assertion. Filtered by name rather than
+    // by silencing the list, so any OTHER error still fails the gate.
+    const IGNORED_CONSOLE = [/GLTFLoader: Couldn't load texture/];
+    const linkConsole = [];
+    const noteConsole = (t) => { if (!IGNORED_CONSOLE.some((re) => re.test(t))) linkConsole.push(t); };
+    linkPage.on('console', (m) => { if (m.type() === 'error') noteConsole(m.text()); });
+    linkPage.on('pageerror', (e) => noteConsole(String(e)));
+    // The unique query string is load-bearing, not decoration. Navigating
+    // from '#p=banana' to '#p=x,y,z' differs only in the fragment, which
+    // Chromium serves as a SAME-DOCUMENT navigation: no reload, no boot, no
+    // parse. Five of the six malformed cases below were silently never
+    // exercised until a fault injection failed to redden this gate. Varying
+    // the query forces a real document load every time.
+    let bootSeq = 0;
+    const bootAt = async (suffix) => {
+      await linkPage.goto(`http://localhost:${port}/?boot=${bootSeq++}${suffix}`);
+      await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      return readPose(linkPage);
+    };
+
+    // (b) the reader.
+    const arrived = await bootAt(posed.hash);
+    // (c) the control: same build, no hash.
+    const plain = await bootAt('');
+    const posGap = Math.hypot(arrived.x - posed.x, arrived.z - posed.z);
+    const controlGap = Math.hypot(plain.x - posed.x, plain.z - posed.z);
+    results.push({
+      name: 'E5c: a link reproduces the spot it was made at (opposed pair)',
+      pass: posGap <= LINK_POS_TOLERANCE_M
+        && degGap(arrived.yaw, posed.yaw) <= LINK_DEG_TOLERANCE
+        && controlGap > 50,
+      detail: `linked boot is ${posGap.toFixed(3)}m / ${degGap(arrived.yaw, posed.yaw).toFixed(2)}deg from the posed spot `
+        + `(max ${LINK_POS_TOLERANCE_M}m / ${LINK_DEG_TOLERANCE}deg); the no-hash control lands ${controlGap.toFixed(1)}m away (must be >50m)`,
+    });
+
+    // (d) fails soft. A hand-mangled link must spawn at the Foot in silence,
+    // not white-screen the scene — the whole point of a share feature is that
+    // strangers paste it.
+    //
+    // The console list is cleared first so this gate answers "did the junk
+    // hash error?" rather than "has anything errored in this context yet?".
+    // It was catching a pre-existing, unrelated GLTFLoader texture warning
+    // from src/cars.js that arrives asynchronously several navigations later.
+    //
+    // One malformed string is not enough: '#p=banana' is rejected by the
+    // arity check alone, so a build with a broken numeric or bounds check
+    // would still pass it. Fault-injecting exactly that (a parser returning a
+    // position for non-finite input) went GREEN against the single case —
+    // hence one input per rejection branch.
+    linkConsole.length = 0;
+    const JUNK_HASHES = [
+      '#p=banana',        // wrong arity
+      '#p=1,2',           // wrong arity, plausible numbers
+      '#p=x,y,z',         // right arity, nothing finite
+      '#p=1,NaN,0',       // right arity, one bad number
+      '#p=1e9,1e9,0',     // finite but far outside the world
+      '#somethingelse',   // not a moment at all
+    ];
+    const junkFails = [];
+    for (const h of JUNK_HASHES) {
+      const junk = await bootAt(h);
+      const gap = Math.hypot(junk.x - plain.x, junk.z - plain.z);
+      if (gap >= 0.01) junkFails.push(`${h} -> ${gap.toFixed(2)}m off`);
+    }
+    results.push({
+      name: 'E5c: every malformed hash falls back to the Foot without erroring',
+      pass: junkFails.length === 0 && linkConsole.length === 0,
+      detail: junkFails.length
+        ? `moved the spawn: ${junkFails.join('; ')}`
+        : `all ${JUNK_HASHES.length} malformed hashes spawned at the Foot; console errors: ${linkConsole.length ? linkConsole.join(' | ') : 'none'}`,
+    });
+
+    // (e) the writer's opposed pair: nothing is written while the title card
+    // is still up. Same page, same movement, the only difference is the
+    // click — so a writer that ignored `entered` fails here and only here.
+    await linkPage.goto(`http://localhost:${port}/?boot=${bootSeq++}`);
+    await linkPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+    await linkPage.evaluate(() => window.__mcgrotDebug.pauseAuto());
+    await linkPage.evaluate(() => { window.__mcgrotDebug.camera.position.x += 40; });
+    await linkPage.evaluate(() => window.__mcgrotDebug.stepFrames(60));
+    const hashBeforeEnter = await linkPage.evaluate(() => location.hash);
+    await linkPage.click('#title-enter');
+    await linkPage.evaluate(() => { window.__mcgrotDebug.camera.position.x += 40; });
+    await linkPage.evaluate(() => window.__mcgrotDebug.stepFrames(60));
+    const hashAfterEnter = await linkPage.evaluate(() => location.hash);
+    results.push({
+      name: 'E5c: the hash tracks only after the title card is dismissed (opposed pair)',
+      pass: hashBeforeEnter === '' && hashAfterEnter !== '',
+      detail: `before entering "${hashBeforeEnter || '(empty)'}" (want empty), after entering "${hashAfterEnter}" (want a moment)`,
+    });
+
+    await linkCtx.close();
+    } // end region: moments
     if (region('render')) {
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
@@ -2251,7 +2404,7 @@ async function main() {
     // --- E2e: mobile pass — touch mode forced at a phone viewport ---
     console.log('[smoke] mobile pass...');
     {
-      const context = await browser.newContext({ viewport: MOBILE_VIEWPORT, hasTouch: true });
+      const context = await newContext(browser, { viewport: MOBILE_VIEWPORT, hasTouch: true });
       const page = await context.newPage();
       const mobileConsole = [];
       page.on('console', (msg) => { if (msg.type() === 'error') mobileConsole.push(msg.text()); });

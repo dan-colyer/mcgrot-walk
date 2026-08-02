@@ -38,6 +38,9 @@
 
 import * as THREE from 'three';
 import { assetUrl } from './assets.js';
+// hashDateKey doubles as the generic FNV-1a used for the per-NPC phase draw
+// below (which hashes a comic id, nothing to do with dates).
+import { todaySeed, hashDateKey as hashString } from './day.js';
 
 const PLAY_RANGE = 18;   // start a voice within this many metres
 const STOP_RANGE = 23;   // ...full-volume busking ends here (hysteresis)
@@ -72,28 +75,17 @@ function hash32(a, b) {
   return h >>> 0;
 }
 
-function hashString(str) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-// Real calendar day by default — window.__mcgrotForceDaySeed (hostname-gated
-// to localhost, set via __mcgrotDebug.setDaySeed) lets scripts/smoke.mjs
-// assert determinism without waiting for the date to turn over: same seed on
-// two loads -> identical offsets, different seed -> different ones.
+// Real calendar day by default, via src/day.js (the single date authority —
+// E5c). window.__mcgrotForceDaySeed still overrides it directly: that lever
+// exists so scripts/smoke.mjs can assert determinism without waiting for the
+// date to turn over (same seed on two loads -> identical offsets, different
+// seed -> different ones), and it is deliberately a *seed* override rather
+// than a date override so the gate stays independent of date formatting.
 function todayDaySeed() {
   if (typeof window !== 'undefined' && window.__mcgrotForceDaySeed != null) {
     return window.__mcgrotForceDaySeed >>> 0;
   }
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return hashString(`${y}-${m}-${day}`);
+  return todaySeed();
 }
 
 function npcPhase01(npc, daySeed) {

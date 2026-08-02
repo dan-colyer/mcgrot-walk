@@ -25,6 +25,8 @@ import { buildLitter } from './litter.js';
 import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
+import { readMoment, createMoments, createShareUi } from './moments.js';
+import { todayKey, startHour, dayName } from './day.js';
 import { createPost } from './post.js';
 import { createJournal, countVendorsWithAudio } from './journal.js';
 import { createDebugApi } from './debug.js';
@@ -94,7 +96,10 @@ async function main() {
   // runs SSW, not due south — controls' forward is (-sin yaw, -cos yaw)).
   const p0 = world.streetLine[0] || [0, 0];
   const p1 = world.streetLine[1] || [p0[0], p0[1] + 1];
-  const spawn = { x: p0[0], z: p0[1], yaw: Math.atan2(-(p1[0] - p0[0]), -(p1[1] - p0[1])) };
+  const defaultSpawn = { x: p0[0], z: p0[1], yaw: Math.atan2(-(p1[0] - p0[0]), -(p1[1] - p0[1])) };
+  // E5c: a shared link overrides where you arrive. Already corridor-clamped
+  // by readMoment, and null for every ordinary visit.
+  const spawn = readMoment(world.nearestStreetPoint) || defaultSpawn;
 
   const controls = createControls(camera, canvas, {
     nearestStreetPoint: world.nearestStreetPoint,
@@ -149,6 +154,21 @@ async function main() {
     journal,
   });
 
+  // E5c: position + heading in the URL hash. Gated on the title card having
+  // been dismissed so the hash isn't rewritten out from under a link the
+  // visitor has not yet acted on.
+  let entered = false;
+  const moments = createMoments({ camera, isEnabled: () => entered });
+  const shareUi = createShareUi({ moments });
+
+  // The name of this visit. startHour() is the date-derived ARRIVAL hour, not
+  // the live clock — atmosphere.setTime() moves the latter and must not move
+  // this label. Weather is read once, at boot, for the same reason.
+  const hudDayEl = document.getElementById('hud-day');
+  if (hudDayEl) {
+    hudDayEl.textContent = dayName(todayKey(), startHour(), atmosphere.state().weather);
+  }
+
   createTitleCard({
     controls,
     torch,
@@ -194,6 +214,7 @@ async function main() {
       }
       ambience.start(sharedCtx);        // AudioContext creation needs this user gesture
       proximityAudio.resume();          // ...and so does the positional-audio listener
+      entered = true;                   // E5c: the URL hash starts tracking from here
     },
   });
 
@@ -231,6 +252,10 @@ async function main() {
     // renderNow so that a settle of N frames lands on the same grain field
     // every run; renderNow deliberately draws without updating.
     { name: 'post', update: (dt, t) => post.setTime(t) },
+    // Last, so the hash reflects the position this frame ended at. Runs under
+    // stepFrame as well as rAF (see moments.js) — that is what makes the
+    // write path measurable rather than only reachable by hand.
+    { name: 'moments', update: (dt) => moments.update(dt) },
   ];
   // Simulation only, no draw. Settling the world costs the same updater work
   // either way, but headless Chromium rasterises in SOFTWARE (SwiftShader —
@@ -286,6 +311,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
+      moments, shareUi,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

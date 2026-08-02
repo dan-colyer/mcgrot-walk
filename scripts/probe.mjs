@@ -83,6 +83,10 @@ try {
   // afterwards is one we asked for. Without it the scene drifts under you.
   await context.addInitScript((a) => {
     window.__mcgrotFreezeAtBoot = true;
+    // Same pinned day as scripts/smoke.mjs — a probe measurement of anything
+    // date-derived (the HUD name, the arrival hour, reading phases) must
+    // reproduce what the suite sees, not what today happens to be.
+    window.__mcgrotForceDate = '2026-01-01';
     if (a !== null) window.__mcgrotForceAnchors = a === 'on';
   }, anchors);
 
