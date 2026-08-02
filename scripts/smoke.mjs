@@ -1868,6 +1868,12 @@ async function main() {
           for (let i = 1; i < line.length; i++) L += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
           return L;
         })();
+      // Step frames BEFORE reading the hinge count. bootPage never drives a
+      // frame, so legs.update() has not run yet at this point and an
+      // unstepped read cannot observe a boot hinge at all — the first version
+      // of this gate was decoration, and a fault injection that failed to go
+      // red is what exposed it.
+      dbg.stepFrames(4);
       return { startClock: dbg.atmosphereState().hours, hingesAtBoot: dbg.legs.state().hinges };
     }, { rate: LEG_RATE });
 

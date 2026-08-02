@@ -65,11 +65,19 @@ export function createLegs({ camera, world, atmosphere, seed = 0, onHinge = null
     return null;
   }
 
+  // Armed as "already here", and THIS line is the one doing the work: the
+  // spawn is at chainage 0, inside the north zone, so a machine that started
+  // with `zone = null` would see a null -> 'north' transition on its very
+  // first update and hinge before the player had moved — the walk would begin
+  // five hours after the HUD promised. Initialising from the actual start
+  // position is what makes the first frame a no-op.
+  //
+  // (Setting lastHingeZone below matters far less than it looks: `zone`
+  // already suppresses the boot fire. It earns its place for a link spawn
+  // dropped straight into an end zone, where it stops a hinge firing the
+  // moment the player steps out and back in.)
   const startChainage = chainageOfPoint(camera.position.x, camera.position.z, streetLine);
   let zone = zoneAt(startChainage);
-  // Armed as "already here". The spawn IS inside the north zone, so without
-  // this the very first frame fires a hinge and the walk starts five hours
-  // later than the HUD promised. It has its own gate.
   let lastHingeZone = zone;
   let leg = 0;
   let hinges = 0;
