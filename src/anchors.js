@@ -18,7 +18,7 @@
 // The `anchors` flag gates whether src/npcs.js applies these overrides at
 // all — see ANCHORS_ENABLED below. Landed off; flipped on once the flag-off
 // run proves byte-identical.
-export const ANCHORS_ENABLED = false;
+export const ANCHORS_ENABLED = true;
 
 export const ANCHOR_SET = [
   { id: '01b27ac5', landmark: 'Spey Lounge', kind: 'pub', chainage: 82 },

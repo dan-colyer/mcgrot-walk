@@ -1721,6 +1721,22 @@ the road from the premises they anchor. Keeping the parity is the cheap
 default; matching the real side costs a bigger nudge and a different vendor
 for some rows. Sonnet reports its judgement rather than choosing silently.
 
+**LANDED 2026-08-01** — `1a4a055` (flag off, landing commit), enabled in
+the following commit (flag on). Kept the parity default throughout: a spot
+check at two anchors (Spey Lounge, The Joker & The Thief) showed the real
+shopfront signage framed directly against the anchored vendor even standing
+opposite the premises, so no anchor needed the side-matching escape hatch.
+Full 187-check smoke suite passed both flag-off (byte-identical: every
+golden 0.000%, `geomHash` unchanged) and flag-on (every golden still
+0.000% — **none of the twelve anchors sit within range of a golden
+bookmark, so zero goldens needed recapturing**, confirming the planning
+brief's own measurement). No per-anchor `STREET_OFFSET` override or light
+was needed: the "brighter reading" requirement was met with an unlit
+material-colour bump (`ANCHOR_GLOW`, ×1.35) on each vendor's already-
+per-vendor-unique face/comic materials — never the shared `clothMat`
+cache, never a new light, so the render path and draw-call budget (checked
+exactly ±0 at every bookmark, both flag states) are untouched.
+
 ### E5c — Moments are links
 
 - **Position + heading (+ nearest reader) in the URL hash**, so "look at this
