@@ -2258,6 +2258,19 @@ while rendering nine seconds of black. Two additions, binding:
   two rejected speedups (hush shortening, concurrent SwiftShader
   contexts) stay rejected — both were measured, and the second corrupts
   results, not just time.
+
+  **Two corrections from E0.3, which did the measuring.** (1) The
+  bundle-caching lever was worth nothing: boots are 4.4% of the run and
+  their zero cache hits are structural, not a header choice — each boot is
+  a fresh context with a fresh cache. Reasoning picked that lever; the
+  profile picked `legs` (37% of the run, spent rastering frames no gate
+  looks at). (2) "Concurrent SwiftShader contexts corrupt results" was
+  over-stated: the measured failure was a wall-clock `page.click` timeout
+  with two contexts in ONE browser. Two shards as separate processes ran
+  green in 358s/343s with identical coverage and goldens unmoved under
+  full load. Still not shipped — it needs a single pre-shard bundle and a
+  merge step — but it is a cost/complexity call now, not a correctness
+  one.
 - **`chainageOfPoint` is now called twice per frame** (legs, plus the
   ending's idle-poll via `legs.state()`). Folded into E3's existing
   cached-chainage-lookup residual rather than fixed now.
@@ -2290,9 +2303,18 @@ outcome on re-examination, with one small unit inserted first:
 1. ~~**E2g.1 — night coverage and the picture gates**~~ — LANDED 2026-08-03.
    It had to precede E8: E8's landing recaptures every golden, and with no
    night golden the grade would ship with its night look never once captured.
-2. **A measured suite speedup** (small — see the runtime ruling above). The
-   full run has doubled to ~14 minutes; take the bundle-caching lever
-   before E8's loop starts leaning on iteration speed.
+2. ~~**A measured suite speedup**~~ — LANDED 2026-08-03 as E0.3. **847s ->
+   519s**, 222 checks, 0 failures. The named lever was wrong and the profile
+   said so: boots are 4.4% of the run, and their 161MB over 1176 requests
+   with zero cache hits cannot be cached away — every boot is a fresh
+   Playwright context with its own cache, so `Cache-Control` has nothing to
+   hit. What paid instead: `legs` was rastering all 2,280 frames it walked
+   and looking at none of them (311.8s -> 37.3s, gate numbers bit-identical),
+   and the DPR timing table was running on every full run while `--quick`
+   silently dropped the DPR cap *gate* that shared its guard (67.3s -> 6.0s,
+   and the gate now always runs). Also landed: a permanent profile table, and
+   `--since`, which routes a working diff to the regions it can reach and
+   falls back to everything for any unmapped path.
 3. **E8 — the McGrot grade** prototype loop. Unblocked, captures-only until
    its landing, no dependency on E2f or E6.
 4. **E2f** stays queue-jumping and Dan-gated: it happens the moment a phone

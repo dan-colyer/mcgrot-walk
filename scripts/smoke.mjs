@@ -50,6 +50,11 @@ const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
 // pass. NOT a deploy gate: `npm run deploy` always runs the full suite, and
 // the weather columns are exactly where a golden regression hides.
 const QUICK = process.argv.includes('--quick');
+// E0.3: the DPR frame-timing table, opt-in. It is command-submission timing
+// under SwiftShader, which docs/VALIDATION.md already records as not a GPU
+// measurement — 67s of an 847s run for numbers nobody can act on. The DPR cap
+// gate that used to sit behind the same guard now always runs.
+const DPR_TIMING = process.argv.includes('--dpr-timing');
 // src/interact.js's hush, shortened for the harness only. The gates still
 // assert the same thing (nothing credited at open, credited after), just
 // without burning 700ms of wall clock per assertion.
@@ -57,10 +62,7 @@ const QUICK = process.argv.includes('--quick');
 // iterating on one gate (~20s) instead of the whole suite. Regions were
 // checked to declare nothing used outside themselves before being made
 // skippable; if you add one, check the same before wrapping it.
-const ONLY = (() => {
-  const hit = process.argv.find((a) => a.startsWith('--only='));
-  return hit ? new Set(hit.slice(7).split(',').map((s) => s.trim()).filter(Boolean)) : null;
-})();
+const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // 'render' is the draw-call budget, every golden column, E2a/E2b, the weather
 // matrix and the post chain — the bulk of the runtime, and the only region
 // that captures desktop goldens. Boot #1 itself is NOT skippable: its page
@@ -73,10 +75,145 @@ const ONLY = (() => {
 // timeout looking like a real bug. --only is the fast path instead.
 const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'ending', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
+
+// --- E0.3: --since — the router, not a new tier -------------------------
+//
+//   node scripts/smoke.mjs --since          # vs HEAD (i.e. the working diff)
+//   node scripts/smoke.mjs --since=<ref>    # vs any ref
+//
+// `--only` already gave a 20-50s inner loop; what was missing is knowing
+// WHICH regions a given change can reach without holding the whole region map
+// in your head. This maps changed paths to regions and feeds the same --only
+// machinery.
+//
+// THE RULE THAT MAKES THIS SAFE: a path matching no pattern selects EVERY
+// region. The failure mode of a router like this is silent under-selection —
+// a change whose region nobody mapped, running nothing, reporting green — so
+// the default is the expensive answer, never the cheap one. Adding a module
+// without touching this table therefore costs time, not coverage. `[]` means
+// "provably cannot affect a gate" and is only for docs.
+//
+// Deliberately NOT a deploy path: `npm run deploy` runs the bare suite, and
+// like --quick this prints what it declined to ask.
+const SINCE_ALL = 'run everything';
+const SINCE_RULES = [
+  [/^docs\//, []],
+  [/^README\.md$/, []],
+  [/^\.gitignore$/, []],
+  // Harness, plumbing and anything that wires the scene together: no useful
+  // narrowing is possible, and a wrong guess here is the expensive kind.
+  [/^scripts\//, SINCE_ALL],
+  [/^package(-lock)?\.json$/, SINCE_ALL],
+  [/^src\/(main|debug|assets|world|atmosphere)\.js$/, SINCE_ALL],
+  [/^src\/index\.html$/, SINCE_ALL], // every overlay's DOM and CSS, plus the bundle stamp
+  // Leaf modules, narrowest first.
+  [/^src\/journal\.js$/, ['journal', 'mobile']],
+  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'onevoice', 'render', 'determinism']],
+  [/^src\/moments\.js$/, ['moments']],
+  [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
+  [/^src\/lamps\.js$/, ['lamps', 'render']],
+  [/^src\/legs\.js$/, ['legs', 'ending']],
+  [/^src\/ending\.js$/, ['ending']],
+  [/^src\/(proximity-audio|ambience)\.js$/, ['alignment', 'onevoice']],
+  [/^src\/interact\.js$/, ['journal', 'onevoice', 'mobile']],
+  [/^src\/(controls|title|keys)\.js$/, ['mobile']],
+  [/^src\/post\.js$/, ['render']],
+  // The rest of the visual set: geometry, materials, placement. All of it can
+  // move a golden, and most of it feeds geomHash.
+  [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|leithers|placeholders|legs|lighting-constants)\.js$/,
+    ['render', 'determinism', 'lamps']],
+  [/^assets\//, ['render', 'determinism', 'alignment']],
+];
+
+function regionsSince(ref) {
+  let changed;
+  try {
+    const diff = execSync(`git diff --name-only ${ref}`, { encoding: 'utf8' });
+    const untracked = execSync('git ls-files --others --exclude-standard', { encoding: 'utf8' });
+    changed = [...new Set((diff + untracked).split('\n').map((s) => s.trim()).filter(Boolean))];
+  } catch (err) {
+    return { regions: null, why: [`git failed (${err.message.split('\n')[0]}) — running everything`] };
+  }
+  if (!changed.length) return { regions: null, why: [`nothing changed vs ${ref} — running everything`] };
+
+  const selected = new Set();
+  const why = [];
+  for (const file of changed) {
+    const rule = SINCE_RULES.find(([pattern]) => pattern.test(file));
+    if (!rule) {
+      why.push(`${file} -> matches no rule, so EVERYTHING runs (see SINCE_RULES in scripts/smoke.mjs)`);
+      return { regions: null, why };
+    }
+    const [, regions] = rule;
+    if (regions === SINCE_ALL) {
+      why.push(`${file} -> everything`);
+      return { regions: null, why };
+    }
+    for (const r of regions) selected.add(r);
+    why.push(`${file} -> ${regions.length ? regions.join(', ') : '(gates nothing)'}`);
+  }
+  return { regions: selected, why };
+}
+
+const SINCE_ARG = process.argv.find((a) => a === '--since' || a.startsWith('--since='));
+const sinceResult = SINCE_ARG ? regionsSince(SINCE_ARG.includes('=') ? SINCE_ARG.split('=')[1] : 'HEAD') : null;
+
+const ONLY = (() => {
+  if (ONLY_ARG) return new Set(ONLY_ARG.slice(7).split(',').map((s) => s.trim()).filter(Boolean));
+  if (sinceResult && sinceResult.regions) return sinceResult.regions;
+  return null; // everything
+})();
+
+if (sinceResult) {
+  console.log(`[smoke] --since: ${sinceResult.regions ? `regions ${[...sinceResult.regions].join(', ') || '(none — boot checks only)'}` : 'running EVERY region'}`);
+  for (const line of sinceResult.why) console.log(`  ${line}`);
+  console.log('  NOT a deploy gate — npm run deploy always runs the full suite.');
+}
+// --- E0.3: where the suite's time actually goes -------------------------
+// The E5 phase gate called for a measured speedup and named a lever (stop
+// re-fetching the bundle on every boot). This exists so the lever is chosen
+// by measurement rather than by that guess, and so a later "X seconds came
+// off" is checkable. Printed at the end of every run; costs nothing.
+//
+// Boot stats come from the page's own Resource Timing, which reports
+// `transferSize === 0` for a cache hit — so the table says outright how much
+// of each boot was actually fetched over the wire.
+const profile = { regions: [], boots: [], phases: [] };
+let regionOpen = null;
+let phaseOpen = null;
+
+function beginRegion(name) {
+  endRegion(); // a region without an explicit end marker still gets closed here
+  regionOpen = { name, at: Date.now() };
+}
+
+function endRegion() {
+  endPhase();
+  if (!regionOpen) return;
+  profile.regions.push({ name: regionOpen.name, ms: Date.now() - regionOpen.at });
+  regionOpen = null;
+}
+
+// One level down, for a region big enough that "it is the biggest" is not an
+// actionable finding. `render` is 52% of the run and does four unrelated
+// things; without this the next lever would be picked by argument rather than
+// by measurement. Phases nest inside a region and are closed by the next
+// beginPhase or by endRegion, so an unclosed one cannot leak into the tail.
+function beginPhase(name) {
+  endPhase();
+  phaseOpen = { name, at: Date.now() };
+}
+
+function endPhase() {
+  if (!phaseOpen) return;
+  profile.phases.push({ name: phaseOpen.name, ms: Date.now() - phaseOpen.at });
+  phaseOpen = null;
+}
+
 function region(name) {
-  if (!ONLY) return true;
+  if (!ONLY) { beginRegion(name); return true; }
   const want = ONLY.has(name);
-  if (want) regionsRun.push(name);
+  if (want) { regionsRun.push(name); beginRegion(name); }
   return want;
 }
 
@@ -307,7 +444,24 @@ async function newContext(browser, opts) {
 // Deliberately opt-in per caller: shortening the hush globally would change
 // golden-mobile:comic, which is stable only because headless audio never
 // reaches playback inside the 600ms window (see docs/VALIDATION.md).
+// E0.3: what one boot costs, read from the page's own Resource Timing.
+// transferSize === 0 with a non-zero decodedBodySize is a cache hit, so this
+// distinguishes "fetched 1.7MB again" from "read it out of the cache" rather
+// than assuming either.
+async function bootStats(page) {
+  return page.evaluate(() => {
+    const rs = performance.getEntriesByType('resource');
+    let wire = 0, cached = 0, cachedBytes = 0;
+    for (const r of rs) {
+      if (r.transferSize > 0) wire += r.transferSize;
+      else if (r.decodedBodySize > 0) { cached++; cachedBytes += r.decodedBodySize; }
+    }
+    return { requests: rs.length, wireBytes: wire, cached, cachedBytes };
+  });
+}
+
 async function bootPage(browser, port, extras = null) {
+  const bootAt = Date.now();
   const context = await newContext(browser, { viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
   const consoleMessages = [];
@@ -347,6 +501,7 @@ async function bootPage(browser, port, extras = null) {
   // a future default-weather change must not silently move these goldens.
   // No-ops today (construction already defaults to 'overcast'), by design.
   await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+  profile.boots.push({ ms: Date.now() - bootAt, region: regionOpen ? regionOpen.name : '-', ...(await bootStats(page)) });
   return { context, page, consoleMessages, preFreezeRafCount };
 }
 
@@ -574,8 +729,11 @@ function meanLuminanceTopStrip(png, frac = 0.15) {
   return count ? sum / count : 0;
 }
 
+const suiteStartedAt = Date.now();
+
 async function main() {
-  const skipped = [];
+  const skipped = [];  // questions this run did NOT ask — flips the summary to PARTIAL
+  const notRun = [];   // informational extras that gate nothing — reported, never PARTIAL
   const results = []; // { name, pass, detail }
   let server;
   let browser;
@@ -675,6 +833,7 @@ async function main() {
       }
     }
 
+    endRegion();
     } // end region: alignment
     const port = await getFreePort();
     console.log(`[smoke] starting server on :${port}`);
@@ -1026,6 +1185,7 @@ async function main() {
       await jCtx.close();
     }
 
+    endRegion();
     } // end region: journal
     if (region('anchors')) {
     // --- E5b.2: the dozen anchor readers ---
@@ -1312,6 +1472,7 @@ async function main() {
       await offCtx.close();
     }
 
+    endRegion();
     } // end region: anchors
 
     if (region('moments')) {
@@ -1645,6 +1806,7 @@ async function main() {
     });
 
     await linkCtx.close();
+    endRegion();
     } // end region: moments
 
     if (region('lamps')) {
@@ -1825,6 +1987,7 @@ async function main() {
 
     await lampsOnCtx2.close();
     await lampsOffCtx2.close();
+    endRegion();
     } // end region: lamps
 
     if (region('legs')) {
@@ -1864,12 +2027,20 @@ async function main() {
       const len = window.__mcgrotLegLength;
       const steps = 40;
       let t = 0;
+      // E0.3: `stepFrames(n, t)` rather than n calls to `stepFrame` — the
+      // SAME (dt, t) sequence (both use dt = 1/60 and t += 1/60 per frame),
+      // but it rasters only the last frame of each chunk instead of all
+      // thirteen. This region measures the CLOCK and the hinge count; not one
+      // of these frames is looked at, and the ~130ms SwiftShader raster of
+      // each was 37% of the whole suite's wall time. Roughly 40 rendered
+      // frames per leg survive, which is also what keeps the shopfront atlas
+      // paging along the street for the evidence captures below.
+      const per = Math.floor(frames / (steps + 1));
       const advance = (from, to) => {
         for (let s = 0; s <= steps; s++) {
           place(from + (to - from) * (s / steps));
-          for (let f = 0; f < Math.floor(frames / (steps + 1)); f++) {
-            dbg.stepFrame(1 / 60, t); t += 1 / 60;
-          }
+          dbg.stepFrames(per, t);
+          t += per / 60;
         }
       };
       advance(5, len - 5);   // out
@@ -2016,6 +2187,7 @@ async function main() {
 
     await legsOnCtx.close();
     await legsOffCtx.close();
+    endRegion();
     } // end region: legs
 
     if (region('ending')) {
@@ -2217,9 +2389,11 @@ async function main() {
 
     await endCtx.close();
     await ctlCtx.close();
+    endRegion();
     } // end region: ending
 
     if (region('render')) {
+    beginPhase('render:bookmark-goldens');
     // --- bookmarks: draw-call budget + goldens ---
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);
@@ -2275,6 +2449,7 @@ async function main() {
       });
     }
 
+    beginPhase('render:night-golden');
     // --- E2g.1: the night golden ------------------------------------------
     // Its own boot at 22:00 overcast, because page1 is pinned to SMOKE_HOUR
     // and every later check in this region reads that state. One pose, one
@@ -2324,6 +2499,7 @@ async function main() {
       await nightCtx.close();
     }
 
+    beginPhase('render:e2a-night-facades');
     // --- E2a: clock pinning + sky/fog seam + the facade-darkening regression ---
     const invAfterBookmarks = await getInvariants(page1);
     results.push({
@@ -2399,6 +2575,7 @@ async function main() {
       results.push({ name: 'night stays night with the lamps lit (opposed pair)', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
     }
 
+    beginPhase('render:torch');
     // --- E2b: the torch demonstrably lights a readable surface ---
     // Runs on its own boot with the LAMPS FORCED OFF (E2g). The gate's job is
     // to catch a reverted MeshLambertMaterial conversion, and it does that by
@@ -2500,6 +2677,7 @@ async function main() {
     await lampsOffCtx.close();
 
 
+    beginPhase('render:weather-matrix');
     // --- E2c.1: exact draw-call parity for this milestone ---
     // The brief's own gate is stricter than the standing ±10% tolerance
     // above: this refactor adds no geometry, so every bookmark's draw calls
@@ -2926,6 +3104,7 @@ async function main() {
       detail: `haar=${haarCapture.fogDensity.toFixed(5)} overcast=${controlCapture.fogDensity.toFixed(5)} clear=${clearFogDensity.toFixed(5)} (haar floor ${HAAR_FOG_DENSITY_FLOOR})`,
     });
 
+    beginPhase('render:weather-transitions');
     // --- E2c.2: console-clean across all 12 ordered weather-pair transitions ---
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), WEATHER_CHAIN[0]);
@@ -2984,6 +3163,7 @@ async function main() {
     await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
     await page1.evaluate((f) => window.__mcgrotDebug.stepFrames(f), WEATHER_SETTLE_FRAMES);
 
+    beginPhase('render:scheduler');
     // --- E2c.3c Part 3: autonomous weather scheduler ---
     // 3a: the load-bearing determinism guarantee — the scheduler must never
     // fire while a harness has pinned time via setTime() (rate=0). This is
@@ -3081,6 +3261,7 @@ async function main() {
       }
     }
 
+    beginPhase('render:post-chain');
     // --- E2d (check 26): the post chain is transparent at neutral, and live
     // as authored. Two assertions per state, deliberately pointing opposite
     // ways, because this project has shipped a gate that passed BECAUSE a bug
@@ -3159,6 +3340,7 @@ async function main() {
         : postLiveBad.join('; '),
     });
 
+    endRegion();
     } // end region: render
     await ctx1.close();
 
@@ -3208,6 +3390,7 @@ async function main() {
       pass: invRain1.geomHash === invRain2.geomHash,
       detail: `boot1=${invRain1.geomHash} boot2=${invRain2.geomHash}, rain=${invRain1.rain.toFixed(2)}`,
     });
+    endRegion();
     } // end region: determinism
 
     // --- E2e item 3 / acceptance criterion 8: DPR cap frame-timing table ---
@@ -3215,25 +3398,41 @@ async function main() {
     // SwiftShader command-submission timing isn't a real-device GPU
     // measurement (renderer.render only queues; raster happens at the next
     // await, so this doesn't capture actual frame cost). Logged, not gated.
-    if (QUICK || !region('dpr')) {
-      if (QUICK) skipped.push('DPR frame-timing table (informational, not gated)');
+    if (!region('dpr')) {
+      // nothing to do — --only excluded this region
     } else {
-    console.log('[smoke] DPR timing...');
     {
       const { context, page } = await bootPage(browser, port);
       await page.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), DPR_TIMING_BOOKMARK);
       const unclamped = await page.evaluate(() => window.devicePixelRatio || 1);
-      const ratios = [...new Set([...DPR_TABLE, unclamped])];
-      const rows = [];
-      for (const r of ratios) {
-        const timing = await page.evaluate((ratio) => {
-          window.__mcgrotDebug.setPixelRatio(ratio);
-          return window.__mcgrotDebug.measureFrameTiming(60);
-        }, r);
-        rows.push({ ratio: r, ...timing });
+
+      // E0.3: the timing TABLE is now opt-in; the cap GATE below always runs.
+      // They used to share a `QUICK ||` guard, which was wrong twice over: it
+      // cost 67s of an 847s full run for a table that is explicitly not a
+      // measurement of anything (see below), and on --quick it silently took
+      // a real gate with it while the skip message said "informational, not
+      // gated". Six measureFrameTiming(60) sweeps is where the 67s went.
+      if (DPR_TIMING) {
+        console.log('[smoke] DPR timing...');
+        const ratios = [...new Set([...DPR_TABLE, unclamped])];
+        const rows = [];
+        for (const r of ratios) {
+          const timing = await page.evaluate((ratio) => {
+            window.__mcgrotDebug.setPixelRatio(ratio);
+            return window.__mcgrotDebug.measureFrameTiming(60);
+          }, r);
+          rows.push({ ratio: r, ...timing });
+        }
+        console.log('[smoke] DPR command-submission timing (NOT a raster/GPU measurement — see docs/VALIDATION.md): ' +
+          rows.map((row) => `${row.ratio}x${row.ratio === unclamped ? ' (unclamped)' : ''}: mean=${row.meanMs.toFixed(2)}ms p95=${row.p95Ms.toFixed(2)}ms`).join(' | '));
+      } else {
+        // NOT `skipped`: that list is "questions this run did not ask", and it
+        // flips the summary line to PARTIAL. The timing table asks no question
+        // — it gates nothing and never did. Putting it there made a full,
+        // complete run announce itself as partial, which is the honesty
+        // machinery crying wolf.
+        notRun.push('DPR frame-timing table (informational, gates nothing — pass --dpr-timing). The DPR cap gate ran.');
       }
-      console.log('[smoke] DPR command-submission timing (NOT a raster/GPU measurement — see docs/VALIDATION.md): ' +
-        rows.map((row) => `${row.ratio}x${row.ratio === unclamped ? ' (unclamped)' : ''}: mean=${row.meanMs.toFixed(2)}ms p95=${row.p95Ms.toFixed(2)}ms`).join(' | '));
 
       // E2e.1 item 6: the thing that can actually regress is the cap itself —
       // assert renderer.getPixelRatio() lands on min(devicePixelRatio, DPR_CAP)
@@ -3268,6 +3467,7 @@ async function main() {
 
       await context.close();
     }
+    endRegion(); // dpr — guarded by `QUICK || !region('dpr')`, so it has no `end region` marker
     }
 
     if (region('onevoice')) {
@@ -3334,6 +3534,7 @@ async function main() {
       });
     }
 
+    endRegion();
     } // end region: onevoice
     if (region('determinism-clock')) {
     // --- E5a gate 5c: virtual reading clock determinism ---
@@ -3401,6 +3602,7 @@ async function main() {
       });
     }
 
+    endRegion();
     } // end region: determinism-clock
     if (region('mobile')) {
     // --- E2e: mobile pass — touch mode forced at a phone viewport ---
@@ -3751,6 +3953,7 @@ async function main() {
 
       await context.close();
     }
+    endRegion();
     } // end region: mobile
 
   } finally {
@@ -3775,6 +3978,41 @@ async function main() {
         flat.map((g) => `${g.name} stddev=${g.stddev.toFixed(1)} mean=${g.mean.toFixed(1)}`).join('; '),
   });
 
+  // E0.3: the profile, printed before the results so a long run's tail is
+  // still the pass/fail line. Regions are wall time between the `region()`
+  // call and its end marker; anything outside one is "unattributed", which is
+  // itself a number worth seeing.
+  endRegion();
+  {
+    const totalMs = Date.now() - suiteStartedAt;
+    const attributed = profile.regions.reduce((a, r) => a + r.ms, 0);
+    const rows = [...profile.regions].sort((a, b) => b.ms - a.ms);
+    const w = Math.max(...rows.map((r) => r.name.length), 12);
+    console.log(`\n[smoke] where the time went (total ${(totalMs / 1000).toFixed(0)}s):`);
+    for (const r of rows) {
+      console.log(`  ${r.name.padEnd(w)}  ${(r.ms / 1000).toFixed(1).padStart(7)}s  ${((r.ms / totalMs) * 100).toFixed(1).padStart(5)}%`);
+    }
+    console.log(`  ${'unattributed'.padEnd(w)}  ${((totalMs - attributed) / 1000).toFixed(1).padStart(7)}s  ${(((totalMs - attributed) / totalMs) * 100).toFixed(1).padStart(5)}%`);
+    if (profile.phases.length) {
+      const pw = Math.max(...profile.phases.map((p) => p.name.length), 12);
+      console.log('  --- inside the regions above (phases, sorted) ---');
+      for (const p of [...profile.phases].sort((a, b) => b.ms - a.ms)) {
+        console.log(`  ${p.name.padEnd(pw)}  ${(p.ms / 1000).toFixed(1).padStart(7)}s  ${((p.ms / totalMs) * 100).toFixed(1).padStart(5)}%`);
+      }
+    }
+    if (profile.boots.length) {
+      const n = profile.boots.length;
+      const bootMs = profile.boots.reduce((a, b) => a + b.ms, 0);
+      const wire = profile.boots.reduce((a, b) => a + b.wireBytes, 0);
+      const cached = profile.boots.reduce((a, b) => a + b.cached, 0);
+      const reqs = profile.boots.reduce((a, b) => a + b.requests, 0);
+      console.log(`  ${n} boots via bootPage: ${(bootMs / 1000).toFixed(1)}s total ` +
+        `(${((bootMs / totalMs) * 100).toFixed(1)}% of the run, mean ${(bootMs / n / 1000).toFixed(1)}s), ` +
+        `${(wire / 1048576).toFixed(1)}MB over the wire in ${reqs} requests, ${cached} of them cache hits. ` +
+        `Boots made outside bootPage (lampBoot) are NOT counted here.`);
+    }
+  }
+
   console.log('\n[smoke] results:');
   const nameWidth = Math.max(...results.map((r) => r.name.length), 10);
   for (const r of results) {
@@ -3786,6 +4024,10 @@ async function main() {
     if (unknown.length) console.log(`\n[smoke] --only: unknown region(s) ${unknown.join(', ')}. Known: ${REGIONS.join(', ')}`);
     skipped.push(`--only=${[...ONLY].join(',')}: ran ${regionsRun.join(', ') || 'nothing'}; ` +
       `skipped ${REGIONS.filter((r) => !ONLY.has(r)).join(', ')} AND every unregioned check (boot invariants, goldens, weather, post)`);
+  }
+  if (notRun.length) {
+    console.log('\n[smoke] not run (informational only, nothing gated):');
+    for (const s of notRun) console.log(`  - ${s}`);
   }
   if (skipped.length) {
     // Never let a quick run read like a full one. The whole failure mode this

@@ -1168,17 +1168,21 @@ three.**
 
 ## Running the suite fast (and what that costs you)
 
-A full run was **412s** measured at E5c; with the `lamps`/`legs`/`ending`
-regions added it measured **834s** at the E5 phase gate (2026-08-03) — the
-suite has doubled, and a measured speedup unit is queued on the roadmap
-(bundle caching first). Two ways to cut a run today, both of which announce
-what they did not check — a partial run that reads like a full one is the
-exact failure this project keeps having.
+A full run was **412s** at E5c and **847s** by the E5 phase gate. E0.3
+(2026-08-03) took it to **519s** — see "The speedup, and what the profile
+said" below for where the time went and which lever was rejected. Three ways
+to cut a run, all of which announce what they did not check: a partial run
+that reads like a full one is the exact failure this project keeps having.
 
-- `npm run smoke:quick` (**169s**) skips the weather matrix (the clear, rain,
-  drizzle and haar golden columns, the transition and midnight-wrap checks,
-  the 20 weather-pair transitions and the 24h sweeps) and the informational
-  DPR timing table. Those are 274s and 59s of the 412s.
+- `npm run smoke -- --since` (**20-60s typical**) runs only the regions the
+  working diff can reach — the router, not a new tier. `--since=<ref>` diffs
+  against any ref. A changed path matching no rule in `SINCE_RULES` selects
+  **every** region, so a new module costs time rather than coverage; docs-only
+  changes run the boot checks alone. It prints the file-to-region reasoning
+  and that it is not a deploy gate.
+- `npm run smoke:quick` skips the weather matrix (the clear, rain, drizzle and
+  haar golden columns, the transition and midnight-wrap checks, the 20
+  weather-pair transitions and the 24h sweeps) — 188s of the 519s.
 - `npm run smoke -- --only=<region>[,<region>]` runs single regions:
   `alignment`, `journal`, `anchors`, `moments`, `render`, `determinism`,
   `dpr`, `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs:
@@ -1195,6 +1199,97 @@ Regions were each checked to declare nothing referenced after them before
 being made skippable. If you add one, do the same check first — a region whose
 `const` escapes will break the *full* run, not the partial one.
 
+### The speedup, and what the profile said (E0.3)
+
+Every run now prints a profile — wall time per region, phases inside `render`,
+and per-boot time plus wire bytes and cache hits. It exists because the E5
+phase gate picked the next lever by reasoning ("stop re-fetching the 1.7MB
+bundle on every boot") and the reasoning was wrong.
+
+The first full profile, at 847s:
+
+| Region | Wall | Share |
+|---|---|---|
+| legs | 311.8s | 36.8% |
+| render | 265.1s | 31.3% |
+| dpr | 67.3s | 7.9% |
+| journal | 45.6s | 5.4% |
+| everything else | ~143s | ~17% |
+| (21 boots, counted within the above) | 37.3s | 4.4% |
+
+**The named lever was the 4.4% line, and unreachable at that.** Boots fetch
+161MB over 1176 requests with **zero** cache hits — and they always will:
+every boot is a fresh Playwright context with its own cache, so HTTP caching
+headers have nothing to hit. Serving `Cache-Control` instead of `no-store`
+would not have paid for reading this paragraph.
+
+What was actually taken:
+
+- **`legs` rendered every frame it walked.** `walkLeg` called `dbg.stepFrame`
+  1140 times per arm, rastering all of them; the region measures the *clock*
+  and the hinge count and looks at none of those frames. Swapped for
+  `dbg.stepFrames(per, t)`, which feeds the identical `(dt, t)` sequence and
+  rasters one frame per chunk. **311.8s -> 37.3s.** The proof it changed
+  nothing is that the gate's own numbers are bit-identical: 13.55h / 3.55h /
+  10.00h contributed, 2 hinges at south then north, the same weather rolls.
+  ~40 rendered frames per leg survive, which is also what keeps the shopfront
+  atlas paging for the hinge evidence captures.
+- **The DPR timing table was always running.** It and the DPR *cap gate* sat
+  behind one guard, so a full run paid 67s for a table that docs already
+  record as not a GPU measurement, and `--quick` silently dropped a real gate
+  while reporting "informational, not gated". Split: the cap gate always runs,
+  the table needs `--dpr-timing`. **67.3s -> 6.0s.**
+- **`skipped` vs `notRun`.** The dpr table first went into the list that
+  flips the summary to PARTIAL, and a complete run announced itself as
+  partial. That list means "questions this run did not ask"; an informational
+  extra that gates nothing gets its own line and never changes the verdict.
+  Honesty machinery that cries wolf teaches people to ignore it.
+
+**Where the remaining 519s sits**, from the phase table (serial):
+`render:weather-matrix` **188.1s (36% of the whole suite)**, then
+`render:weather-transitions` 20.9s, `render:post-chain` 18.8s,
+`render:bookmark-goldens` 15.2s. The four weather passes are independent of
+each other and each boots its own page — that is the next lever, and it is
+parallelism rather than thrift.
+
+### What a bookmark visit actually costs
+
+Measured with `npm run probe`, idle machine:
+
+| | |
+|---|---|
+| `gotoBookmark`, first visit | 1361ms |
+| `gotoBookmark`, revisit | 1060ms |
+| the 150 settle frames | **76ms** |
+| the post-load loop, 5 × (macrotask yield + render) | **1279ms** |
+| one yield + render | 179ms |
+
+Nearly the whole cost of a visit is the post-load loop, because each yield is
+what lets a deferred SwiftShader raster land. The settle frames — the thing
+that *looks* expensive — are 6% of it. Halving the loop would save ~30s
+across ~45 visits, but it is the loop that stops a stale texture reaching a
+golden, so it cannot be cut without a full golden pass as proof. Not done.
+
+### Concurrency: the earlier rejection was narrower than it looked
+
+Two shards were run as separate processes — `--only=render` against every
+other region — on a fully loaded machine:
+
+- **358s and 343s, both green**, wall clock 519s -> ~360s.
+- **Coverage is identical**: 221 unique check names in the full run, zero
+  missing across the two shards.
+- **Goldens do not care about load.** Under full contention: skyline 0.178%
+  (serial 0.180%), mid-805-far 0.100% (0.098%), lamp-hero-night 0.045%
+  (0.052%). SwiftShader is a software rasteriser; the frames are unmoved.
+
+So the rejection below stands only against what it actually measured — two
+contexts *inside one browser* starving each other into a 30s `page.click`
+timeout. Boot times do stretch under load (1.8s -> 3.5s mean), which is the
+margin to watch. Two prerequisites before this could ship: bundle **once**
+before the shards (concurrent `esbuild` writes to `src/dev-bundle.js` are a
+genuine race — the experiment dodged it by staggering the starts), and a merge
+step so one exit code and one profile come out. Not done.
+
 ### Two speedups that were tried and rejected
 
 Recorded because both look obviously worth doing until measured.
@@ -1208,7 +1303,9 @@ Recorded because both look obviously worth doing until measured.
 - **Running the journal and anchor gates concurrently.** 85s -> 68s, but the
   run failed: `page.click('#title-enter')` timed out at 30s because two
   SwiftShader contexts rendering at once starve each other (10-core machine).
-  A timeout that looks like a real bug costs more than 17s saves.
+  A timeout that looks like a real bug costs more than 17s saves. *Scope
+  corrected at E0.3: this is a finding about two contexts in ONE browser, not
+  about parallelism as such — see the sharding measurements above.*
 
 ## Goldens as measuring instruments (the contrast floor)
 
