@@ -118,7 +118,13 @@ const SINCE_RULES = [
   [/^src\/(proximity-audio|ambience)\.js$/, ['alignment', 'onevoice']],
   [/^src\/interact\.js$/, ['journal', 'onevoice', 'mobile']],
   [/^src\/(controls|title|keys)\.js$/, ['mobile']],
-  [/^src\/post\.js$/, ['render']],
+  // 'mobile' is not obvious and was measured, not reasoned: the full-screen
+  // pass reaches the mobile captures too. Raising VIGNETTE 0.28 -> 0.85 and
+  // running the whole gate moved 30 render goldens AND golden-mobile:hud,
+  // while `--since` on this path was selecting 'render' alone — a silent
+  // under-selection in the one file E8 iterates on. The same run showed lamps
+  // and ending do NOT move, so they stay out.
+  [/^src\/post\.js$/, ['render', 'mobile']],
   // The rest of the visual set: geometry, materials, placement. All of it can
   // move a golden, and most of it feeds geomHash.
   [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|leithers|placeholders|legs|lighting-constants)\.js$/,
