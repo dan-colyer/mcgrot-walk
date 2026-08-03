@@ -1192,9 +1192,13 @@ that reads like a full one is the exact failure this project keeps having.
   **every** region, so a new module costs time rather than coverage; docs-only
   changes run the boot checks alone. It prints the file-to-region reasoning
   and that it is not a deploy gate.
-- `npm run smoke:quick` skips the weather matrix (the clear, rain, drizzle and
-  haar golden columns, the transition and midnight-wrap checks, the 20
-  weather-pair transitions and the 24h sweeps) — 188s of the 519s.
+- `npm run smoke:quick` was **removed** (E0.5). It skipped the weather matrix
+  to buy an inner loop, which was worth having at 100s against a 412s full
+  run under SwiftShader. Under Metal it measured **93s and PARTIAL against
+  `smoke:par` at 74s and COMPLETE** — slower and narrower at once, so it was
+  strictly dominated. What replaced it was not a cheaper tier but a faster
+  full gate. Passing `--quick` now exits 2 rather than quietly running more
+  than the caller asked for.
 - `npm run smoke -- --only=<region>[,<region>]` runs single regions:
   `alignment`, `journal`, `anchors`, `moments`, `render`, `determinism`,
   `dpr`, `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs:
@@ -1203,7 +1207,7 @@ that reads like a full one is the exact failure this project keeps having.
   server, browser, boot #1) that every run pays.
 
 `render` is the only region that captures desktop goldens; `mobile` captures
-the four mobile ones. **Neither `--quick` nor `--only` is a deploy gate.**
+the four mobile ones. **`--only` is not a deploy gate.**
 `npm run deploy` always runs the whole suite, because the weather columns are
 exactly where a golden regression hides.
 
@@ -1532,7 +1536,7 @@ measures command submission, not drawing, and will happily report ~2 ms for a
 frame that takes 160 ms. Never size a settle from that number.
 
 The suite used to draw every frame of every settle: 156 renders per bookmark
-visit, six 700-frame weather settles, 52 ninety-frame quick settles — roughly
+visit, six 700-frame weather settles, 52 ninety-frame short settles — roughly
 14,000 frames nobody ever looked at, and **42 minutes** of runtime. Settles now
 run simulation *without* drawing and render only the frame that gets captured
 (`updateFrame` in `src/main.js`, `stepFrames` in `src/debug.js`). Same updater

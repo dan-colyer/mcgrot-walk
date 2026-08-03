@@ -8,7 +8,6 @@
     "bundle": "esbuild src/main.js --bundle --outfile=src/dev-bundle.js && node scripts/stamp-bundle.mjs",
     "dev": "npm run bundle && cd src && python3 ../scripts/serve.py ${PORT:-5174}",
     "smoke": "node scripts/smoke.mjs",
-    "smoke:quick": "node scripts/smoke.mjs --quick",
     "smoke:par": "node scripts/smoke.mjs --shards",
     "probe": "node scripts/probe.mjs",
     "style": "node scripts/style-sheet.mjs",

@@ -145,7 +145,6 @@ node build.mjs --site   # dist-site/ for GitHub Pages (npm run deploy does this 
 
 npm run smoke        # full validation rig, ~133s — see docs/VALIDATION.md
 npm run smoke:par    # the SAME full gate, two sharded processes, ~74s — the deploy gate
-npm run smoke:quick  # 93s and PARTIAL — strictly worse than smoke:par now; see below
 npm run smoke -- --since        # only the regions the working diff reaches
 npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates nothing)
 npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
@@ -162,11 +161,10 @@ renderer-specific. `MCGROT_GPU=0` forces the software path back; try it first
 if goldens ever move for no reason anyone can explain, since a clean run under
 it blames a driver update rather than the scene.
 
-**`smoke:quick` is now strictly dominated and should probably go.** Measured
-under Metal: quick is 93s and PARTIAL, `smoke:par` is 74s and complete. It is
-slower *and* narrower — there is no case left for running it. Removing
-`--quick` touches `QUICK` in several places in `scripts/smoke.mjs`, so it is
-its own small unit rather than a tidy-up.
+**`smoke:quick` is gone** (E0.5). Measured under Metal it was 93s and PARTIAL
+against `smoke:par` at 74s and COMPLETE — slower *and* narrower, so there was
+no case left for running it. Passing `--quick` now exits 2 with that number
+rather than silently running something else.
 
 `--since` remains the genuine inner loop. It maps changed paths to regions and
 **falls back to running everything** for any path it has no rule for, so adding

@@ -42,15 +42,19 @@ const captureDir = join(smokeDir, 'captures');
 const budgetPath = join(smokeDir, 'budget.json');
 
 const UPDATE_GOLDENS = process.argv.includes('--update-goldens');
-// --quick: the inner-loop suite. Skips the weather matrix (the four
-// non-overcast golden columns, the transition/midnight-wrap checks, the 20
-// weather-pair transitions and the 24h sweeps) and the informational DPR
-// timing table. Measured: those are 274s and 59s of a 412s run, so quick is
-// ~100s. Everything structural still runs — invariants, determinism, the
-// overcast goldens, the draw-call budget, the milestone gates and the mobile
-// pass. NOT a deploy gate: `npm run deploy` always runs the full suite, and
-// the weather columns are exactly where a golden regression hides.
-const QUICK = process.argv.includes('--quick');
+// `--quick` was REMOVED (E0.5). It skipped the weather matrix and the DPR
+// table to buy an inner loop, and under SwiftShader that was 100s against a
+// 412s full run. Under Metal it measured 93s and PARTIAL against `--shards`
+// at 74s and COMPLETE: slower AND narrower, with no case left for running it.
+// The inner loop is `--since` (regions the diff reaches) or `--only`.
+// Passing it now is an error rather than a no-op: a flag that silently means
+// something different from what the caller remembers is how a run gets
+// misread, which is the one failure mode this suite exists to prevent.
+if (process.argv.includes('--quick')) {
+  console.error('[smoke] --quick was removed (E0.5): it measured 93s and PARTIAL against'
+    + ' `npm run smoke:par` at 74s and COMPLETE. Use --since or --only for an inner loop.');
+  process.exit(2);
+}
 // E0.3: the DPR frame-timing table, opt-in. It is command-submission timing
 // under SwiftShader, which docs/VALIDATION.md already records as not a GPU
 // measurement — 67s of an 847s run for numbers nobody can act on. The DPR cap
@@ -95,7 +99,7 @@ const regionsRun = [];
 // "provably cannot affect a gate" and is only for docs.
 //
 // Deliberately NOT a deploy path: `npm run deploy` runs the bare suite, and
-// like --quick this prints what it declined to ask.
+// this prints what it declined to ask.
 const SINCE_ALL = 'run everything';
 const SINCE_RULES = [
   [/^docs\//, []],
@@ -382,7 +386,7 @@ const SWEEP_HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 23.99, 0.01]; // includes the m
 // already asserted elsewhere) — a bug here throws immediately, not only
 // after 10 full seconds of blend. Kept short because both sweeps repeat
 // this settle many times (12 transitions x this + 4 weathers x this).
-const QUICK_SETTLE_FRAMES = 90;
+const SHORT_SETTLE_FRAMES = 90;
 
 // E2e: mobile pass — a phone-shaped viewport with touch mode forced via
 // __mcgrotDebug.setTouchMode rather than relying on Playwright's own
@@ -2802,10 +2806,6 @@ async function main() {
         : drawCallDrift.map((r) => `${r.id}: ${r.calls} vs ${r.baseline}`).join('; '),
     });
 
-    if (QUICK) {
-      console.log('[smoke] --quick: skipping the weather matrix (clear/rain/drizzle/haar columns, transitions, 24h sweeps)');
-      skipped.push('weather matrix (clear, rain, drizzle, haar columns + transition and sweep checks)');
-    } else {
     // --- E2c.1: the clear weather column ---
     // setWeather + a full WEATHER_SETTLE_FRAMES worth of stepped dt so the
     // 10s transition (WEATHER_TRANSITION_SECONDS, atmosphere.js) is
@@ -3230,7 +3230,7 @@ async function main() {
       await page1.evaluate((frames) => {
         // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
         window.__mcgrotDebug.stepFrames(frames);
-      }, QUICK_SETTLE_FRAMES);
+      }, SHORT_SETTLE_FRAMES);
       const inv = await getInvariants(page1);
       const newErrors = inv.consoleErrors.slice(errCursor);
       if (newErrors.length) transitionFailures.push(`${from}->${to}: ${newErrors.join(' | ')}`);
@@ -3250,7 +3250,7 @@ async function main() {
       await page1.evaluate((frames) => {
         // Settle without drawing the frames nobody looks at (see debug.js stepFrames).
         window.__mcgrotDebug.stepFrames(frames);
-      }, QUICK_SETTLE_FRAMES);
+      }, SHORT_SETTLE_FRAMES);
       const before = (await getInvariants(page1)).consoleErrors.length;
       for (const h of SWEEP_HOURS) {
         await page1.evaluate((hh) => window.__mcgrotDebug.setTime(hh), h);
@@ -3265,9 +3265,8 @@ async function main() {
       });
     }
 
-    }
-    // Re-pin whatever the skipped region would have left set, so the blocks
-    // below start from the same state in both modes.
+    // Re-pin the clock and weather, so the blocks below start from a known
+    // state rather than from whatever the last sweep above left set.
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
     await page1.evaluate((f) => window.__mcgrotDebug.stepFrames(f), WEATHER_SETTLE_FRAMES);
@@ -3516,7 +3515,7 @@ async function main() {
       const unclamped = await page.evaluate(() => window.devicePixelRatio || 1);
 
       // E0.3: the timing TABLE is now opt-in; the cap GATE below always runs.
-      // They used to share a `QUICK ||` guard, which was wrong twice over: it
+      // They used to share a `--quick` guard, which was wrong twice over: it
       // cost 67s of an 847s full run for a table that is explicitly not a
       // measurement of anything (see below), and on --quick it silently took
       // a real gate with it while the skip message said "informational, not
@@ -3576,7 +3575,7 @@ async function main() {
 
       await context.close();
     }
-    endRegion(); // dpr — guarded by `QUICK || !region('dpr')`, so it has no `end region` marker
+    endRegion(); // dpr — guarded by `!region('dpr')`, so it has no `end region` marker
     }
 
     if (region('onevoice')) {
@@ -4071,7 +4070,7 @@ async function main() {
   }
 
   const flat = goldenSubstrate.filter((g) => g.stddev < SUBSTRATE_MIN_STDDEV);
-  // A partial run (--only / --quick) may capture no goldens at all; reporting
+  // A partial run (--only/--since) may capture no goldens at all; reporting
   // "all 0 frames pass" would be a check that cannot fail, which is exactly
   // the kind of decoration this suite is supposed to be free of.
   if (goldenSubstrate.length === 0) {
@@ -4139,14 +4138,14 @@ async function main() {
     for (const s of notRun) console.log(`  - ${s}`);
   }
   if (skipped.length) {
-    // Never let a quick run read like a full one. The whole failure mode this
-    // project keeps hitting is a green result that was never asked the hard
-    // question — so say plainly which questions went unasked.
-    console.log(`\n[smoke] --quick SKIPPED ${skipped.length} area(s):`);
+    // Never let a partial run read like a full one. The whole failure mode
+    // this project keeps hitting is a green result that was never asked the
+    // hard question — so say plainly which questions went unasked.
+    console.log(`\n[smoke] SKIPPED ${skipped.length} area(s):`);
     for (const s of skipped) console.log(`  - ${s}`);
     console.log('  Run the full suite before deploying (npm run deploy does this for you).');
   }
-  console.log(`\n[smoke] ${exitCode === 0 ? (skipped.length ? 'quick checks passed (PARTIAL)' : 'all checks passed') : 'FAILED'}`);
+  console.log(`\n[smoke] ${exitCode === 0 ? (skipped.length ? 'checks passed (PARTIAL)' : 'all checks passed') : 'FAILED'}`);
   process.exit(exitCode);
 }
 
