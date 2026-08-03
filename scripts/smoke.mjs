@@ -123,6 +123,20 @@ const LAMP_GAP_MIN = 30;
 const LAMP_GAP_MAX = 45;
 const LAMP_SPAN_MIN = 1400; // metres between the first and last lamp
 
+// E2g.1's mid-close picture gate. The band is set around the measured frame
+// (filled in after the first capture, below) wide enough that tuning the
+// close does not need the gate touched, and tight enough that the failure it
+// exists for — the E5d whiteout easing to a black frame instead of a pale one
+// — lands outside it. Fault-injected red by restoring EXPOSURE_FLOOR = 0.12
+// in src/ending.js; the measured numbers for both are in docs/VALIDATION.md.
+const MID_CLOSE_MEAN_MIN = 0;
+const MID_CLOSE_MEAN_MAX = 255;
+
+// E2g.1. The night golden's hour — the same 22:00 the night gates above
+// already use, and overcast, so the pose costs one capture rather than a
+// weather column. See NIGHT_BOOKMARK_DEFS in src/debug.js for the pose.
+const NIGHT_GOLDEN_HOUR = 22;
+
 // E5d. END_RADIUS in src/legs.js, quoted in a gate's detail line only.
 const LEG_END_RADIUS_HINT = 40;
 // The hinge's own contribution must clear the ~1.9h-per-leg free drift by a
@@ -411,7 +425,10 @@ function exactChannelDiff(a, b) {
 const goldenSubstrate = [];
 const SUBSTRATE_MIN_STDDEV = 8; // of 255. Below this the pose is too flat to gate anything.
 
-function measureSubstrate(name, png) {
+// Mean and stddev of frame luminance. Shared by the golden substrate check
+// and by E2g.1's picture gates — a picture gate is the same measurement made
+// of a frame no golden covers (see the mid-close gate in region 'ending').
+function luminanceStats(png) {
   let sum = 0, sumSq = 0;
   const n = png.width * png.height;
   for (let i = 0; i < n; i++) {
@@ -420,7 +437,11 @@ function measureSubstrate(name, png) {
     sum += l; sumSq += l * l;
   }
   const mean = sum / n;
-  goldenSubstrate.push({ name, stddev: Math.sqrt(Math.max(0, sumSq / n - mean * mean)), mean });
+  return { mean, stddev: Math.sqrt(Math.max(0, sumSq / n - mean * mean)) };
+}
+
+function measureSubstrate(name, png) {
+  goldenSubstrate.push({ name, ...luminanceStats(png) });
 }
 
 function checkGolden(results, name, shot, goldenPath) {
@@ -1894,6 +1915,17 @@ async function main() {
     const onWalk = await walkLeg(legsOnPg);
     const offWalk = await walkLeg(legsOffPg);
 
+    // E2g.1: evidence, not a gate. Both arms have just walked the identical
+    // out-and-back and are standing on the same spot at the Foot; the only
+    // difference is the hinge. The clock arithmetic below says the return leg
+    // is a different street — these two files are that claim as a pair of
+    // pictures a reviewer can open side by side. Nothing diffs them (the
+    // hinge's weather roll is deterministic but the hour it lands on is a
+    // product of the walk, so a tracked baseline would be churn).
+    if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
+    writeFileSync(join(captureDir, 'hinge-return-on.png'), await legsOnPg.screenshot());
+    writeFileSync(join(captureDir, 'hinge-return-off.png'), await legsOffPg.screenshot());
+
     const onDelta = onWalk.clock - onStart.startClock;
     const offDelta = offWalk.clock - offStart.startClock;
     const hingeContribution = onDelta - offDelta;
@@ -2070,8 +2102,33 @@ async function main() {
     // Diverge HERE and nowhere else: one arm steps into the haar.
     const began = await endPg.evaluate(() => window.__mcgrotDebug.ending.begin());
     const SEQ_FRAMES = 60 * 11; // one second past SEQUENCE_SECONDS
-    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES);
-    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES);
+    // E2g.1: stop half way through and LOOK. Both arms are stepped in the
+    // same two chunks so the total is unchanged and the pair below still
+    // compares like with like.
+    const MID_CLOSE_FRAMES = 60 * 5; // t=5s: ease=0.5, fog 5x, exposure half way to the floor
+    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), MID_CLOSE_FRAMES);
+    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), MID_CLOSE_FRAMES);
+
+    // THE gate E5d shipped without. Every numeric assert on that milestone
+    // passed while the sequence rendered nine seconds of black: fog rose,
+    // exposure fell, the hand-off held — and there was nothing to look at.
+    // A number cannot see a bad picture, so this one measures the picture.
+    if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
+    const midShot = await endPg.screenshot();
+    writeFileSync(join(captureDir, 'ending-mid-close.png'), midShot);
+    const mid = luminanceStats(PNG.sync.read(midShot));
+    results.push({
+      name: 'the mid-close frame is a picture, not a blackout',
+      pass: mid.stddev >= SUBSTRATE_MIN_STDDEV
+        && mid.mean >= MID_CLOSE_MEAN_MIN && mid.mean <= MID_CLOSE_MEAN_MAX,
+      detail: `t=5s of the close: mean luminance ${mid.mean.toFixed(1)} ` +
+        `(want ${MID_CLOSE_MEAN_MIN}-${MID_CLOSE_MEAN_MAX} — neither black nor blown out), ` +
+        `stddev ${mid.stddev.toFixed(1)} (want >=${SUBSTRATE_MIN_STDDEV}, i.e. there is still something to look at). ` +
+        `Frame written to docs/smoke/captures/ending-mid-close.png`,
+    });
+
+    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - MID_CLOSE_FRAMES);
+    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - MID_CLOSE_FRAMES);
     const during = await snapshot(endPg);
     const duringCtl = await snapshot(ctlPg);
     const endState = await endPg.evaluate(() => ({
@@ -2185,6 +2242,55 @@ async function main() {
         pass: controlClipPct < CLIP_PCT_MAX,
         detail: `${controlClipPct.toFixed(3)}% pixels clipped (overcast control, must be <${CLIP_PCT_MAX}%)`,
       });
+    }
+
+    // --- E2g.1: the night golden ------------------------------------------
+    // Its own boot at 22:00 overcast, because page1 is pinned to SMOKE_HOUR
+    // and every later check in this region reads that state. One pose, one
+    // hour, no weather column: the point is that the lit street exists in the
+    // golden set at all before E8 recaptures everything it can see.
+    //
+    // The night poses are deliberately NOT in `bookmarks` (see
+    // NIGHT_BOOKMARK_DEFS in src/debug.js), so nothing above this line moved.
+    // They do enter budget.json and the contrast-floor aggregate, both of
+    // which are keyed by whatever was actually captured.
+    const nightBookmarks = await page1.evaluate(() => window.__mcgrotDebug.nightBookmarks);
+    {
+      const { context: nightCtx, page: nightPg } = await bootPage(browser, port);
+      // Belt-and-braces against the autonomous roller, same as the weather
+      // capture passes: a scheduled change mid-capture would be indistinguishable
+      // from a real golden regression.
+      await nightPg.evaluate(() => window.__mcgrotDebug.setWeatherSchedule(false));
+      await nightPg.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+      await nightPg.evaluate((h) => window.__mcgrotDebug.setTime(h), NIGHT_GOLDEN_HOUR);
+      await nightPg.evaluate((f) => window.__mcgrotDebug.stepFrames(f), WEATHER_SETTLE_FRAMES);
+
+      for (const bm of nightBookmarks) {
+        await nightPg.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
+        const inv = await getInvariants(nightPg);
+        if (inv.drawCalls === 0) {
+          results.push({ name: `render:${bm.id}`, pass: false, detail: 'rendered 0 draw calls (empty frame — capture/GPU failure); golden NOT written' });
+          continue;
+        }
+        drawCallsByBookmark[bm.id] = inv.drawCalls;
+        const baseline = budget.perBookmark[bm.id];
+        if (UPDATE_GOLDENS || baseline === undefined) {
+          results.push({ name: `budget:${bm.id}`, pass: true, detail: `baseline captured (${inv.drawCalls} draw calls)` });
+        } else {
+          const diff = pctDiff(inv.drawCalls, baseline.drawCalls);
+          results.push({
+            name: `budget:${bm.id}`,
+            pass: diff <= budget.tolerancePct,
+            detail: `${inv.drawCalls} draw calls vs baseline ${baseline.drawCalls} (${diff.toFixed(1)}% diff, tolerance ${budget.tolerancePct}%)`,
+          });
+        }
+        // No clip-control check: CLIP_PCT_MAX is E2c.1's overcast-DAYLIGHT
+        // criterion, and a lamp bulb is an additive emissive that is supposed
+        // to be the brightest thing in a night frame.
+        const shot = await nightPg.screenshot();
+        checkGolden(results, `golden:${bm.id}`, shot, join(goldenDir, `${bm.id}.png`));
+      }
+      await nightCtx.close();
     }
 
     // --- E2a: clock pinning + sky/fog seam + the facade-darkening regression ---
@@ -2921,7 +3027,7 @@ async function main() {
         // For a bookmark that rendered fine, use its fresh count; for one that
         // failed the 0-draw-call guard above (absent from drawCallsByBookmark),
         // keep its prior baseline rather than clobbering it with a bad capture.
-        perBookmark: Object.fromEntries(bookmarks
+        perBookmark: Object.fromEntries([...bookmarks, ...nightBookmarks]
           .map((bm) => [bm.id, drawCallsByBookmark[bm.id] !== undefined
             ? { drawCalls: drawCallsByBookmark[bm.id] }
             : prev[bm.id]])
@@ -2929,6 +3035,19 @@ async function main() {
       };
       writeFileSync(budgetPath, JSON.stringify(budget, null, 2));
       console.log(`[smoke] wrote budget baseline to ${budgetPath}`);
+    } else {
+      // A bookmark ADDED since the baseline was written (E2g.1's night pose is
+      // the first) has no entry, and the wholesale rebuild above deliberately
+      // does not run just because one is missing — that would re-baseline
+      // every existing bookmark off one run's counts and quietly absorb a real
+      // drift. So add the missing ones and touch nothing else.
+      const added = [...bookmarks, ...nightBookmarks]
+        .filter((bm) => budget.perBookmark[bm.id] === undefined && drawCallsByBookmark[bm.id] !== undefined);
+      if (added.length) {
+        for (const bm of added) budget.perBookmark[bm.id] = { drawCalls: drawCallsByBookmark[bm.id] };
+        writeFileSync(budgetPath, JSON.stringify(budget, null, 2));
+        console.log(`[smoke] added draw-call baselines to ${budgetPath}: ${added.map((bm) => `${bm.id}=${drawCallsByBookmark[bm.id]}`).join(', ')}`);
+      }
     }
 
     // --- E2d (check 26): the post chain is transparent at neutral, and live

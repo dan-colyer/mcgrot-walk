@@ -49,6 +49,43 @@ const BOOKMARK_DEFS = [
   },
 ];
 
+// E2g.1. Poses captured at NIGHT only, kept OUT of BOOKMARK_DEFS on purpose:
+// everything that iterates `bookmarks` (the draw-call budget, the anchors
+// on/off diff, all five weather passes) would otherwise pick these up and pay
+// for a daylight column nobody looks at. The suite visits these in one extra
+// pass at 22:00 overcast — see the night golden in scripts/smoke.mjs.
+//
+// Why a night pose was needed at all: street lighting landed in E2g and no
+// golden framed a lamp, so the whole night look — 46 fittings, the emissive
+// bulbs, the pool's cast on the road — was uncaptured, and E8's grade will
+// recapture every golden it can see. What it cannot see, it ships blind.
+const NIGHT_BOOKMARK_DEFS = [
+  {
+    id: 'lamp-hero-night',
+    custom: true,
+    // Standing on the centreline ~chainage 660, 25m short of the lamp at
+    // station 20, looking up-street along the tangent and ~3.5 degrees above
+    // the horizon. Absolute coordinates rather than chainage-derived for the
+    // same reason `skyline` is: the pose is picked against one specific piece
+    // of scene furniture (lamp 20's head sits 9.3m off the centreline and
+    // 6.8m above local ground) and a goto()-style side/distance pose frames a
+    // frontage, never a fitting.
+    //
+    // What is deliberately IN frame: the lamp head and its pool on the road,
+    // the roadworks fencing and cones near camera, two shopfront fascias, and
+    // the unlit rooflines above. That mix is what makes it a usable diff
+    // substrate after dark — an empty stretch of dark road measures flat and
+    // gates nothing (see SUBSTRATE_MIN_STDDEV in scripts/smoke.mjs).
+    //
+    // Chosen over a pose 7m closer to the lamp, which framed the fitting
+    // larger but stood inside an NPC's proximity radius: the interaction
+    // prompt is a DOM overlay and page.screenshot() captures it, so the
+    // golden would have carried a piece of proximity state.
+    camera: { x: -284.62, y: 9.7, z: 623.92 },
+    lookAt: { x: -303.93, y: 12.99, z: 664.57 },
+  },
+];
+
 // FNV-1a 32-bit, no deps. Folded over raw bytes so float rounding never
 // changes the hash between two runs that produce bit-identical arrays.
 function fnv1a(bytes, hash) {
@@ -305,7 +342,8 @@ export function createDebugApi(ctx) {
   }
 
   async function gotoBookmark(id) {
-    const bm = BOOKMARK_DEFS.find((b) => b.id === id);
+    const bm = BOOKMARK_DEFS.find((b) => b.id === id)
+      || NIGHT_BOOKMARK_DEFS.find((b) => b.id === id);
     if (!bm) throw new Error(`[debug] unknown bookmark: ${id}`);
     if (bm.custom) {
       // Absolute camera pose (elevated skyline shot). settleAt sets the fixed
@@ -512,6 +550,7 @@ export function createDebugApi(ctx) {
     atmosphereNudge: (h, seed, leg) => atmosphere.nudge(h, seed, leg),
     atmosphereIsSuspended: () => atmosphere.isSuspended(),
     bookmarks: BOOKMARK_DEFS,
+    nightBookmarks: NIGHT_BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),
     resumeAuto: () => setAutoAnimate(true),
   };

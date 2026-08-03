@@ -24,6 +24,9 @@
     },
     "skyline": {
       "drawCalls": 1112
+    },
+    "lamp-hero-night": {
+      "drawCalls": 1131
     }
   }
 }
