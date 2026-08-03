@@ -2404,8 +2404,30 @@ grade, and its own argument is why they wait — the grade may make a simple too
 character read better than an expensive one. The grade has to exist to be
 judged against. They join round 2.
 
-**Next:** Dan judges the three sheets. Rejected presets get their one line;
-survivors get a round 2 with character candidates under them.
+### Round 1's verdict (Dan, 2026-08-03)
+
+**`b` fine-litho survives.** The lightest touch — the shipped murk kept nearly
+intact, print as texture rather than as a palette. Recorded as a preference,
+not yet a keeper: the loop continues from here rather than hardening.
+
+Rejected, with reasons, so a later round does not re-propose them:
+
+| | why not |
+|---|---|
+| `a` newsprint | cool grey stock reads as a photocopy, not a comic; loses the warmth the whole project is built on |
+| `c` cream-page | the most *printed* of the four and still rejected — at night the press exposure lifts the shadows into a flat milky grey and the night stops being night |
+| `d` hard-ink | near-duotone eats the photo façades, exactly the failure it was included to make visible |
+
+**The finding that shapes round 2:** press exposure is the axis that kills the
+night. At 22:00 rain, `a`, `c` and `d` all lift the murk to a milky grey and
+only `b` (press 0.90, barely lifted) survives. A single constant press cannot
+serve noon and midnight, so round 2 should test press as a **weather/hour-driven
+value** rather than a per-preset constant — which changes what a preset *is*,
+and is the first thing to settle before generating more candidates.
+
+**Round 2's shape:** variants around `b` — screen fineness, stock warmth and
+misregistration explored at `b`'s light touch — plus 2–3 character treatments
+rendered under them, per the roadmap's pairing.
 
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 
