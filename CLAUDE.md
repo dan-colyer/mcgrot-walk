@@ -57,6 +57,21 @@ has to be mechanical:
   renders its captures and the review opens them; where the moment is
   deterministic, also gate it with the contrast floor ("the frame is a
   picture" — see E2g.1).
+- **A golden proves the harness agrees with itself, not that the picture is
+  right.** Where the harness renders differently from a player's machine, the
+  golden preserves the harness's artefact. `golden-mobile:hud` locked in a
+  mobile spawn view whose entire near-field ground was flat black for as long
+  as the suite ran on SwiftShader, and every check passed the whole time. Keep
+  the harness's renderer matched to the shipped one; where it cannot be, name
+  the blind spot rather than trusting the green.
+- **Say whether a ruling was measured or reasoned, and re-test it when its
+  conditions change.** "Do not enable a real GPU" stood in
+  `docs/VALIDATION.md` on four confident grounds; when E0.4 finally tested them
+  instead of arguing with them, three were wrong and the suite was 4× slower
+  than it needed to be. A no-go with no measurement behind it is a hypothesis
+  that has been promoted by repetition. The same applies to dismissals: boots
+  were dismissed at 4.4% of a run, and were 17.1% of the next one without
+  changing at all.
 
 The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
 a milestone adds a claim worth trusting later, and document each gate in

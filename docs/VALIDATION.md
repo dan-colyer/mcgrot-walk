@@ -1486,6 +1486,37 @@ Renderer: Apple M4)`. Every run prints its renderer in the header line, so no
 capture is ever ambiguous about which one produced it. `MCGROT_GPU=0` forces
 the old software path back.
 
+### Every speedup tried, and what it was worth
+
+The whole ledger, so a future attempt starts from evidence instead of
+re-deriving it. **847s → 74s across E0.3–E0.4.** Rejections are as load-bearing
+as the wins — most of the entries below are things that sounded obviously right.
+
+| Attempt | Verdict | Measured |
+|---|---|---|
+| Stop `legs` rastering all 2,280 frames it walks and looks at none of | **won** | 311.8s → 37.3s, gate numbers bit-identical |
+| DPR timing table running on every full run | **won** | 67.3s → 6.0s; the DPR *gate* it hid behind now always runs |
+| Shard the gate 2 ways across processes | **won** | 521s → 346s (34%) |
+| Render on the GPU (Metal) instead of SwiftShader | **won** | 346s → 74s sharded, 133s serial |
+| Cache the bundle across boots — *the lever the E5 gate named* | rejected | worth ≤4.4%, and unreachable: each boot is a fresh Playwright context with its own cache. Closed for good below — only 36ms of a 1482ms boot is network |
+| Run the four weather passes concurrently | rejected | 188.1s → 180.9s (4%). Rasterising already saturated the cores |
+| Skip post-load settle renders when no texture decoded | rejected | unsound: page textures churn, so counts *fall* between visits |
+| Content-hash result caching (Bazel/Turborepo style) | rejected | `render` is 56s of 133s and nearly every source path routes to it; a cache that misses there saves nothing |
+| Shard 3 ways instead of 2 | rejected | 74s → 68s (8%), gate only, for a hand-listed partition that rots |
+| Speed up golden comparison | not a bottleneck | ~51ms per golden, ~2s across the set |
+
+Two rules generalise out of that table, and both were learned the expensive way:
+
+1. **Measure the lever, don't reason about it.** The two biggest wins (`legs`,
+   the GPU) were found by the profile and by a throwaway experiment. The two
+   most confidently-argued levers — bundle caching, and the standing ruling
+   against a GPU — were worth 0% and −4× respectively.
+2. **Parallelise work that WAITS against work that COMPUTES.** Sharding
+   `render` against the wait-bound regions paid; four concurrent rasterisers
+   did not. Note this rule was derived under SwiftShader, where rasterising was
+   the compute — see the 3-way shard result for what it looks like once that
+   is no longer true.
+
 Before that, Playwright's default headless — the chromium *headless shell* —
 had no GPU path at all and rasterised in software via SwiftShader, reporting
 `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device), SwiftShader driver)`. At the
@@ -1612,10 +1643,34 @@ in the same region, so the split has to establish that the two halves are
 genuinely independent before it can be trusted — the same check every region
 had to pass before it was made skippable.
 
-Two things are NOT the bottleneck, and were measured rather than assumed: the
-golden comparison itself is ~51ms per golden (23ms PNG decode ×2, 5ms
-pixelmatch), so ~2s across the whole set; and boots are unchanged from E0.3's
-finding — still a fresh Playwright context each time, still nothing to cache.
+The golden comparison is NOT a bottleneck, measured rather than assumed: ~51ms
+per golden (23ms PNG decode ×2, 5ms pixelmatch), so ~2s across the whole set.
+
+**Boots, and the end of the bundle-caching thread.** Boots deserve a second
+look on the GPU for a reason that is easy to miss: they were 4.4% of a
+SwiftShader run and E0.3 dismissed them on exactly that ground, but they did
+not get faster when everything else got 4× faster, so they are now **17.1%**
+(22.6s across 21 boots, mean 1.1s). A share that rises because the denominator
+shrank is still a bigger share — re-check a dismissal when the thing it was
+relative to changes.
+
+Having re-checked it: still not worth taking, and now for a definite reason
+rather than a structural one. A single boot breaks down as
+
+| | |
+|---|---|
+| network busy | **36ms** (8.4MB, 60 requests, localhost) |
+| DOM content loaded | 135ms |
+| `__mcgrotDebug` ready | **1482ms** |
+
+so ~1.35s of every boot is **scene construction in JS** — merging 995 OSM
+buildings, building the NPC set — and essentially none of it is transfer. That
+closes the bundle-caching idea the E5 phase gate opened for good: it was never
+about the network, and no cache header, faster static server or warm HTTP cache
+can touch a millisecond of it. Making boots cheaper now means making the scene
+build cheaper, which is product code with golden and determinism-hash blast
+radius — a legitimate thing to want for the shipped load time, but not a
+harness optimisation and not free.
 
 ## The debug API (`window.__mcgrotDebug`)
 
