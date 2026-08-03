@@ -77,6 +77,35 @@ The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
 a milestone adds a claim worth trusting later, and document each gate in
 `docs/VALIDATION.md` — including what it deliberately does *not* prove.
 
+### Landing work: commit without asking
+
+**Committing needs no permission — and waiting for it is the wrong default.**
+Land each phase, feature or fix as it completes rather than accumulating work in
+a dirty tree. An uncommitted milestone is the state every gotcha below bites in:
+`git stash` collides across worktrees, `git checkout <paths>` silently restores
+nothing when one path is untracked, and a fault injection survives into the next
+run looking like a second bug. Committing early is what makes those recoverable.
+
+A landing is one unit of work, not a code commit plus a documentation chore
+afterwards:
+
+- **The suite is green**, and the commit message carries the actual measurement
+  — the numbers, the control, what went red under fault injection. That message
+  is the record a phase gate reads.
+- **`docs/` is updated in the same commit**: `VALIDATION.md` for what a gate
+  proves and deliberately does not, `ROADMAP.md` for what landed and what it
+  cost. Rejected experiments get written down with their numbers too; most of
+  them sounded obviously right, and the point is to stop a later session
+  re-deriving them.
+- **Memory gets what the repo cannot carry** — cross-session working facts,
+  not a second copy of this file. A Fable phase-gate session reads the repo and
+  has no access to that store, so anything a reviewer needs belongs in `docs/`.
+
+**Pushing and deploying stay explicit asks.** Deploying publishes to a public
+site under Dan's name, and `main` sitting ahead of what is live is a normal
+state, not something to fix unprompted. Say when a deploy is worth running and
+let him call it.
+
 **Planning** goes deep only on the NEXT milestone. Keep the rest high-level and
 re-plan from the actual state of the codebase after each one lands — detailed
 plans for far-future work go stale before they're used.
