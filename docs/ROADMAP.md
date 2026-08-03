@@ -91,7 +91,7 @@ exception left is E7a's mechanical hosting migration.
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
 | E2g street lights | LANDED 2026-08-02 | no golden moved (no pose frames a lamp); both night gates isolated, not relaxed |
 | E2g.1 night golden | small | the lit street has no pictorial coverage; needs its own bookmark |
-| E5d turnaround + ending | **high (review)** | state machine + weather nudge; closes E5, Fable pass due after |
+| E5d turnaround + ending | LANDED 2026-08-03 | closes E5 — **Fable phase gate now due** |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
 | E9a the shop | **high (review)** | render-path scene swap, boot change, transition gates |
@@ -2018,6 +2018,33 @@ between "different" and "black". Doing E2g first also gives E5d something to
 change *about* the lamps on the way back.
 
 ### E5d — Turning back, and leaving
+
+**E5d LANDED 2026-08-03**, closing phase E5 — `900a827`/`f472054` (the leg
+hinge) and `07029ed`/`f0e4fc1` (the close at the Foot). No golden moved by
+either half.
+
+Measured: on an identical out-and-back the hinge advances the clock 13.55h
+against a hinge-disabled control's 3.55h, so its own contribution is 10.00h
+against the ~1.9h-per-leg drift a walk gives you free. The close is refused at
+leg 0 on the very spot it is offered at leg 2, and "keep walking" restores fog,
+exposure and camera to match a boot that never ended.
+
+**Four defects, three of them in the product and none visible by reading:**
+
+- `nudge()` called `setTime()`, which pins `rate` to 0 — the first turnaround
+  would have stopped the day/night cycle permanently.
+- The weather roll read `settledWeather`, which lags a transition, so a second
+  hinge could roll back to the weather it had just left.
+- The close was a blackout: every numeric gate passed while the frame was
+  black. **Caught by opening the capture, not by a gate.**
+- And one in the harness: the boot gate read `legs.state()` before any
+  `legs.update()` had run, so it could not observe the bug it was named for.
+
+**Deferred:** "voices merging" is `ambience.setDucked(true)`, the right
+direction but not the written intent — a real merge wants an ambience API that
+does not exist. The stretch interior is untouched.
+
+**Fable phase gate is now due** — E5 is closed.
 
 *Planned to depth 2026-08-02, against the codebase as it stands after E2g.*
 

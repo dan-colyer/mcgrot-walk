@@ -1595,6 +1595,82 @@ a null -> north transition on its first update and hinges before you move.
   bookmark sits inside either 40 m end zone — verified by the goldens holding
   at the noise floor with the flag enabled.
 
+## Leaving (E5d part 2)
+
+`src/ending.js` offers the haar off the Forth at the Foot, once you have
+turned back at least once. Stepping into it runs a ~10 s close — fog thickens
+and lifts toward a pale haar, exposure falls, the camera drifts north over the
+water — then a card offering "keep walking".
+
+### The hand-off is the architecture, and a gate proves it
+
+`atmosphere.js` reapplies the entire palette every frame. A sequence that
+wrote `fog.density` and `toneMappingExposure` directly would be overwritten
+before a single frame of it was ever seen. `atmosphere.setSuspended(true)`
+stops it painting and hands those fields over; resuming repaints immediately,
+so nothing the sequence leaves behind can survive into a visible frame.
+
+Fault-injecting the suspend call away is the cleanest demonstration in the
+suite: with it removed, the "closes the street" gate reads fog and exposure
+**identical to the control** (0.0095 / 0.7333) after the full sequence has
+supposedly run. The hand-off is load-bearing, not ceremony.
+
+The clock keeps advancing while suspended, so resuming lands on the hour it
+would have been.
+
+### The gates (region `ending`)
+
+Two boots run the identical script and diverge at exactly one point: one steps
+into the haar, the other does not.
+
+- **The close is offered at the Foot only after turning back (opposed pair).**
+  On the same spot at leg 0: `canOffer()` false, `begin()` refuses, prompt
+  hidden. After turning back, leg 2: offered. An ending you can walk into in
+  the first ten seconds is a trapdoor, not a close.
+- **Stepping into the haar closes the street (opposed pair).** Fog must exceed
+  **3x the control's** and exposure fall below it, and the camera must move
+  >20 m. The control is what stops this passing on the clock simply rolling on
+  underneath both arms.
+- **Atmosphere is suspended for the close and only for the close.**
+- **"Keep walking" hands the street back, matching a boot that never ended.**
+
+### Why the restore gate needs a second boot rather than a snapshot
+
+The first version compared the resumed state against a snapshot taken *before*
+the close, and read **0.5694 vs 0.5700** — an apparent hand-off failure that
+was nothing of the sort. The turnaround hinge starts a weather transition, and
+`WEATHER_TRANSITION_SECONDS` of it was still settling underneath; the settle
+frames after resume advanced it. Comparing against a second boot stepped the
+identical number of frames removes that common-mode term, and the two now
+match exactly.
+
+This is the same shape as E5d part 1's free-drift problem and E2g's
+"lamps on vs off": **a before/after snapshot is not a control when something
+else in the system is still moving.**
+
+### One product defect the eyeball caught, not a gate
+
+The close was a **blackout**. Easing exposure to 0.12 with a per-frame
+approach-the-floor step reached black inside a second and then held a black
+frame for nine more — every numeric gate passed, because fog was up and
+exposure was down exactly as asserted. Only opening the mid-sequence capture
+showed there was nothing to look at. Haar off the Forth is pale, so the fog
+colour now lifts toward it and exposure falls only far enough to take the
+contrast out; the mid frame reads as shopfront signage dissolving into mist.
+
+**The gates cannot see this class of defect** and should not be trusted to.
+Capture the sequence and look at it after any change to its curves.
+
+### What this deliberately does not prove
+
+- **Nothing about the framing.** The captures force a `lookAt` north over the
+  water; where the player is actually facing when they step in is not
+  controlled, and "the street recedes" depends on it.
+- **Nothing about the audio.** "Voices merging" is currently just
+  `ambience.setDucked(true)` — the right direction, not the written intent.
+  A real merge wants an ambience API that does not exist yet.
+- **No golden covers it**, and none should: the close is a transient.
+
 ## Invariants reference
 
 | Field | What it means | If it fails |
