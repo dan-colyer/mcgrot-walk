@@ -71,7 +71,7 @@ const ONLY = (() => {
 // contexts rendering at once starve each other on a 10-core machine. A 20%
 // saving on two regions is not worth a suite that intermittently reports a
 // timeout looking like a real bug. --only is the fast path instead.
-const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'ending', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 function region(name) {
   if (!ONLY) return true;
@@ -227,7 +227,7 @@ const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's b
 // script needs a conscious update, not a silent pass.
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
-  'rain', 'birds', 'vermin', 'scenery', 'lamps', 'legs', 'interact', 'proximityAudio', 'torch',
+  'rain', 'birds', 'vermin', 'scenery', 'lamps', 'legs', 'ending', 'interact', 'proximityAudio', 'torch',
   'post', 'moments',
 ];
 
@@ -1967,6 +1967,169 @@ async function main() {
     await legsOnCtx.close();
     await legsOffCtx.close();
     } // end region: legs
+
+    if (region('ending')) {
+    // --- E5d part 2: leaving -----------------------------------------------
+    // Two boots that run the IDENTICAL script and diverge at exactly one
+    // point: one steps into the haar, the other does not. Everything is
+    // stepped the same number of frames in both, because a weather transition
+    // from the turnaround hinge is still settling and a shortcut control
+    // ("compare against the snapshot I took before") reads that settling as a
+    // hand-off failure. It did, on the first attempt: 0.5694 vs 0.5700.
+    const endingBoot = async () => {
+      const { context, page: pg } = await bootPage(browser, port, { __mcgrotForceLegs: true });
+      await pg.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        dbg.setWeather('overcast');
+        dbg.setWeatherSchedule(false);
+        dbg.setTime(20);
+      });
+      return { context, pg };
+    };
+
+    // Walk out and back so the leg counter reaches 2 and the close is offered,
+    // then settle long enough that the hinge's weather transition is done.
+    const walkToTheFoot = async (pg) => pg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const line = dbg.world.streetLine;
+      const place = (chain) => {
+        let acc = 0;
+        for (let i = 0; i < line.length - 1; i++) {
+          const [ax, az] = line[i], [bx, bz] = line[i + 1];
+          const seg = Math.hypot(bx - ax, bz - az);
+          if (acc + seg >= chain) {
+            const t = seg > 0 ? (chain - acc) / seg : 0;
+            dbg.camera.position.x = ax + (bx - ax) * t;
+            dbg.camera.position.z = az + (bz - az) * t;
+            return;
+          }
+          acc += seg;
+        }
+      };
+      const len = dbg.legs.state().length;
+      for (let c = 60; c < len - 10; c += 60) { place(c); dbg.stepFrames(1); }
+      place(len - 5); dbg.stepFrames(2);
+      for (let c = len - 60; c > 20; c -= 60) { place(c); dbg.stepFrames(1); }
+      place(5);
+      // WEATHER_TRANSITION_SECONDS is 10 real seconds of dt; settle past it so
+      // neither arm is mid-blend when the snapshots are taken.
+      dbg.stepFrames(700);
+      return {
+        leg: dbg.legs.state().leg,
+        canOffer: dbg.ending.canOffer(),
+        promptDisplay: getComputedStyle(document.getElementById('ending-prompt')).display,
+      };
+    });
+
+    const snapshot = async (pg) => pg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      return {
+        fogDensity: +dbg.world.fog.density.toFixed(6),
+        exposure: +dbg.renderer.toneMappingExposure.toFixed(4),
+        camX: +dbg.camera.position.x.toFixed(2),
+        camZ: +dbg.camera.position.z.toFixed(2),
+        suspended: dbg.atmosphereIsSuspended(),
+      };
+    });
+
+    const { context: endCtx, pg: endPg } = await endingBoot();
+    const { context: ctlCtx, pg: ctlPg } = await endingBoot();
+
+    // Offered only after turning back. The control is the SAME boot before it
+    // has turned round — leg 0, standing on the very same spot.
+    const leg0 = await endPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const p = dbg.world.streetLine[0];
+      dbg.camera.position.x = p[0];
+      dbg.camera.position.z = p[1];
+      dbg.stepFrames(3);
+      return {
+        leg: dbg.legs.state().leg,
+        canOffer: dbg.ending.canOffer(),
+        beginReturned: dbg.ending.begin(),
+        phase: dbg.ending.state().phase,
+        promptDisplay: getComputedStyle(document.getElementById('ending-prompt')).display,
+      };
+    });
+
+    const endArrival = await walkToTheFoot(endPg);
+    const ctlArrival = await walkToTheFoot(ctlPg);
+
+    results.push({
+      name: 'the close is offered at the Foot only after turning back (opposed pair)',
+      pass: leg0.leg === 0 && leg0.canOffer === false && leg0.beginReturned === false
+        && leg0.phase === 'idle' && leg0.promptDisplay === 'none'
+        && endArrival.leg >= 1 && endArrival.canOffer === true && endArrival.promptDisplay === 'block',
+      detail: `same spot at the Foot — leg ${leg0.leg}: canOffer=${leg0.canOffer}, begin() returned ` +
+        `${leg0.beginReturned}, prompt ${leg0.promptDisplay} (want refused and hidden: an ending you can ` +
+        `walk into in the first ten seconds is a trapdoor); after turning back, leg ${endArrival.leg}: ` +
+        `canOffer=${endArrival.canOffer}, prompt ${endArrival.promptDisplay} (want offered)`,
+    });
+
+    const beforeEnd = await snapshot(endPg);
+    // Diverge HERE and nowhere else: one arm steps into the haar.
+    const began = await endPg.evaluate(() => window.__mcgrotDebug.ending.begin());
+    const SEQ_FRAMES = 60 * 11; // one second past SEQUENCE_SECONDS
+    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES);
+    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES);
+    const during = await snapshot(endPg);
+    const duringCtl = await snapshot(ctlPg);
+    const endState = await endPg.evaluate(() => ({
+      ...window.__mcgrotDebug.ending.state(),
+      cardDisplay: getComputedStyle(document.getElementById('ending-card')).display,
+    }));
+
+    // The close must actually close something. The control arm proves the fog
+    // and exposure moved because of the sequence and not because the clock
+    // rolled on underneath both of them.
+    results.push({
+      name: 'stepping into the haar closes the street (opposed pair)',
+      pass: began && endState.phase === 'ended' && endState.cardDisplay === 'flex'
+        && during.fogDensity > duringCtl.fogDensity * 3
+        && during.exposure < duringCtl.exposure
+        && Math.hypot(during.camX - beforeEnd.camX, during.camZ - beforeEnd.camZ) > 20,
+      detail: `after ${SEQ_FRAMES} frames — ended: fog ${during.fogDensity}, exposure ${during.exposure}, ` +
+        `camera moved ${Math.hypot(during.camX - beforeEnd.camX, during.camZ - beforeEnd.camZ).toFixed(1)}m north; ` +
+        `control (identical frames, never stepped in): fog ${duringCtl.fogDensity}, exposure ${duringCtl.exposure} ` +
+        `(want fog >3x the control and exposure below it); card ${endState.cardDisplay}`,
+    });
+
+    results.push({
+      name: 'atmosphere is suspended for the close and only for the close',
+      pass: beforeEnd.suspended === false && during.suspended === true && duringCtl.suspended === false,
+      detail: `suspended before=${beforeEnd.suspended}, during=${during.suspended}, ` +
+        `control throughout=${duringCtl.suspended} (atmosphere repaints the whole palette every frame, so ` +
+        `without the hand-off the sequence's fog and exposure are overwritten before they are ever seen)`,
+    });
+
+    // "Keep walking" is the reason this is a close and not a fail state.
+    await endPg.evaluate(() => window.__mcgrotDebug.ending.resume());
+    await endPg.evaluate(() => window.__mcgrotDebug.stepFrames(4));
+    await ctlPg.evaluate(() => window.__mcgrotDebug.stepFrames(4));
+    const resumed = await snapshot(endPg);
+    const resumedCtl = await snapshot(ctlPg);
+    const resumedState = await endPg.evaluate(() => ({
+      phase: window.__mcgrotDebug.ending.state().phase,
+      cardDisplay: getComputedStyle(document.getElementById('ending-card')).display,
+    }));
+    results.push({
+      name: '"keep walking" hands the street back, matching a boot that never ended',
+      pass: resumedState.phase === 'idle' && resumedState.cardDisplay === 'none'
+        && resumed.suspended === false
+        && resumed.fogDensity === resumedCtl.fogDensity
+        && resumed.exposure === resumedCtl.exposure
+        && resumed.camX === beforeEnd.camX && resumed.camZ === beforeEnd.camZ,
+      detail: `resumed vs a control boot stepped the identical number of frames — ` +
+        `fog ${resumed.fogDensity} vs ${resumedCtl.fogDensity}, exposure ${resumed.exposure} vs ${resumedCtl.exposure} ` +
+        `(want equal; comparing against a snapshot taken BEFORE the close instead reads the hinge's still-settling ` +
+        `weather transition as a hand-off failure — it did, at 0.5694 vs 0.5700); ` +
+        `camera back at ${resumed.camX},${resumed.camZ} vs ${beforeEnd.camX},${beforeEnd.camZ}; ` +
+        `phase ${resumedState.phase}, card ${resumedState.cardDisplay}`,
+    });
+
+    await endCtx.close();
+    await ctlCtx.close();
+    } // end region: ending
 
     if (region('render')) {
     // --- bookmarks: draw-call budget + goldens ---

@@ -10,6 +10,8 @@ import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
 import { buildLamps } from './lamps.js';
 import { createLegs } from './legs.js';
+import { createEnding } from './ending.js';
+import { isTypingTarget } from './keys.js';
 import { buildGables } from './gables.js';
 import { buildChimneys } from './chimneys.js';
 import { createSky } from './sky.js';
@@ -136,6 +138,15 @@ async function main() {
   // day so the same day walked twice hinges the same way.
   const legs = createLegs({ camera, world, atmosphere, seed: todaySeed() });
 
+  // E5d part 2: the opt-in close at the Foot, offered only once you have
+  // turned back. Enter, or tap the prompt.
+  const ending = createEnding({ camera, world, legs, atmosphere, ambience, controls, renderer });
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'Enter' || isTypingTarget(e)) return;
+    if (ending.state().phase === 'ended') ending.resume();
+    else ending.begin();
+  });
+
   // Duck the ambience bed whenever a comic is being read to camera OR a nearby
   // busker is audible — both feed one combined ducking state.
   let readingDuck = false;
@@ -258,6 +269,7 @@ async function main() {
     { name: 'scenery', update: (dt, t) => scenery.update(dt, t) },
     { name: 'lamps', update: () => lamps.update() },
     { name: 'legs', update: () => legs.update() },
+    { name: 'ending', update: (dt) => ending.update(dt) },
     { name: 'interact', update: (dt) => interact.update(dt) },
     { name: 'proximityAudio', update: (dt, t) => proximityAudio.update(dt, t) },
     { name: 'torch', update: (dt, t) => torch.update(t) },
@@ -326,7 +338,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
-      moments, shareUi, lamps, legs,
+      moments, shareUi, lamps, legs, ending,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

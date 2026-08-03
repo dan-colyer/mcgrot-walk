@@ -735,6 +735,12 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   // atmosphere the sole authority for light-by-hour, which a consumer
   // sampling state() itself would not.
   let lamps = null;
+
+  // E5d part 2: while suspended, applyPalette is not called and the ending
+  // sequence owns fog.color/fog.density and toneMappingExposure. Resuming
+  // reapplies the full palette on the next update, so nothing the sequence
+  // left behind can persist.
+  let suspended = false;
   const hemi = world.lights && world.lights.hemi;
   const sun = world.lights && world.lights.sun;
   const ambient = world.lights && world.lights.ambient;
@@ -1048,6 +1054,16 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   }
 
   function update(dt, time) {
+    // E5d part 2: the ending sequence takes over fog and exposure for ~10s.
+    // It has to be a hand-off rather than the sequence writing the same
+    // fields behind atmosphere's back — this module reapplies the whole
+    // palette every frame, so anything written from outside is overwritten
+    // before it is ever seen. The clock still advances while suspended, so
+    // resuming lands on the time it would have been.
+    if (suspended) {
+      if (rate !== 0) hours = (((hours + rate * (dt / 60)) % 24) + 24) % 24;
+      return;
+    }
     if (rate !== 0) {
       hours = (hours + rate * (dt / 60)) % 24;
       if (hours < 0) hours += 24;
@@ -1216,5 +1232,14 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     if (lamps) lamps.setGlow(sLastApplied.windowGlow);
   }
 
-  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps, nudge };
+  function setSuspended(v) {
+    const was = suspended;
+    suspended = !!v;
+    // Resuming must repaint immediately rather than waiting for the next
+    // frame: the ending leaves fog and exposure somewhere arbitrary, and a
+    // single frame of that after "keep walking" is a visible flash.
+    if (was && !suspended) update(0, 0);
+  }
+
+  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps, nudge, setSuspended, isSuspended: () => suspended };
 }

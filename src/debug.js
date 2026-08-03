@@ -202,7 +202,7 @@ export function createDebugApi(ctx) {
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact,
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
-    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs,
+    vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs, ending,
   } = ctx;
 
   const consoleErrors = [];
@@ -488,6 +488,7 @@ export function createDebugApi(ctx) {
     shareUi,
     lamps,
     legs,
+    ending,
     setTouchMode,
     setPixelRatio,
     measureFrameTiming,
@@ -509,6 +510,7 @@ export function createDebugApi(ctx) {
     // E5d: drives the weather roll directly with an explicit seed, so the
     // determinism gate tests the roll rather than the arrival detection.
     atmosphereNudge: (h, seed, leg) => atmosphere.nudge(h, seed, leg),
+    atmosphereIsSuspended: () => atmosphere.isSuspended(),
     bookmarks: BOOKMARK_DEFS,
     pauseAuto: () => setAutoAnimate(false),
     resumeAuto: () => setAutoAnimate(true),
