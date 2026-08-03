@@ -1200,14 +1200,18 @@ that reads like a full one is the exact failure this project keeps having.
   full gate. Passing `--quick` now exits 2 rather than quietly running more
   than the caller asked for.
 - `npm run smoke -- --only=<region>[,<region>]` runs single regions:
-  `alignment`, `journal`, `anchors`, `moments`, `render`, `determinism`,
-  `dpr`, `onevoice`, `determinism-clock`, `mobile`. Measured marginal costs:
-  journal ~41s, anchors ~31s, moments ~35s (it boots eight documents),
-  onevoice+clock ~16s, mobile ~7s, on top of ~12s of fixed overhead (bundle,
-  server, browser, boot #1) that every run pays.
+  `alignment`, `journal`, `anchors`, `moments`, `lamps`, `legs`, `ending`,
+  `render`, `weather`, `determinism`, `dpr`, `onevoice`, `determinism-clock`,
+  `mobile`. Measured marginal costs: journal ~41s, anchors ~31s, moments ~35s
+  (it boots eight documents), onevoice+clock ~16s, mobile ~7s, on top of ~12s
+  of fixed overhead (bundle, server, browser, boot #1) that every run pays.
+  Under Metal, `render` is 22.4s and `weather` 28.6s (E0.6).
 
-`render` is the only region that captures desktop goldens; `mobile` captures
-the four mobile ones. **`--only` is not a deploy gate.**
+`render` captures the overcast desktop goldens and the night golden; `weather`
+captures the clear, rain, drizzle and haar columns; `mobile` captures the four
+mobile ones. `weather` is the one region that opens in the **middle** of
+another — render runs, weather runs, render resumes — so `--only=render` skips
+it and `--only=weather` runs it alone. **`--only` is not a deploy gate.**
 `npm run deploy` always runs the whole suite, because the weather columns are
 exactly where a golden regression hides.
 
@@ -1646,6 +1650,48 @@ the phase opens by reading `drawCallsByBookmark`, accumulated by earlier phases
 in the same region, so the split has to establish that the two halves are
 genuinely independent before it can be trusted — the same check every region
 had to pass before it was made skippable.
+
+### The split, and what it turned out to be worth (E0.6)
+
+**Done.** `weather` is now its own region. Two things about it were wrong in
+the paragraph above, and both were wrong in the direction of caution:
+
+*The independence was never actually in doubt.* The phase does not read
+`drawCallsByBookmark` — the draw-call parity check that does sits **before**
+it, and is now its own `render:draw-call-parity` phase. More to the point,
+`--quick` had been shipping the whole suite with exactly this block skipped,
+through the same unconditional re-pin that still follows it. A working
+configuration was better evidence than the argument that replaced it.
+
+*The floor is not `render`.* Measured after the split:
+
+| Selection | Region time | Run total |
+|---|---|---|
+| `--only=render` | 22.4s | 26s, 43 PASS / 0 FAIL |
+| `--only=weather` | 28.6s | 33s, 116 PASS / 0 FAIL |
+| shard 2 (the twelve non-render regions) | — | **70s** |
+| `smoke:par` (unchanged) | — | 74s, 228 PASS / 0 FAIL |
+
+Shard 1 is `render` + `weather` at ~51s and shard 2 is 70s, so **the deploy
+gate is bounded by the twelve small regions, not by `render`**. Splitting
+`render` further cannot move it, and neither can a 3-way shard. The next
+structural lever for the *gate* — if one is ever wanted — is on the other side
+of the partition entirely.
+
+What the split actually bought is the **inner loop**: `--only=render` went 56s
+→ 26s, which is the loop E8's containment work runs in. That is a real win and
+it is not the one that was predicted.
+
+`weather` rides with `render` in the shard partition rather than becoming a
+third shard, because moving 30s out of the 51s shard and into nothing would
+have made the gate slower, not faster.
+
+**`SINCE_RULES` gained `weather` everywhere `render` appears.** The four
+non-overcast columns are goldens of the same scene, so anything that moves an
+overcast golden moves them too — 27 of the 30 goldens that E8a's fault
+injection moved are in `weather`. Not routing them together would have
+recreated exactly the silent under-selection that the `src/post.js` rule was
+fixed for the day before.
 
 The golden comparison is NOT a bottleneck, measured rather than assumed: ~51ms
 per golden (23ms PNG decode ×2, 5ms pixelmatch), so ~2s across the whole set.

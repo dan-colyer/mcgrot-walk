@@ -78,7 +78,11 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // contexts rendering at once starve each other on a 10-core machine. A 20%
 // saving on two regions is not worth a suite that intermittently reports a
 // timeout looking like a real bug. --only is the fast path instead.
-const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'ending', 'render', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+// 'weather' (E0.6) is the four non-overcast golden columns, the 12 weather-pair
+// transitions and the 24h sweeps — 29.9s that used to be unskippable inside
+// `render`. It is the one region that opens in the MIDDLE of another: render
+// runs, weather runs, render resumes. See the note at the split.
+const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -113,10 +117,10 @@ const SINCE_RULES = [
   [/^src\/index\.html$/, SINCE_ALL], // every overlay's DOM and CSS, plus the bundle stamp
   // Leaf modules, narrowest first.
   [/^src\/journal\.js$/, ['journal', 'mobile']],
-  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'onevoice', 'render', 'determinism']],
+  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'onevoice', 'render', 'weather', 'determinism']],
   [/^src\/moments\.js$/, ['moments']],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
-  [/^src\/lamps\.js$/, ['lamps', 'render']],
+  [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
   [/^src\/legs\.js$/, ['legs', 'ending']],
   [/^src\/ending\.js$/, ['ending']],
   [/^src\/(proximity-audio|ambience)\.js$/, ['alignment', 'onevoice']],
@@ -124,16 +128,19 @@ const SINCE_RULES = [
   [/^src\/(controls|title|keys)\.js$/, ['mobile']],
   // 'mobile' is not obvious and was measured, not reasoned: the full-screen
   // pass reaches the mobile captures too. Raising VIGNETTE 0.28 -> 0.85 and
-  // running the whole gate moved 30 render goldens AND golden-mobile:hud,
-  // while `--since` on this path was selecting 'render' alone — a silent
+  // running the whole gate moved 30 goldens AND golden-mobile:hud, while
+  // `--since` on this path was selecting 'render' alone — a silent
   // under-selection in the one file E8 iterates on. The same run showed lamps
-  // and ending do NOT move, so they stay out.
-  [/^src\/post\.js$/, ['render', 'mobile']],
+  // and ending do NOT move, so they stay out. 'weather' joined when the
+  // weather columns left 'render' (E0.6) — 27 of those 30 goldens are in it.
+  [/^src\/post\.js$/, ['render', 'weather', 'mobile']],
   // The rest of the visual set: geometry, materials, placement. All of it can
-  // move a golden, and most of it feeds geomHash.
+  // move a golden, and most of it feeds geomHash. 'weather' for the same
+  // reason as post.js: the four non-overcast columns are goldens of the same
+  // scene, so anything that moves an overcast golden moves them too.
   [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|leithers|placeholders|legs|lighting-constants)\.js$/,
-    ['render', 'determinism', 'lamps']],
-  [/^assets\//, ['render', 'determinism', 'alignment']],
+    ['render', 'weather', 'determinism', 'lamps']],
+  [/^assets\//, ['render', 'weather', 'determinism', 'alignment']],
 ];
 
 function regionsSince(ref) {
@@ -187,9 +194,15 @@ function regionsSince(ref) {
 // for a partition that hand-lists all twelve non-render regions and has to be
 // re-derived by hand whenever one is added or changes cost. See
 // docs/VALIDATION.md — the floor is `render` itself, not the partition.
+// E0.6: `weather` rides with `render` rather than becoming a third shard or
+// moving to the other one. Measured before the split, shard 1 (render) was 56s
+// and shard 2 (everything else) was the long pole at ~74s — so moving 30s of
+// weather OUT of shard 1 would have made the gate SLOWER, not faster. The
+// split's payoff is `--only`/`--since`, not the deploy gate.
+const RENDER_SHARD = ['render', 'weather'];
 const SHARDS = [
-  ['render'],
-  REGIONS.filter((r) => r !== 'render'),
+  RENDER_SHARD,
+  REGIONS.filter((r) => !RENDER_SHARD.includes(r)),
 ];
 const SHARDS_ARG = process.argv.find((a) => a === '--shards' || a.startsWith('--shards='));
 const NO_BUNDLE = process.argv.includes('--no-bundle');
@@ -229,7 +242,13 @@ function beginRegion(name) {
 function endRegion() {
   endPhase();
   if (!regionOpen) return;
-  profile.regions.push({ name: regionOpen.name, ms: Date.now() - regionOpen.at });
+  // Merged by name, because `render` opens twice (see region()): two rows
+  // called 'render' would make the profile table unreadable exactly where it
+  // is used to pick the next lever.
+  const prior = profile.regions.find((r) => r.name === regionOpen.name);
+  const ms = Date.now() - regionOpen.at;
+  if (prior) prior.ms += ms;
+  else profile.regions.push({ name: regionOpen.name, ms });
   regionOpen = null;
 }
 
@@ -252,7 +271,13 @@ function endPhase() {
 function region(name) {
   if (!ONLY) { beginRegion(name); return true; }
   const want = ONLY.has(name);
-  if (want) { regionsRun.push(name); beginRegion(name); }
+  // `render` opens twice — `weather` sits between its two halves — so both
+  // the run list and the profile dedupe by name. Without this a full run
+  // reports render twice and the skip banner reads as if it ran two regions.
+  if (want) {
+    if (!regionsRun.includes(name)) regionsRun.push(name);
+    beginRegion(name);
+  }
   return want;
 }
 
@@ -2505,15 +2530,22 @@ async function main() {
     endRegion();
     } // end region: ending
 
-    if (region('render')) {
-    beginPhase('render:bookmark-goldens');
-    // --- bookmarks: draw-call budget + goldens ---
+    // Hoisted out of the `render` block because `weather` now sits BETWEEN two
+    // halves of it (E0.6). These are the only values that cross that boundary:
+    // `bookmarks` is read by both, and `budget`/`drawCallsByBookmark`/
+    // `shotsByBookmark` are accumulated in render's first half and consumed in
+    // its second. The weather half touches none of them — which is exactly the
+    // independence the split needed, and is why it was safe to make.
     if (!existsSync(goldenDir)) mkdirSync(goldenDir, { recursive: true });
     const bookmarks = await page1.evaluate(() => window.__mcgrotDebug.bookmarks);
-
+    const nightBookmarks = await page1.evaluate(() => window.__mcgrotDebug.nightBookmarks);
     let budget = existsSync(budgetPath) ? JSON.parse(readFileSync(budgetPath, 'utf8')) : { tolerancePct: DRAW_CALL_TOLERANCE_PCT, perBookmark: {} };
     const drawCallsByBookmark = {};
     const shotsByBookmark = {}; // raw PNG buffers, for the facade-darkening check below
+
+    if (region('render')) {
+    beginPhase('render:bookmark-goldens');
+    // --- bookmarks: draw-call budget + goldens ---
 
     for (const bm of bookmarks) {
       await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
@@ -2573,7 +2605,6 @@ async function main() {
     // NIGHT_BOOKMARK_DEFS in src/debug.js), so nothing above this line moved.
     // They do enter budget.json and the contrast-floor aggregate, both of
     // which are keyed by whatever was actually captured.
-    const nightBookmarks = await page1.evaluate(() => window.__mcgrotDebug.nightBookmarks);
     {
       const { context: nightCtx, page: nightPg } = await bootPage(browser, port);
       // Belt-and-braces against the autonomous roller, same as the weather
@@ -2790,7 +2821,7 @@ async function main() {
     await lampsOffCtx.close();
 
 
-    beginPhase('render:weather-matrix');
+    beginPhase('render:draw-call-parity');
     // --- E2c.1: exact draw-call parity for this milestone ---
     // The brief's own gate is stricter than the standing ±10% tolerance
     // above: this refactor adds no geometry, so every bookmark's draw calls
@@ -2806,6 +2837,21 @@ async function main() {
         : drawCallDrift.map((r) => `${r.id}: ${r.calls} vs ${r.baseline}`).join('; '),
     });
 
+    endRegion();
+    } // end region: render (first half — goldens, night, torch, draw calls)
+
+    // E0.6: the weather matrix is its own region. It was 29.9s of `render`'s
+    // 56s and the single biggest thing an inner loop was forced to pay for,
+    // and it sits in the MIDDLE of render rather than at one end — hence the
+    // hoisted state above and render reopening below.
+    //
+    // The independence this needed was not argued, it was already shipped:
+    // `--quick` ran the whole suite with exactly this block skipped, through
+    // the same re-pin that follows it. What was missing was making that
+    // configuration addressable by name instead of by a flag that also
+    // dropped the DPR gate.
+    if (region('weather')) {
+    beginPhase('weather:matrix');
     // --- E2c.1: the clear weather column ---
     // setWeather + a full WEATHER_SETTLE_FRAMES worth of stepped dt so the
     // 10s transition (WEATHER_TRANSITION_SECONDS, atmosphere.js) is
@@ -3213,7 +3259,7 @@ async function main() {
       detail: `haar=${haarCapture.fogDensity.toFixed(5)} overcast=${controlCapture.fogDensity.toFixed(5)} clear=${clearFogDensity.toFixed(5)} (haar floor ${HAAR_FOG_DENSITY_FLOOR})`,
     });
 
-    beginPhase('render:weather-transitions');
+    beginPhase('weather:transitions');
     // --- E2c.2: console-clean across all 12 ordered weather-pair transitions ---
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate((name) => window.__mcgrotDebug.setWeather(name), WEATHER_CHAIN[0]);
@@ -3265,8 +3311,15 @@ async function main() {
       });
     }
 
-    // Re-pin the clock and weather, so the blocks below start from a known
-    // state rather than from whatever the last sweep above left set.
+    endRegion();
+    } // end region: weather
+
+    if (region('render')) {
+    // Re-pin the clock and weather. This runs whether or not `weather` ran —
+    // it is what makes the two orderings equivalent, and it is the same
+    // unconditional re-pin `--quick` relied on. Inside this block rather than
+    // outside it so `--only=weather` does not pay a 700-frame settle for
+    // checks it is not going to run.
     await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
     await page1.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
     await page1.evaluate((f) => window.__mcgrotDebug.stepFrames(f), WEATHER_SETTLE_FRAMES);
