@@ -57,14 +57,19 @@ step(2, 'Validation suite');
 if (skipSmoke) {
   console.log('  SKIPPED (--skip-smoke). Only valid if the suite was just run green on this exact commit.');
 } else {
-  const r = spawnSync('node', [join(root, 'scripts/smoke.mjs')], { cwd: root, encoding: 'utf8' });
+  // --shards runs the WHOLE gate as two child processes: 346s against ~515s
+  // serial, nothing skipped. It refuses to start unless its partition covers
+  // every region, and it replays each child's report verbatim — so the FAIL
+  // scrape below reads exactly what it read before. The pass total is higher
+  // than a serial run's because the always-on boot checks run in each child.
+  const r = spawnSync('node', [join(root, 'scripts/smoke.mjs'), '--shards'], { cwd: root, encoding: 'utf8' });
   const out = (r.stdout || '') + (r.stderr || '');
   const failures = out.split('\n').filter((l) => l.includes('  FAIL  '));
   if (r.status !== 0 || failures.length) {
     die(`suite is red — ${failures.length} failing check(s):\n${failures.slice(0, 10).join('\n')}`);
   }
   const passes = out.split('\n').filter((l) => l.includes('  PASS  ')).length;
-  console.log(`  ${passes} checks green`);
+  console.log(`  ${passes} checks green (sharded; boot checks run in every shard, so this exceeds a serial run's 222)`);
 }
 
 // --- 3. build ---------------------------------------------------------------

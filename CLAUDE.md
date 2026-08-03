@@ -105,7 +105,7 @@ npm run smoke:quick  # inner loop: skips the weather matrix (188s of the run), a
 npm run smoke -- --since        # only the regions the working diff reaches (~20-60s)
 npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates nothing)
 npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
-npm run deploy       # smoke -> build -> secret scan -> push gh-pages -> md5-verify live
+npm run deploy       # smoke:par -> build -> secret scan -> push gh-pages -> md5-verify live
 npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
 ```
 
@@ -119,8 +119,8 @@ E0.3 found the real levers after the roadmap had guessed the wrong one.
 
 `smoke:par` is different: it runs **everything**, split across two processes,
 and refuses to start if the shard partition misses a region. It is a
-legitimate full run; `npm run deploy` still uses the serial path until that is
-changed deliberately. The rule it embodies, measured both ways: parallelise
+legitimate full run, and **`npm run deploy` now uses it** (Dan's call,
+2026-08-03). The rule it embodies, measured both ways: parallelise
 work that WAITS against work that COMPUTES. Running the four weather passes
 concurrently bought 4% — rasterising already saturates the cores, so a second
 rasteriser is not a second machine.

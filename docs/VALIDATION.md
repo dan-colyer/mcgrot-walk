@@ -1308,8 +1308,10 @@ Safety properties of the shard runner, both checked rather than asserted:
   higher (228) only because the always-on boot checks run in every child.
 - Each child prints its own PARTIAL, correctly — it ran a subset. The merged
   summary states the coverage proof so the union is not read off trust.
-- `npm run deploy` still runs the **serial** suite. Switching the deploy gate
-  to the sharded path is a deliberate decision, not a default.
+- `npm run deploy` runs the **sharded** suite (Dan's call, 2026-08-03). It
+  scrapes the same `FAIL` lines out of the same report — the runner replays
+  each child's output verbatim — and the only visible difference is a higher
+  pass total, because the always-on boot checks run in every child.
 
 ### Why the post-load settle was left alone
 
