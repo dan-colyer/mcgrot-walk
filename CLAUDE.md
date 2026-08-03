@@ -51,6 +51,12 @@ has to be mechanical:
   An unfalsified gate is decoration.
 - **Gates test the product, not the calculator.** If a check compares two
   calls to one pure function, it passes whether or not the scene ever uses it.
+- **Numeric gates cannot see a bad picture.** E5d's ending passed every
+  fog/exposure assert while rendering nine seconds of black. Any unit that
+  authors something the player *watches* — a sequence, a grade, a movement —
+  renders its captures and the review opens them; where the moment is
+  deterministic, also gate it with the contrast floor ("the frame is a
+  picture" — see E2g.1).
 
 The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
 a milestone adds a claim worth trusting later, and document each gate in

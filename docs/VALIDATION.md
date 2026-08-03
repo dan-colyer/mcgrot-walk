@@ -1168,7 +1168,10 @@ three.**
 
 ## Running the suite fast (and what that costs you)
 
-A full run is **412s**, measured. Two ways to cut it, both of which announce
+A full run was **412s** measured at E5c; with the `lamps`/`legs`/`ending`
+regions added it measured **834s** at the E5 phase gate (2026-08-03) — the
+suite has doubled, and a measured speedup unit is queued on the roadmap
+(bundle caching first). Two ways to cut a run today, both of which announce
 what they did not check — a partial run that reads like a full one is the
 exact failure this project keeps having.
 
@@ -1671,6 +1674,21 @@ Capture the sequence and look at it after any change to its curves.
   A real merge wants an ambience API that does not exist yet.
 - **No golden covers it**, and none should: the close is a transient.
 
+## Seeding map (E5 phase gate — the one-story view)
+
+Every source of variation, who owns it, and why the copies that exist are
+isolation rather than debt. Nothing here changed at the gate; it had just
+never been written down in one place.
+
+| Source | Owner | Consumers | Notes |
+|---|---|---|---|
+| Calendar date | `src/day.js` (`todayKey`/`todaySeed`) | HUD label, arrival hour (`startHour`), per-vendor reading phase, legs' weather roll seed | The single date authority (E5c). Pinnable via `__mcgrotForceDate`; every smoke context sets it (`2026-01-01`). |
+| Scene layout PRNG | `src/scenery.js`'s seeded PRNG | debris, wrecks, smoke, catenary poles | **Draw order is sacred** — never insert draws; append. Lamps deliberately take pole *positions*, never a draw. |
+| `hash32` (counter-keyed) | private copy per subsystem (`chimneys.js`, `atmosphere.js` scheduler, `windows.js`, legs roll via atmosphere) | each keeps its own counter sequence | The duplication is the point: separate sequences cannot interleave, so adding a consumer can never shift another's draws — the property `geomHash` depends on. Do not "consolidate" into shared mutable state. |
+| Weather schedule | `atmosphere.js` (`schedClock`, own `hash32` sequence seeded from the date-derived boot hour) | autonomous weather changes | Only advances when `rate !== 0`, which is the whole pinned-time determinism argument (check 23). |
+| Turnaround roll | `atmosphere.nudge(deltaHours, seed, legIndex)` | legs' per-leg weather | Deterministic in (day seed, leg); walks `WEATHER_ADJACENCY`. |
+| Reading join offsets | `proximity-audio.js` (`__mcgrotForceDaySeed`) | virtual reading clocks | Reads the stepped `simTime`, never `AudioContext.currentTime` (check 5c). |
+
 ## Invariants reference
 
 | Field | What it means | If it fails |
@@ -1909,6 +1927,11 @@ For poking around live rather than running the full harness:
    ```
 4. `await window.__mcgrotDebug.goto(chainage, side, distance)` or
    `gotoBookmark(id)`, then screenshot/inspect via the usual browser tools.
+   If you instead set `camera.position` directly while paused, set Y too:
+   `pauseAuto()` suspends the ground-follow clamp, and the Walk climbs ~27m
+   south — a teleport up the Brae otherwise leaves the camera underground,
+   producing a garbage frame that looks like a rendering bug (hit at the E5
+   phase gate).
 5. `window.__mcgrotDebug.resumeAuto()` before handing back to a human tester
    — otherwise the world stays frozen except for whatever `stepFrame` calls
    you make.

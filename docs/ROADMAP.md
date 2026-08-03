@@ -70,6 +70,14 @@ E2c.3a two-step) and **opposed-pair gates** (neutral input → bit-identical,
 authored input → measurably moved — check 26's shape, reused for every new
 axis).
 
+*Flag plumbing (E5 phase-gate ruling): three modules now carry the same
+~10-line `__mcgrotForce<Name>` override boilerplate plus a dead `= true`
+constant each. Fine as it stands — do not retrofit for its own sake. The
+**next** unit that needs a flag builds `src/flags.js` (one localhost-gated
+`flag(name, shippedDefault)` helper) and migrates the three existing flags
+in the same commit; the existing opposed-pair gates verify the migration for
+free.*
+
 ### Model and effort per unit
 
 **The rule:** Opus runs **medium** by default — the design here is
@@ -90,8 +98,8 @@ exception left is E7a's mechanical hosting migration.
 | E5b.2 anchor readers | **high (review)** | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
 | E2g street lights | LANDED 2026-08-02 | no golden moved (no pose frames a lamp); both night gates isolated, not relaxed |
-| E2g.1 night golden | small | the lit street has no pictorial coverage; needs its own bookmark |
-| E5d turnaround + ending | LANDED 2026-08-03 | closes E5 — **Fable phase gate now due** |
+| E2g.1 night coverage + picture gates | medium; **high (review)** on the golden-capture commit | **NEXT** — expanded at the E5 gate; new bookmark + golden, the ending's picture gate |
+| E5d turnaround + ending | LANDED 2026-08-03 | closed E5 — phase gate passed 2026-08-03 |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
 | E9a the shop | **high (review)** | render-path scene swap, boot change, transition gates |
@@ -1253,6 +1261,10 @@ distribution model (Dan's call, E2e), the piece is *voice-led*, and today every
 iOS visitor gets silence. Nothing else on this roadmap matters to a visitor
 who cannot hear it.
 
+*Re-examined and upheld at the E5 phase gate — see "Sequencing check (E5
+phase gate)" further down: E2g.1 (small) precedes E8, E2f stays Dan-gated
+and queue-jumping, and E6 stays where it is.*
+
 ## E2f — The Device Round (iOS)
 
 *The two open iOS bugs, plus the device-verification protocol whose absence
@@ -1277,6 +1289,14 @@ read first** — the last unverified fix for bug 1 is what broke the music.*
   buildings + 400 NPCs on a real GPU) gets its first measured data point for
   free. Ten minutes of walking with the FPS meter is enough; write the number
   down.
+- **Added at the E5 phase gate — the lamp pool on a real GPU.** E2g's pool
+  size (4) is reasoned, not measured; the harness was shown *unable* to
+  measure it (SwiftShader rasters outside every timed window). The scene now
+  runs **eight dynamic PointLights at night** (pool 4 + torch + 3 arc
+  flashes) in a forward-lit scene — on a phone GPU that is a real cost
+  question. Walk the street at night on the device; if the frame rate dips
+  only after dark, the pool is the first suspect and `POOL_SIZE` the first
+  lever.
 - **Optional rider if the round goes fast:** the E7a Cloudflare Pages
   migration is independent, mechanical, and removes the standing
   bandwidth-takedown risk before any share push that a working iOS build
@@ -1536,7 +1556,7 @@ couples groups and animals visually for free.
 - These are exactly the "loud, nameable daily differences" the date-seed
   sharing thesis (E5c) wants — a visitor can say "I was there on Gala Day".
 
-## E5 — The Comic Layer (McGrot UX) — NEXT AFTER E2f
+## E5 — The Comic Layer (McGrot UX) — CLOSED (phase-gate passed 2026-08-03)
 
 *The headline interaction: explore the Walk while hearing AND reading McGrot.
 Fleshed out at the E2 phase gate with attributed ideas from a six-axis survey
@@ -1917,35 +1937,13 @@ night golden above.
 
 ### E2g.1 — A night golden (follow-on, small)
 
-*The gap E2g's landing measurement exposed: the golden suite has no coverage
-of the lit street at all.*
-
-Every golden held at the noise floor with the lamps enabled and the draw-call
-budget rose by exactly 2, which together say the fittings render and **no
-bookmark pose frames one**. All 27 desktop goldens are captured at 13:00, when
-the lamps are switched fully off by design. So the entire subsystem is watched
-by the `lamps` region's numeric gates and by nothing pictorial.
-
-- **Why it was impossible before and is possible now.** Night frames could not
-  clear the `goldens are usable diff substrates` contrast floor (luminance
-  stddev >= 8) — an unlit street is a flat black rectangle, and a golden with
-  no contrast cannot discriminate a regression from a re-render. A sodium-lit
-  street clears it comfortably; the 03:00 legibility pose measures mean 21.7
-  with plenty of local structure.
-- **Wants its own bookmark**, not a re-use. Existing bookmarks face a
-  frontage; the lamp fittings sit 7 m up and 11 m out, so a pose that frames
-  one has to look along and slightly up the street. `torchGroundPose` is the
-  closest thing and is deliberately evidence-only (writes to `captures/`,
-  never `goldenDir`).
-- **Pick the hour deliberately.** 03:00 is the darkest and makes the strongest
-  picture, but 22:00 exercises the same lamp state and is already the hour the
-  two night gates use — one hour for all three is less to keep in step.
-- **Watch the arc flashes.** `scenery.js` fires three randomised PointLight
-  pulses on timers; a night golden is far more sensitive to one landing
-  mid-capture than a daylight one. Check whether the settle count lands
-  deterministically before trusting the first capture, and take three.
-- **Cost:** one bookmark, one golden per weather column that is worth it
-  (probably overcast alone), one entry in `docs/VALIDATION.md`.
+*Superseded at the E5 phase gate: expanded into "E2g.1 — Night coverage and
+the picture gates", the unit queued next (after the E5 audit section below).
+The reasoning that lived here — why a night golden is possible now (a lit
+street clears the stddev ≥ 8 contrast floor; the 03:00 pose measures mean
+21.7), why it wants its own bookmark (fittings sit 7m up, 11m out; no
+existing pose frames one), the 22:00 hour choice, and the arc-flash
+determinism caution — is carried into that unit's spec.*
 
 
 
@@ -2044,7 +2042,7 @@ exposure and camera to match a boot that never ended.
 direction but not the written intent — a real merge wants an ambience API that
 does not exist. The stretch interior is untouched.
 
-**Fable phase gate is now due** — E5 is closed.
+**Fable phase gate passed 2026-08-03** — see the audit section after E5d.
 
 *Planned to depth 2026-08-02, against the codebase as it stands after E2g.*
 
@@ -2118,6 +2116,230 @@ whole point.
 
 - Stretch (unchanged): one enterable interior as a hub gallery.
 
+## E5 — phase-gate audit (2026-08-03): PASSED
+
+Audited by Fable at the phase boundary; claims re-verified independently, not
+quoted: smoke green on **two fresh runs** (the second counted line-by-line:
+**218 checks, 0 failures**); the live site serves
+exactly the `gh-pages 5359e37` bundle (`index.html` and `bundle.js`
+md5-matched against the branch, whose head is "Deploy d5ccc4a"); the recorded
+counts hold on disk (19 updaters, 13 regions, 3655-line harness, module sizes
+as logged); the ending card's copy is wrapper phrasing with no quoted comic
+fragment (verbatim rule holds); and the build was walked. The live site
+boots to a legible 23:22 dreich street under the lamps — E2g doing in
+production exactly what it was built for (the HUD's "arrived 23:22"
+independently recomputed from `startHour('2026-08-03')`). The full journey
+ran on a localhost boot of the same commit via the debug API: out to the
+top of the Walk (hinge 1: 23:22 dreich → 04:39, rolling to haar — the
+lamp-lit haar street at the summit is a genuinely different street), back
+to the Foot (hinge 2: → 09:47 overcast morning), prompt offered, close
+begun — **the mid-close frame is a picture at 09:47 too** (signage
+dissolving into pale haar; the whiteout fix holds at a second hour, the
+gates only run it at 20:00) — card, "keep walking", street handed back
+with the clock having run on through the close. Three different streets in
+one out-and-back; the phase does what it says.
+
+*(One harness sharp edge re-confirmed on the way: under `pauseAuto()` the
+ground-follow clamp is off, so a teleport walk up the Brae leaves the
+camera ~25m underground at the summit unless Y is reset from
+`groundHeight` — the first "summit" frame was garbage and looked like a
+rendering bug. Known behaviour, now noted in VALIDATION's QA recipe.)*
+
+### The five judgement calls, ruled
+
+1. **`setSuspended()` is a seam, and the right one.** The alternative —
+   atmosphere exposing "drive toward these targets" while keeping ownership —
+   forces the ending to express its curves in atmosphere's vocabulary and
+   leaves two writers blending into the same fields; the suspend flag makes
+   ownership exclusive and *provable* (the fault injection reading
+   fog/exposure identical-to-control with the call removed is the strongest
+   gate in the region). What it is not is general: a bare boolean supports
+   exactly one suspender. The second consumer is already on the roadmap —
+   E9a's interiors need `toneMappingExposure` (a renderer-global) and their
+   own fog while the street clock keeps running — so the seam graduates to
+   an owned hand-off (a token, or a named owner with re-entry refused) **in
+   E9a, not now**. Two callers on a boolean is the bug; one caller is a
+   correct simple design. A risk line has been added to E9a.
+2. **The goldens have not failed; they were never the instrument for this.**
+   All 39 are captured at boot/leg-0/13:00 because that is the deterministic
+   state — they are the *base-state* regression instrument, and becoming a
+   "boot-state regression test" is them working. The real gap splits in two:
+   (a) the lit night street is a persistent, poseable state with zero
+   pictorial coverage — that is E2g.1, and it should land **before E8**, or
+   the grade's wholesale recapture will bake in a look nobody has ever seen
+   at night; (b) the turnaround and the close are transients, and transients
+   should never be goldens — they need **picture gates** (the contrast floor
+   applied at the authored moment) plus captured sequences a human opens.
+   Both fold into E2g.1, expanded below. One night golden alone was indeed
+   too small an answer.
+3. **Isolating the two night gates was correct.** `night darkens facades`
+   was built to detect a palette regression that renders night as day;
+   running it lamps-off preserves that instrument at its original threshold
+   instead of relaxing 45% to ~60% and deleting what it detects. The
+   lamps-off boot is not "a configuration no player sees" — it is the
+   control that isolates the palette pipeline from the lamp subsystem,
+   which is rule 1 of the E2d lessons applied precisely. The shipped
+   configuration is not unguarded: the top-strip gate and the 03:00
+   legibility gate both run lamps-on with their own controls. The one
+   honest cost — `night darkens facades` no longer watches the shipped
+   frame — is covered by the night golden E2g.1 adds.
+4. **Pool size stands as reasoned, and E2f now carries it explicitly.** The
+   harness measurement was attempted properly and shown impossible
+   (SwiftShader rasters outside the timed window; forced in, ordering noise
+   swamps the signal). Four camera-following PointLights on top of torch +
+   three arc flashes is **eight dynamic point lights in a forward-lit
+   scene** — on a phone GPU that is a real question, and it is a
+   ten-minute measurement once a phone is in hand. Added to E2f.
+5. **The flag pattern is right; the litter is real; do not retrofit.** The
+   dead `= true` constants are one line each and the override plumbing is
+   what the opposed-pair gates drive both states through — it earns its
+   keep. The fix is prospective: the **next** unit that needs a flag builds
+   `src/flags.js` (one localhost-gated `flag(name, shippedDefault)` reading
+   `window.__mcgrotForce<Name>`) and migrates the three existing flags in
+   the same commit — the existing opposed-pair gates verify the migration
+   for free. Added to the containment conventions. A retrofit sweep on its
+   own would be churn in enabled code paths for zero player value.
+
+### E2g mid-phase: the right call, kept as a rule
+
+E2g was filed against E2 and built inside E5 because E5d depended on it.
+Dependency order beats phase-label purity: the unit inherited the phase's
+discipline (flag-first, opposed pairs, re-derived rather than relaxed
+thresholds) and is audited with the phase it landed in — this audit. The
+rule going forward: **an inserted unit is filed where its subject lives and
+audited where it lands.** What would have been wrong is pausing E5 for a
+ceremony-sized E2 reopening.
+
+### The defect pattern, read
+
+Across E5c/E2g/E5d the defects were overwhelmingly in the verification, and
+E5d's two product defects were caught by arithmetic — which is the
+opposed-pair discipline working, not failing. Fault injection is also doing
+its job: all five dead gates were found *by an injection that failed to go
+red*. Keep both. What the phase exposed is a third instrument missing:
+every numeric gate measures mechanism or aggregate state, and none can see
+that a frame is not a picture — the ending passed fog-up/exposure-down
+while rendering nine seconds of black. Two additions, binding:
+
+- **Captures are part of the deliverable.** Any unit that authors something
+  the player *watches* (a sequence, a grade, a movement) renders its
+  captures and the review opens them. Now in `CLAUDE.md`'s verification
+  contract.
+- **Where the authored moment is deterministic, gate it as a picture.** The
+  contrast floor (luminance stddev, already machinery in the suite) applied
+  at the moment — the ending's mid-close frame, the night street. It would
+  have caught the blackout, and it catches the symmetric failure (a
+  whiteout that arrives at t=1s instead of t=10s). Built in E2g.1.
+
+### Cross-cutting rulings
+
+- **`HOURS_PER_REAL_MINUTE = 1` holds.** A ~4-minute out-and-back now
+  crosses more than half a day of light, which is the dynamism the piece is
+  for, and E2g removed the "half of every cycle is unusable" cost that was
+  the one argument against it. It is now load-bearing in three tunings
+  (lamp switch thresholds are hour-driven and would survive; the hinge's
+  5h-vs-1.9h-free-drift ratio and the legs gates' cranked-rate arithmetic
+  would not). Treat the constant as frozen; changing it is its own small
+  unit that re-derives `TURNAROUND_HOURS` and the legs-region maths.
+- **Seeding stays as it is.** The private `hash32` copies are isolation,
+  not debt — separate counter sequences cannot interleave, which is the
+  property the determinism gates depend on. What was missing is the map;
+  `docs/VALIDATION.md` now has a "Seeding map" section so the next person
+  sees it as one story without having to re-derive it.
+- **Suite cost has doubled and has now hit its ceiling.** The two gate
+  runs measured ~10.5 and **13.9 minutes** wall (834s timed, idle-ish
+  machine) against the 412s recorded at E5c — three new regions, each
+  booting two or more contexts, a 1.7MB bundle re-fetched per boot. The
+  deploy gate stays the full suite, but a **measured speedup unit is now
+  warranted** — small, after E2g.1, before E8's prototype loop leans on
+  fast iteration. The levers in order of expected value: stop re-fetching
+  the bundle every boot (serve with `Cache-Control`/keep-alive), then
+  boot-count consolidation only where regions genuinely share state. The
+  two rejected speedups (hush shortening, concurrent SwiftShader
+  contexts) stay rejected — both were measured, and the second corrupts
+  results, not just time.
+- **`chainageOfPoint` is now called twice per frame** (legs, plus the
+  ending's idle-poll via `legs.state()`). Folded into E3's existing
+  cached-chainage-lookup residual rather than fixed now.
+- **The two environment breakages were environmental** (IPv4-only
+  `serve.py` vs a `localhost`→`::1` connect; python 3.14's ~9s first
+  accept) and are worked around by measurement in the harness. No action;
+  recorded so the next stall gets grepped before it gets theorised.
+
+### Residuals carried forward
+
+- **E2f** still blocked on a phone, and now carries three device questions:
+  the iOS audio bugs, the torch toggle, and the lamp pool's real-GPU cost
+  (call 4 above).
+- **E2g.1** expanded into the next unit (below): night golden + picture
+  gates.
+- **Lamp damage/flicker** stays deferred (E∞ material — the street is too
+  tidy, but that is delight, not debt).
+- **"Voices merging"** in the ending is still `setDucked(true)`. The real
+  merge wants per-source mix control that E6b's strip-of-voices design
+  *also* wants — build the ambience API once, there. Noted in E6b.
+- **Transcription** unchanged at 124/418 this phase; still the content
+  critical path (see Standing trickles).
+
+## Sequencing check (E5 phase gate)
+
+**E6 is not the next phase, and neither is anything new.** The standing
+order (E2f → E5 → **E8 → E9a → E3 → E4 → E9b → E6 → E7**) survives E5's
+outcome on re-examination, with one small unit inserted first:
+
+1. **E2g.1 — night coverage and the picture gates** (small, next). It must
+   precede E8: E8's landing recaptures every golden, and if no night golden
+   exists by then, the grade ships with its night look never once captured.
+2. **A measured suite speedup** (small — see the runtime ruling above). The
+   full run has doubled to ~14 minutes; take the bundle-caching lever
+   before E8's loop starts leaning on iteration speed.
+3. **E8 — the McGrot grade** prototype loop. Unblocked, captures-only until
+   its landing, no dependency on E2f or E6.
+4. **E2f** stays queue-jumping and Dan-gated: it happens the moment a phone
+   is in hand, whatever else is mid-flight — nothing in E2g.1 or E8's loop
+   conflicts with it.
+
+Why not E6: collision's payoff is physical believability, which buys most
+after the street has its look (E8) and its people (E3/E4); the tram is
+phase-sized and explicitly wants E4's cast for its riders and stops; and
+E6a's player-only scope would today protect a street the player mostly
+cannot yet be *in* wrongly (no interiors, no boarding). The reasons E5
+jumped E3 do not transfer to E6 jumping E8 — E8 is cheaper, feeds E3's
+character decisions, and its judging set is pure Dan-delight per hour spent.
+
+## E2g.1 — Night coverage and the picture gates — NEXT (small)
+
+*Expanded at the E5 phase gate from "one night golden" to the phase's
+missing instrument: pictorial coverage for the two persistent states nobody
+frames, and picture gates for the transients goldens must never cover.*
+
+1. **A night bookmark and golden.** One new bookmark that frames a lamp —
+   looking along and slightly up the street (fittings sit ~7m up, 11m out;
+   no existing pose catches one). Captured at **22:00 overcast** only — the
+   hour the night gates already use, one golden, not a weather column.
+   Watch the arc flashes: three randomised PointLight pulses are far more
+   visible on a night frame; verify the settle lands them deterministically
+   and take three captures before trusting the first. The contrast-floor
+   aggregate check must *include* this golden (a lit night street clears
+   stddev ≥ 8 comfortably — that was measured at E2g; assert it stays
+   true).
+2. **The ending's picture gate.** Capture the close's mid-sequence frame
+   (t≈5s, deterministic under `stepFrames`) and assert the contrast floor
+   plus a mean-luminance band — "there is something to look at, and it is
+   neither black nor blown out". This is the gate the blackout proved
+   missing; the numeric fog/exposure asserts stay as they are.
+3. **The hinge's evidence capture.** Not a gate: one post-turnaround frame
+   written to `docs/smoke/captures/` per run, so "the return leg is a
+   different street" has a picture a reviewer can open next to the clock
+   arithmetic. Free, and it is the eyeball path the phase kept proving
+   necessary.
+
+Gates: the new golden joins the standard capture-or-compare path (0.5%);
+the mid-close picture gate fault-injected red (re-introduce the exposure
+floor of 0.12 — it must fail); draw calls at the new bookmark enter
+`budget.json` on capture. **Effort:** medium, **high (review)** on the
+golden-capture commit per the standing rule.
+
 ## E6 — Getting About (collision, and a tram that runs)
 
 *Dan's call, 2026-07-27. Two items, and the first is a hard prerequisite for the
@@ -2174,6 +2396,10 @@ the game spent every phase building. Concretely:
   in sequence — tamed with one-voice-at-a-time crossfade and a distance
   window, the ride becomes vendors handing off down the Walk like stations
   on a dial. The cacophony risk IS the best audio moment in the piece.
+  (This is where the **per-source mix API** gets built: the ending's
+  "voices merging" is still `ambience.setDucked(true)` for want of exactly
+  this control — build it once here, then upgrade the ending's close to a
+  real merge as a rider. E5 phase-gate note.)
 - **The ending is the thesis**: the line terminates **where the rails stop
   dead** — deceleration, doors, silence, and the player steps off into the
   unfinished half. Riding the tram that never ran, as far as it ever got.
@@ -2418,7 +2644,13 @@ containment; audio — one `AudioContext`, ambience ducking measured indoors
 vs out. Risks, named: the door prompt colliding with the existing NPC
 proximity prompt at the same façade (`interact.js` priority needs a rule);
 scene-swap interaction with `FramebufferTexture` resize; mobile safe-area
-for the gesture radial.
+for the gesture radial; and **atmosphere ownership** — an interior needs
+`toneMappingExposure` (renderer-global) and its own fog while the street
+clock runs on, which makes it the *second* consumer of the
+`setSuspended()` seam the ending built. A bare boolean supports one
+suspender: this unit graduates it to an owned hand-off (a token, or a
+named owner with re-entry refused) before two callers can fight over it
+(E5 phase-gate ruling).
 
 ### E9b — Open for Business (the visitor theatre) — after E4
 
