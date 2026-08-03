@@ -1564,6 +1564,59 @@ GPU. The recaptured golden is the more faithful one.
 first. A clean run under the software path points the finger at a driver
 update rather than at the scene.
 
+### Where the time goes now, and what is left (E0.4b)
+
+Two follow-on experiments were run against the 74s gate. Both are recorded
+here because the numbers, not the reasoning, are what should decide whether
+anyone tries them again.
+
+**Result caching keyed by content hash — not the lever, and not built.** The
+idea was to skip regions whose inputs are byte-identical, reusing `SINCE_RULES`
+as the dependency map. Measurement killed it: `render` is 56s of a 133s serial
+run, and nearly every source path in `SINCE_RULES` routes to `render`. A cache
+that misses on the one region that dominates every run saves nothing. The
+measured inner loop is bimodal, and this is the number that matters for E8:
+
+| Change | Routes to | `--since` cost |
+|---|---|---|
+| `src/journal.js` (leaf module) | journal, mobile | **15s** |
+| `src/lamps.js` (anything visual) | lamps, render | **59s** |
+
+E8's grade work is visual, so it takes the 59s path every time.
+
+**A 3-way shard split — measured, 8%, rejected.** The 2-way partition was tuned
+when `render` was 266s of a 515s run; on the GPU that inverted, and render's
+shard (63s) now finishes 11s before the other. Splitting the twelve remaining
+regions in two should have brought the wall down to render's floor. Measured:
+74s -> 68s, not the predicted 63s — three concurrent browsers cost render's own
+shard 5s. An 8% gain on the deploy gate, nothing for the inner loop, in
+exchange for a hand-listed partition that rots the moment a region changes
+cost. Reverted.
+
+**What is actually left.** Wall time is bounded below by the largest single
+region, because a region is the smallest unit `--only` can select. That floor
+is `render`, and inside it:
+
+| Phase | Cost |
+|---|---|
+| `render:weather-matrix` | 29.9s |
+| `render:post-chain` | 7.0s |
+| `render:scheduler` | 6.9s |
+| `render:bookmark-goldens` | 4.4s |
+| the other four phases | 8.1s combined |
+
+Making `render:weather-matrix` separately selectable would drop the floor to
+~35s and is the only remaining structural win of any size. It is not a tidy-up:
+the phase opens by reading `drawCallsByBookmark`, accumulated by earlier phases
+in the same region, so the split has to establish that the two halves are
+genuinely independent before it can be trusted — the same check every region
+had to pass before it was made skippable.
+
+Two things are NOT the bottleneck, and were measured rather than assumed: the
+golden comparison itself is ~51ms per golden (23ms PNG decode ×2, 5ms
+pixelmatch), so ~2s across the whole set; and boots are unchanged from E0.3's
+finding — still a fresh Playwright context each time, still nothing to cache.
+
 ## The debug API (`window.__mcgrotDebug`)
 
 Hostname-gated to `localhost`/`127.0.0.1` (see `src/main.js`) — inert

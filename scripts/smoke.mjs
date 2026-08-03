@@ -171,6 +171,12 @@ function regionsSince(ref) {
 // adding a region without assigning it fails the run loudly instead of
 // quietly going unchecked. Coverage was also verified empirically — 221
 // unique check names in a full run, zero missing across the two shards.
+// Stays 2-way, and deliberately stays derived rather than hand-listed. A
+// 3-way split WAS measured on the GPU (E0.4b) and rejected: 74s -> 68s, an 8%
+// gain on the deploy gate and nothing at all for the inner loop, in exchange
+// for a partition that hand-lists all twelve non-render regions and has to be
+// re-derived by hand whenever one is added or changes cost. See
+// docs/VALIDATION.md — the floor is `render` itself, not the partition.
 const SHARDS = [
   ['render'],
   REGIONS.filter((r) => r !== 'render'),
