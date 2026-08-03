@@ -123,14 +123,22 @@ const LAMP_GAP_MIN = 30;
 const LAMP_GAP_MAX = 45;
 const LAMP_SPAN_MIN = 1400; // metres between the first and last lamp
 
-// E2g.1's mid-close picture gate. The band is set around the measured frame
-// (filled in after the first capture, below) wide enough that tuning the
-// close does not need the gate touched, and tight enough that the failure it
-// exists for — the E5d whiteout easing to a black frame instead of a pale one
-// — lands outside it. Fault-injected red by restoring EXPOSURE_FLOOR = 0.12
-// in src/ending.js; the measured numbers for both are in docs/VALIDATION.md.
-const MID_CLOSE_MEAN_MIN = 0;
-const MID_CLOSE_MEAN_MAX = 255;
+// E2g.1's picture gates on the close. Two frames of the sequence are measured
+// rather than asserted about: mean luminance in a band ("neither black nor
+// blown out") and the same contrast floor the goldens use ("there is still
+// something to look at"). Measured on the shipped close: t=5s reads mean 55.5
+// / stddev 53.1, t=9.5s reads 85.9 / 83.6.
+//
+// The bands are set from the failure, not from the reading. Turning the haar
+// black in src/ending.js — the E5d defect exactly: a close that fades to
+// nothing while every fog and exposure assert stays green — takes t=5s to
+// 20.7 and t=9.5s to 4.5/7.9, so both floors sit above the injected values
+// and below the real ones with room to tune. See docs/VALIDATION.md for what
+// these deliberately do not prove.
+const MID_CLOSE_MEAN_MIN = 25;
+const MID_CLOSE_MEAN_MAX = 200;
+const LATE_CLOSE_MEAN_MIN = 30;
+const LATE_CLOSE_MEAN_MAX = 210;
 
 // E2g.1. The night golden's hour — the same 22:00 the night gates above
 // already use, and overcast, so the pose costs one capture rather than a
@@ -1922,9 +1930,19 @@ async function main() {
     // pictures a reviewer can open side by side. Nothing diffs them (the
     // hinge's weather roll is deterministic but the hour it lands on is a
     // product of the walk, so a tracked baseline would be churn).
+    //
+    // Each arm is stepped one more frame immediately before its capture, and
+    // the timeout is raised: a page that has been idle since its last
+    // stepFrame does not always hand the compositor a frame within
+    // Playwright's default 30s under two live SwiftShader contexts, and the
+    // second capture here timed out the whole suite doing exactly that.
     if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
-    writeFileSync(join(captureDir, 'hinge-return-on.png'), await legsOnPg.screenshot());
-    writeFileSync(join(captureDir, 'hinge-return-off.png'), await legsOffPg.screenshot());
+    const hingeShot = async (pg, path) => {
+      await pg.evaluate(() => window.__mcgrotDebug.stepFrames(1));
+      writeFileSync(join(captureDir, path), await pg.screenshot({ timeout: 120000 }));
+    };
+    await hingeShot(legsOnPg, 'hinge-return-on.png');
+    await hingeShot(legsOffPg, 'hinge-return-off.png');
 
     const onDelta = onWalk.clock - onStart.startClock;
     const offDelta = offWalk.clock - offStart.startClock;
@@ -2102,33 +2120,46 @@ async function main() {
     // Diverge HERE and nowhere else: one arm steps into the haar.
     const began = await endPg.evaluate(() => window.__mcgrotDebug.ending.begin());
     const SEQ_FRAMES = 60 * 11; // one second past SEQUENCE_SECONDS
-    // E2g.1: stop half way through and LOOK. Both arms are stepped in the
-    // same two chunks so the total is unchanged and the pair below still
-    // compares like with like.
-    const MID_CLOSE_FRAMES = 60 * 5; // t=5s: ease=0.5, fog 5x, exposure half way to the floor
+    // E2g.1: stop part way through and LOOK. Both arms are stepped in the
+    // same chunks, so the total is unchanged and the pair below still
+    // compares like with like (measured: the same fog 0.0855 / exposure 0.5
+    // against control 0.0095 / 0.7333 as before the split).
+    //
+    // TWO frames, not one. E2g.1's brief asked for the mid frame; measuring
+    // it showed the mid frame cannot carry this gate alone. The deepest point
+    // of the fade is where a close that fades to nothing shows itself, and
+    // that is t=9.5s, one frame short of the card covering the screen: with
+    // the haar turned black it reads mean 4.5 against the shipped 85.9, while
+    // t=5s only falls from 55.5 to 20.7. Both are captured and gated.
+    const MID_CLOSE_FRAMES = 60 * 5;   // t=5s: ease=0.5, fog 5x, exposure half way to the floor
+    const LATE_CLOSE_FRAMES = 60 * 9.5; // t=9.5s: the last frame before the card covers the screen
+    const pictureGate = async (name, label, path, min, max) => {
+      const shot = await endPg.screenshot();
+      writeFileSync(join(captureDir, path), shot);
+      const s = luminanceStats(PNG.sync.read(shot));
+      results.push({
+        name,
+        pass: s.stddev >= SUBSTRATE_MIN_STDDEV && s.mean >= min && s.mean <= max,
+        detail: `${label} of the close: mean luminance ${s.mean.toFixed(1)} ` +
+          `(want ${min}-${max} — neither black nor blown out), stddev ${s.stddev.toFixed(1)} ` +
+          `(want >=${SUBSTRATE_MIN_STDDEV}, i.e. there is still something to look at). ` +
+          `Frame written to docs/smoke/captures/${path}`,
+      });
+    };
+
+    if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
     await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), MID_CLOSE_FRAMES);
     await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), MID_CLOSE_FRAMES);
+    await pictureGate('the mid-close frame is a picture, not a blackout',
+      't=5s', 'ending-mid-close.png', MID_CLOSE_MEAN_MIN, MID_CLOSE_MEAN_MAX);
 
-    // THE gate E5d shipped without. Every numeric assert on that milestone
-    // passed while the sequence rendered nine seconds of black: fog rose,
-    // exposure fell, the hand-off held — and there was nothing to look at.
-    // A number cannot see a bad picture, so this one measures the picture.
-    if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
-    const midShot = await endPg.screenshot();
-    writeFileSync(join(captureDir, 'ending-mid-close.png'), midShot);
-    const mid = luminanceStats(PNG.sync.read(midShot));
-    results.push({
-      name: 'the mid-close frame is a picture, not a blackout',
-      pass: mid.stddev >= SUBSTRATE_MIN_STDDEV
-        && mid.mean >= MID_CLOSE_MEAN_MIN && mid.mean <= MID_CLOSE_MEAN_MAX,
-      detail: `t=5s of the close: mean luminance ${mid.mean.toFixed(1)} ` +
-        `(want ${MID_CLOSE_MEAN_MIN}-${MID_CLOSE_MEAN_MAX} — neither black nor blown out), ` +
-        `stddev ${mid.stddev.toFixed(1)} (want >=${SUBSTRATE_MIN_STDDEV}, i.e. there is still something to look at). ` +
-        `Frame written to docs/smoke/captures/ending-mid-close.png`,
-    });
+    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), LATE_CLOSE_FRAMES - MID_CLOSE_FRAMES);
+    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), LATE_CLOSE_FRAMES - MID_CLOSE_FRAMES);
+    await pictureGate('the deepest frame of the close is still a picture',
+      't=9.5s', 'ending-late-close.png', LATE_CLOSE_MEAN_MIN, LATE_CLOSE_MEAN_MAX);
 
-    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - MID_CLOSE_FRAMES);
-    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - MID_CLOSE_FRAMES);
+    await endPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - LATE_CLOSE_FRAMES);
+    await ctlPg.evaluate((n) => window.__mcgrotDebug.stepFrames(n), SEQ_FRAMES - LATE_CLOSE_FRAMES);
     const during = await snapshot(endPg);
     const duringCtl = await snapshot(ctlPg);
     const endState = await endPg.evaluate(() => ({

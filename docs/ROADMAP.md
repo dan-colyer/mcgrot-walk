@@ -98,7 +98,7 @@ exception left is E7a's mechanical hosting migration.
 | E5b.2 anchor readers | **high (review)** | placement; a reindex recaptures all 39 goldens |
 | E5c moment links + seed HUD | **high (review)** | HUD copy change moves every desktop golden |
 | E2g street lights | LANDED 2026-08-02 | no golden moved (no pose frames a lamp); both night gates isolated, not relaxed |
-| E2g.1 night coverage + picture gates | medium; **high (review)** on the golden-capture commit | **NEXT** — expanded at the E5 gate; new bookmark + golden, the ending's picture gate |
+| E2g.1 night coverage + picture gates | LANDED 2026-08-03 | one new golden (`lamp-hero-night`, night-only pose set); no existing golden moved; the close's picture gates fault-injected red |
 | E5d turnaround + ending | LANDED 2026-08-03 | closed E5 — phase gate passed 2026-08-03 |
 | E8 prototype loop | medium | no golden may move during the loop |
 | E8 keeper landing | **high (review)** | wholesale recapture + new opposed-pair axis |
@@ -2287,9 +2287,9 @@ while rendering nine seconds of black. Two additions, binding:
 order (E2f → E5 → **E8 → E9a → E3 → E4 → E9b → E6 → E7**) survives E5's
 outcome on re-examination, with one small unit inserted first:
 
-1. **E2g.1 — night coverage and the picture gates** (small, next). It must
-   precede E8: E8's landing recaptures every golden, and if no night golden
-   exists by then, the grade ships with its night look never once captured.
+1. ~~**E2g.1 — night coverage and the picture gates**~~ — LANDED 2026-08-03.
+   It had to precede E8: E8's landing recaptures every golden, and with no
+   night golden the grade would ship with its night look never once captured.
 2. **A measured suite speedup** (small — see the runtime ruling above). The
    full run has doubled to ~14 minutes; take the bundle-caching lever
    before E8's loop starts leaning on iteration speed.
@@ -2307,7 +2307,7 @@ cannot yet be *in* wrongly (no interiors, no boarding). The reasons E5
 jumped E3 do not transfer to E6 jumping E8 — E8 is cheaper, feeds E3's
 character decisions, and its judging set is pure Dan-delight per hour spent.
 
-## E2g.1 — Night coverage and the picture gates — NEXT (small)
+## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 
 *Expanded at the E5 phase gate from "one night golden" to the phase's
 missing instrument: pictorial coverage for the two persistent states nobody
@@ -2339,6 +2339,28 @@ the mid-close picture gate fault-injected red (re-introduce the exposure
 floor of 0.12 — it must fail); draw calls at the new bookmark enter
 `budget.json` on capture. **Effort:** medium, **high (review)** on the
 golden-capture commit per the standing rule.
+
+**What landed** (full write-up in `docs/VALIDATION.md`, "Night coverage and
+the picture gates"):
+
+- `lamp-hero-night`, in a new `NIGHT_BOOKMARK_DEFS` set kept out of
+  `BOOKMARK_DEFS` so no weather column or anchors diff pays for it. 1131 draw
+  calls, stddev 30.2 against a floor of 8 — and not the flattest frame in the
+  suite (that is `golden-clear:mid-550-close` at 20.6). Three further runs
+  diffed 0.047%, 0.062% and 0.052%; the arc flashes do not move it measurably.
+- **Two** picture gates on the close, at t=5s and t=9.5s, both mean-band plus
+  contrast floor.
+- The hinge evidence pair, `hinge-return-{on,off}.png` — the same spot at the
+  Foot, night-and-offered against flat daylight.
+
+**One ruling changed on measurement.** The specified fault injection
+(`EXPOSURE_FLOOR = 0.12`) does **not** take the mid gate red: it moves t=5s
+from 55.5 to 51.1. E5d's blackout was the per-frame approach-the-floor step,
+since replaced by an ease across the whole sequence, so the floor value alone
+no longer produces one. Turning `HAAR_COLOUR` black reproduces the real defect
+class and takes the **late** gate red (mean 4.5, stddev 7.9) — which is why
+the unit shipped two frames rather than the one specified, and why the bands
+are set from the injection rather than from the shipped reading.
 
 ## E6 — Getting About (collision, and a tram that runs)
 

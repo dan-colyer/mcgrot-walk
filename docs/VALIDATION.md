@@ -1221,6 +1221,15 @@ makes that a measured property rather than a convention someone might quietly
 break by adding a night pose. On a partial run that captures no goldens the
 check is skipped and says so, rather than reporting "all 0 frames pass".
 
+E2g.1 added exactly the night pose that convention was guarding against, and
+it clears the floor on its own merits: `lamp-hero-night` reads **stddev 30.2**,
+nearly 4x the floor — and it is *not* the flattest frame in the suite. Across
+the full 40-frame run the minimum is **20.6**, on `golden-clear:mid-550-close`,
+a daylight pose. A lit night street is a better diff substrate than a flatly
+lit daytime frontage. That is the check doing its job rather than being
+sidestepped: the night pose is allowed in because it was measured, not because
+the rule was relaxed.
+
 Note what this does *not* cover: the night checks (torch at 03:00, facade
 darkening at 22:00) are deliberately dark, and they assert luminance
 **ratios** — 36x torch-on vs off, 22:00 at 3.4% of 13:00 — never pixel diffs.
@@ -1517,7 +1526,9 @@ these read, so both had to change. Neither number moved.
 - **A night golden is now possible for the first time**, and is the obvious
   follow-on. Night frames previously failed the contrast floor (stddev >= 8)
   for want of anything lit; a sodium-lit street clears it comfortably. Not
-  done here — it wants its own bookmark and a deliberate capture.
+  done here — it wants its own bookmark and a deliberate capture. **Done in
+  E2g.1** (below): `lamp-hero-night` frames a fitting and its pool, and the
+  golden set now covers the lit street.
 - **Nothing about a real GPU.** See the pool-sizing note above.
 
 ## Turning back (E5d part 1)
@@ -1636,6 +1647,9 @@ into the haar, the other does not.
   underneath both arms.
 - **Atmosphere is suspended for the close and only for the close.**
 - **"Keep walking" hands the street back, matching a boot that never ended.**
+- **The mid-close frame is a picture, not a blackout** and **the deepest frame
+  of the close is still a picture** (E2g.1 — see that section for the bands,
+  the fault injection, and why two frames rather than one).
 
 ### Why the restore gate needs a second boot rather than a snapshot
 
@@ -1673,6 +1687,112 @@ Capture the sequence and look at it after any change to its curves.
   `ambience.setDucked(true)` — the right direction, not the written intent.
   A real merge wants an ambience API that does not exist yet.
 - **No golden covers it**, and none should: the close is a transient.
+
+## Night coverage and the picture gates (E2g.1)
+
+Three additions, all instrument rather than feature. Nothing the player sees
+changed; `src/ending.js`, `src/lamps.js` and `src/legs.js` were not touched.
+
+### The night golden (`lamp-hero-night`)
+
+E2g lit the street and no golden framed a lamp, so the whole night look was
+uncaptured — and E8's landing recaptures every golden it can see. What it
+cannot see, it ships blind.
+
+- **The pose.** A custom (absolute) camera on the centreline ~25 m short of
+  the lamp at station 20, looking up-street and ~3.5° above the horizon:
+  fitting, pool on the road, roadworks near camera, two shopfront fascias,
+  unlit rooflines. Defined in `NIGHT_BOOKMARK_DEFS` in `src/debug.js`, which
+  is **separate from `BOOKMARK_DEFS` on purpose** — everything iterating
+  `bookmarks` (the draw-call budget, the anchors on/off diff, all five weather
+  passes) would otherwise pay for a daylight column of a pose picked for the
+  dark.
+- **Captured at 22:00 overcast only**, on its own boot, since `page1` is
+  pinned to `SMOKE_HOUR` and every later check in that region reads that
+  state. One golden, not a weather column.
+- **Measured:** 1131 draw calls (baselined in `budget.json`); stddev 30.2;
+  three further runs diffed **0.047%**, **0.062%** and **0.052%** against the
+  capture — the same order as the documented sky-FBM jitter, and far under the
+  0.5% tolerance. The
+  arc flashes were the determinism worry going in — three randomised
+  PointLight pulses are far more visible after dark — and at this pose they do
+  not move the frame measurably.
+- A pose 7 m closer framed the fitting larger and was **rejected**: it stood
+  inside an NPC's proximity radius, and the interaction prompt is a DOM
+  overlay that `page.screenshot()` captures. That golden would have carried a
+  piece of proximity state.
+- **No clip-control check runs on it.** `CLIP_PCT_MAX` is E2c.1's overcast-
+  *daylight* criterion; a lamp bulb is an additive emissive that is meant to
+  be the brightest thing in the frame.
+
+A bookmark added after `budget.json` was written now has its entry **added in
+place**. The wholesale rebuild deliberately does not trigger on a missing
+entry: that would re-baseline every existing pose off one run's counts and
+quietly absorb a real drift.
+
+### The picture gates on the close
+
+E5d's ending passed every fog and exposure assert while rendering nine seconds
+of black. Numeric gates cannot see a bad picture, so these two measure the
+picture: mean luminance inside a band ("neither black nor blown out") plus the
+goldens' own contrast floor ("there is still something to look at"). Both
+frames are written to `docs/smoke/captures/`.
+
+| Frame | Shipped | Haar turned black | Band |
+|---|---|---|---|
+| t=5s (`ending-mid-close.png`) | mean 55.5, stddev 53.1 | mean 20.7 | 25–200 |
+| t=9.5s (`ending-late-close.png`) | mean 85.9, stddev 83.6 | mean 4.5, stddev 7.9 | 30–210 |
+
+Both arms of the opposed pair are stepped in the same chunks, so the total
+frame count is unchanged and the existing gates still compare like with like.
+t=9.5s is one frame short of the card, which covers the screen once `phase`
+reaches `ended`.
+
+**The brief's fault injection does not work, and that is worth recording.**
+E2g.1 specified re-introducing `EXPOSURE_FLOOR = 0.12` and expected red. It
+does not go red: it moves t=5s from 55.5 to 51.1 and t=9.5s from 85.9 to 80.7.
+The reason is that E5d's blackout was never the floor *value* — it was the
+per-frame approach-the-floor step, which reached black in about a second and
+was replaced by an ease across the whole sequence. With the ease, the fog has
+already lifted the frame toward pale haar and a low exposure barely dents it.
+Setting `HAAR_COLOUR` to black reproduces the actual defect class — a close
+that fades to nothing while every numeric assert stays green — and takes the
+late gate red on both the mean and the contrast floor. The bands above are set
+from that injection, not from the shipped reading.
+
+### The hinge's evidence pair (not a gate)
+
+Both `legs` arms have just walked the identical out-and-back and stand on the
+same spot at the Foot; the only difference is the hinge. Each writes a frame:
+`hinge-return-on.png` is that spot at night, torch-lit, with the close being
+offered; `hinge-return-off.png` is the same spot in flat daylight. The clock
+arithmetic already gates "the return leg is a different street" — this is the
+same claim as a picture a reviewer can open. Nothing diffs them, and nothing
+should: the hour the walk lands on is a product of the walk.
+
+Each arm is stepped one extra frame immediately before its capture and the
+screenshot timeout is raised to 120s. The first version timed the whole suite
+out on the *second* capture: a page idle since its last `stepFrame` does not
+reliably hand the compositor a frame inside Playwright's default 30s with two
+live SwiftShader contexts.
+
+### What this deliberately does not prove
+
+- **The night golden covers one pose at one hour.** Nothing frames a lamp in
+  rain, in haar, or at 03:00 — the hour the legibility pair uses. A night
+  weather column was considered and rejected as cost without a question
+  attached; if E8's grade turns out to read differently by weather after dark,
+  that is the moment to add one.
+- **The picture gates are floors, not judgements.** A close that is grey mush
+  at the right average brightness passes. They catch black and blown-out; they
+  cannot tell you the sequence is *good*, and the standing instruction to open
+  the captures after touching its curves still holds.
+- **The mid frame carries no fault-injection evidence of its own.** The
+  injection that proves this class of gate can go red fails the *late* one
+  first. The mid gate is kept because the sequence's failure modes are not all
+  monotonic, but it is the late frame that has been shown red.
+- **Nothing about draw-call cost after dark on a real GPU.** Unchanged from
+  E2g: SwiftShader rasters outside every timed window. E2f owns it.
 
 ## Seeding map (E5 phase gate — the one-story view)
 
@@ -1747,6 +1867,10 @@ check.
    `{ id, chainage, side, distance }` (goes through `goto`'s geometry) or
    `{ id, custom: true, camera: {x,y,z}, lookAt: {x,y,z} }` for a
    hand-placed shot (e.g. `skyline`, which isn't chainage-derived).
+   A pose that only makes sense after dark goes in `NIGHT_BOOKMARK_DEFS`
+   instead (E2g.1): same shape, visited by one extra pass at 22:00 overcast,
+   and kept out of every loop that iterates `bookmarks` — the weather columns
+   and the anchors diff would otherwise pay for it five times over.
 2. `npm run bundle`, open the dev server, `dbg.gotoBookmark('your-id')`,
    screenshot — confirm it's not in the dead zone above and shows real
    content.
