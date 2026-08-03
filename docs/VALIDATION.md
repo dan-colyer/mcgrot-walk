@@ -2115,6 +2115,106 @@ live SwiftShader contexts.
 - **Nothing about draw-call cost after dark on a real GPU.** Unchanged from
   E2g: SwiftShader rasters outside every timed window. E2f owns it.
 
+## The style prototype loop (E8a)
+
+E8 is a prototype loop, not a landing: candidates are judged from pictures and
+the shipped frame must not move while it runs. Two things make that hold.
+
+**The containment is a branch, not a multiply.** `uStyle` ships at 0 and the
+whole grade lives inside `if (uStyle > 0.0)`, so the neutral path executes the
+same instruction sequence it did before E8 existed. A multiply-by-zero would
+have been *arguably* exact; a branch needs no argument.
+
+**Check 26a is already the gate for it, at no extra cost.** 26a asserts the
+post frame at `uStrength` 0 is bit-identical to `renderer.render()`. The style
+block is gated on `uStyle`, not `uStrength`, so a style that leaked into the
+shipped build breaks 26a whatever `uStrength` is doing. Fault-injected by
+shipping `uStyle: 0.6`:
+
+| Check | Green | Fault-injected |
+|---|---|---|
+| `post: neutral strength is bit-identical` | 7/7 states exactly equal | **FAIL** — 1,023,817 of 1,024,000 px differ, max channel 147, in all 7 states |
+| every golden | 0 FAIL | **FAIL** — 30 goldens, 36–63% of pixels |
+| `night stays night with the lamps lit` | pass | **FAIL** — 43.1% vs the 30% ceiling |
+| `torch lights a readable surface` | pass | **FAIL** — 1.66× vs the 2.5× floor |
+
+No new gate was added, and none was needed: the containment axis was chosen so
+that an existing falsified gate covers it.
+
+### The judging rig (`npm run style`)
+
+`scripts/style-sheet.mjs` renders 8 bookmarks × 3 conditions × every preset.
+**24s for the whole round on Metal** — measured, against a pre-build estimate
+of ~2 minutes. It is cheap for a structural reason worth keeping: the grade is
+a set of post-pass uniforms, so one settled pose is re-rendered through every
+preset via `renderNow()` (which draws without stepping updaters). 24 poses, not
+24 × presets. Adding a fifth preset costs about a second.
+
+Two products, because they answer different questions:
+
+- `sheet-<condition>.png` — 8 × presets, downscaled 3.2×. Composition, palette,
+  whether the façades survive.
+- `detail-<condition>.png` — 1:1 centre crops. **A 3px halftone cell does not
+  survive the contact sheet's downscale.** Round 1 was first rendered with the
+  four presets differing mainly in cell size and screen mix, and the four
+  columns were indistinguishable at sheet scale — the round was unjudgeable and
+  had to be re-authored so the presets differ on axes that survive a thumbnail
+  (press exposure, stock colour, saturation) with texture as the second axis.
+
+Output lands in `docs/smoke/captures/`, which is **gitignored** — the sheets are
+evidence, not artefacts, and the round reproduces in 24s.
+
+### Press exposure, and why the first stack was wrong
+
+The first working build screened the scene's own tonality and came out as ink
+almost everywhere. The cause was measured, not guessed: this scene's **median
+display luminance is 0.139 at noon overcast and 0.055 at night rain**. A dot
+radius of `sqrt(1 - 0.139)` nearly fills its cell, and a highlight gate set
+anywhere sensible never fires, so "highlights stay clean paper" — the thing
+that makes a screen read as printing rather than as a filter — was dead.
+
+A printed page is a *light* object. `uPress` re-exposes the frame for the plate
+before screening, as a repro camera did. It is a per-preset axis rather than a
+constant because how far the night should be lifted is exactly the judgement
+the loop exists to make.
+
+### What this deliberately does not prove
+
+- **Nothing about whether any preset is good.** There is no numeric gate on the
+  grade and there should not be one until a keeper exists; the round is judged
+  by eye, and the rejected presets' reasons are the durable output.
+- **Nothing about motion.** Every capture is a settled still. Screen swim under
+  camera movement is the artefact the analytic dot's derived AA band is meant
+  to prevent, and it has not been tested — that needs a moving capture, and it
+  is a keeper-landing question.
+- **Nothing about cost.** The style block adds two texture taps and a `pow` per
+  pixel and has never been timed. It is inert in the shipped build, so it
+  cannot regress anything yet, but the keeper landing owes a frame-timing pass.
+- **Nothing about the DOM.** The HUD, the interaction prompt and the caption
+  are overlays, not pixels the pass can reach; they sit ungraded on top of
+  every capture. That is the roadmap's separate "caption boxes and lettering"
+  item, and the sheets show why it is on the list.
+
+### The pre-existing golden jitter band is wider than `skyline`
+
+Measured while checking whether E8a moved anything, with the pre-change source
+as the control:
+
+| Golden | Control | With E8a |
+|---|---|---|
+| `golden-haar:mid-805-far` | 0.286% | 0.317% |
+| `golden-haar:elm-row-hero` | 0.295% | 0.290% |
+| `golden:skyline` | 0.243% | 0.253% |
+| `golden-haar:skyline` | 0.225% | 0.222% |
+
+The ordering swaps between runs and the deltas are ±0.03%, so this is
+run-to-run jitter and none of it is E8a's. The point is the level: the haar
+column sits near **0.3%, 60% of the 0.5% tolerance, before anyone has changed
+anything**. The standing note that `golden:skyline` is the outlier is wrong —
+`skyline` is not even the worst of them, and haar is a whole column. A future
+change that legitimately moves a haar golden by 0.25% would land over tolerance
+for reasons that are mostly not its own.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

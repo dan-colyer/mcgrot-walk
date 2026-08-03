@@ -11,6 +11,7 @@
     "smoke:quick": "node scripts/smoke.mjs --quick",
     "smoke:par": "node scripts/smoke.mjs --shards",
     "probe": "node scripts/probe.mjs",
+    "style": "node scripts/style-sheet.mjs",
     "goldens:audit": "node scripts/goldens-audit.mjs",
     "deploy": "node scripts/deploy.mjs"
   },

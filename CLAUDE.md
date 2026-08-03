@@ -151,6 +151,7 @@ npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates n
 npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
 npm run deploy       # smoke:par -> build -> secret scan -> push gh-pages -> md5-verify live
 npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
+npm run style        # E8's judging round -> docs/smoke/captures/style/, 24s
 ```
 
 **The harness renders on the GPU** (E0.4, `scripts/launch.mjs`): Playwright's

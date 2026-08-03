@@ -541,6 +541,16 @@ export function createDebugApi(ctx) {
     // post-off frame (the plumbing is transparent), at 1 it must not be (the
     // effects actually reach the frame). See src/post.js.
     setPostStrength: (v) => post.setStrength(v),
+    // E8's prototype loop. The style axis is separate from uStrength on
+    // purpose: uStrength governs the shipped post pass and is what check 26
+    // pins, while uStyle governs the candidate grade and ships at 0 until a
+    // keeper is chosen. Both are live so scripts/style-sheet.mjs can re-render
+    // one settled pose through every candidate without re-posing.
+    setStylePreset: (name, strength) => post.setStylePreset(name, strength),
+    setStyle: (params) => post.setStyle(params),
+    setStyleStrength: (v) => post.setStyleStrength(v),
+    getStyleStrength: () => post.getStyleStrength(),
+    stylePresets: post.stylePresets,
     invariants,
     // Cheap read of the clock and weather without invariants() cost (which
     // steps a frame). E5d gates sample this a lot.

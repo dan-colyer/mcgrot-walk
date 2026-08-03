@@ -2358,6 +2358,55 @@ cannot yet be *in* wrongly (no interiors, no boarding). The reasons E5
 jumped E3 do not transfer to E6 jumping E8 — E8 is cheaper, feeds E3's
 character decisions, and its judging set is pure Dan-delight per hour spent.
 
+## E8a — The grade rig and round 1 — LANDED 2026-08-03
+
+The prototype loop's machinery, plus the first round of candidates rendered for
+judgement. **No golden moved and no gate was added**; `uStyle` ships at 0.
+
+What landed:
+
+- **The style stack in `src/post.js`'s existing single pass**, behind
+  `uStyle` plus twelve live uniforms: press exposure, dot screen, shadow/mid
+  gating, ink misregistration, palette pull, ink/paper stock remap, press
+  artefacts. All four of the roadmap's candidate-stack items are present.
+- **Named preset slots** — `dbg.setStylePreset('a'|'b'|'c'|'d'|null)` and
+  `dbg.setStyle({...})` for live tuning, per the roadmap's shape.
+- **`npm run style`** (`scripts/style-sheet.mjs`) — the judging set as contact
+  sheets plus 1:1 detail strips. **24s for 120 captures.**
+
+Round 1's four candidates, deliberately spread rather than clustered:
+`a` newsprint (cool grey stock, coarse screen), `b` fine-litho (the murk kept
+nearly intact — the control for "is any of this an improvement"), `c`
+cream-page (the comics' own warm stock, the most *printed*), `d` hard-ink
+(near-duotone warm brown, the departure most likely to eat the photo façades).
+
+Two things cost a re-author and are worth not re-deriving:
+
+1. **Screening the scene's own tonality does not work.** Measured median
+   display luminance is 0.139 at noon and 0.055 at night; a dot sized from that
+   fills its cell and the highlight gate never fires. A printed page is a light
+   object, so the frame is re-exposed for the plate first (`uPress`). See
+   `docs/VALIDATION.md`.
+2. **A contact sheet cannot show a halftone.** The first round's presets
+   differed mainly in cell size and screen mix, and the four columns were
+   indistinguishable at sheet scale. Presets must differ on axes that survive a
+   3.2× downscale; the detail strip carries the texture.
+
+Deviation from the brief, recorded: the dot screen is analytic rather than a
+Bayer/blue-noise texture. The brief's reason for a texture was driver
+stability, which an analytic dot also has, and it additionally admits an
+antialiased edge. The AA width is derived from the cell size rather than read
+from `fwidth` — which does not compile in ESSL1 here without an extension
+pragma, and would have put a hardware derivative inside a golden.
+
+**Not in this round: character treatments.** The roadmap pairs them with the
+grade, and its own argument is why they wait — the grade may make a simple toon
+character read better than an expensive one. The grade has to exist to be
+judged against. They join round 2.
+
+**Next:** Dan judges the three sheets. Rejected presets get their one line;
+survivors get a round 2 with character candidates under them.
+
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 
 *Expanded at the E5 phase gate from "one night golden" to the phase's
