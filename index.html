@@ -86,6 +86,65 @@
   }
   #npc-prompt:active { background: rgba(40, 44, 30, 0.9); }
 
+  /* --- Leaving (E5d part 2) — the opt-in close at the Foot. Same visual
+     language as #npc-prompt and #title-card deliberately: this is one more
+     diegetic offer, not a new kind of UI. --------------------------------- */
+  #ending-prompt {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: calc(104px + var(--safe-bottom));
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    background: rgba(16, 18, 12, 0.82);
+    border: 1px solid rgba(150, 142, 108, 0.55);
+    border-radius: 3px;
+    color: #d8d4c0;
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #ending-prompt:active { background: rgba(40, 44, 30, 0.9); }
+
+  #ending-card {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(40, 42, 36, 0.9), rgba(4, 5, 4, 0.99) 70%),
+      #040504;
+    color: #cfcdbb;
+    font-family: "Courier New", ui-monospace, monospace;
+  }
+  #ending-card .inner { max-width: 30em; padding: 0 24px; }
+  #ending-card p { margin: 0 0 1.4em; line-height: 1.7; font-size: 15px; }
+  #ending-card .faint { color: rgba(190, 186, 160, 0.5); font-size: 13px; }
+  #ending-resume {
+    margin-top: 6px;
+    padding: 12px 26px;
+    background: rgba(20, 22, 14, 0.7);
+    border: 1px solid rgba(150, 142, 108, 0.6);
+    border-radius: 3px;
+    color: #d8d4c0;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #ending-resume:active { background: rgba(40, 44, 30, 0.9); }
+
   #comic-overlay {
     display: none;
     position: fixed;
@@ -519,6 +578,18 @@
 <div id="hud"><div id="hud-day"></div><div id="hud-hint">WASD — move, drag — look</div></div>
 
 <div id="npc-prompt"><span id="npc-prompt-label">[E] Hear read</span></div>
+
+<div id="ending-prompt"><span id="ending-prompt-label">[Enter] Step into the haar</span></div>
+
+<div id="ending-card">
+  <div class="inner">
+    <p>The haar takes the street a shopfront at a time, and the readers go on
+       reading somewhere behind it.</p>
+    <p class="faint">You can close the tab here. Or you can go back — the Walk
+       is still there, and it will be a different hour when you reach it.</p>
+    <button id="ending-resume" type="button">Keep walking</button>
+  </div>
+</div>
 
 <div id="comic-overlay">
   <button id="comic-close" type="button" aria-label="Close">✕</button>
