@@ -137,6 +137,14 @@ and does not report success until every changed file md5-matches the live URL.
   changes in and conflicted. Check `git stash list` and pop by explicit index
   (`git stash pop 'stash@{1}'`), or don't stash at all while a background task
   is running: commit to a scratch commit instead.
+- **Never `git checkout -- src/index.html` to drop the bundle stamp once the
+  file has real changes in it.** The stamp line is churn and the reflex to
+  revert it is right, but `index.html` also holds every overlay's DOM and CSS.
+  Doing this on autopilot during E5d discarded the entire ending card and
+  prompt, and because the suite had passed *before* the checkout, the commit
+  that followed looked measured and was not. Check `git diff src/index.html`
+  first: revert only when the sole hunk is the `?v=` stamp, otherwise commit
+  the file and let the stamp ride along.
 - **`git checkout <paths>` restores NOTHING if any path is untracked.** Mid-
   milestone, a new module is untracked, so a restore command naming it fails
   on that path and silently leaves everything else modified — a fault
