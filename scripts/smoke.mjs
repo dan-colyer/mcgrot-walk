@@ -20,6 +20,7 @@ import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
+import { LAUNCH_OPTS, LAUNCH_LABEL } from './launch.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const smokeDir = join(root, 'docs/smoke');
@@ -929,7 +930,10 @@ async function main() {
     endRegion();
     } // end region: alignment
     const port = await getFreePort();
-    console.log(`[smoke] starting server on :${port}`);
+    // Name the renderer in every report: goldens are renderer-specific, so a
+    // capture or a diff that does not say which one produced it is evidence
+    // nobody can check later.
+    console.log(`[smoke] starting server on :${port} — renderer ${LAUNCH_LABEL}`);
     server = spawn('python3', [join(root, 'scripts/serve.py'), String(port)], {
       cwd: join(root, 'src'),
       stdio: 'ignore',
@@ -962,7 +966,7 @@ async function main() {
     }
     await waitForServer(`http://127.0.0.1:${port}/`);
 
-    browser = await chromium.launch();
+    browser = await chromium.launch(LAUNCH_OPTS);
 
     // --- boot #1: invariants + goldens ---
     const { context: ctx1, page: page1, consoleMessages: pc1, preFreezeRafCount: preFreezeRafCount1 } = await bootPage(browser, port);

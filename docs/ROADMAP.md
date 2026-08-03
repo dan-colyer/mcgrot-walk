@@ -2326,8 +2326,26 @@ outcome on re-examination, with one small unit inserted first:
    measured and left alone — page textures churn (counts fall as pages evict),
    so the cheap "nothing new loaded, skip the composite renders" test is
    unsound next to a golden capture. Full write-ups in `docs/VALIDATION.md`.
+   **Third, 2026-08-03: E0.4 — the harness renders on the GPU.** `346s -> 77s`
+   sharded, `133s` serial. This overturned a standing ruling in
+   `docs/VALIDATION.md` that said not to try it; three of that ruling's four
+   grounds were reasoned rather than measured, and were wrong. Metal is exactly
+   as deterministic as SwiftShader, and 39 of 40 goldens held untouched. The
+   fourth ground was right and is now a knowingly-carried cost: goldens are
+   tied to this machine's GPU and driver, so `MCGROT_GPU=0` exists to tell a
+   driver update apart from a real regression. One golden was deliberately
+   recaptured — `golden-mobile:hud`, where SwiftShader had been rendering the
+   near-field paving as a flat black void and Metal shows the slabs, joints and
+   tram rail. That golden had been locking in a picture no player ever sees.
+
+   The reusable lesson matches the other two: the gain was entirely in
+   `gotoBookmark` (1285ms -> 174ms, the post-load settle). Stepped frames and
+   screenshots cost the *same* on both renderers, so nothing else in the suite
+   got faster and no further lever should be predicted from this one.
 3. **E8 — the McGrot grade** prototype loop. Unblocked, captures-only until
-   its landing, no dependency on E2f or E6.
+   its landing, no dependency on E2f or E6. Note it now inherits a **77s**
+   deploy gate rather than a 346s one, which is most of what E8's judging loop
+   wanted from the speedup work.
 4. **E2f** stays queue-jumping and Dan-gated: it happens the moment a phone
    is in hand, whatever else is mid-flight — nothing in E2g.1 or E8's loop
    conflicts with it.

@@ -57,11 +57,14 @@ step(2, 'Validation suite');
 if (skipSmoke) {
   console.log('  SKIPPED (--skip-smoke). Only valid if the suite was just run green on this exact commit.');
 } else {
-  // --shards runs the WHOLE gate as two child processes: 346s against ~515s
+  // --shards runs the WHOLE gate as two child processes: 77s against 133s
   // serial, nothing skipped. It refuses to start unless its partition covers
   // every region, and it replays each child's report verbatim — so the FAIL
   // scrape below reads exactly what it read before. The pass total is higher
   // than a serial run's because the always-on boot checks run in each child.
+  //
+  // Both numbers are the GPU renderer (E0.4, scripts/launch.mjs). Under the
+  // old software path they were 346s and ~515s.
   const r = spawnSync('node', [join(root, 'scripts/smoke.mjs'), '--shards'], { cwd: root, encoding: 'utf8' });
   const out = (r.stdout || '') + (r.stderr || '');
   const failures = out.split('\n').filter((l) => l.includes('  FAIL  '));

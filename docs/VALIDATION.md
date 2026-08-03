@@ -472,8 +472,10 @@ so the only variable was the pass itself: 28→29, 54→55, 75→76, 28→29, 72
 (`post` is registered in `main.js`'s single updater list, so `stepFrames(n)`
 lands on the same grain field every run) and resamples on a 24fps step rather
 than per frame. The hash is all `fract`/`dot`/multiply — no `sin`, whose
-precision varies between drivers, since the goldens are captured under
-SwiftShader.
+precision varies between drivers. That rule was written when goldens were
+captured under SwiftShader, where it was belt-and-braces; since E0.4 they are
+captured on a real Metal driver, so it now matters for the reason it was
+originally stated.
 
 **Not shipped: ambient occlusion.** AO needs scene depth and normals in linear
 space, which is exactly the composer path this module exists to avoid. Its
@@ -1157,9 +1159,15 @@ deliberately.
 **Goldens do not read 0.000% at rest.** Measured on unmodified HEAD, the
 overcast column alone reads `elm-row-hero` 0.095%, `mid-805-far` 0.093%,
 `skyline` 0.053%, `foot-1500-far` 0.050%, `north-250-far` 0.023%, with the
-close poses at a genuine 0.000%. That is the SwiftShader noise floor, and it
+close poses at a genuine 0.000%. That is the noise floor, and it
 is why "0.09% so it passed" is not evidence of anything on those poses — only
 a delta against a same-day baseline is.
+
+Those per-pose figures were measured under SwiftShader and **have not been
+re-measured pose by pose under Metal**. What was measured across the switch is
+that the floor did not move in character: inter-boot jitter on three sampled
+poses read 0 / 0.024 / 0.175% against SwiftShader's 0 / 0.030 / 0.184%. Treat
+the table above as the right order of magnitude, not as a Metal baseline.
 
 `golden:skyline` is the noisiest and occasionally spikes: one run read 0.174%
 against a 0.053% baseline, with three further runs at 0.056/0.050/0.060 on
@@ -1471,10 +1479,20 @@ delete only these four files and run a normal `npm run smoke` (never
 
 ## Why the suite is fast, and how to keep it that way
 
-**Headless Chromium here has no GPU.** It rasterises in software — the WebGL
-context reports `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device), SwiftShader
-driver)`. At the `skyline` pose (945 draw calls) **one rendered frame costs
-~160 ms of wall-clock**, against ~2 ms of JavaScript.
+**The harness now renders on the GPU** (E0.4). `scripts/launch.mjs` launches
+Playwright's `chromium` *channel* — the full browser — with
+`--use-angle=metal`, and the WebGL context reports `ANGLE (Apple, ANGLE Metal
+Renderer: Apple M4)`. Every run prints its renderer in the header line, so no
+capture is ever ambiguous about which one produced it. `MCGROT_GPU=0` forces
+the old software path back.
+
+Before that, Playwright's default headless — the chromium *headless shell* —
+had no GPU path at all and rasterised in software via SwiftShader, reporting
+`ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device), SwiftShader driver)`. At the
+`skyline` pose (945 draw calls) **one rendered frame cost ~160 ms of
+wall-clock**, against ~2 ms of JavaScript. Most of the shape of this suite is
+a response to that cost, and the rules below still hold — the frames just got
+cheap.
 
 That cost is invisible from JS. `renderer.render` only queues commands and
 returns; the raster lands at the next `await`. So per-frame timing taken with
@@ -1499,14 +1517,52 @@ Rules that keep this true:
   `renderer.info.render`, which only updates on a draw; `settleAt`'s
   post-texture-wait frames exist because texture upload happens on render. Don't
   "optimise" either into `updateFrame`.
-- **Do not enable a real GPU to make this faster.** SwiftShader is a
-  deterministic software rasteriser: identical pixels on any machine, any time.
-  A hardware rasteriser differs by vendor and driver in texture filtering and
-  shader rounding, so every golden would need recapturing and would then be tied
-  to one machine's GPU and driver version — a macOS update could move them.
-  Worse, a forced-GPU flag can silently fall back to SwiftShader, so you would
-  not know which rasteriser produced a given golden. The determinism is the
-  point; the speed has already been taken from elsewhere.
+### The GPU ruling, and how measurement overturned it
+
+This section used to say **"do not enable a real GPU to make this faster"**, on
+four reasoned grounds. E0.4 tested all four instead of arguing with them. Three
+were wrong; one was right and is now a cost we knowingly carry.
+
+| The claim | What measurement said |
+|---|---|
+| A hardware rasteriser is not deterministic | **Wrong.** Repeat captures are bit-identical within a boot; inter-boot jitter matches SwiftShader fraction for fraction (0 / 0.024 / 0.175% vs 0 / 0.030 / 0.184%). The `skyline` wobble shows identically on both, so it was never a renderer artefact |
+| Every golden would need recapturing | **Wrong.** 39 of 40 held, all under 0.31% against a 0.5% tolerance. Exactly one moved: `golden-mobile:hud` |
+| A forced-GPU flag can silently fall back, so you would not know which rasteriser produced a golden | **Right, and now fixed by construction.** Every run prints its renderer in the header |
+| Goldens become tied to one machine's GPU and driver; a macOS update could move them | **Right, and accepted.** This is the real price of the switch |
+
+The speed it bought, whole gate, this machine:
+
+| | SwiftShader | Metal |
+|---|---|---|
+| serial | 514–521s | **133s** |
+| sharded (`npm run deploy`) | 346s | **77s** |
+
+**The gain is all in one place**, and that matters for predicting the next
+lever: `gotoBookmark` fell 1285ms → 174ms, i.e. the post-load settle. Stepped
+frames (240 in ~140ms) and screenshots (~150ms) cost the *same* on both — the
+screenshot is dominated by PNG encoding on the CPU, and `stepFrames` draws only
+its last frame. Nothing else in the suite got faster, and no other speedup
+should be predicted from this result.
+
+**The one golden that moved is a fidelity gain, not drift.** `golden-mobile:hud`
+went 2.492%, and the control isolates the cause: the same full chromium build
+forced onto SwiftShader reads 0.019%, indistinguishable from the headless
+shell's 0.015%. So it is the GPU, not the browser build, and not a settle race
+(30 further frames do not converge it). Both renderers advertise identical
+capabilities — 16× anisotropy, 4× MSAA — so this is implementation fidelity.
+
+Look at the pixels and the direction is obvious: at the mobile spawn pose the
+near-field paving is a **flat black void under SwiftShader**, while Metal shows
+the slabs, their joint lines and the tram rail. It is pose-specific —
+`golden-mobile:street` teleports elsewhere and reads 0.001%. That golden had
+been locking in an image that under-represents the mobile near-field ground,
+so any visual work reviewed against it was reviewed on a picture no player
+sees. SwiftShader exists only inside this harness; a real player is on a real
+GPU. The recaptured golden is the more faithful one.
+
+**If goldens ever move for no reason anyone can explain**, run `MCGROT_GPU=0`
+first. A clean run under the software path points the finger at a driver
+update rather than at the scene.
 
 ## The debug API (`window.__mcgrotDebug`)
 

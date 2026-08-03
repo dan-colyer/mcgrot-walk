@@ -99,23 +99,37 @@ npm run bundle   # esbuild src/main.js → src/dev-bundle.js (stamps index.html 
 node build.mjs   # single-file dist/mcgrot-walk.html, all assets inlined (the shareable artifact)
 node build.mjs --site   # dist-site/ for GitHub Pages (npm run deploy does this and scans it)
 
-npm run smoke        # full validation rig, ~515-520s — the deploy gate; see docs/VALIDATION.md
-npm run smoke:par    # the SAME full gate, two sharded processes, ~346s (nothing skipped)
-npm run smoke:quick  # inner loop: skips the weather matrix (188s of the run), and SAYS SO
-npm run smoke -- --since        # only the regions the working diff reaches (~20-60s)
+npm run smoke        # full validation rig, ~133s — see docs/VALIDATION.md
+npm run smoke:par    # the SAME full gate, two sharded processes, ~74s — the deploy gate
+npm run smoke:quick  # 93s and PARTIAL — strictly worse than smoke:par now; see below
+npm run smoke -- --since        # only the regions the working diff reaches
 npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates nothing)
 npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
 npm run deploy       # smoke:par -> build -> secret scan -> push gh-pages -> md5-verify live
 npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
 ```
 
-`smoke:quick` and `--since` are for iterating, never for deploying — the
-weather columns are exactly where a golden regression hides, and `npm run
-deploy` always runs the full suite regardless. `--since` maps changed paths to
-regions and **falls back to running everything** for any path it has no rule
-for, so adding a module without touching `SINCE_RULES` costs time, never
-coverage. Every run prints a profile (region, phase, boot) — that table is how
-E0.3 found the real levers after the roadmap had guessed the wrong one.
+**The harness renders on the GPU** (E0.4, `scripts/launch.mjs`): Playwright's
+`chromium` channel with `--use-angle=metal`, not the headless shell's
+SwiftShader. That is where these numbers come from — the gate was 346s sharded
+the day before. Every run names its renderer in the header, because goldens are
+renderer-specific. `MCGROT_GPU=0` forces the software path back; try it first
+if goldens ever move for no reason anyone can explain, since a clean run under
+it blames a driver update rather than the scene.
+
+**`smoke:quick` is now strictly dominated and should probably go.** Measured
+under Metal: quick is 93s and PARTIAL, `smoke:par` is 74s and complete. It is
+slower *and* narrower — there is no case left for running it. Removing
+`--quick` touches `QUICK` in several places in `scripts/smoke.mjs`, so it is
+its own small unit rather than a tidy-up.
+
+`--since` remains the genuine inner loop. It maps changed paths to regions and
+**falls back to running everything** for any path it has no rule for, so adding
+a module without touching `SINCE_RULES` costs time, never coverage. Its old
+20–60s range was measured under SwiftShader and has not been re-measured under
+Metal. Every run prints a profile (region, phase, boot) — that table is how
+E0.3 found the real levers after the roadmap had guessed the wrong one, and how
+E0.4 knew the GPU win was entirely in the post-load settle.
 
 `smoke:par` is different: it runs **everything**, split across two processes,
 and refuses to start if the shard partition misses a region. It is a
@@ -123,7 +137,11 @@ legitimate full run, and **`npm run deploy` now uses it** (Dan's call,
 2026-08-03). The rule it embodies, measured both ways: parallelise
 work that WAITS against work that COMPUTES. Running the four weather passes
 concurrently bought 4% — rasterising already saturates the cores, so a second
-rasteriser is not a second machine.
+rasteriser is not a second machine. (That rule was measured under SwiftShader,
+where rasterising was the compute. On the GPU the shards are no longer
+raster-bound, and the 2-way partition is tuned for a workload that no longer
+exists — it still wins, 133s → 74s, but the split is worth re-deriving from
+the profile if it is ever touched again.)
 
 `probe` boots the scene the same way the suite does (freeze rAF, dismiss the
 title card, pin clock and weather) and evaluates an expression, so a one-off

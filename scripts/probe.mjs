@@ -23,6 +23,7 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { createServer } from 'net';
 import { chromium } from 'playwright';
+import { LAUNCH_OPTS } from './launch.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -95,7 +96,7 @@ for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
 
 try {
   await waitForServer();
-  browser = await chromium.launch();
+  browser = await chromium.launch(LAUNCH_OPTS);
   const context = await browser.newContext(
     mobile ? { viewport: { width: 390, height: 844 }, hasTouch: true }
            : { viewport: { width: 1280, height: 800 } }

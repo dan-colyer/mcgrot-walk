@@ -4,6 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>McGrot Walk</title>
+<!-- Declares "there is no icon" so the browser stops probing /favicon.ico.
+     Playwright's headless shell never asked; the full chromium build does, and
+     the resulting 404 fails the console-clean gate. The live site 404s on it
+     too, so this is a real fix rather than a harness workaround. -->
+<link rel="icon" href="data:," />
 <script>
   // Touch-capability detection (E2e). Runs synchronously before first paint
   // so touch-only UI has no FOUC. `any-pointer: coarse` catches touch
