@@ -1169,11 +1169,15 @@ three.**
 ## Running the suite fast (and what that costs you)
 
 A full run was **412s** at E5c and **847s** by the E5 phase gate. E0.3
-(2026-08-03) took it to **519s** — see "The speedup, and what the profile
-said" below for where the time went and which lever was rejected. Three ways
+(2026-08-03) took it to **~515-520s** serial (three runs: 519s, 521s, 514s)
+and **346s** sharded — see "The speedup, and what the profile said" below for
+where the time went and which levers were rejected. Three ways
 to cut a run, all of which announce what they did not check: a partial run
 that reads like a full one is the exact failure this project keeps having.
 
+- `npm run smoke:par` (**346s**) runs the *whole* gate as two sharded
+  processes — nothing skipped, coverage verified against `REGIONS` before it
+  starts. See "Parallelism: which kind pays" below.
 - `npm run smoke -- --since` (**20-60s typical**) runs only the regions the
   working diff can reach — the router, not a new tier. `--since=<ref>` diffs
   against any ref. A changed path matching no rule in `SINCE_RULES` selects
@@ -1269,6 +1273,60 @@ what lets a deferred SwiftShader raster land. The settle frames — the thing
 that *looks* expensive — are 6% of it. Halving the loop would save ~30s
 across ~45 visits, but it is the loop that stops a stale texture reaching a
 golden, so it cannot be cut without a full golden pass as proof. Not done.
+
+### Parallelism: which kind pays, and which does not
+
+Two shapes of concurrency were measured, and only one works. The difference is
+the whole lesson.
+
+**Parallelising the four weather passes: rejected, 188.1s -> 180.9s.** They
+share nothing but the browser, they were run under `Promise.all`, every check
+passed — and it bought 4%. CPU went from ~490% to ~672% on a **10-core** box:
+rasterising is *already* multi-threaded, so one `render` pass alone occupies
+about five cores and four concurrent passes simply divide the same silicon.
+The refactor (per-pass result arrays, fixed-order splicing) was reverted; the
+serial code is simpler and within noise of the same speed.
+
+**Sharding across processes: taken, 521s -> 346s (34%).** Same hardware, same
+total work. It pays for the opposite reason: it pairs the raster-bound region
+(`render`, ~50% of the run) against the wait-bound ones (journal, anchors,
+moments — page round-trips, boots, polling), so the capacity one leaves idle
+is the capacity the other uses. `npm run smoke:par` bundles **once**, then
+runs two children with `--no-bundle --only=<set>` and merges their verdicts.
+
+The rule this leaves: **parallelise work that waits against work that
+computes; never compute against compute.** A second rasteriser on a saturated
+box is not a second machine.
+
+Safety properties of the shard runner, both checked rather than asserted:
+
+- The partition is verified against `REGIONS` *before* anything runs, and a
+  gap is a hard failure — "a shard set that does not cover every region is a
+  green run that checked less than it claims."
+- Coverage was also confirmed empirically: 221 unique check names in a serial
+  full run, **zero** missing across the two shards. The sharded PASS total is
+  higher (228) only because the always-on boot checks run in every child.
+- Each child prints its own PARTIAL, correctly — it ran a subset. The merged
+  summary states the coverage proof so the union is not read off trust.
+- `npm run deploy` still runs the **serial** suite. Switching the deploy gate
+  to the sharded path is a deliberate decision, not a default.
+
+### Why the post-load settle was left alone
+
+The obvious 30s: skip a visit's five post-load renders when nothing new
+decoded. Measured over 16 visits (two laps of every bookmark in one boot),
+counting completed page textures either side of each settle:
+
+- 7 of 16 visits (44%) saw **no change** in the count.
+- 3 visits saw the count **fall** (4->3, 4->2) — pages are evicted as the
+  camera moves.
+
+That last line is the finding. A falling count means the set of loaded pages
+*churns*, so an unchanged count does not mean "nothing new to composite" — a
+load and an eviction cancel out. A count-based skip is therefore unsound
+exactly where it matters, next to the golden capture. A sound version would
+track page identity and generation, which is not a small change; the ceiling
+even then is ~22s of a 346s run. Not done, deliberately.
 
 ### Concurrency: the earlier rejection was narrower than it looked
 

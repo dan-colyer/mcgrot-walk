@@ -9,6 +9,7 @@
     "dev": "npm run bundle && cd src && python3 ../scripts/serve.py ${PORT:-5174}",
     "smoke": "node scripts/smoke.mjs",
     "smoke:quick": "node scripts/smoke.mjs --quick",
+    "smoke:par": "node scripts/smoke.mjs --shards",
     "probe": "node scripts/probe.mjs",
     "goldens:audit": "node scripts/goldens-audit.mjs",
     "deploy": "node scripts/deploy.mjs"

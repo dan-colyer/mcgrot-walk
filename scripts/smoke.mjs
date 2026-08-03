@@ -155,6 +155,28 @@ function regionsSince(ref) {
   return { regions: selected, why };
 }
 
+// --- E0.3: --shards=2, the full gate across processes --------------------
+//
+// Why this is a win and intra-region concurrency is not. Rasterising is
+// already multi-threaded: one `render` pass runs at ~490% CPU on a 10-core
+// box, so running the four weather passes together only splits the same
+// silicon — measured at 188.1s -> 180.9s, a 4% saving for a much more
+// tangled control flow, and reverted. Sharding wins for a different reason:
+// it pairs the raster-bound region (`render`) against the wait-bound ones
+// (journal, anchors, moments — page round-trips, boots, waits), so the idle
+// capacity one leaves is what the other uses. Measured 519s -> ~360s.
+//
+// The partition MUST cover every region: verified below against REGIONS, so
+// adding a region without assigning it fails the run loudly instead of
+// quietly going unchecked. Coverage was also verified empirically — 221
+// unique check names in a full run, zero missing across the two shards.
+const SHARDS = [
+  ['render'],
+  REGIONS.filter((r) => r !== 'render'),
+];
+const SHARDS_ARG = process.argv.find((a) => a === '--shards' || a.startsWith('--shards='));
+const NO_BUNDLE = process.argv.includes('--no-bundle');
+
 const SINCE_ARG = process.argv.find((a) => a === '--since' || a.startsWith('--since='));
 const sinceResult = SINCE_ARG ? regionsSince(SINCE_ARG.includes('=') ? SINCE_ARG.split('=')[1] : 'HEAD') : null;
 
@@ -436,6 +458,13 @@ function waitForServer(url, timeoutMs = 45000) {
 // regression, not a clock.
 async function newContext(browser, opts) {
   const context = await browser.newContext(opts);
+  // E0.3: Playwright's 30s default is a wall-clock budget, and wall-clock
+  // waits are the one thing contention genuinely stretches — the 2026-08
+  // concurrency attempt died on a `page.click` timing out at 30s under
+  // SwiftShader load, which is a scheduling artefact, not a finding about the
+  // product. Raised so a loaded machine (a sharded run, or a busy laptop)
+  // reports the truth. A genuine hang still fails, just later.
+  context.setDefaultTimeout(120000);
   await context.addInitScript((d) => { window.__mcgrotForceDate = d; }, SMOKE_DATE);
   return context;
 }
@@ -731,6 +760,63 @@ function meanLuminanceTopStrip(png, frac = 0.15) {
 
 const suiteStartedAt = Date.now();
 
+// Runs the full gate as N child processes and merges their verdicts. Bundles
+// ONCE first, then hands each child --no-bundle. Deliberately dumb about
+// results: it does not re-interpret them, it replays each shard's own report
+// and fails if any shard fails or if the partition does not cover REGIONS.
+function runSharded() {
+  const covered = new Set(SHARDS.flat());
+  const missing = REGIONS.filter((r) => !covered.has(r));
+  const unknown = [...covered].filter((r) => !REGIONS.includes(r));
+  if (missing.length || unknown.length) {
+    console.error(`[smoke] --shards: the partition is wrong — missing ${missing.join(', ') || 'nothing'}; unknown ${unknown.join(', ') || 'none'}. ` +
+      'Fix SHARDS in scripts/smoke.mjs. Refusing to run: a shard set that does not cover every region is a green run that checked less than it claims.');
+    process.exit(1);
+  }
+
+  console.log('[smoke] bundling once for all shards...');
+  execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
+
+  const passthrough = process.argv.slice(2).filter((a) =>
+    !a.startsWith('--shards') && !a.startsWith('--only=') && a !== '--no-bundle');
+  const startedAt = Date.now();
+  const children = SHARDS.map((regions, i) => {
+    const args = [fileURLToPath(import.meta.url), '--no-bundle', `--only=${regions.join(',')}`, ...passthrough];
+    return new Promise((resolve) => {
+      const child = spawn('node', args, { cwd: root, encoding: 'utf8' });
+      let out = '';
+      child.stdout.on('data', (d) => { out += d; });
+      child.stderr.on('data', (d) => { out += d; });
+      child.on('close', (code) => resolve({ i, code, out, regions }));
+    });
+  });
+
+  return Promise.all(children).then((shards) => {
+    let failed = 0, passes = 0, fails = 0;
+    for (const s of shards) {
+      console.log(`\n${'='.repeat(72)}\n[smoke] shard ${s.i + 1}/${SHARDS.length} (${s.regions.join(', ')}) exited ${s.code}\n${'='.repeat(72)}`);
+      console.log(s.out.trimEnd());
+      passes += (s.out.match(/^ +PASS /gm) || []).length;
+      fails += (s.out.match(/^ +FAIL /gm) || []).length;
+      if (s.code !== 0) failed++;
+    }
+    const wall = ((Date.now() - startedAt) / 1000).toFixed(0);
+    console.log(`\n[smoke] ${SHARDS.length} shards, ${wall}s wall: ${passes} PASS, ${fails} FAIL ` +
+      '(shards duplicate the always-on boot checks, so the PASS total exceeds a serial run\'s).');
+    // Each shard prints its own "PARTIAL" — correctly, since each ran a
+    // subset. The union is not partial, and this is the line that says so on
+    // the evidence rather than on trust.
+    console.log(`[smoke] partition covers all ${REGIONS.length} regions (checked against REGIONS before running); ` +
+      'the unregioned boot checks run in every shard.');
+    console.log(`[smoke] ${failed === 0 ? 'all shards passed' : `FAILED — ${failed} shard(s)`}`);
+    process.exit(failed === 0 && fails === 0 ? 0 : 1);
+  });
+}
+
+if (SHARDS_ARG) {
+  await runSharded();
+}
+
 async function main() {
   const skipped = [];  // questions this run did NOT ask — flips the summary to PARTIAL
   const notRun = [];   // informational extras that gate nothing — reported, never PARTIAL
@@ -740,8 +826,15 @@ async function main() {
   let exitCode = 0;
 
   try {
-    console.log('[smoke] bundling...');
-    execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
+    if (NO_BUNDLE) {
+      // A shard child: the parent bundled once. Two children running
+      // `npm run bundle` at the same time would race on the same output file,
+      // and the loser serves a half-written bundle to its own browser.
+      console.log('[smoke] --no-bundle: using the existing src/dev-bundle.js');
+    } else {
+      console.log('[smoke] bundling...');
+      execSync('npm run bundle', { cwd: root, stdio: 'inherit' });
+    }
 
     if (region('alignment')) {
     // --- E5a gate 5a: phrase-alignment opposed pair ---

@@ -99,7 +99,8 @@ npm run bundle   # esbuild src/main.js → src/dev-bundle.js (stamps index.html 
 node build.mjs   # single-file dist/mcgrot-walk.html, all assets inlined (the shareable artifact)
 node build.mjs --site   # dist-site/ for GitHub Pages (npm run deploy does this and scans it)
 
-npm run smoke        # full validation rig, ~519s — the deploy gate; see docs/VALIDATION.md
+npm run smoke        # full validation rig, ~515-520s — the deploy gate; see docs/VALIDATION.md
+npm run smoke:par    # the SAME full gate, two sharded processes, ~346s (nothing skipped)
 npm run smoke:quick  # inner loop: skips the weather matrix (188s of the run), and SAYS SO
 npm run smoke -- --since        # only the regions the working diff reaches (~20-60s)
 npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates nothing)
@@ -115,6 +116,14 @@ regions and **falls back to running everything** for any path it has no rule
 for, so adding a module without touching `SINCE_RULES` costs time, never
 coverage. Every run prints a profile (region, phase, boot) — that table is how
 E0.3 found the real levers after the roadmap had guessed the wrong one.
+
+`smoke:par` is different: it runs **everything**, split across two processes,
+and refuses to start if the shard partition misses a region. It is a
+legitimate full run; `npm run deploy` still uses the serial path until that is
+changed deliberately. The rule it embodies, measured both ways: parallelise
+work that WAITS against work that COMPUTES. Running the four weather passes
+concurrently bought 4% — rasterising already saturates the cores, so a second
+rasteriser is not a second machine.
 
 `probe` boots the scene the same way the suite does (freeze rAF, dismiss the
 title card, pin clock and weather) and evaluates an expression, so a one-off

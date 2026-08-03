@@ -2315,6 +2315,17 @@ outcome on re-examination, with one small unit inserted first:
    and the gate now always runs). Also landed: a permanent profile table, and
    `--since`, which routes a working diff to the regions it can reach and
    falls back to everything for any unmapped path.
+
+   **Second half, same day: `npm run smoke:par` — the full gate in two
+   sharded processes, 521s -> 346s (34%), nothing skipped.** Two related
+   experiments were run and only one paid, which is the reusable lesson:
+   parallelising the four weather passes bought 4% (188.1s -> 180.9s) and was
+   reverted, because rasterising already saturates a 10-core box and a second
+   rasteriser is not a second machine; sharding pays because it pairs the
+   raster-bound region against the wait-bound ones. The post-load settle was
+   measured and left alone — page textures churn (counts fall as pages evict),
+   so the cheap "nothing new loaded, skip the composite renders" test is
+   unsound next to a golden capture. Full write-ups in `docs/VALIDATION.md`.
 3. **E8 — the McGrot grade** prototype loop. Unblocked, captures-only until
    its landing, no dependency on E2f or E6.
 4. **E2f** stays queue-jumping and Dan-gated: it happens the moment a phone
