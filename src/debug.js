@@ -551,6 +551,9 @@ export function createDebugApi(ctx) {
     setStyleStrength: (v) => post.setStyleStrength(v),
     getStyleStrength: () => post.getStyleStrength(),
     stylePresets: post.stylePresets,
+    // E8b: the press mapping as a number. `stylePress()` reports the live
+    // state, `stylePress(e)` what it would use at exposure e.
+    stylePress: (exposure) => post.stylePress(exposure),
     invariants,
     // Cheap read of the clock and weather without invariants() cost (which
     // steps a frame). E5d gates sample this a lot.

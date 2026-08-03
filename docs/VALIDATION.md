@@ -2214,6 +2214,38 @@ Two products, because they answer different questions:
 Output lands in `docs/smoke/captures/`, which is **gitignored** — the sheets are
 evidence, not artefacts, and the round reproduces in 24s.
 
+### Press follows the atmosphere (E8b)
+
+Round 1 measured that one press exposure cannot serve noon and midnight. Press
+is now interpolated between a night and a day value by
+`renderer.toneMappingExposure` — the number `atmosphere.js` already sets every
+frame from the per-hour, per-weather palette stops.
+
+Read from the renderer rather than pushed from atmosphere, and read inside
+`post.render()` rather than cached, for a specific reason: **atmosphere is not
+the only thing that drives exposure.** The ending sequence takes it over for
+~10s (`src/ending.js`), and a grade holding a value pushed to it by atmosphere
+would print those ten seconds at the wrong tone. Reading the live value means
+the grade cannot disagree with whatever set it.
+
+Measured across the four conditions (`dbg.stylePress()`, preset `b`):
+
+| Hour / weather | `toneMappingExposure` | press |
+|---|---|---|
+| 13:00 overcast | 1.378 | 0.740 |
+| 08:00 clear | 1.150 | 0.794 |
+| 03:00 haar | 0.592 | 0.928 |
+| 22:00 rain | 0.520 | 0.945 |
+
+The direction is the counter-intuitive one — **darker moments get a HIGHER
+press, meaning LESS lift.** A night panel in a comic is mostly ink, and round 1
+is what happens when you argue otherwise.
+
+The mapping lives in JS, not the shader, so `dbg.stylePress(e)` answers "what
+press at exposure e" without a screenshot. It is still inside the `uStyle > 0`
+branch, so a shipped frame does no work for it and the containment above is
+unchanged — no new gate, and check 26a still covers the axis.
+
 ### Press exposure, and why the first stack was wrong
 
 The first working build screened the scene's own tonality and came out as ink

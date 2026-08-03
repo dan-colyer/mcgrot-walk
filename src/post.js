@@ -68,33 +68,57 @@ const GRAIN_FPS = 24;    // grain resamples on a 24fps step, not every frame
 // an extension in ESSL1 (it fails to compile here without the pragma) and a
 // hardware derivative is exactly the kind of driver-dependent quantity this
 // project's goldens can least afford. No hashes, no derivatives, no texture.
-// Round 1's four candidates. They are differentiated FIRST on the axes that
-// survive a contact sheet's downscale — press exposure, stock colour,
-// saturation — and only second on screen texture. Round 1 was rendered once
-// with the four differing mainly in cell size and halftone mix, and the four
-// columns were indistinguishable at sheet scale: a 3px cell simply is not
-// there after a 3.2x downscale. The detail strip exists for the texture; the
-// sheet has to be able to show four different LOOKS.
+// PRESS FOLLOWS THE ATMOSPHERE (E8b), and this is the round-1 finding made
+// structural. A single press exposure cannot serve noon and midnight: every
+// round-1 preset lifted enough to print well in daylight turned 22:00 rain
+// into flat milky grey, and only `b` — barely lifting at all — survived the
+// night. So press is no longer a constant, it is interpolated between a night
+// value and a day value by how bright the moment already is.
+//
+// The driver is `renderer.toneMappingExposure`. atmosphere.js sets it every
+// frame from the per-hour, per-weather palette stops, so it is the scene's own
+// answer to "how bright is this moment" — the same number the darkness comes
+// from. Reading it means there is no second palette to keep in step, and no
+// way for the grade to disagree with the weather it is grading. The mapping is
+// computed in JS in render() rather than in the shader, so it stays
+// inspectable from a probe and testable without a screenshot.
+//
+// The direction is deliberately the counter-intuitive one: DARKER moments get
+// a HIGHER press, meaning less lift. A night panel in a comic is mostly ink,
+// and round 1 measured what happens when you argue otherwise.
+const PRESS_EXPOSURE_LO = 0.50;  // the darkest palette stop (night, haar)
+const PRESS_EXPOSURE_HI = 1.46;  // the brightest (noon clear) — also the shipped default
+
+// Round 2's candidates: variants around `b`, the round-1 survivor (Dan,
+// 2026-08-03). `b` itself is carried forward unchanged apart from its press
+// becoming a pair, so the round always contains its own reference — a round of
+// variants with no baseline in it can only be judged against memory.
 const STYLE_PRESETS = {
-  // Cool grey newsprint. Cheap stock, coarse screen, colour mostly gone.
-  a: { label: 'newsprint', press: 0.70, cell: 4.5, halftone: 0.62, highCut: 0.68, misreg: 1.1,
-       sat: 0.45, shadowTint: [0.96, 0.98, 1.03], highTint: [1.02, 1.01, 0.98],
-       stock: 0.70, ink: [0.11, 0.11, 0.12], paper: [0.93, 0.92, 0.88], artefact: 0.10 },
-  // The lightest touch: the shipped murk kept nearly intact, print as texture
-  // rather than as a palette. The control for "is any of this an improvement".
-  b: { label: 'fine-litho', press: 0.90, cell: 2.6, halftone: 0.35, highCut: 0.60, misreg: 0.7,
-       sat: 0.85, shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
+  // The reference. Round 1's survivor: the shipped murk kept nearly intact,
+  // print as texture rather than as a palette.
+  b: { label: 'fine-litho', pressDay: 0.72, pressNight: 0.95, cell: 2.6, halftone: 0.35,
+       highCut: 0.60, misreg: 0.7, sat: 0.85,
+       shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
-  // Aged cream page — the comics' own stock. Warm, open, the most "printed".
-  c: { label: 'cream-page', press: 0.60, cell: 3.4, halftone: 0.34, highCut: 0.52, misreg: 1.0,
-       sat: 0.40, shadowTint: [0.92, 0.95, 1.05], highTint: [1.08, 1.02, 0.88],
-       stock: 0.85, ink: [0.16, 0.12, 0.09], paper: [0.94, 0.89, 0.74], artefact: 0.08 },
-  // Near-duotone warm brown ink: the strongest departure, and the one most
-  // likely to eat the photo facades — in the round precisely so the failure
-  // is visible rather than argued about.
-  d: { label: 'hard-ink', press: 0.55, cell: 3.8, halftone: 0.78, highCut: 0.78, misreg: 1.4,
-       sat: 0.15, shadowTint: [0.90, 0.94, 1.06], highTint: [1.10, 1.00, 0.84],
-       stock: 0.92, ink: [0.10, 0.06, 0.04], paper: [0.95, 0.87, 0.70], artefact: 0.16 },
+  // b, warmer. The only change is the stock: does the comics' cream read
+  // better than b's near-neutral paper at the same light touch?
+  b1: { label: 'litho-warm', pressDay: 0.72, pressNight: 0.95, cell: 2.6, halftone: 0.35,
+        highCut: 0.60, misreg: 0.7, sat: 0.72,
+        shadowTint: [0.94, 0.97, 1.05], highTint: [1.08, 1.02, 0.90],
+        stock: 0.55, ink: [0.12, 0.09, 0.07], paper: [0.96, 0.92, 0.80], artefact: 0.06 },
+  // b, coarser. The only change is the screen: a 3.6px cell and a firmer
+  // halftone, to find where the dot starts reading as print rather than grain.
+  b2: { label: 'litho-coarse', pressDay: 0.72, pressNight: 0.95, cell: 3.6, halftone: 0.52,
+        highCut: 0.64, misreg: 0.7, sat: 0.85,
+        shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
+        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
+  // b, more press. Deliberately keeps b's palette and screen and pushes ONLY
+  // the exposure pair toward round 1's rejected values, so the sheet carries
+  // its own evidence for the finding rather than relying on the last round's.
+  b3: { label: 'litho-open', pressDay: 0.55, pressNight: 0.72, cell: 2.6, halftone: 0.35,
+        highCut: 0.60, misreg: 0.7, sat: 0.85,
+        shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
+        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
 };
 
 const VERT = `
@@ -261,23 +285,48 @@ export function createPost(renderer) {
     uGrain: { value: GRAIN },
     uGrade: { value: GRADE },
     uTime: { value: 0 },
-    // E8, all inert until uStyle rises above 0. The defaults are preset 'a''s
-    // so a bare setStyleStrength(1) shows something rather than a black frame,
-    // but nothing reads them while the style is off.
+    // E8, all inert until uStyle rises above 0. The defaults are preset 'b''s
+    // so a bare setStyleStrength(1) shows the round-1 survivor rather than a
+    // black frame, but nothing reads them while the style is off.
     uStyle: { value: 0 },
-    uPress: { value: 0.50 },
-    uCell: { value: 4.5 },
-    uHalftone: { value: 0.62 },
-    uHighCut: { value: 0.72 },
-    uMisreg: { value: 1.6 },
-    uSat: { value: 0.55 },
-    uShadowTint: { value: new THREE.Vector3(0.92, 0.95, 1.05) },
-    uHighTint: { value: new THREE.Vector3(1.08, 1.02, 0.90) },
-    uStock: { value: 0.72 },
-    uInk: { value: new THREE.Vector3(0.13, 0.09, 0.07) },
-    uPaper: { value: new THREE.Vector3(0.95, 0.91, 0.80) },
-    uArtefact: { value: 0.10 },
+    uPress: { value: 0.72 },   // DERIVED per frame — see pressPair below
+    uCell: { value: 2.6 },
+    uHalftone: { value: 0.35 },
+    uHighCut: { value: 0.60 },
+    uMisreg: { value: 0.7 },
+    uSat: { value: 0.85 },
+    uShadowTint: { value: new THREE.Vector3(0.97, 0.99, 1.03) },
+    uHighTint: { value: new THREE.Vector3(1.04, 1.01, 0.96) },
+    uStock: { value: 0.35 },
+    uInk: { value: new THREE.Vector3(0.06, 0.05, 0.05) },
+    uPaper: { value: new THREE.Vector3(0.98, 0.96, 0.92) },
+    uArtefact: { value: 0.05 },
   };
+
+  // Not a uniform: uPress is computed from these and the renderer's live
+  // exposure every frame (see render()). Kept in JS so `dbg.stylePress()` can
+  // report the mapping without a screenshot.
+  const pressPair = { day: 0.72, night: 0.95 };
+
+  function pressForExposure(exposure) {
+    const k = Math.min(1, Math.max(0,
+      (exposure - PRESS_EXPOSURE_LO) / (PRESS_EXPOSURE_HI - PRESS_EXPOSURE_LO)));
+    return pressPair.night + (pressPair.day - pressPair.night) * k;
+  }
+
+  function applyStyle(params) {
+    for (const [k, v] of Object.entries(params || {})) {
+      // pressDay/pressNight are not uniforms — they are the endpoints uPress
+      // is interpolated between, so they live in JS. Anything else maps to its
+      // `u`-prefixed uniform by name; `label` matches nothing and falls through.
+      if (k === 'pressDay') { pressPair.day = v; continue; }
+      if (k === 'pressNight') { pressPair.night = v; continue; }
+      const u = uniforms['u' + k[0].toUpperCase() + k.slice(1)];
+      if (!u) continue;
+      if (Array.isArray(v)) u.value.set(v[0], v[1], v[2]);
+      else u.value = v;
+    }
+  }
 
   const material = new THREE.RawShaderMaterial({
     name: 'McGrotPost',
@@ -333,29 +382,24 @@ export function createPost(renderer) {
     // per tweak is the thing that makes a style round die of friction.
     // `setStylePreset(null)` / `'none'` returns the frame to the shipped look.
     stylePresets: STYLE_PRESETS,
-    setStyle(params) {
-      for (const [k, v] of Object.entries(params || {})) {
-        const u = uniforms['u' + k[0].toUpperCase() + k.slice(1)];
-        if (!u) continue;
-        if (Array.isArray(v)) u.value.set(v[0], v[1], v[2]);
-        else u.value = v;
-      }
-    },
+    setStyle: applyStyle,
     setStyleStrength(v) { uniforms.uStyle.value = v; },
     getStyleStrength() { return uniforms.uStyle.value; },
     setStylePreset(name, strength = 1) {
       if (!name || name === 'none') { uniforms.uStyle.value = 0; return null; }
       const preset = STYLE_PRESETS[name];
       if (!preset) throw new Error(`[post] unknown style preset: ${name}`);
-      for (const [k, v] of Object.entries(preset)) {
-        if (k === 'label') continue;
-        const u = uniforms['u' + k[0].toUpperCase() + k.slice(1)];
-        if (!u) continue;
-        if (Array.isArray(v)) u.value.set(v[0], v[1], v[2]);
-        else u.value = v;
-      }
+      applyStyle(preset);
       uniforms.uStyle.value = strength;
       return preset;
+    },
+    // What press the grade would use at a given exposure, and what it is using
+    // now. The mapping is the load-bearing part of E8b, so it is readable as a
+    // number rather than only as a picture.
+    stylePress(exposure) {
+      return exposure === undefined
+        ? { day: pressPair.day, night: pressPair.night, exposure: renderer.toneMappingExposure, press: uniforms.uPress.value }
+        : pressForExposure(exposure);
     },
 
     // Draws the scene to the canvas exactly as a post-off frame would, then
@@ -364,6 +408,17 @@ export function createPost(renderer) {
     render(scene, camera) {
       renderer.render(scene, camera);
       if (!enabled) return;
+      // E8b: press tracks the exposure atmosphere.js has already set for this
+      // frame. Read here rather than pushed from atmosphere, so the grade
+      // cannot be left holding a stale value by anything else that drives
+      // exposure — the ending sequence takes it over for ~10s, and a grade
+      // that ignored that would print the ending at the wrong tone.
+      //
+      // Inside the `enabled` path and behind the same uStyle check the shader
+      // uses, so a post-off or style-off frame does no work for it at all.
+      if (uniforms.uStyle.value > 0) {
+        uniforms.uPress.value = pressForExposure(renderer.toneMappingExposure);
+      }
       renderer.copyFramebufferToTexture(texture);
       renderer.render(quadScene, quadCamera);
     },

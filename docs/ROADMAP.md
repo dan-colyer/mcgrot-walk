@@ -2425,9 +2425,37 @@ serve noon and midnight, so round 2 should test press as a **weather/hour-driven
 value** rather than a per-preset constant — which changes what a preset *is*,
 and is the first thing to settle before generating more candidates.
 
-**Round 2's shape:** variants around `b` — screen fineness, stock warmth and
-misregistration explored at `b`'s light touch — plus 2–3 character treatments
-rendered under them, per the roadmap's pairing.
+## E8b — Press follows the atmosphere, and round 2 — LANDED 2026-08-03
+
+Round 1's blocking finding made structural. Press is no longer a per-preset
+constant: it is interpolated between a night and a day value by
+`renderer.toneMappingExposure`, which `atmosphere.js` already sets every frame
+from the per-hour, per-weather palette stops. No second palette to keep in
+step, and the grade cannot disagree with the weather it is grading.
+
+Read live from the renderer inside `post.render()` rather than pushed from
+atmosphere, because atmosphere is not the only thing that drives exposure —
+the ending sequence takes it over for ~10s, and a pushed value would print
+those ten seconds at the wrong tone.
+
+Measured (`dbg.stylePress()`, preset `b`): 13:00 overcast exposure 1.378 →
+press 0.740; 08:00 clear 1.150 → 0.794; 03:00 haar 0.592 → 0.928; 22:00 rain
+0.520 → 0.945.
+
+**Round 2's four candidates** are variants around `b`, each moving one axis so
+the sheet attributes a difference to a cause: `b` itself (the reference — a
+round of variants with no baseline can only be judged against memory), `b1`
+warmer stock, `b2` coarser screen, `b3` deliberately over-pressed so the sheet
+carries its own evidence for the round-1 finding rather than relying on the
+previous round's captures.
+
+Suite green at 228 PASS / 0 FAIL / 71s, no golden moved, `uStyle` still 0.
+
+**Next:** Dan judges round 2. Then E8c — character treatments, which is its
+own unit: the post pass is full-screen and has no per-object mask, so a
+character axis means mesh and material work (inverted-hull outlines, flat-toon
+materials) in `src/npcs.js`, not another preset field. Pairing it with the
+grade was right; putting it in the same commit was not.
 
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 
