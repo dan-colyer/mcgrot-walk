@@ -2568,24 +2568,36 @@ check.
   exits non-zero and the recapture silently never runs. The tool has to
   reproduce the suite's filename composition exactly — including the 08:00
   clear pose, which is `<id>-clear-08.png`, variant before the hour.
-- **THE FROZEN GOLDENS ARE CURRENTLY 0.17–0.31% STALE, and nobody has looked
-  at why** (found 2026-08-04, during E3b, which did not cause it). E3b's own
-  contribution was isolated the honest way: run `--only=render,weather` with
-  `src/` checked out at the previous commit, run it again with the change, and
-  diff the two lists of percentages. Every non-zero golden reads essentially
-  the same before and after — `golden-haar:elm-row-hero` 0.300% → 0.307%,
-  `golden:skyline` 0.254% → 0.249% — and the wobbles go both ways, so they are
-  run-to-run noise on an already-drifted baseline, not E3b's doing. That
-  technique is the reusable part; `goldens:audit` alone cannot tell you whose
-  diff it is.
-  The drift itself matters: 24 goldens are eating up to 62% of the 0.5%
-  tolerance before any real change is measured, which leaves far less headroom
-  than the number suggests. **Dan's call whether to recapture** — it is not a
-  regression anyone has identified, and recapturing would freeze whatever
-  caused it. Note also which goldens are exactly reproducible run to run
-  (`golden:mid-805-far` 0.171% both times, `golden:north-250-far` 0.040%) and
-  which are not (the rain/drizzle/haar poses and `elm-row-hero`, all ±0.016pp):
-  a golden that wobbles has a particle system or foliage in it.
+- **A GOLDEN THAT CONTAINS ANIMATED DRESSING HAS A NON-ZERO NOISE FLOOR, and
+  24 of them had drifted to 0.17–0.31% on it** (found and recaptured
+  2026-08-04, during E3b, which did not cause it). Three steps, all reusable:
+
+  **Whose diff is it?** `goldens:audit` cannot tell you. Run
+  `--only=render,weather` with `src/` checked out at the previous commit, run
+  it again with the change, and diff the two lists of percentages. Every
+  non-zero golden read the same either side of E3b — `golden-haar:elm-row-hero`
+  0.300% → 0.307%, `golden:skyline` 0.254% → 0.249% — and the wobbles went both
+  ways, so E3b was not the cause.
+
+  **What moved?** Not "which file" — *which pixels*. `checkGolden` computes a
+  pixelmatch diff and throws it away, so diff the backed-up old PNGs against
+  the recaptured ones with `diffMask: true` and overlay the mask on the new
+  golden. (Without `diffMask` the output is a dimmed copy of the whole frame
+  and every pixel reads as changed.) The answer was unambiguous and identical
+  in all 24: **rooftop buddleia, walking Leithers and gutter litter, and
+  nothing else.** No façade, no geometry, no lighting, no vendor pixel moved.
+  That is what made recapturing safe — the alternative would have been
+  freezing an unidentified regression.
+
+  **Recapture does not reach 0.000%, and expecting it to is the mistake.**
+  Worst case went 0.294% → 0.114%, and a second run of the identical build
+  reproduces ~0.09–0.11% again. Leithers walk and buddleia sways, both are
+  excluded from `geomHash` for exactly that reason, and a pose containing them
+  cannot be frozen — the golden captures one sample of a moving thing. So
+  `elm-row-hero`, `mid-805-far` and `skyline` carry a **~0.11% floor**, and the
+  0.5% tolerance is really 0.39% of headroom on those three. The static poses
+  (`fascia-close`, `north-150-close`, `mid-550-close`) reproduce to 0.000–0.009%
+  and are the ones to trust for a small change.
 - **Unexplained diff on unrelated work** → human eyes, always. The tolerance
   (0.5% changed pixels, per-pixel threshold 0.1) is sized to absorb
   antialiasing/compression jitter, not to wave through a real regression.
