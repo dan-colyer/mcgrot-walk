@@ -82,7 +82,7 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // transitions and the 24h sweeps — 29.9s that used to be unskippable inside
 // `render`. It is the one region that opens in the MIDDLE of another: render
 // runs, weather runs, render resumes. See the note at the split.
-const REGIONS = ['alignment', 'journal', 'anchors', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -117,7 +117,11 @@ const SINCE_RULES = [
   [/^src\/index\.html$/, SINCE_ALL], // every overlay's DOM and CSS, plus the bundle stamp
   // Leaf modules, narrowest first.
   [/^src\/journal\.js$/, ['journal', 'mobile']],
-  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'onevoice', 'render', 'weather', 'determinism']],
+  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'characters', 'onevoice', 'render', 'weather', 'determinism']],
+  // characters.js is landed off, so it cannot move a golden — but npcs.js now
+  // exports vendorDims() for it, and 'characters' is where a wrong number
+  // there shows up.
+  [/^src\/characters\.js$/, ['characters']],
   [/^src\/moments\.js$/, ['moments']],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
   [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
@@ -1612,6 +1616,141 @@ async function main() {
 
     endRegion();
     } // end region: anchors
+
+    if (region('characters')) {
+    // --- E3b: five generated meshes across 124 vendors --------------------
+    //
+    // What this region is for: E3b answers whether 24.8x mesh reuse survives
+    // being scaled per vendor, and the ANSWER is a picture (see
+    // docs/VALIDATION.md). What a gate can hold afterwards is narrower and
+    // still worth having — that the selection reaches every vendor, that the
+    // meshes occupy exactly the silhouette the dolls did, and that no vendor
+    // is distorted past the bound the picture was judged at.
+    //
+    // Every number below is read off the LIVE scene's transforms and geometry
+    // via characters.measure(), never by calling vendorTransform() a second
+    // time. A gate that re-ran the selection would pass on a build that
+    // computed a beautiful assignment and rendered none of it.
+    console.log('[smoke] E3b characters gate...');
+    {
+      const bootForced = async (on) => {
+        const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+        await ctx.addInitScript((v) => {
+          window.__mcgrotFreezeAtBoot = true;
+          if (v !== null) window.__mcgrotForceCharacters = v;
+        }, on);
+        const page = await ctx.newPage();
+        await page.goto(`http://localhost:${port}/`);
+        await page.click('#title-enter');
+        await page.evaluate(() => {
+          const el = document.getElementById('title-card');
+          if (el) el.style.transition = 'none';
+        });
+        await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+        await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
+        await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+        await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+        return { ctx, page };
+      };
+
+      // THE CONTROL, and the one that matters most while the flag is off:
+      // booted with no override at all, the shipped scene must be untouched.
+      // Not "characters.enabled is false" — that only proves the flag reads
+      // false. Every doll part visible and no vendor tagged is what proves
+      // nothing ran.
+      const { ctx: defCtx, page: defPage } = await bootForced(null);
+      const shipped = await defPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        return {
+          enabled: dbg.characters.enabled,
+          tagged: dbg.npcs.npcs.filter((n) => n.archetype != null).length,
+          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0)
+            + dbg.npcs.npcs.filter((n) => n.scarf && !n.scarf.visible).length,
+          vendors: dbg.npcs.npcs.length,
+        };
+      });
+      results.push({
+        name: 'E3b: the shipped default leaves every paper doll intact',
+        pass: shipped.enabled === false && shipped.tagged === 0 && shipped.hidden === 0 && shipped.vendors === 124,
+        detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged} (must be 0), `
+          + `hidden doll parts=${shipped.hidden} (must be 0)`,
+      });
+
+      const { ctx: onCtx2, page: onPage2 } = await bootForced(true);
+      await onPage2.waitForFunction(
+        () => window.__mcgrotDebug.characters.loaded() === window.__mcgrotDebug.npcs.npcs.length,
+        null, { timeout: 60000 }
+      );
+      const meshed = await onPage2.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const m = dbg.characters.measure();
+        const heightErr = m.map((r) => Math.abs(r.meshTop - r.dollTop) / (r.dollTop || 1));
+        const dist = m.map((r) => r.distortion);
+        return {
+          n: m.length,
+          counts: dbg.characters.counts,
+          worstHeightErrPct: Math.max(...heightErr) * 100,
+          worstHeightAt: m[heightErr.indexOf(Math.max(...heightErr))].name,
+          distMin: Math.min(...dist),
+          distMax: Math.max(...dist),
+          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0),
+        };
+      });
+      const archetypes = Object.keys(meshed.counts);
+      results.push({
+        name: 'E3b: every vendor is meshed, and all five archetypes are used',
+        pass: meshed.n === 124 && archetypes.length === 5 && meshed.hidden === 620
+          && Object.values(meshed.counts).reduce((a, b) => a + b, 0) === 124,
+        detail: `${meshed.n} meshes over ${archetypes.length} archetypes `
+          + `(${archetypes.map((k) => `${k}:${meshed.counts[k]}`).join(' ')}), `
+          + `${meshed.hidden} doll parts hidden (must be 620 = 5 x 124)`,
+      });
+
+      // The height claim, and the reason E3a's flat TARGET_HEIGHT had to go.
+      // `dollTop` is measured off the hidden box meshes' own geometry, so this
+      // compares two independently-built figures rather than one formula
+      // against itself. The tolerance is for the idle sway, which tilts a
+      // vendor by up to 0.01 rad — nothing here is allowed to drift on purpose.
+      results.push({
+        name: 'E3b: every mesh stands at exactly the height of the doll it replaces',
+        pass: meshed.worstHeightErrPct <= 0.5,
+        detail: `worst ${meshed.worstHeightErrPct.toFixed(3)}% (${meshed.worstHeightAt}), budget 0.5%`,
+      });
+
+      // The bound the contact sheet was judged at. Selection does the coarse
+      // matching so that scale only ever carries a residual; if a future
+      // archetype swap or catalog change pushes a vendor past this, the crowd
+      // has stopped being the crowd that was looked at and approved.
+      results.push({
+        name: 'E3b: no vendor is scaled past the distortion the crowd was judged at',
+        pass: meshed.distMin >= 0.70 && meshed.distMax <= 1.30,
+        detail: `distortion ${meshed.distMin.toFixed(3)}-${meshed.distMax.toFixed(3)}, allowed 0.70-1.30`,
+      });
+
+      // The cost of the swap, at the one pose that sees the whole street.
+      // Direction only, with the numbers in the detail: the exact deltas move
+      // with any scene change and this is not the place to relitigate them.
+      // Non-obvious and worth recording — the swap SAVES draw calls. A paper
+      // doll is 13 of them per vendor because its head carries six materials,
+      // one per box face; a generated vendor is 3, of which the body is 1.
+      await onPage2.evaluate(() => window.__mcgrotDebug.gotoBookmark('skyline'));
+      const onSky = await getInvariants(onPage2);
+      const { ctx: offCtx2, page: offPage2 } = await bootForced(false);
+      await offPage2.evaluate(() => window.__mcgrotDebug.gotoBookmark('skyline'));
+      const offSky = await getInvariants(offPage2);
+      results.push({
+        name: 'E3b: meshes cost triangles at skyline and refund draw calls',
+        pass: onSky.drawCalls < offSky.drawCalls,
+        detail: `skyline draw calls ${offSky.drawCalls} -> ${onSky.drawCalls}`,
+      });
+
+      await defCtx.close();
+      await onCtx2.close();
+      await offCtx2.close();
+    }
+
+    endRegion();
+    } // end region: characters
 
     if (region('moments')) {
     // --- E5c: moments are links -------------------------------------------

@@ -4,6 +4,7 @@
 //   node scripts/probe.mjs -e "dbg.npcs.npcs.length"
 //   node scripts/probe.mjs -f my-probe.mjs          # module default-exports async ({page, dbg...}) => any
 //   node scripts/probe.mjs -e "..." --anchors=off --hour=3 --weather=haar
+//   node scripts/probe.mjs --characters=on --shot=/tmp/crowd.png
 //   node scripts/probe.mjs -e "..." --mobile --shot=/tmp/look.png
 //
 // Why this exists: every review needs a one-off measurement (is the built
@@ -45,6 +46,7 @@ const shot = arg('shot');
 const hour = Number(arg('hour', 13));
 const weather = arg('weather', 'overcast');
 const anchors = arg('anchors', null);      // 'on' | 'off' | null (shipped default)
+const characters = arg('characters', null); // ditto, for E3b's generated meshes
 const mobile = flag('mobile');
 const keepOpen = flag('keep-open');        // leave the browser up for a human look
 
@@ -104,14 +106,15 @@ try {
   // Set BEFORE any page script runs — main.js suppresses its first animate()
   // while this is set, so nothing renders on the wall clock and every frame
   // afterwards is one we asked for. Without it the scene drifts under you.
-  await context.addInitScript((a) => {
+  await context.addInitScript(({ a, c }) => {
     window.__mcgrotFreezeAtBoot = true;
     // Same pinned day as scripts/smoke.mjs — a probe measurement of anything
     // date-derived (the HUD name, the arrival hour, reading phases) must
     // reproduce what the suite sees, not what today happens to be.
     window.__mcgrotForceDate = '2026-01-01';
     if (a !== null) window.__mcgrotForceAnchors = a === 'on';
-  }, anchors);
+    if (c !== null) window.__mcgrotForceCharacters = c === 'on';
+  }, { a: anchors, c: characters });
 
   const page = await context.newPage();
   const consoleErrors = [];

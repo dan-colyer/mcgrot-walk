@@ -125,11 +125,11 @@ async function main() {
   buildGables(assets, world, scene);     // baked soot/blocked-window/ghost-sign dressing on blank gable walls
   buildChimneys(assets, world, scene);   // instanced chimney stacks + TV aerials along rooflines
   buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
-  // E8d spike, LANDED OFF (characters.js CHARACTERS_ENABLED = false): returns
+  // E3b, LANDED OFF (characters.js CHARACTERS_ENABLED = false): returns
   // immediately and adds nothing to the scene until the flag is flipped.
   // Placed after buildCars so the two glb loaders sit together, and after
-  // buildNpcs because it stands its meshes beside specific vendors.
-  buildCharacters(assets, world, scene, npcs);
+  // buildNpcs because it parents a mesh to each vendor and hides its doll.
+  const characters = buildCharacters(assets, world, scene, npcs);
   const scenery = buildScenery(world, scene);
   scenery.onArcFlash = () => ambience.triggerCrackle();
 
@@ -344,7 +344,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
-      moments, shareUi, lamps, legs, ending,
+      moments, shareUi, lamps, legs, ending, characters,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

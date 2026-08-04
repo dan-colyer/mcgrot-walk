@@ -283,29 +283,47 @@ export function buildNpcs(assets, world, scene, camera) {
 // Single character
 // ---------------------------------------------------------------------------
 
-function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
-  const glow = isAnchor ? ANCHOR_GLOW : 1;
-  const build = comic.npc.build || { height: 1.9, girth: 1.0, headScale: 1.5 };
+export const DEFAULT_BUILD = { height: 1.9, girth: 1.0, headScale: 1.5 };
+
+// Every dimension the paper doll derives from its build triple, in ONE place.
+// Extracted for E3b: a generated character mesh has to stand at exactly the
+// height of the doll it replaces (otherwise the LOD swap pops, and the crowd
+// changes height the moment the flag flips), so src/characters.js needs these
+// same numbers. Two copies of `0.78 * height` would drift the first time
+// either is touched.
+export function vendorDims(build) {
   const H = build.height;
   const G = build.girth;
   const S = build.headScale;
-
-  const group = new THREE.Group();
-  const coatMat = clothMat(coatColor, false);
-  const bootMat = new THREE.MeshLambertMaterial({ color: 0x15140f, flatShading: true });
-
   const bootH = 0.12;
   const legH = H * 0.30;
   const bodyW = 0.52 * G;
   const bodyD = 0.34 * G;
   const bodyH = H * 0.48;
   const headSize = 0.34 * S;
-
   const legTopY = bootH + legH;
   const bodyTopY = legTopY + bodyH;
   const headCenterY = bodyTopY + headSize * 0.5 + 0.02;
-  const headTopY = headCenterY + headSize * 0.5;
-  const legX = bodyW * 0.24;
+  return {
+    bootH, legH, bodyW, bodyD, bodyH, headSize,
+    legTopY, bodyTopY, headCenterY,
+    headTopY: headCenterY + headSize * 0.5,
+    legX: bodyW * 0.24,
+  };
+}
+
+function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
+  const glow = isAnchor ? ANCHOR_GLOW : 1;
+  const build = comic.npc.build || DEFAULT_BUILD;
+
+  const group = new THREE.Group();
+  const coatMat = clothMat(coatColor, false);
+  const bootMat = new THREE.MeshLambertMaterial({ color: 0x15140f, flatShading: true });
+
+  const {
+    bootH, legH, bodyW, bodyD, bodyH, headSize,
+    legTopY, bodyTopY, headCenterY, headTopY, legX,
+  } = vendorDims(build);
 
   // Merge the coat boxes (legs + body + arms) into one mesh, boots into another.
   const coatGeos = [];
@@ -377,10 +395,12 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
 
   // Hands gripping the comic's bottom corners — without them the comic floats.
   const handMat = new THREE.MeshLambertMaterial({ color: 0x84745e, flatShading: true });
+  const hands = [];
   for (const sx of [-1, 1]) {
     const hand = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.06), handMat);
     hand.position.set(sx * comicH * 0.28, legTopY + bodyH * 0.55 - comicH * 0.48, bodyD * 0.5 + 0.18);
     group.add(hand);
+    hands.push(hand);
   }
 
   const plate = makeNamePlate(comic.npc.name, comic.npc.blurb);
@@ -390,8 +410,17 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
   const npc = {
     group,
     head,
+    scarf,
     comicMesh,
     comic,
+    build,
+    // The box figure itself, separable from the things it is HOLDING. E3b
+    // stands a generated mesh in the doll's place and hides these five — coat,
+    // boots, head and the two gripping hands, all of them box geometry sized
+    // from the build triple. The comic, the scarf and the nameplate are the
+    // vendor's props, are positioned in the group's own frame, and stay.
+    // Nothing reads this unless src/characters.js is enabled.
+    dollBody: [coatMesh, bootMesh, head, ...hands],
     name: comic.npc.name,
     blurb: comic.npc.blurb,
     voice: null,       // PositionalAudio, attached lazily by proximity-audio.js

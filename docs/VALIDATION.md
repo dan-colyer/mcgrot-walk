@@ -2165,6 +2165,176 @@ live SwiftShader contexts.
 - **Nothing about draw-call cost after dark on a real GPU.** Unchanged from
   E2g: SwiftShader rasters outside every timed window. E2f owns it.
 
+## Character meshes: selection and per-vendor scaling (E3b)
+
+`src/characters.js` — five generated meshes standing in for 124 paper dolls,
+staged behind `CHARACTERS_ENABLED` and overridable on localhost with
+`window.__mcgrotForceCharacters`, exactly as `ANCHORS_ENABLED` /
+`__mcgrotForceAnchors` are. `scripts/probe.mjs --characters=on|off` drives the
+same override.
+
+E3b existed to answer one question with a picture: **five meshes across 124
+vendors is 24.8x reuse, ten times the 2.6x the faces already get away with —
+does per-vendor scaling close that gap, or does a squashed figure just read as
+a bug?** Everything below is what the answer cost and what is now held.
+
+### The ruling: selection does the matching, scale carries only the residual
+
+Stretching one mesh across the catalog's girth range (0.50 to 1.60) is a 3.2x
+squash and would have read as a bug. It is never asked to. Each vendor is
+assigned the archetype whose OWN proportions are nearest its build triple, so
+scale only has to carry what selection could not match. Measured over all 124
+vendors, twice and independently — once offline from `catalog.json`, once off
+the rendered transforms via `characters.measure()` — the residual is **0.735 to
+1.253**, and 90% of vendors sit inside 0.79–1.25. That is a nudge.
+
+The archetypes' own triples are **measured off the glbs**, by
+`scripts/glb-proportions.mjs`, and mapped into catalog units by matching
+z-scores. Taking them from the generation prompt would have been asserting
+them, and they are the denominator of every scale factor:
+
+| Archetype | file | width/height | head/torso | girth\* | headScale\* | vendors |
+|---|---|---|---|---|---|---|
+| bulk | rab-form | 0.684 | 0.331 | 1.420 | 1.198 | 19 |
+| slab | slab-form | 0.582 | 0.342 | 1.195 | 1.204 | 33 |
+| runt | runt-form | 0.455 | 0.802 | 0.918 | 1.470 | 26 |
+| stoop | morag-form | 0.362 | 0.828 | 0.712 | 1.485 | 7 |
+| spindle | kenneth-form | 0.347 | 0.607 | 0.680 | 1.357 | 39 |
+
+**Regenerate a mesh and these must be re-measured**, or every vendor assigned
+to it silently inherits the old mesh's residual.
+
+### Where headScale went, and what it cost
+
+A Trellis mesh is one primitive with no separable head, so of the build
+triple's three axes only two survive directly. `headScale` is not redundant —
+measured across the 124 it correlates 0.03 with height and 0.23 with girth, so
+it is real variation — and its only outlet is selection. Girth has two, since
+the residual picks up whatever selection misses.
+
+Weighting the head axis in the selection metric therefore trades directly
+against squash, and the trade was swept rather than guessed:
+
+| head weight | worst squash | correlation, vendor headScale vs assigned |
+|---|---|---|
+| 0 | 1.14 | **−0.25** |
+| 0.15 | 1.25 | 0.07 |
+| **0.25** | **1.25** | **0.18** |
+| 0.40 | 1.63 | 0.34 |
+| 1.00 | 1.69 | 0.66 |
+
+Weight 0 is not merely blind, it is **wrong**: big-headed vendors get
+systematically handed the no-neck archetypes. 0.25 is the knee — it buys the
+anti-correlation out for the same worst case as 0.15, and the next step up
+costs 30% more squash for 0.16 more correlation.
+
+### What the picture said, and the two things it caught that no number did
+
+Judged on a contact sheet of ten vendors — for each archetype, the one
+squashed narrowest and the one stretched widest, all at 3.4m. **Greenlit: at
+0.74 and at 1.25 the figures read as ten different people, not as one figure
+distorted ten ways.** Against the doll control the gap is not close.
+
+Two defects were visible only in the picture, and both would have passed every
+numeric gate in this file:
+
+- **The whole crowd faced the wrong way — and then it didn't.** The first
+  sheet had every mesh backed to the camera, so a 180° yaw was applied and duly
+  turned them all round. The dolls had their backs to the camera too: every
+  street bookmark stands 12m off the centreline while the vendors stand 6m off
+  it facing inward, so all eight photograph the crowd from behind, by
+  construction. The measurement that settled it was the dot of a vendor's
+  forward against the direction to the camera — −1.00, −0.78, −0.45 — and it
+  showed the "fix" had rotated the whole street away from the street it faces.
+  Trellis reconstructs facing +Z, which is the doll's own front. No yaw
+  correction is applied and the comment in `normalise()` says why.
+- **The scarf does not survive the swap.** The E3 plan kept it as the
+  per-vendor colour note. A neck-height accessory needs a neck, and measured
+  with `glb-proportions`, Slab's and Stoop's width never dips between shoulder
+  and head — the collar search returns the top of its own search range, a
+  boundary hit dressed as a measurement. At the doll's height the scarf reads
+  as a gag across the mouth; at the measured "collar" it sits in Morag's hair.
+  It is hidden on meshed vendors, and the colour note has to come from the
+  per-vendor tint pass instead. **That is a change to the E3 plan, not an
+  omission from it.** `collarY` is still reported by `glb-proportions` as the
+  evidence, and consumed nowhere.
+
+The comic plane needed re-hanging for a duller reason: it was positioned from
+the doll's box depth and ended up inside several bellies. It is now placed from
+the archetype's measured `frontZ`, scaled by the vendor's own squash.
+
+### The gates (region `characters`, 5 checks, ~5s)
+
+Every number is read off the live scene's transforms and geometry through
+`characters.measure()`. None re-runs the selection: a gate that called
+`vendorTransform()` a second time would pass on a build that computed a
+beautiful assignment and rendered none of it.
+
+- **The shipped default leaves every paper doll intact.** The control, and the
+  one that matters while the flag is off. Not "the flag reads false" — every
+  doll part visible and no vendor tagged is what proves nothing ran.
+- **Every vendor is meshed, all five archetypes used, 620 doll parts hidden.**
+- **Every mesh stands at exactly the height of the doll it replaces.**
+  `dollTop` comes from the hidden box meshes' own geometry, so this compares
+  two independently-built figures rather than one formula against itself. Worst
+  0.000%; the 0.5% budget is headroom for the idle sway, not for drift.
+- **No vendor is scaled past the distortion the crowd was judged at**
+  (0.70–1.30). If a future archetype swap or catalog change pushes a vendor
+  out, the crowd has stopped being the crowd that was looked at and approved.
+- **Meshes cost triangles at skyline and refund draw calls.** Direction only,
+  numbers in the detail — the exact deltas move with any scene change.
+
+All five fault-injected, one at a time, each restored after:
+
+| Injected fault | Goes red |
+|---|---|
+| `CHARACTERS_ENABLED = true` | shipped default — `tagged=124, hidden=744` |
+| drop the `stoop` archetype | coverage — 4 archetypes, spindle absorbs 45 |
+| reinstate E3a's flat `TARGET_HEIGHT = 1.9` | height — worst 19.355% (Gurney Girnigoe) |
+| `HEAD_WEIGHT` 0.25 → 1.0 | distortion — 0.628–1.688 |
+| stop hiding the doll bodies | coverage AND cost — `1103 -> 1103` |
+
+The `HEAD_WEIGHT = 1.0` injection is worth noting twice: it reproduces the
+sweep table's 1.69 from the rendered scene, so the offline sweep and the live
+measurement agree to three figures by two different routes.
+
+**What these gates deliberately do not prove.** Nothing here can see whether
+the crowd reads as five clones; that is the contact sheet's job and it has to
+be re-looked-at whenever an archetype changes. Nothing here checks a mesh's
+facing, its materials, or where its props sit — all three were caught by eye,
+and the yaw in particular is invisible to a draw call, a triangle count and a
+bounding box alike.
+
+**Measuring in the vendor's frame, not the world's.** `characters.measure()`
+expresses each instance's bounding box in its vendor's coordinates.
+Leith Walk curves, so every vendor faces a slightly different way, and a
+world-axis-aligned box reads a figure turned side-on as its depth rather than
+its width. Doing it the naive way made the same crowd measure 0.66–1.48
+distorted instead of the 0.74–1.25 it is — the yaw swamping the signal. Note
+also that a `Box3` grows to the axis-aligned hull every time it is
+transformed, so applying a world matrix and then its inverse does not undo it;
+`localSize()` composes the two matrices first and transforms once.
+
+### The cost, measured at `skyline` (the only pose that sees the whole street)
+
+| | dolls | meshes |
+|---|---|---|
+| Draw calls | 1,103 | **404** |
+| Triangles | 306,435 | **573,894** |
+| Renderable objects per vendor, unculled | 13 | 3 |
+
+**The swap SAVES draw calls, and this inverts E3d's premise.** A paper doll is
+13 draw calls per vendor because its head is a BoxGeometry carrying six
+materials, one per face; a meshed vendor is 3, of which the body is 1. The
+roadmap had the doll down as the cheap distance LOD — it is cheap in triangles
+(134 against ~4,100) and expensive in draw calls. Which of the two matters is
+what E3d has to measure before it picks a crossover; "the doll is cheaper" is
+now known to be false as a general claim.
+
+The 470,084-triangle figure for 124 meshes is the sum over the actual
+assignment, not 124 x the largest archetype. The roadmap's 651,496 was the
+latter and is retired.
+
 ## The style prototype loop (E8a)
 
 E8 is a prototype loop, not a landing: candidates are judged from pictures and
@@ -2398,6 +2568,24 @@ check.
   exits non-zero and the recapture silently never runs. The tool has to
   reproduce the suite's filename composition exactly — including the 08:00
   clear pose, which is `<id>-clear-08.png`, variant before the hour.
+- **THE FROZEN GOLDENS ARE CURRENTLY 0.17–0.31% STALE, and nobody has looked
+  at why** (found 2026-08-04, during E3b, which did not cause it). E3b's own
+  contribution was isolated the honest way: run `--only=render,weather` with
+  `src/` checked out at the previous commit, run it again with the change, and
+  diff the two lists of percentages. Every non-zero golden reads essentially
+  the same before and after — `golden-haar:elm-row-hero` 0.300% → 0.307%,
+  `golden:skyline` 0.254% → 0.249% — and the wobbles go both ways, so they are
+  run-to-run noise on an already-drifted baseline, not E3b's doing. That
+  technique is the reusable part; `goldens:audit` alone cannot tell you whose
+  diff it is.
+  The drift itself matters: 24 goldens are eating up to 62% of the 0.5%
+  tolerance before any real change is measured, which leaves far less headroom
+  than the number suggests. **Dan's call whether to recapture** — it is not a
+  regression anyone has identified, and recapturing would freeze whatever
+  caused it. Note also which goldens are exactly reproducible run to run
+  (`golden:mid-805-far` 0.171% both times, `golden:north-250-far` 0.040%) and
+  which are not (the rain/drizzle/haar poses and `elm-row-hero`, all ±0.016pp):
+  a golden that wobbles has a particle system or foliage in it.
 - **Unexplained diff on unrelated work** → human eyes, always. The tolerance
   (0.5% changed pixels, per-pixel threshold 0.1) is sized to absorb
   antialiasing/compression jitter, not to wave through a real regression.

@@ -240,6 +240,7 @@ export function createDebugApi(ctx) {
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
     vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs, ending,
+    characters,
   } = ctx;
 
   const consoleErrors = [];
@@ -518,6 +519,10 @@ export function createDebugApi(ctx) {
     setDaySeed,
     anchorsEnabled,
     anchorSet,
+    // E3b: {enabled, loaded(), assigned, counts}. `loaded()` is a function
+    // because the five glbs land asynchronously — reading it as a value
+    // measures how fast the harness got here, not how many meshes exist.
+    characters,
     anchorLayout,
     // E5c. `moments` is the live instance the updater list drives, not a
     // fresh one — a gate that constructed its own would measure the module

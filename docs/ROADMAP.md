@@ -1448,40 +1448,58 @@ which already carries the idle sway, with the comic plane bobbing along with
 it. It costs nothing because the transform exists, and it removes the need for
 a head node at all, keeping a vendor at one body primitive.
 
-#### The constraint that actually shapes the phase
+#### The constraint that actually shapes the phase — REWRITTEN BY E3b
 
-Correcting the E8d headline, which was the mesh-only figure: a working vendor
-still needs its comic plane and scarf.
+The pre-E3b estimate below is kept because it was confident, load-bearing and
+wrong in both directions:
 
-| | Today | With meshes |
+> | | Today | With meshes |
+> |---|---|---|
+> | Meshes per vendor | 7 | 4 (body, comic, scarf, nameplate) |
+> | **Triangles, 124 vendors** | **16,616** | **651,496** |
+>
+> **So the paper-doll survives, as the distance LOD.** It is 134 triangles, the
+> code exists, and it is already gated.
+
+Measured at `skyline`, the only pose that sees the whole street:
+
+| | dolls | meshes |
 |---|---|---|
-| Meshes per vendor | 7 | 4 (body, comic, scarf, nameplate) |
-| 124 vendors | 868 | 496 |
-| **Triangles, 124 vendors** | **16,616** | **651,496** |
+| Draw calls | 1,103 | **404** |
+| Triangles | 306,435 | **573,894** |
+| Renderable objects per vendor, unculled | 13 | 3 |
 
-651k triangles is nearly **twice the entire current scene** (342,224). Frustum
-culling hides it at street level — bookmarks see 30–78 draw calls — but
-`skyline` at 1,112 sees everything, and that is where it lands.
+Two corrections, both measured:
 
-**So the paper-doll survives, as the distance LOD.** It is 134 triangles, the
-code exists, and it is already gated. Swapping beyond a measured crossover
-keeps the near field real and the skyline cheap.
+- **651,496 was 124 × the largest archetype.** Summed over the actual
+  assignment it is **470,084**, and the whole-scene figure is 573,894 — a lot,
+  but not "twice the scene".
+- **The swap SAVES 699 draw calls, and this inverts E3d's premise.** A paper
+  doll is 13 draw calls per vendor, because its head is a BoxGeometry carrying
+  six materials, one per face; a meshed vendor is 3, of which the body is 1.
+  The doll is the cheap LOD *in triangles* (134 against ~4,100) and the
+  expensive one *in draw calls*. Which of those binds is what E3d has to
+  measure before choosing a crossover — "the doll is cheaper" is now known to
+  be false as a general claim.
 
 #### Units
 
 | | | |
 |---|---|---|
-| **E3a** | Generate and judge the five archetypes | ~$0.10, contact sheet, no scene change |
-| **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | answers the 24.8×-reuse question on a crowd shot |
-| **E3c** | Body-lean speaking tell; retire the head node | |
-| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | the gate for `skyline` triangles |
+| **E3a** | Generate and judge the five archetypes | ✅ landed — 5 glbs, 20,455 tris, 2,252KB |
+| **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | ✅ landed — **greenlit**, squash 0.735–1.253, 5 gates |
+| **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | the scarf did not survive E3b |
+| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | re-derive the premise first, see above |
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the only commit that moves goldens |
 | **E3f** | Leithers — 30 walkers, reuse or leave as dolls | possibly a footnote |
 
-**What would kill it:** non-uniform scaling at girth 0.5 against 1.6 may read
-as a broken mesh rather than a grotesque — squashed faces look like a bug, not
-a style. That is E3b's judging question, and E3c–E3e are not worth building
-until it is answered.
+**What would have killed it, and did not:** non-uniform scaling at girth 0.5
+against 1.6 may read as a broken mesh rather than a grotesque. It does not,
+because scale is never asked to span that range — selection matches each
+vendor to its nearest archetype and scale carries only the residual, measured
+at 0.735–1.253. Judged on a contact sheet of each archetype's narrowest and
+widest vendor: ten figures, ten people. Full account, including the two
+defects only the picture caught, in `docs/VALIDATION.md` § E3b.
 - Readers: seated/standing sculpted grotesques, comic held two-handed, idle +
   page-turn animation, lip-sync-adjacent head motion while speaking.
 - Leithers: walk/idle/turn cycles, silhouette variety (shopping bags, prams,
