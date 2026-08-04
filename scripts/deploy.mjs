@@ -170,7 +170,14 @@ let round = 0;
 while (pending.size && Date.now() < deadline) {
   round++;
   for (const f of [...pending]) {
-    const r = spawnSync('curl', ['-sf', `${LIVE}/${f}`], { encoding: 'buffer', maxBuffer: 1 << 28 });
+    // Encode per SEGMENT — a path is not a URL. An asset whose filename
+    // contained spaces ("WhatsApp Image 2026-08-04 at 06.51.18.jpeg") made
+    // this curl fail for five minutes and abort a deploy that had in fact
+    // succeeded: the file was live and md5-matched the whole time. encodeURI
+    // would do for spaces alone, but it leaves ? and # alone too, and those
+    // would silently truncate the path instead.
+    const url = `${LIVE}/${f.split('/').map(encodeURIComponent).join('/')}`;
+    const r = spawnSync('curl', ['-sf', url], { encoding: 'buffer', maxBuffer: 1 << 28 });
     if (r.status === 0 && md5(r.stdout) === expected.get(f)) pending.delete(f);
   }
   if (pending.size) {
