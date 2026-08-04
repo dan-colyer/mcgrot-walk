@@ -99,7 +99,11 @@ async function buildSite() {
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
   ['shopfronts/manifest.json', 'shopfronts/atlas-pages.json', 'shopfronts/atlas-pages', 'shopfronts/credits.json',
    'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',
-   'cars/Textures/colormap.png', 'comic-lines.json'].forEach(copy);
+   'cars/Textures/colormap.png', 'comic-lines.json',
+   // E8d: copied even though characters.js is LANDED OFF, so flipping
+   // CHARACTERS_ENABLED is genuinely a one-line change rather than one line
+   // plus a missing asset nobody remembers. 480KB against a 95MB site build.
+   'characters'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
   for (const c of manifest.comics) copy(c.image);
 

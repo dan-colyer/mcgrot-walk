@@ -2588,6 +2588,53 @@ would read as a child standing next to them.
 Deliberately not mapped in `SINCE_RULES`: an unmapped path falls back to the
 full suite, which is the right default for a module that adds scene geometry.
 
+#### Spike result — RUN 2026-08-04, seven Trellis calls, $0.14
+
+**Verdict: greenlight.** A McGrot grotesque survives reconstruction, and the
+runtime cost lands well inside what this scene can carry.
+
+| Variant | `mesh_simplify` | `texture_size` | Tris | Total | Texture |
+|---|---|---|---|---|---|
+| form | 0.90 | 1024 | 26,048 | 1,843KB | 1,195KB |
+| form | 0.95 | 1024 | 12,932 | 1,491KB | 1,161KB |
+| form | 0.98 | 1024 | 5,328 | 1,309KB | 1,165KB |
+| **form** | **0.98** | **512** | **5,254** | **480KB** | **336KB** |
+| flat | 0.90 | 1024 | 25,098 | 1,813KB | 1,192KB |
+| flat | 0.95 | 1024 | 11,387 | 1,472KB | 1,182KB |
+| flat | 0.98 | 1024 | 5,132 | 1,341KB | 1,197KB |
+
+**Every single one is 1 primitive = 1 draw call.** That is the finding the
+whole unit turned on.
+
+**Decimation is the wrong lever; texture size is the right one.** `mesh_simplify`
+0.90 → 0.98 drops triangles 5× and total bytes only 29%, because the texture is
+~90% of the file at every setting. Dropping `texture_size` to 512 cut a
+character from 1,309KB to **480KB** in one step. Rendered side by side in-scene
+at conversation distance the two are indistinguishable, so 512 is the default.
+
+**The `flat` prediction was WRONG, and the reason it was wrong matters.** This
+file predicted flat comic art would reconstruct as a slab for want of shading
+cues. It did not — geometrically it came back as good a figure as `form`.
+`form` is still the keeper, but for a *texture* reason rather than a geometry
+one: the flat art's heavy outlines and rosy cheeks bake into the albedo and
+read in-scene as clown makeup. Trellis infers form from silhouette and
+segmentation far better than the prediction assumed. Recorded because the
+prediction was confident, was documented, and cost $0.06 to falsify.
+
+Grade `b` sits on the meshes well — captured at the same pose with `uStyle 1`;
+the halftone and press tint read as print on a figure rather than as noise.
+
+**What this changes for E3.** At 480KB a character, **distinct meshes for all
+124 NPCs is still off the table** — 124 × 480KB is 58MB, which the 95MB site
+could technically carry but the artifact could not, and the load cost is
+absurd. Shared archetypes with per-NPC tint (the `wreckify()` pattern) is the
+answer: **five archetypes is 2.4MB**, which fits the single-file artifact's
+remaining headroom, let alone the site.
+
+The keeper is committed at `assets/characters/rab-form.glb` (480KB) and
+`build.mjs` copies `characters/` in the site build, so flipping
+`CHARACTERS_ENABLED` is genuinely one line.
+
 ### E3 — Characters (after E8d, unchanged in position)
 
 Full character system v2. Depends on E8d's answer: if generated meshes are
