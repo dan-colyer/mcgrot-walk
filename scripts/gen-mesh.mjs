@@ -26,7 +26,7 @@
 // API's own file_size — fal's documented output schema for this endpoint
 // carries a content_type of "image/png" on the mesh object, which is plainly
 // wrong, so its metadata is not evidence about what arrived.
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { basename, extname, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { glbStats } from './glb-stats.mjs';
@@ -64,6 +64,15 @@ const textureSize = Number(arg('texture', 1024));
 const outDir = join(root, arg('out', 'scratchpad/characters'));
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png' };
 
+// Validate every input BEFORE quoting a cost. Printing "1 run, $0.02" and then
+// rejecting the file misreports what is about to be spent.
+for (const input of inputs) {
+  if (!MIME[extname(input).toLowerCase()]) {
+    console.error(`${input}: expected .jpg or .png`); process.exit(1);
+  }
+  if (!existsSync(input)) { console.error(`${input}: no such file`); process.exit(1); }
+}
+
 const runs = inputs.length * simplifies.length;
 console.log(`${runs} run(s) at ~$${COST_PER_RUN.toFixed(2)} — estimated $${(runs * COST_PER_RUN).toFixed(2)}\n`);
 
@@ -71,7 +80,6 @@ mkdirSync(outDir, { recursive: true });
 
 for (const input of inputs) {
   const ext = extname(input).toLowerCase();
-  if (!MIME[ext]) { console.error(`${input}: expected .jpg or .png`); process.exitCode = 1; continue; }
   // Data URI rather than fal's upload endpoint: one request instead of two,
   // and the inputs here are ~100KB. If fal ever rejects it, upload first.
   const imageUrl = `data:${MIME[ext]};base64,${readFileSync(input).toString('base64')}`;
