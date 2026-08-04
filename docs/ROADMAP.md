@@ -1489,7 +1489,8 @@ Two corrections, both measured:
   The doll is the cheap LOD *in triangles* (134 against ~4,100) and the
   expensive one *in draw calls*. Which of those binds is what E3d has to
   measure before choosing a crossover — "the doll is cheaper" is now known to
-  be false as a general claim.
+  be false as a general claim. **E3d is conditional on that measurement as of
+  2026-08-04; see E3d.0 below.**
 
 #### Units
 
@@ -1498,9 +1499,46 @@ Two corrections, both measured:
 | **E3a** | Generate and judge the five archetypes | ✅ landed — 5 glbs, 20,455 tris, 2,252KB |
 | **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | ✅ landed — **greenlit**, squash 0.735–1.253, 5 gates |
 | **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | ✅ landed — tell at speed parity with the one it replaced, note at 124 materials for **zero** extra draw calls, 5 gates |
-| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | re-derive the premise first, see above |
-| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the only commit that moves goldens |
-| **E3f** | Leithers — 30 walkers, reuse or leave as dolls | possibly a footnote |
+| **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ⬅ do this first, ~30 min |
+| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | **conditional on E3d.0** — do not build it unless the number says to |
+| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the next real milestone; the only commit that moves goldens |
+| **E3f** | Leithers — 30 walkers, 124 meshes, reuse or leave as dolls | genuinely open, not a footnote |
+
+#### E3d is now conditional, and E3d.0 is what decides it (2026-08-04)
+
+E3b measured the swap as **−699 draw calls and +267,459 triangles**, which
+inverts the LOD's premise: swapping to dolls at distance SPENDS draw calls to
+SAVE triangles. So an LOD only pays if triangles are what bind, and nothing has
+shown that they do.
+
+**That last sentence is reasoned, not measured, and E3d.0 is the measurement.**
+The rule this project keeps relearning is that a no-go with no measurement
+behind it is a hypothesis promoted by repetition — `docs/VALIDATION.md` records
+four such grounds that E0.4 tested and three of which were wrong. So E3d is not
+being cancelled here; it is being made conditional on a number:
+
+- Frame time with `--characters=on` against `--characters=off`, at `skyline`
+  (the whole street, worst triangle load) and at a close pose (worst per-pixel
+  load), **on the mobile viewport at the DPR cap**, which is the only place
+  triangles plausibly bind.
+- The control is the same build with the flag off — `probe --characters=on|off`
+  already drives it, so this is a probe script, not a milestone.
+- If meshes cost no meaningful frame time: E3d is rejected, written up with its
+  numbers in `VALIDATION.md`, and struck from this table.
+- If they do: E3d proceeds, and the crossover comes from that curve rather than
+  from a guess.
+
+Either outcome is delivered work. A number that kills the unit is the point.
+
+**E3f is not a footnote.** 30 walkers × 4 meshes is 124 ambient meshes that
+also move, and none of the E3a–E3c measurements covered them. Whether they take
+archetypes, stay as dolls, or want something cheaper again is unmeasured.
+
+**Nothing in E3 is visible yet.** The live site (deployed 2026-08-04) ships
+`CHARACTERS_ENABLED = false`, so E3a–E3c are three landed milestones that
+change the deployed picture not at all. E3e is the commit that makes the phase
+real, which is also why it is the one worth a **Fable phase gate afterwards** —
+a fresh independent read is worth most on the commit that changes what ships.
 
 **What would have killed it, and did not:** non-uniform scaling at girth 0.5
 against 1.6 may read as a broken mesh rather than a grotesque. It does not,
