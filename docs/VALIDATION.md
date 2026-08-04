@@ -2335,7 +2335,125 @@ The 470,084-triangle figure for 124 meshes is the sum over the actual
 assignment, not 124 x the largest archetype. The roadmap's 651,496 was the
 latter and is retired.
 
-## The style prototype loop (E8a)
+## The speaking tell, and the colour note (E3c)
+
+Two things that had to move because a Trellis mesh is a single primitive: the
+tell that said "this one is reading", which lived on a head node the mesh has
+not got, and the per-vendor colour note, which lived on a scarf that needs a
+neck two of the five archetypes do not have.
+
+### The tell moved from the head to the whole body
+
+`npcs.js:tick()` used to turn a vendor's head 5 degrees at 4Hz while speaking.
+A meshed vendor physically cannot do that, and leaving it on the doll would
+mean the two LODs perform differently and E3d's swap pops mid-sentence. The
+tell is now a roll on `group.rotation.z` plus a small yaw on `.y`, composed
+with the idle sway that was already on both, and `setSpeaking(false)`'s head
+reset is gone because the head no longer moves at all.
+
+**Roll and yaw only, never pitch.** three's default `XYZ` euler composes as
+Rx·Ry·Rz, so the Z term is applied innermost — in the vendor's own frame — and
+an X term would be applied *after* the street-facing yaw, about the world axis.
+Leith Walk curves, so a pitch would have tipped half the crowd sideways. Yaw
+needs no such care: it adds to `baseY` on the same axis.
+
+**The amplitude is set by the tell it replaces, not by the plan.** The roadmap
+said ±2°. That was written before anything was measured, and a still cannot
+tell a mutter from a shiver. What can be measured is the retired tell —
+reproduced *by the probe* on the live scene (so the pivot, the radius and the
+frame are the real ones, not arithmetic on paper) and read at the same physical
+point, the centre of each vendor's face:
+
+| `SPEAK_ROCK` | face peak speed vs the retired head tell, 124 vendors |
+|---|---|
+| 0.035 (the plan's 2°) | median **1.45×**, range 1.08–1.81 |
+| **0.024 (shipped)** | median **1.03×**, range 0.77–1.29 |
+
+So the street now carries the same amount of motion it always did, moved off
+the head and onto the figure. Head-top excursion at parity is 8.4cm peak to
+peak against a 0.7cm idle-sway floor.
+
+The tell also fades rather than switching: `leanAmp` eases toward 0 or 1 at 8
+e-folds per second, driven by `dt` (which is why `npcs.update` now passes it
+through to `tick`), so a vendor does not snap upright the instant its audio
+stops, and does so at the same wall-clock rate at 60Hz and 120Hz.
+
+### The colour note moved from the scarf to the mesh's own material
+
+Read off **the vendor's own scarf material**, not by re-hashing its name — the
+same discipline `measure()` uses. A mesh that recomputed the hash would agree
+with the doll by construction; this one agrees because it read what the doll is
+wearing, and E3d's LOD swap therefore cannot change a vendor's colour mid-street.
+
+Applied as chroma only (each note normalised by its own average, so it
+recolours without darkening) and **equalised**, which the scarf never needed to
+be. The palette's six entries carry very different amounts of colour —
+`0x6b3328`'s deviation from neutral is 2.7× `0x2e4640`'s. Fine on a 9cm band;
+not fine on a whole figure. Photographed side by side at full palette strength,
+the red vendor read as a different coat and the green one was indistinguishable
+from no tint at all. Each note now keeps its direction and gets one length,
+0.27 — the red note's own former strength, i.e. the one that was judged.
+
+Measured on the rendered frame, tint on against tint off:
+
+| note | vendor | figure px | hue shift R / G / B (percentage points) |
+|---|---|---|---|
+| `6b3328` | Dod McAvity | 4.0% | **+6.85** / −3.08 / −3.77 |
+| `2e4640` | Senga MacRurie | 4.4% | −6.67 / **+4.92** / +1.75 |
+| `3d3453` | Shug McGubbin | 5.6% | −1.96 / −4.39 / **+6.35** |
+| `664a1e` | Tam MacGeoch | 5.0% | **+5.40** / −0.48 / −4.92 |
+| `59422e` | Dougal MacEwing | 4.6% | **+5.59** / −1.07 / −4.52 |
+| `705c23` | Ina MacRimmel | 7.4% | **+4.78** / +0.52 / −5.29 |
+
+**Two dead ends in getting that table, both worth keeping.** The first attempt
+compared two separately-booted pages: 51–85% of every clip "changed", because
+film grain resamples off the sim clock and two boots differ everywhere. The
+measurement was rebuilt to capture, divide each material by its own note, call
+`renderNow()` (which redraws without stepping the clock) and capture again —
+one page, one frame, the tint the only difference. The second attempt then
+reported a 32% brightness shift for one vendor, which was the comic texture
+streaming in *between* the two captures. **A control that is a second boot is
+not a control in a scene with per-frame noise and async asset loads.**
+
+### What it cost
+
+Nothing, at the pose that sees the whole street:
+
+| | 5 shared materials | 124 per-vendor materials |
+|---|---|---|
+| `skyline` draw calls | 404 | **404** |
+| `skyline` triangles | 573,786 | **573,786** |
+
+`Material.clone()` copies the texture *reference*, so 124 materials still share
+the one archetype texture; the clone costs 124 sets of uniforms, not 124
+textures. Draw calls are per-mesh, and each instance was already its own Mesh.
+E3b's warning that the tint would spend the draw-call refund it had bought
+turns out to be wrong, and it was wrong by measurement rather than by argument
+— `window.__mcgrotForceTint` (localhost-only, like `__mcgrotForceCharacters`;
+`probe --tint=on|off`) exists so the gate boots the *same build* both ways.
+
+### The five gates, and what went red
+
+| Injection | What reddened |
+|---|---|
+| `SPEAK_ROCK = 0` | tell 1.0× (need 4×), parity 0.144, mesh tell 1.0× |
+| `SPEAK_ROCK = 0.048` | **parity only**, median 1.950 — the travel gates still pass at 23.5×, which is the point of having both |
+| restore the `head.rotation.y` bobble | tell (head rotation 0.09, must be exactly 0), parity 1.976 |
+| `scene.add(inst)` instead of the vendor group | mesh tell — "not parented to the transform that carries the tell"; also E3b's distortion gate |
+| stop cloning the material per vendor | note — 5 materials, hue agreement **−0.966** (vendors wearing each other's notes) |
+| drop the equalisation | note — strength 0.529–1.464, not 0.270 |
+| tint ignores its own off switch | cost — the control booted with 124 materials, not 5 |
+
+The parity gate and the travel gates are deliberately separate: an amplitude
+bump is invisible to "did it move" and obvious to "how fast".
+
+**What these gates deliberately do not prove.** Whether 1.6Hz reads as a mutter
+or a twitch is a motion judgement, and nothing here can see motion — the strip
+in the judging capture shows the two extremes of one cycle and no more. What
+stands behind the amplitude is the parity measurement, not a look at it. The
+note gates check that every vendor wears its own note at one strength; whether
+0.27 is the right strength was judged on the pictures above and is a taste that
+a future grade change could invalidate without reddening anything.
 
 E8 is a prototype loop, not a landing: candidates are judged from pictures and
 the shipped frame must not move while it runs. Two things make that hold.

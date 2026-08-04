@@ -46,6 +46,33 @@ const COAT_COLORS = [
 // Scarf/neckerchief accents — the one colour note each vendor gets.
 const SCARF_COLORS = [0x6b3328, 0x705c23, 0x2e4640, 0x59422e, 0x3d3453, 0x664a1e];
 
+// E3c — the speaking tell, moved off the head and onto the whole body.
+//
+// WHY IT MOVED: a Trellis mesh is a single primitive with no separable head, so
+// a head-only animation is a tell the meshed vendor physically cannot perform.
+// Leaving it on the doll would mean the two LODs act differently and E3d's swap
+// pops mid-sentence. Both figures now share one transform, so both perform the
+// same thing.
+//
+// WHY TWO RATES: the old tell was a 5-degree head turn at 4Hz. Transplanted
+// whole onto a 1.9m body that is a 6.6cm head excursion at 4Hz, which reads as
+// a shiver rather than a person. Split instead — a slow rock carries the weight,
+// a small fast yaw keeps the 4Hz "reading aloud" cadence the old tell had.
+//
+// WHY 0.024 AND NOT THE PLAN'S 2 DEGREES: "±2°" was written before anything
+// was measured, and a still cannot tell a mutter from a shiver. What can is the
+// tell this one REPLACES — reproduced on the live scene by the probe and
+// measured at the same physical point, the centre of each vendor's face. At 2°
+// the body tell moved that point 1.45× faster than the head tell did across all
+// 124 vendors (range 1.08–1.81). 0.024 is the value that puts the median at
+// parity: the same motion the street already had, carried by the whole figure
+// instead of the head. See docs/VALIDATION.md § E3c.
+const SPEAK_ROCK = 0.024;      // ~1.4 deg of roll, the visible one head-on
+const SPEAK_ROCK_W = 10;       // ~1.6Hz — a body's rate, not a head's
+const SPEAK_NATTER = 0.012;    // ~0.7 deg of yaw
+const SPEAK_NATTER_W = 25;     // ~4Hz, inherited from the head bobble
+const SPEAK_FADE = 8;          // e-folds per second in and out of the tell
+
 const texLoader = new THREE.TextureLoader();
 function loadSRGB(url, onLoad) {
   return texLoader.load(url, (tex) => {
@@ -268,7 +295,7 @@ export function buildNpcs(assets, world, scene, camera) {
     const cam = camera ? camera.position : null;
     for (let i = 0; i < npcs.length; i++) {
       const npc = npcs[i];
-      npc.tick(time);
+      npc.tick(time, dt);
       if (cam && !npc.comicLoaded) {
         const g = npc.group.position;
         if (Math.hypot(cam.x - g.x, cam.z - g.z) < COMIC_LOAD_RANGE) npc.loadComic();
@@ -443,16 +470,26 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
     },
     setSpeaking(v) {
       npc.speaking = !!v;
-      if (!npc.speaking) head.rotation.set(0, 0, 0);
+      // No head reset any more: the head does not move. See tick().
     },
-    tick(time) {
-      group.rotation.z = Math.sin(time * 0.6 + npc.phase) * 0.01;
-      group.rotation.y = npc.baseY + Math.sin(time * 0.4 + npc.phase) * 0.008;
-      if (npc.speaking) {
-        const w = time * 25 + npc.phase; // ~4Hz head bobble
-        head.rotation.y = Math.sin(w) * 0.09;
-        head.rotation.x = (Math.sin(w * 0.5) + 1) * 0.05;
-      }
+    // E3c: the speaking tell is on the BODY, and `leanAmp` is what fades it in
+    // and out so a vendor does not snap 2 degrees upright the instant its audio
+    // stops. dt-driven rather than a fixed per-frame constant, so the fade is
+    // the same wall-clock length at 60Hz and at 120Hz.
+    leanAmp: 0,
+    tick(time, dt) {
+      npc.leanAmp += ((npc.speaking ? 1 : 0) - npc.leanAmp)
+        * Math.min(1, (dt || 0) * SPEAK_FADE);
+      const a = npc.leanAmp;
+      // Roll and yaw ONLY, never pitch. three's default 'XYZ' euler composes as
+      // Rx·Ry·Rz, so Z is applied innermost — in the vendor's own frame — while
+      // X would be applied AFTER the street-facing yaw, i.e. about the world
+      // axis. Leith Walk curves, so a pitch term would tip half the crowd
+      // sideways. Yaw needs no such care: it adds to baseY on the same axis.
+      group.rotation.z = Math.sin(time * 0.6 + npc.phase) * 0.01
+        + (a ? Math.sin(time * SPEAK_ROCK_W + npc.phase) * SPEAK_ROCK * a : 0);
+      group.rotation.y = npc.baseY + Math.sin(time * 0.4 + npc.phase) * 0.008
+        + (a ? Math.sin(time * SPEAK_NATTER_W + npc.phase) * SPEAK_NATTER * a : 0);
     },
   };
   return npc;

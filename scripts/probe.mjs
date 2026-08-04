@@ -47,6 +47,7 @@ const hour = Number(arg('hour', 13));
 const weather = arg('weather', 'overcast');
 const anchors = arg('anchors', null);      // 'on' | 'off' | null (shipped default)
 const characters = arg('characters', null); // ditto, for E3b's generated meshes
+const tint = arg('tint', null);             // E3c's per-vendor colour note, on by default
 const mobile = flag('mobile');
 const keepOpen = flag('keep-open');        // leave the browser up for a human look
 
@@ -114,7 +115,8 @@ try {
     window.__mcgrotForceDate = '2026-01-01';
     if (a !== null) window.__mcgrotForceAnchors = a === 'on';
     if (c !== null) window.__mcgrotForceCharacters = c === 'on';
-  }, { a: anchors, c: characters });
+    if (n !== null) window.__mcgrotForceTint = n === 'on';
+  }, { a: anchors, c: characters, n: tint });
 
   const page = await context.newPage();
   const consoleErrors = [];

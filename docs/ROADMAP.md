@@ -1448,6 +1448,15 @@ which already carries the idle sway, with the comic plane bobbing along with
 it. It costs nothing because the transform exists, and it removes the need for
 a head node at all, keeping a vendor at one body primitive.
 
+> **±2° and 4Hz were both wrong, and E3c measured them out.** Shipped as a
+> 1.4° roll at 1.6Hz plus a 0.7° yaw at 4Hz. The rate split because a 4Hz
+> whole-body motion is a shiver, not a person; the amplitude because the tell
+> being *replaced* is a measurable control — at 2° the body tell moved each
+> vendor's face 1.45× faster than the head tell had, and 1.4° is the value that
+> puts the median at parity. Also: roll and yaw only, never pitch, because
+> three's default euler order applies X *after* the street-facing yaw and the
+> street curves.
+
 #### The constraint that actually shapes the phase — REWRITTEN BY E3b
 
 The pre-E3b estimate below is kept because it was confident, load-bearing and
@@ -1488,7 +1497,7 @@ Two corrections, both measured:
 |---|---|---|
 | **E3a** | Generate and judge the five archetypes | ✅ landed — 5 glbs, 20,455 tris, 2,252KB |
 | **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | ✅ landed — **greenlit**, squash 0.735–1.253, 5 gates |
-| **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | the scarf did not survive E3b |
+| **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | ✅ landed — tell at speed parity with the one it replaced, note at 124 materials for **zero** extra draw calls, 5 gates |
 | **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | re-derive the premise first, see above |
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the only commit that moves goldens |
 | **E3f** | Leithers — 30 walkers, reuse or leave as dolls | possibly a footnote |

@@ -1633,12 +1633,13 @@ async function main() {
     // computed a beautiful assignment and rendered none of it.
     console.log('[smoke] E3b characters gate...');
     {
-      const bootForced = async (on) => {
+      const bootForced = async (on, tint = null) => {
         const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
-        await ctx.addInitScript((v) => {
+        await ctx.addInitScript(({ v, t }) => {
           window.__mcgrotFreezeAtBoot = true;
           if (v !== null) window.__mcgrotForceCharacters = v;
-        }, on);
+          if (t !== null) window.__mcgrotForceTint = t;
+        }, { v: on, t: tint });
         const page = await ctx.newPage();
         await page.goto(`http://localhost:${port}/`);
         await page.click('#title-enter');
@@ -1744,9 +1745,195 @@ async function main() {
         detail: `skyline draw calls ${offSky.drawCalls} -> ${onSky.drawCalls}`,
       });
 
+      // --- E3c: the tell moved to the body, and the note moved to the mesh ---
+      //
+      // The speaking tell used to be a head turn. A Trellis mesh has no
+      // separable head, so a meshed vendor physically cannot perform it, and
+      // leaving it on the doll would mean the two LODs act differently and
+      // E3d's swap pops mid-sentence. Everything below is measured by driving
+      // stepFrame over one full rock cycle and reading world matrices, with a
+      // SILENT pass over the same window as the control — the idle sway is on
+      // the same two axes and never stops, so "the vendor moved" proves
+      // nothing on its own.
+      console.log('[smoke] E3c tell + note gate...');
+
+      // Reproduces the RETIRED head tell alongside the new one, on the live
+      // scene, so the amplitude constant is checked against the motion it
+      // replaced rather than against itself. `drive` runs after each step so
+      // the probe's own rotation wins over tick()'s reset.
+      const sampleTells = (page, useMesh) => page.evaluate((mesh) => {
+        const dbg = window.__mcgrotDebug;
+        const list = dbg.npcs.npcs;
+        const heads = list.map((n) => {
+          n.head.geometry.computeBoundingBox();
+          return { n, fz: n.head.geometry.boundingBox.max.z };
+        });
+        const N = 100, DT = 1 / 120;
+        const run = (drive) => {
+          let prev = null; const peak = list.map(() => 0); let travel = 0; let headRot = 0;
+          let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+          for (let i = 0; i < N; i++) {
+            const t = 100 + i * DT;
+            dbg.stepFrame(DT, t);
+            drive(t);
+            const pts = heads.map(({ n, fz }) => {
+              n.group.updateWorldMatrix(true, true);
+              const e = n.head.matrixWorld.elements;
+              headRot = Math.max(headRot,
+                Math.abs(n.head.rotation.x) + Math.abs(n.head.rotation.y) + Math.abs(n.head.rotation.z));
+              return [e[8] * fz + e[12], e[9] * fz + e[13], e[10] * fz + e[14]];
+            });
+            // The figure's own head top, in world space: the named instance's
+            // local (0,1,0) when meshed, the doll's head centre otherwise.
+            const n0 = list[0];
+            const target = mesh ? n0.group.children.find((o) => o.name === 'vendor-mesh') : n0.head;
+            if (target) {
+              const e = target.matrixWorld.elements;
+              const p = mesh ? [e[4] + e[12], e[6] + e[14]] : [e[12], e[14]];
+              lo = [Math.min(lo[0], p[0]), Math.min(lo[1], p[1])];
+              hi = [Math.max(hi[0], p[0]), Math.max(hi[1], p[1])];
+            }
+            if (prev) {
+              for (let k = 0; k < pts.length; k++) {
+                const d = Math.hypot(pts[k][0] - prev[k][0], pts[k][1] - prev[k][1], pts[k][2] - prev[k][2]);
+                peak[k] = Math.max(peak[k], d / DT);
+              }
+            }
+            prev = pts;
+          }
+          // -1 rather than Infinity when the figure was never found: unparent
+          // the mesh from the vendor group and this gate should say the mesh
+          // is missing, not print "Infinitycm -> NaNx".
+          travel = Number.isFinite(lo[0]) ? Math.hypot(hi[0] - lo[0], hi[1] - lo[1]) * 100 : -1;
+          return { peak, travel, headRot };
+        };
+
+        for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; }
+        const silent = run(() => {});
+        for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; n.head.rotation.set(0, 0, 0); }
+        const oldTell = run((t) => {
+          for (const n of list) {
+            const w = t * 25 + n.phase;
+            n.head.rotation.y = Math.sin(w) * 0.09;
+            n.head.rotation.x = (Math.sin(w * 0.5) + 1) * 0.05;
+          }
+        });
+        for (const n of list) { n.head.rotation.set(0, 0, 0); n.setSpeaking(true); n.leanAmp = 1; }
+        const bodyTell = run(() => { for (const n of list) n.leanAmp = 1; });
+        for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; }
+
+        const ratios = bodyTell.peak.map((b, i) => b / (oldTell.peak[i] || 1)).sort((a, b) => a - b);
+        return {
+          silentTravelCm: silent.travel,
+          speakingTravelCm: bodyTell.travel,
+          headRotWhileSpeaking: bodyTell.headRot,
+          headRotSilent: silent.headRot,
+          speedRatioMedian: ratios[Math.floor(ratios.length / 2)],
+          speedRatioMin: ratios[0],
+          speedRatioMax: ratios[ratios.length - 1],
+        };
+      }, useMesh);
+
+      // On the DOLL, which is still what ships and still the LOD in E3d.
+      const dollTell = await sampleTells(defPage, false);
+      results.push({
+        name: 'E3c: the speaking tell moves the doll body, and the head no longer moves at all',
+        pass: dollTell.speakingTravelCm > dollTell.silentTravelCm * 4
+          && dollTell.headRotWhileSpeaking === 0 && dollTell.headRotSilent === 0,
+        detail: `head top travel silent ${dollTell.silentTravelCm.toFixed(2)}cm -> speaking `
+          + `${dollTell.speakingTravelCm.toFixed(2)}cm `
+          + `(${(dollTell.speakingTravelCm / dollTell.silentTravelCm).toFixed(1)}x, need 4x), `
+          + `head rotation ${dollTell.headRotWhileSpeaking} (must be exactly 0)`,
+      });
+
+      // The amplitude's own justification. "±2°" was a plan-time guess; what is
+      // measurable is the tell this one REPLACES, reproduced above on the same
+      // scene and read at the same physical point. Parity is the target — this
+      // goes red if someone bumps SPEAK_ROCK, with a number that says why.
+      results.push({
+        name: 'E3c: the body tell moves the face at the speed the retired head tell did',
+        pass: dollTell.speedRatioMedian >= 0.8 && dollTell.speedRatioMedian <= 1.3,
+        detail: `face peak speed, new/old across 124 vendors: median `
+          + `${dollTell.speedRatioMedian.toFixed(3)} (allowed 0.80-1.30), `
+          + `range ${dollTell.speedRatioMin.toFixed(2)}-${dollTell.speedRatioMax.toFixed(2)}`,
+      });
+
+      // And that the tell REACHES the generated figure — i.e. the mesh hangs
+      // off the transform that carries it. Parented to the scene instead of the
+      // vendor group, this reads zero however well the doll performs.
+      const meshTell = await sampleTells(onPage2, true);
+      results.push({
+        name: 'E3c: the generated mesh performs the tell, not just the doll it replaced',
+        // Travel only — "the head does not move" is the gate above's claim, and
+        // asserting it here too made a restored head bobble redden three gates
+        // when it is one defect.
+        pass: meshTell.silentTravelCm > 0
+          && meshTell.speakingTravelCm > meshTell.silentTravelCm * 4,
+        detail: meshTell.silentTravelCm < 0
+          ? 'no "vendor-mesh" child on the vendor group — the mesh is not parented to the transform that carries the tell'
+          : `mesh head top travel silent ${meshTell.silentTravelCm.toFixed(2)}cm -> speaking `
+            + `${meshTell.speakingTravelCm.toFixed(2)}cm `
+            + `(${(meshTell.speakingTravelCm / meshTell.silentTravelCm).toFixed(1)}x, need 4x)`,
+      });
+
+      // The colour note. Two independently-sourced chroma vectors per vendor:
+      // what the mesh's material ended up with (divided by the UNTINTED
+      // prototype, so this is the tint's contribution alone) and what that
+      // vendor's scarf is wearing. Equal direction is the claim; equal length
+      // is E3c's own ruling, since the palette's six entries carry 2.7x
+      // different amounts of colour and a weak one vanished on a whole figure.
+      const notes = await onPage2.evaluate(() => {
+        const m = window.__mcgrotDebug.characters.measure();
+        const dev = (a) => [a[0] - 1, a[1] - 1, a[2] - 1];
+        const cos = m.map((r) => {
+          const u = dev(r.meshNote), v = dev(r.scarfNote);
+          const nu = Math.hypot(...u), nv = Math.hypot(...v);
+          return (nu && nv) ? (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv) : 0;
+        });
+        const strength = m.map((r) => Math.hypot(...dev(r.meshNote)));
+        return {
+          materials: new Set(m.map((r) => r.materialId)).size,
+          distinctNotes: new Set(m.map((r) => r.meshNote.map((x) => x.toFixed(4)).join(','))).size,
+          cosMin: Math.min(...cos),
+          strengthMin: Math.min(...strength),
+          strengthMax: Math.max(...strength),
+        };
+      });
+      results.push({
+        name: 'E3c: every meshed vendor wears its own scarf\'s note, at one strength',
+        pass: notes.materials === 124 && notes.distinctNotes === 6 && notes.cosMin > 0.999
+          && (notes.strengthMax - notes.strengthMin) < 1e-6,
+        detail: `${notes.materials} materials / ${notes.distinctNotes} notes, `
+          + `worst mesh-vs-scarf hue agreement ${notes.cosMin.toFixed(4)} (need >0.999), `
+          + `strength ${notes.strengthMin.toFixed(3)}-${notes.strengthMax.toFixed(3)}`,
+      });
+
+      // What the note COST. E3b bought its draw-call refund partly by sharing
+      // one material per archetype, and E3c spends that: 124 materials where
+      // there were 5. The control is the same build booted with the tint
+      // forced off, not a number recorded on another day — the tint is the
+      // only difference between the two pages.
+      const { ctx: flatCtx, page: flatPage } = await bootForced(true, false);
+      await flatPage.waitForFunction(
+        () => window.__mcgrotDebug.characters.loaded() === window.__mcgrotDebug.npcs.npcs.length,
+        null, { timeout: 60000 }
+      );
+      await flatPage.evaluate(() => window.__mcgrotDebug.gotoBookmark('skyline'));
+      const flatSky = await getInvariants(flatPage);
+      const flatMats = await flatPage.evaluate(() =>
+        new Set(window.__mcgrotDebug.characters.measure().map((r) => r.materialId)).size);
+      results.push({
+        name: 'E3c: the per-vendor note costs no draw calls and no triangles',
+        pass: onSky.drawCalls === flatSky.drawCalls && onSky.triangles === flatSky.triangles
+          && flatMats === 5,
+        detail: `skyline ${flatSky.drawCalls} calls / ${flatSky.triangles} tris with ${flatMats} shared `
+          + `materials -> ${onSky.drawCalls} / ${onSky.triangles} with ${notes.materials} per-vendor ones`,
+      });
+
       await defCtx.close();
       await onCtx2.close();
       await offCtx2.close();
+      await flatCtx.close();
     }
 
     endRegion();
