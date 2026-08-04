@@ -2504,28 +2504,88 @@ Cheapest of the three by a distance: faces are flat JPEGs on the head front,
 so nothing about geometry, draw calls or the 8MB budget changes. The only
 risk is aesthetic, and the sheet answers that.
 
-### E8d — Props and objects (after E8c)
+### E8d — Image-to-3D: real character meshes (after E8c)
 
-Generated 3D items brought into the scene. **The open question is not the
-generator, it is what the runtime can accept**, and that has to be answered
-before any volume generation:
+**Rescoped 2026-08-04 (Dan).** This was written as "generated props". The
+actual goal is characters: take a generated character image and convert it to
+a mesh, so NPCs stop being `BoxGeometry` paper-dolls with a face JPEG on the
+head front. Props follow the same pipeline once it exists.
 
-- The draw-call budget holds every bookmark to **exact** parity (`draw calls
-  +/-0`), so each new prop is a deliberate baseline change, not drift.
-- The shipped artefact is a single HTML file with an ~8MB ceiling and every
-  asset inlined as a data URI.
-- `src/scenery.js` layout is seeded and **draw order is sacred** — append,
-  never insert.
+**Three constraints this section previously asserted turned out to be wrong.**
+All three were reasoned, none were measured, and measuring them made the unit
+substantially cheaper:
 
-So E8d starts as a spike: **one** generated prop, in-scene, measured for
-draw-call cost, inlined size and how it reads under the grade. That number
-decides whether props are a phase or a footnote.
+| Was asserted | Measured 2026-08-04 |
+|---|---|
+| "no GLTF loader in the bundle" | `src/cars.js:15` imports `GLTFLoader` and has since the wrecks landed. Four glbs ship. Cost already paid. |
+| "~8MB ceiling, every asset inlined" | Only for `dist/mcgrot-walk.html`, which **already omits the cars** (`cars.js:64` exits quietly when assets are absent). The deployed `--site` build inlines nothing and is **95MB**. |
+| "the constraint is the draw-call budget" | True, but inverted: NPCs are **868 of the scene's 1,129 meshes** for **4.9%** of its triangles. A single-mesh character *reduces* mesh count by 744. |
+
+Measured baselines (`npm run probe`, and `scripts/glb-stats.mjs`):
+
+| | Meshes | Triangles |
+|---|---|---|
+| One NPC (box paper-doll) | 7 | 134 |
+| 124 NPCs | 868 | 16,616 |
+| 15 car clones | 71 | 31,142 |
+| Whole scene | 1,129 | 342,224 |
+
+One shipped vehicle is the precedent to author against: **~2,000 triangles,
+5 draw calls, ~170KB**. Frustum culling is what holds street bookmarks to
+30–78 draw calls; `skyline` at 1,112 is the unculled case and would *fall*.
+
+**Together.ai has no 3D endpoint** — checked against their own model docs, not
+a search summary: chat, image, vision, video, audio, embedding, rerank,
+moderation. Their image models remain the *input* stage.
+
+**Service ruling: fal.ai Trellis at ~$0.02/run for the spike; Meshy for
+production if it greenlights.** Meshy's `target_polycount` (100–300,000) is
+the parameter this project actually wants, but it needs a $20/mo Pro plan, and
+the spike's question is not "what polycount" — it is "does a McGrot grotesque
+survive reconstruction at all". Trellis's `mesh_simplify` (0..1, default 0.95)
+is a decimation *ratio* rather than a target, so polycount is discovered by
+sweeping. Others priced: Hunyuan3D V2 Turbo $0.14, V3 $0.375 (LowPoly $0.45),
+Rodin $0.50+. Licences (vendor help pages, not re-verified): Meshy free tier is
+CC BY 4.0 — fine here, the project already runs credits pages for the cars and
+shopfronts — Tripo's free tier bars commercial use.
+
+**Animation is a non-issue.** NPCs do not articulate: `npcs.js:420` is a
+whole-group sway, `:424` a head turn while speaking, and the leithers' walk
+(`leithers.js:181`) is bob and sway with no leg motion. A static mesh with the
+head as a separate node covers everything the rig does today. No skinning, no
+auto-rigging.
+
+**The input image is a different artefact from a face texture**, and this is
+the one real risk. `docs/STYLE.md` prescribes flat 2D comic art — thick
+outlines, no gradients, no cel shading — which is precisely the removal of the
+shading cues single-image-to-3D reconstructs from. `scripts/gen-character.mjs`
+therefore generates two variants per character: `flat` (the style bible's own
+prescription, expected to reconstruct as a slab) and `form` (matte clay
+shading, palette retained, linework dropped). Both go through the mesh stage so
+the prediction is measured rather than assumed. The bet behind `form`: the mesh
+supplies only shape, and the comic look returns downstream — `cars.js` already
+re-materials every loaded glb to tinted Lambert, and preset `b` grades the
+frame on top. Same principle `STYLE.md` records for lightness.
+
+Still true, and still the gate: the draw-call budget holds every bookmark to
+exact parity, so any scene change is a deliberate baseline recapture, and
+`src/scenery.js` draw order is sacred — append, never insert.
+
+Spike scope: **one** character, in-scene, measured for triangles, draw calls,
+byte cost and how it reads under grade `b`. That decides whether characters are
+a phase or a footnote.
 
 ### E3 — Characters (after E8d, unchanged in position)
 
 Full character system v2. Depends on E8d's answer: if generated meshes are
 affordable the paper-doll goes; if they are not, characters stay 2D and the
 grade carries them. This is why the spike comes first.
+
+With byte cost off the table, the shared-versus-distinct question becomes an
+art decision rather than a budget one: a handful of archetype meshes with
+per-NPC tint (exactly the `wreckify()` pattern the cars already use) versus 124
+individuals. The player stays first-person with no visible body, so no player
+model.
 
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 

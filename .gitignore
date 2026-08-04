@@ -31,3 +31,9 @@ docs/smoke/captures/
 
 # Daily TTS harvest logs (scripts/daily-tts.sh)
 scripts/.tts-logs/
+
+# E8d image-to-3D candidates: generated character images (gen-character.mjs)
+# and the glbs Trellis returns for them (gen-mesh.mjs). Each run costs money,
+# so they are kept locally rather than re-generated — but only a JUDGED mesh
+# earns a place in assets/, and nothing here is one yet.
+scratchpad/
