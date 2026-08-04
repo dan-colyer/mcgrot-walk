@@ -2472,8 +2472,60 @@ deliberate: a later session should reach for the decided look rather than
 re-propose one that has already been judged twice.
 
 `b` is still a **candidate, not a keeper** — `uStyle` ships at 0 and nothing is
-hardened into shader constants until `docs/STYLE.md` exists. What promotes it
-is the colour work below, not another round of grade variants.
+hardened into shader constants until `docs/STYLE.md` § 2 is written. What
+promotes it is the generated-content work below, not another round of grade
+variants.
+
+## E8 continued — generated content on the measured palette
+
+Dan, 2026-08-04. The grade decides how the street is printed; these decide
+what is *on* it. Sequenced cheapest and most reversible first, which is also
+increasing order of how much runtime risk each carries.
+
+`docs/STYLE.md` § 1 is the shared input to all three: the measured palette,
+the three constraints (warm always, neutral on green/red, cool is a <2%
+accent), and the standing **cream-forward** authoring bias.
+
+### E8c — Faces (next)
+
+**Correction to an earlier claim in this file's history: there are 40 faces,
+not 400+, and they are fetched rather than generated** — `assets/faces` is a
+set of sci-fi character stills (`balok.jpg`, `borg-queen.jpg`, `chiana.jpg`)
+standing in for grotesques. So this is not a re-generation pass; it is the
+first real generated-character content in the project.
+
+`scripts/gen-faces.mjs` already exists (Together API, FLUX.2-pro) but defines
+only three faces and asks for the palette in adjectives — *"muted
+olive-mustard-khaki"*. The unit is: feed it the measured hex list instead,
+generate a batch, and judge them on a contact sheet against the fetched ones
+they replace.
+
+Cheapest of the three by a distance: faces are flat JPEGs on the head front,
+so nothing about geometry, draw calls or the 8MB budget changes. The only
+risk is aesthetic, and the sheet answers that.
+
+### E8d — Props and objects (after E8c)
+
+Generated 3D items brought into the scene. **The open question is not the
+generator, it is what the runtime can accept**, and that has to be answered
+before any volume generation:
+
+- The draw-call budget holds every bookmark to **exact** parity (`draw calls
+  +/-0`), so each new prop is a deliberate baseline change, not drift.
+- The shipped artefact is a single HTML file with an ~8MB ceiling and every
+  asset inlined as a data URI.
+- `src/scenery.js` layout is seeded and **draw order is sacred** — append,
+  never insert.
+
+So E8d starts as a spike: **one** generated prop, in-scene, measured for
+draw-call cost, inlined size and how it reads under the grade. That number
+decides whether props are a phase or a footnote.
+
+### E3 — Characters (after E8d, unchanged in position)
+
+Full character system v2. Depends on E8d's answer: if generated meshes are
+affordable the paper-doll goes; if they are not, characters stay 2D and the
+grade carries them. This is why the spike comes first.
 
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 

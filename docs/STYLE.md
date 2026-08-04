@@ -65,6 +65,29 @@ So: match the comics' **hue and chroma** discipline, and ignore their
 lightness. A generated asset should be authored warm, low-chroma and
 cream-to-brown, and then be allowed to sit in the dark.
 
+### Author cream-forward (Dan, 2026-08-04: "keep it all as creamy as possible")
+
+A standing bias for every generated asset: **prefer the cream / warm-stone /
+khaki end of the palette over the deep-olive / near-black end.** When in doubt,
+go creamier.
+
+This is not only taste — it is what the renderer requires, for two compounding
+reasons already recorded in `CLAUDE.md`:
+
+1. **The scene supplies the darkness.** Frames sit at median display luminance
+   0.139 at noon and 0.055 at night. An asset authored at the palette's dark
+   end arrives in a dark scene and reads as black mush; the tonality it was
+   authored with is simply not visible. The dark end of the palette describes
+   where things *land*, not where they should be *painted*.
+2. **ACES lifts, and canvas bakes double-convert.** Procedural tones must be
+   picked far darker than looks right on paper, and an SRGB-tagged canvas
+   converts again — the failure mode that has produced silhouettes before.
+   Cream-forward source art has the headroom to survive both; a dark source
+   does not have anywhere to go.
+
+The check is the same either way: put it in the scene and measure it, not in a
+viewer.
+
 ### Using this on generated assets
 
 - Put the hex list in the prompt, not the adjectives. "Aged cream `#e4d5a1`,
