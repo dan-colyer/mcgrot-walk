@@ -5,28 +5,28 @@
       "drawCalls": 31
     },
     "north-250-far": {
-      "drawCalls": 57
+      "drawCalls": 47
     },
     "elm-row-hero": {
-      "drawCalls": 78
+      "drawCalls": 48
     },
     "mid-550-close": {
       "drawCalls": 31
     },
     "mid-805-far": {
-      "drawCalls": 75
+      "drawCalls": 45
     },
     "fascia-close": {
       "drawCalls": 30
     },
     "foot-1500-far": {
-      "drawCalls": 71
+      "drawCalls": 41
     },
     "skyline": {
-      "drawCalls": 1112
+      "drawCalls": 413
     },
     "lamp-hero-night": {
-      "drawCalls": 1131
+      "drawCalls": 421
     }
   }
 }

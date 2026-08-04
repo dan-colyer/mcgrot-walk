@@ -36,7 +36,11 @@ const out = (r.stdout || '') + (r.stderr || '');
 
 const rows = [];
 for (const line of out.split('\n')) {
-  const m = line.match(/^\s*(PASS|FAIL)\s+(golden[^\s]*)\s+(.*)$/);
+  // The colon is required: every golden check is `golden<variant>:<bookmark>`,
+  // and without it this also matched `goldens are usable diff substrates`,
+  // whose detail says "all N captured frames" — so the audit reported a
+  // phantom 24th golden that had been "captured (was missing)" on every run.
+  const m = line.match(/^\s*(PASS|FAIL)\s+(golden[^\s]*:[^\s]*)\s+(.*)$/);
   if (!m) continue;
   const [, verdict, name, detail] = m;
   const pct = detail.match(/([\d.]+)% pixels differ/);

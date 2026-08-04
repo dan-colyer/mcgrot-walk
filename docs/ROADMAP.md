@@ -1501,8 +1501,8 @@ Two corrections, both measured:
 | **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | ✅ landed — tell at speed parity with the one it replaced, note at 124 materials for **zero** extra draw calls, 5 gates |
 | **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ✅ landed — **no**, and the doll is the expensive end; gate strengthened |
 | ~~**E3d**~~ | ~~Distance LOD, doll ↔ mesh~~ | ❌ **rejected by E3d.0** — see below and `VALIDATION.md` |
-| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ⬅ next; the only commit that moves goldens |
-| **E3f** | Leithers — 30 walkers, 124 meshes, reuse or leave as dolls | genuinely open, not a footnote |
+| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ✅ landed — 23 goldens recaptured, 6 baselines re-cut, 2 gates; **E3 is visible** |
+| **E3f** | Leithers — 30 walkers, 124 meshes, reuse or leave as dolls | ⬅ next, and genuinely open |
 
 #### E3d was rejected by measurement (E3d.0, 2026-08-04)
 
@@ -1541,11 +1541,19 @@ old direction-only assertion.
 also move, and none of the E3a–E3c measurements covered them. Whether they take
 archetypes, stay as dolls, or want something cheaper again is unmeasured.
 
-**Nothing in E3 is visible yet.** The live site (deployed 2026-08-04) ships
-`CHARACTERS_ENABLED = false`, so E3a–E3c are three landed milestones that
-change the deployed picture not at all. E3e is the commit that makes the phase
-real, which is also why it is the one worth a **Fable phase gate afterwards** —
-a fresh independent read is worth most on the commit that changes what ships.
+**E3 is visible as of E3e.** `CHARACTERS_ENABLED` ships true: 124 vendors
+stand as generated meshes instead of box stacks. 23 goldens were deleted and
+recaptured, six draw-call baselines re-cut by hand, and `skyline` went from
+1112 draw calls to 413. The gate that asserted the shipped default was
+untouched now asserts the crowd is standing in it, and a new gate covers the
+off override, which is the direction every A/B comparison in the suite now
+depends on. Numbers and the frames in `docs/VALIDATION.md` § E3e.
+
+**The live site is behind main** — it was last deployed 2026-08-04 with the
+flag off, so nothing of E3 is on it until the next deploy. That is Dan's call.
+
+**A Fable phase gate is now due.** E3e is the commit that changed what ships,
+and a fresh independent read is worth most here.
 
 **What would have killed it, and did not:** non-uniform scaling at girth 0.5
 against 1.6 may read as a broken mesh rather than a grotesque. It does not,

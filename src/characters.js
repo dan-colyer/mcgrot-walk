@@ -1,11 +1,14 @@
 // E3b — five generated meshes standing in for 124 paper dolls.
 //
-// LANDED OFF. `CHARACTERS_ENABLED` is false, exactly as ANCHORS_ENABLED was, so
-// the scene is byte-identical until the flag is flipped deliberately and the
-// draw-call baselines and goldens are recaptured as a deliberate change (E3e).
+// SHIPPING SINCE E3e. It landed OFF in E3b, exactly as ANCHORS_ENABLED did, so
+// that the scene stayed byte-identical until the flip could be paid for
+// properly; E3e paid for it — 23 goldens deleted and recaptured, six draw-call
+// baselines re-cut by hand (see docs/VALIDATION.md § E3e).
 // `window.__mcgrotForceCharacters` overrides it on localhost only — the same
 // escape hatch npcs.js gives the anchors flag, so the gate and the probe can
-// photograph the crowd both ways from one build.
+// photograph the crowd both ways from one build. It is now the OFF direction
+// that the overrides carry, and a smoke gate checks that it genuinely restores
+// the dolls, because every A/B comparison in the suite boots an arm with it.
 //
 // THE PROBLEM THIS SOLVES
 //
@@ -27,7 +30,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from './assets.js';
 import { vendorDims, DEFAULT_BUILD } from './npcs.js';
 
-export const CHARACTERS_ENABLED = false;
+export const CHARACTERS_ENABLED = true;
 
 // Each archetype's OWN build triple, measured off the glb by
 // `node scripts/glb-proportions.mjs assets/characters/*.glb` and mapped into

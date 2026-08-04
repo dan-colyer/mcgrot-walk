@@ -1654,12 +1654,20 @@ async function main() {
         return { ctx, page };
       };
 
-      // THE CONTROL, and the one that matters most while the flag is off:
-      // booted with no override at all, the shipped scene must be untouched.
-      // Not "characters.enabled is false" — that only proves the flag reads
-      // false. Every doll part visible and no vendor tagged is what proves
-      // nothing ran.
+      // WHAT SHIPS, booted with no override at all. E3e flipped
+      // CHARACTERS_ENABLED, so this gate flipped with it: until then it
+      // asserted that the shipped scene was untouched, and now it asserts that
+      // the crowd is actually standing in it.
+      //
+      // Not "characters.enabled is true" — that only proves the flag reads
+      // true. 124 vendors tagged with an archetype and 744 doll parts hidden
+      // (620 boxes + 124 scarves) is what proves the swap ran on the scene the
+      // player gets rather than only on the one the override builds.
       const { ctx: defCtx, page: defPage } = await bootForced(null);
+      await defPage.waitForFunction(
+        () => window.__mcgrotDebug.characters.loaded() === window.__mcgrotDebug.npcs.npcs.length,
+        null, { timeout: 60000 }
+      );
       const shipped = await defPage.evaluate(() => {
         const dbg = window.__mcgrotDebug;
         return {
@@ -1671,10 +1679,34 @@ async function main() {
         };
       });
       results.push({
-        name: 'E3b: the shipped default leaves every paper doll intact',
-        pass: shipped.enabled === false && shipped.tagged === 0 && shipped.hidden === 0 && shipped.vendors === 124,
-        detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged} (must be 0), `
-          + `hidden doll parts=${shipped.hidden} (must be 0)`,
+        name: 'E3e: the shipped default stands the generated crowd in the street',
+        pass: shipped.enabled === true && shipped.tagged === 124 && shipped.hidden === 744
+          && shipped.vendors === 124,
+        detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged} (must be 124), `
+          + `hidden doll parts=${shipped.hidden} (must be 744 = 620 boxes + 124 scarves)`,
+      });
+
+      // The OFF override, which is now the one carrying the weight: every
+      // comparison below boots one arm with it, so a `false` that quietly
+      // meshed the crowd anyway would turn each of those A/B gates into an
+      // A/A that passes on any build. Same shape as the gate above, inverted
+      // — the scene has to come back, not just the flag.
+      const { ctx: offCtx0, page: offPage0 } = await bootForced(false);
+      const forcedOff = await offPage0.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        return {
+          enabled: dbg.characters.enabled,
+          tagged: dbg.npcs.npcs.filter((n) => n.archetype != null).length,
+          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0)
+            + dbg.npcs.npcs.filter((n) => n.scarf && !n.scarf.visible).length,
+        };
+      });
+      await offCtx0.close();
+      results.push({
+        name: 'E3e: the off override genuinely puts the paper dolls back',
+        pass: forcedOff.enabled === false && forcedOff.tagged === 0 && forcedOff.hidden === 0,
+        detail: `enabled=${forcedOff.enabled}, tagged=${forcedOff.tagged} (must be 0), `
+          + `hidden doll parts=${forcedOff.hidden} (must be 0)`,
       });
 
       const { ctx: onCtx2, page: onPage2 } = await bootForced(true);

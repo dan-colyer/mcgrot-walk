@@ -2748,6 +2748,145 @@ frame-time gate would be machine-dependent and flaky, and the numbers above are
 a one-off ruling rather than a standing claim — what makes the ruling durable is
 the draw-call ratio it rests on, and that is what is pinned.
 
+## Flipping CHARACTERS_ENABLED (E3e)
+
+The commit that makes E3 visible. E3a–E3d.0 were four landed milestones that
+changed the deployed picture not at all; this one swaps 124 paper dolls for 124
+generated meshes in the scene the player actually gets.
+
+Everything below was measured by flipping the flag and running the suite, not
+by reasoning about which poses might contain a vendor.
+
+### What moved, and what deliberately did not
+
+**23 goldens, 6 draw-call baselines.** `npm run goldens:audit` named them; each
+was deleted and recaptured individually. `--update-goldens` was not used and
+would have been wrong — it rebuilds every golden and every baseline from one
+run, absorbing any unrelated drift in the same gesture.
+
+The important number is not the 8 that failed. It is the **15 that moved while
+passing**, which the 0.5% tolerance was about to swallow:
+
+| | |
+|---|---|
+| failed outright | 8, worst `golden-haar:foot-1500-far` at 2.373% |
+| moved but passed | 15, including `golden:elm-row-hero` at 0.482% — **clearing tolerance by 0.018%** |
+| genuinely unmoved | 9, all ≤0.02% |
+
+Three bookmarks came back **byte-identical on draw calls** — `north-150-close`
+31, `mid-550-close` 31, `fascia-close` 30 — because no vendor is in frame at
+any of them. Their baselines were left alone. The six that moved:
+
+| bookmark | dolls | meshes |
+|---|---|---|
+| `skyline` | 1112 | **413** |
+| `lamp-hero-night` | 1131 | **421** |
+| `elm-row-hero` | 78 | 48 |
+| `mid-805-far` | 75 | 45 |
+| `foot-1500-far` | 71 | 41 |
+| `north-250-far` | 57 | 47 |
+
+Re-cut by hand rather than by `--update-goldens`, for the same reason.
+
+### The picture, which no gate can see
+
+E3e is the first time the crowd is on screen in the shipped build, so the
+frames were opened rather than only measured. `foot-1500-far` with the flag off
+is a grey box stack with a comic pinned to it; with the flag on it is a hunched
+figure with legs, boots and hands, holding the comic two-handed. At `skyline`
+the near vendor reads as a person and the 68 behind it read as figures rather
+than as repeats. Nothing black, nothing broken, no clone artefact at range.
+
+That judgement is a look, not a number, and the numbers below cannot stand in
+for it. What the numbers do cover is that the crowd is *there*: `E3e: the
+shipped default stands the generated crowd in the street` boots with no
+override at all and requires 124 vendors tagged with an archetype and 744 doll
+parts hidden (620 boxes + 124 scarves) — not `characters.enabled === true`,
+which would only prove the flag reads true.
+
+### The gate that had to invert, and the one that had to be added
+
+`E3b: the shipped default leaves every paper doll intact` was the control while
+the flag was off. It became `E3e: the shipped default stands the generated
+crowd in the street` — the same discipline pointed the other way.
+
+That left a hole. **`__mcgrotForceCharacters = false` is now the direction the
+suite's A/B comparisons depend on** — the E3b draw-call gate boots one arm with
+it, and an override that quietly meshed the crowd anyway would turn that
+comparison into an A/A. So `E3e: the off override genuinely puts the paper
+dolls back` was added, asserting 0 vendors tagged and 0 doll parts hidden — the
+scene coming back, not the flag reading false.
+
+Fault-injected two ways:
+
+| injection | what reddened |
+|---|---|
+| scarves left visible on meshed vendors | **shipped default** — 620 doll parts hidden, must be 744 |
+| `const enabled = true`, so the off override no longer disables | **off override** — 124 tagged and 744 hidden, must be 0; *and* E3b's draw-call gate collapsed to a 1.00× refund, 404 → 404 |
+
+That second row is the hole made visible. The E3b gate does go red on its own,
+so this is not a silent failure — but it goes red reporting "the refund
+vanished", which is a symptom several unrelated defects would also produce. The
+new gate names the cause. It also covers the case the E3b gate cannot see: an
+override that half-works, restoring some vendors and not others, which still
+leaves a refund large enough to clear the 2× floor.
+
+### A documented noise floor that was wrong
+
+`VALIDATION.md` recorded `elm-row-hero`, `mid-805-far` and `skyline` as sitting
+on a **~0.11%** golden noise floor. Measured on this machine, against the
+pre-flip goldens and with the flag off, the suite reproduces them at:
+
+| golden | pre-flip suite | after recapture |
+|---|---|---|
+| `mid-805-far` | 0.357% | 0.28–0.35% |
+| `elm-row-hero` | 0.303% | 0.084–0.108% |
+| `skyline` | 0.167% | 0.050–0.063% |
+
+So the standing 0.11% figure understated it by roughly 3×, and the recapture
+reset drift that had accumulated across sessions on two of the three. The
+useful fact for the next milestone is the level, not the change: **`mid-805-far`
+sits at about 0.31% of a 0.5% tolerance and is the tightest golden in the set.**
+A future change that legitimately moves that pose by 0.2% would land over
+tolerance for reasons that are mostly not its own.
+
+**It is not the crowd's doing, and the obvious explanation was wrong.** The
+guess was that walkers now cross in front of bigger silhouettes and so repaint
+more pixels. Measured with `scratchpad/e3e/floor.mjs` — two independent boots
+per arm, same pose, diffed within the arm with the suite's own pixelmatch
+settings — boot-to-boot noise is:
+
+| pose | dolls | meshes |
+|---|---|---|
+| `mid-805-far` | 0.102% | 0.106% |
+| `elm-row-hero` | 0.090% | 0.112% |
+| `skyline` | 0.058% | 0.058% |
+
+Identical within noise. The crowd changed nothing about reproducibility, and
+whatever drives the suite's higher figure lives in the suite's own bookmark
+walk (one page visiting poses in sequence) rather than in the scene. That is
+unexplained, and named as unexplained rather than attributed.
+
+### Also fixed here
+
+`npm run goldens:audit` reported a phantom 24th golden, "captured (was
+missing)", on every run. Its line regex was `(golden[^\s]*)`, which also
+matched the check named `goldens are usable diff substrates` whose detail reads
+"all N **captured** frames". Every real golden check is `golden<variant>:<bookmark>`,
+so the regex now requires the colon.
+
+### What E3e deliberately does not prove
+
+- **Nothing about the Leithers.** The 30 ambient walkers are still paper dolls
+  and were never in scope; E3f is where that gets measured. So "the crowd is
+  meshed" means the 124 vendors, and the street still contains doll walkers
+  standing next to meshed vendors.
+- **Nothing about a phone.** See E3d.0's blind spot — every frame measured in
+  this repo comes off an Apple M4 through ANGLE Metal.
+- **The goldens now agree with the harness's renderer, as they always did.** A
+  golden proves the harness agrees with itself. These were recaptured under
+  chromium/metal, and remain renderer-specific.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are
@@ -2875,10 +3014,18 @@ check.
   reproduces ~0.09–0.11% again. Leithers walk and buddleia sways, both are
   excluded from `geomHash` for exactly that reason, and a pose containing them
   cannot be frozen — the golden captures one sample of a moving thing. So
-  `elm-row-hero`, `mid-805-far` and `skyline` carry a **~0.11% floor**, and the
-  0.5% tolerance is really 0.39% of headroom on those three. The static poses
-  (`fascia-close`, `north-150-close`, `mid-550-close`) reproduce to 0.000–0.009%
-  and are the ones to trust for a small change.
+  `elm-row-hero`, `mid-805-far` and `skyline` carry a floor, and the static
+  poses (`fascia-close`, `north-150-close`, `mid-550-close`) reproduce to
+  0.000–0.009% and are the ones to trust for a small change.
+
+  **That floor was recorded as ~0.11% and it was wrong.** Re-measured during
+  E3e on this machine: the suite reproduces `mid-805-far` at **0.28–0.36%**,
+  `elm-row-hero` at 0.08–0.30% and `skyline` at 0.05–0.17%, depending on how
+  recently the golden was captured. `mid-805-far` is the tightest golden in the
+  set at roughly **0.31% of the 0.5% tolerance**, leaving under 0.2% of real
+  headroom — not the 0.39% claimed here before. It is not the crowd's doing
+  (boot-to-boot noise is 0.102% with dolls and 0.106% with meshes), and the gap
+  between that and the suite's figure is unexplained. See § E3e.
 - **Unexplained diff on unrelated work** → human eyes, always. The tolerance
   (0.5% changed pixels, per-pixel threshold 0.1) is sized to absorb
   antialiasing/compression jitter, not to wave through a real regression.
