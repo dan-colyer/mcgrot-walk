@@ -18,11 +18,20 @@ import { fileURLToPath } from 'url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const KEY = process.env.TOGETHER_API_KEY;
 const MODEL = process.env.FLUX_MODEL || 'black-forest-labs/FLUX.2-pro';
+// Deliberately no copy-pasteable `KEY=...` example below. The first version of
+// this message printed one, it was pasted verbatim, and the literal three dots
+// went into .env.local — which then failed as a 401 "invalid API key" and read
+// like a revoked credential rather than a placeholder. An error message that
+// can be run without editing will be.
 if (!KEY) {
-  console.error('TOGETHER_API_KEY not set. It is NOT the same key as GEMINI_API_KEY,\n'
-    + 'which is the one .env.local currently holds. Add it and re-source:\n'
-    + '  echo \'TOGETHER_API_KEY=...\' >> .env.local\n'
-    + '  set -a; source .env.local; set +a');
+  console.error('TOGETHER_API_KEY not set. Note it is NOT the same key as '
+    + 'GEMINI_API_KEY.\nPut the real key in .env.local, then: set -a; source .env.local; set +a');
+  process.exit(1);
+}
+if (KEY.length < 32) {
+  console.error(`TOGETHER_API_KEY is only ${KEY.length} characters — that is a `
+    + 'placeholder or a truncated paste, not a key.\nFix .env.local and re-source. '
+    + '(Checked here so the failure says what is wrong, rather than arriving as a 401.)');
   process.exit(1);
 }
 
