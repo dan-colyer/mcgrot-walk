@@ -77,7 +77,11 @@ if (skipSmoke) {
 
 // --- 3. build ---------------------------------------------------------------
 step(3, 'Building dist-site');
-rmSync(SITE, { recursive: true, force: true });
+// maxRetries because macOS recreates .DS_Store underneath this. A deploy died
+// here with ENOTEMPTY on a directory whose only remaining entry was a
+// .DS_Store that Finder had written back between the walk and the final
+// rmdir — the suite had already run, so it cost a full 90s gate to hit.
+rmSync(SITE, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 sh('node build.mjs --site');
 const files = walk(SITE);
 console.log(`  ${files.length} files, ${(files.reduce((n, f) => n + statSync(f).size, 0) / 1e6).toFixed(1)} MB`);
