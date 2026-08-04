@@ -2575,6 +2575,19 @@ Spike scope: **one** character, in-scene, measured for triangles, draw calls,
 byte cost and how it reads under grade `b`. That decides whether characters are
 a phase or a footnote.
 
+`src/characters.js` is the harness, **landed off** (`CHARACTERS_ENABLED =
+false`, the same way `ANCHORS_ENABLED` landed) — 228 PASS / 0 FAIL with it
+wired into `main.js`, so the scene is unchanged until the flag is flipped and
+the draw-call baselines are recaptured deliberately. It stands a mesh *beside*
+a chosen vendor rather than replacing one, so a single capture frames doll and
+mesh in the same light at the same scale under the same grade. Meshes normalise
+to **1.9m**, which is the cast's own measured height (four vendors probed at
+1.83–2.01m) — these are grotesques, and a mesh normalised to a realistic 1.75m
+would read as a child standing next to them.
+
+Deliberately not mapped in `SINCE_RULES`: an unmapped path falls back to the
+full suite, which is the right default for a module that adds scene geometry.
+
 ### E3 — Characters (after E8d, unchanged in position)
 
 Full character system v2. Depends on E8d's answer: if generated meshes are

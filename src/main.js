@@ -24,6 +24,7 @@ import { buildBirds } from './birds.js';
 import { buildVermin } from './vermin.js';
 import { buildFlora } from './flora.js';
 import { buildCars } from './cars.js';
+import { buildCharacters } from './characters.js';
 import { buildLeithers } from './leithers.js';
 import { buildLitter } from './litter.js';
 import { createRain } from './rain.js';
@@ -124,6 +125,11 @@ async function main() {
   buildGables(assets, world, scene);     // baked soot/blocked-window/ghost-sign dressing on blank gable walls
   buildChimneys(assets, world, scene);   // instanced chimney stacks + TV aerials along rooflines
   buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
+  // E8d spike, LANDED OFF (characters.js CHARACTERS_ENABLED = false): returns
+  // immediately and adds nothing to the scene until the flag is flipped.
+  // Placed after buildCars so the two glb loaders sit together, and after
+  // buildNpcs because it stands its meshes beside specific vendors.
+  buildCharacters(assets, world, scene, npcs);
   const scenery = buildScenery(world, scene);
   scenery.onArcFlash = () => ambience.triggerCrackle();
 
