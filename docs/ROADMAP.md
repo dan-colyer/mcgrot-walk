@@ -1391,10 +1391,97 @@ judged from renders under the McGrot grade (Dan: iterate until a keeper).
 What stands: the photo-collage faces retire, and the readers stay grotesque
 in spirit whatever the rendering treatment.*
 
-- **Opens with a pipeline spike** (the risk lives here): evaluate rigged-model
+- ~~**Opens with a pipeline spike** (the risk lives here): evaluate rigged-model
   sources — Mixamo characters + animation retarget, AI 3D generation
   (e.g. Meshy/Tripo), curated paid packs — for look, licence, file size, and
-  web performance. Pick one pipeline before building anything.
+  web performance. Pick one pipeline before building anything.~~
+  **DONE — E8d, 2026-08-04.** fal.ai Trellis, image-to-3D from a FLUX-generated
+  character image. Greenlit: 1 primitive = 1 draw call, 5,254 triangles, 480KB
+  at `texture_size=512`. Rigging turned out not to be needed at all (see the
+  head-turn ruling below). Full numbers in § E8d.
+
+### E3 plan — archetype mapping and the head turn (2026-08-04)
+
+Measured before planning, because the mapping falls out of what is already in
+`assets/catalog.json` rather than out of a preference:
+
+| | |
+|---|---|
+| Vendors with body data | 124, of which **114 distinct** `{height, girth, headScale}` triples |
+| Ranges | height 1.40–2.15 · girth 0.50–1.60 · headScale 1.15–1.75 |
+| Faces | **39 across 103 vendors — already reusing 2.6×** |
+| Leithers | 30 walkers, 4 meshes each, 124 meshes |
+| People as share of the scene | 992 of 1,129 meshes |
+
+#### The archetype ruling: identity from the mesh, variety from the build triple
+
+Non-uniform scale costs nothing — no draw call, no bytes — so five archetype
+meshes crossed with the ranges above is not five clones. It is five silhouette
+families each stretched across a 1.5× height and 3.2× girth span, tinted
+per-NPC by the `wreckify()` pattern, keeping the existing name-hashed scarf as
+the per-vendor colour note.
+
+The reuse precedent is real but must not be oversold: faces already repeat 2.6×
+unremarked, whereas five archetypes across 124 vendors is **24.8×** — ten times
+more aggressive. Scaling is what has to close that gap, and whether it does is
+a judging question, not an argument. E3b is where it gets answered.
+
+| Archetype | Girth | Height | Seed character |
+|---|---|---|---|
+| Bulk | 1.2–1.6 | mid | Rab — mesh already judged |
+| Spindle | 0.5–0.8 | tall | Kenneth — image judged |
+| Stoop | 0.8–1.1 | short | Morag — image judged |
+| Slab | 1.0–1.3 | tall | new |
+| Runt | 0.6–0.9 | short | new |
+
+#### The head-turn ruling: move the tell to the body
+
+The head turn is smaller than its prominence in the code suggests —
+`npcs.js:424` is `sin(w) * 0.09`, a **5° bobble at 4Hz**, only while speaking,
+reset to zero on stop. It is a "this one is talking" tell, not a performance.
+
+Three options were weighed. Splitting the head out of Trellis's single
+primitive means a mesh-edit step and a seam that will show under a Lambert
+tint. Dropping the tell loses the only signal that a vendor is mid-reading.
+**Taken: move the tell to the whole body** — a 4Hz ±2° lean on `group.rotation`,
+which already carries the idle sway, with the comic plane bobbing along with
+it. It costs nothing because the transform exists, and it removes the need for
+a head node at all, keeping a vendor at one body primitive.
+
+#### The constraint that actually shapes the phase
+
+Correcting the E8d headline, which was the mesh-only figure: a working vendor
+still needs its comic plane and scarf.
+
+| | Today | With meshes |
+|---|---|---|
+| Meshes per vendor | 7 | 4 (body, comic, scarf, nameplate) |
+| 124 vendors | 868 | 496 |
+| **Triangles, 124 vendors** | **16,616** | **651,496** |
+
+651k triangles is nearly **twice the entire current scene** (342,224). Frustum
+culling hides it at street level — bookmarks see 30–78 draw calls — but
+`skyline` at 1,112 sees everything, and that is where it lands.
+
+**So the paper-doll survives, as the distance LOD.** It is 134 triangles, the
+code exists, and it is already gated. Swapping beyond a measured crossover
+keeps the near field real and the skyline cheap.
+
+#### Units
+
+| | | |
+|---|---|---|
+| **E3a** | Generate and judge the five archetypes | ~$0.10, contact sheet, no scene change |
+| **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | answers the 24.8×-reuse question on a crowd shot |
+| **E3c** | Body-lean speaking tell; retire the head node | |
+| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | the gate for `skyline` triangles |
+| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the only commit that moves goldens |
+| **E3f** | Leithers — 30 walkers, reuse or leave as dolls | possibly a footnote |
+
+**What would kill it:** non-uniform scaling at girth 0.5 against 1.6 may read
+as a broken mesh rather than a grotesque — squashed faces look like a bug, not
+a style. That is E3b's judging question, and E3c–E3e are not worth building
+until it is answered.
 - Readers: seated/standing sculpted grotesques, comic held two-handed, idle +
   page-turn animation, lip-sync-adjacent head motion while speaking.
 - Leithers: walk/idle/turn cycles, silhouette variety (shopping bags, prams,

@@ -100,6 +100,19 @@ const CHARACTERS = {
     + 'hollow cheeks, oversized square spectacles with one cracked lens, thin '
     + 'pencil moustache, receding slicked hair, dead-eyed customer-service smile, '
     + 'shirt and lanyard, ill-fitting trousers, cheap black shoes.',
+
+  // E3a: two more, to complete the five archetypes. The set is chosen to span
+  // the SILHOUETTES the measured build triples already describe (girth
+  // 0.50-1.60, height 1.40-2.15) rather than to span personalities — the mesh
+  // supplies the family, per-NPC scaling supplies the individual.
+  slab: 'A huge slab-shouldered Scottish doorman, broad and upright, standing '
+    + 'square: flat wide face, boxer\'s flattened nose, tiny close-set eyes, '
+    + 'shaved head, thick jaw, no neck to speak of, black bomber jacket '
+    + 'straining at the shoulders, dark trousers, heavy boots.',
+  runt: 'A small wiry elderly Scottish man, short and stooped with a head too '
+    + 'big for him: enormous jug ears, deep-set watery eyes, hollow toothless '
+    + 'jaw working sideways, wispy white hair, flat cap, shabby overcoat far '
+    + 'too long for him, trousers pooling over worn shoes.',
 };
 
 const args = process.argv.slice(2);
