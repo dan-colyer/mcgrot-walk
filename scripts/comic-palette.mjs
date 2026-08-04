@@ -21,7 +21,7 @@
 import { readdirSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (name, dflt = null) => {
@@ -35,14 +35,61 @@ const only = arg('only');
 const swatchOut = arg('swatch');
 
 // --- decode ---------------------------------------------------------------
-function pixels(path) {
+// Letterbox bands are trimmed FIRST, and this is not a nicety. The newest
+// comic arrived as a phone screenshot with flat dark-brown bands top and
+// bottom — about a quarter of the image — and they came back as a phantom
+// 17.8% cluster (#3c2b1f) that outranked the paper. A palette that a style
+// bible quotes cannot include the chrome of whatever took the screenshot.
+// `--no-trim` disables it; `--crop=W:H:X:Y` overrides the detection.
+const NO_TRIM = process.argv.includes('--no-trim');
+const CROP_OVERRIDE = arg('crop');
+
+// ffmpeg's own `cropdetect` was tried first and emits nothing at all for a
+// single still on this build, so the trim is done here instead — on a
+// criterion that was measured rather than guessed. A letterbox band is a run
+// of rows of FLAT colour; a comic's own cream border is printed paper and
+// carries texture. Row standard deviation separates them cleanly (measured:
+// bands ~0.6, paper border ~7+), and the threshold sits well clear of both.
+const FLAT_ROW_STDDEV = 3.0;
+
+function trimFlatEdges(rows, w) {
+  const rowStd = rows.map((row) => {
+    let m = 0;
+    for (const p of row) m += (p[0] + p[1] + p[2]) / 3;
+    m /= row.length;
+    let v = 0;
+    for (const p of row) v += ((p[0] + p[1] + p[2]) / 3 - m) ** 2;
+    return Math.sqrt(v / row.length);
+  });
+  let top = 0, bot = rows.length - 1;
+  while (top < bot && rowStd[top] < FLAT_ROW_STDDEV) top++;
+  while (bot > top && rowStd[bot] < FLAT_ROW_STDDEV) bot--;
+  return { rows: rows.slice(top, bot + 1), top, bottom: rows.length - 1 - bot };
+}
+
+function pixels(path, report = false) {
   const raw = execFileSync('ffmpeg', [
     '-loglevel', 'error', '-i', path,
-    '-vf', `scale=${DECODE_W}:-1`, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-',
+    '-vf', CROP_OVERRIDE ? `crop=${CROP_OVERRIDE},scale=${DECODE_W}:-1` : `scale=${DECODE_W}:-1`,
+    '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-',
   ], { maxBuffer: 1 << 28 });
-  const out = [];
-  for (let i = 0; i + 2 < raw.length; i += 3) out.push([raw[i], raw[i + 1], raw[i + 2]]);
-  return out;
+
+  const w = DECODE_W;
+  const rows = [];
+  for (let i = 0; i + 2 < raw.length; i += 3) {
+    const idx = i / 3;
+    const y = Math.floor(idx / w);
+    if (!rows[y]) rows[y] = [];
+    rows[y].push([raw[i], raw[i + 1], raw[i + 2]]);
+  }
+  if (NO_TRIM) return rows.flat();
+
+  const trimmed = trimFlatEdges(rows, w);
+  if (report && (trimmed.top || trimmed.bottom)) {
+    console.log(`  trimmed ${trimmed.top} top / ${trimmed.bottom} bottom flat rows `
+      + `(of ${rows.length}) — letterbox bands, not comic`);
+  }
+  return trimmed.rows.flat();
 }
 
 // --- k-means in CIELAB ----------------------------------------------------
@@ -143,7 +190,7 @@ if (only) {
 
 console.log(`sampling ${files.length} image(s) at ${DECODE_W}px wide, k=${K}`);
 const pool = [];
-for (const f of files) pool.push(...pixels(f));
+for (const f of files) pool.push(...pixels(f, files.length === 1));
 console.log(`${pool.length.toLocaleString()} pixels pooled`);
 
 const palette = kmeans(pool, K);

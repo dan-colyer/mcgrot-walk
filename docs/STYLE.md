@@ -65,6 +65,32 @@ So: match the comics' **hue and chroma** discipline, and ignore their
 lightness. A generated asset should be authored warm, low-chroma and
 cream-to-brown, and then be allowed to sit in the dark.
 
+### Calibrated against the newest comic — and it did not move
+
+"The Sandwich Incident" (2026-08-04, `assets/comics/WhatsApp Image 2026-08-04
+at 06.51.18.jpeg`) was measured against the July corpus to check for style
+drift. **There is none.** It sits inside the corpus distribution on every axis:
+
+| | Newest comic | Corpus (42) | |
+|---|---|---|---|
+| `L*` | 41.2 | 50.5 (sd 10.6) | darker, under 1 sd |
+| `a*` | +0.6 | −0.8 (sd 5.4) | both neutral |
+| `b*` | +18.6 | +22.4 (sd 9.8) | warm, within 1 sd |
+| cool pixels | **0.7%** | 1.7% | *less* cool, not more |
+
+The last row is the one worth keeping. By eye that comic reads as having a
+strong cool presence — navy night skies in three panels, a slate theatre
+interior — and the eyeball conclusion was that the style had drifted cooler.
+It has not: the navies are **visually salient but tiny in area**, 0.7% of
+pixels, *below* the corpus average. Chasing that apparent drift would have
+been chasing something that does not exist.
+
+Practical effect: the corpus palette above stands as the reference. The only
+adjustment is that the newest comic's paper is a slightly deeper cream —
+`#e0c58c` / `#d6b575` rather than `#e4d5a1` — so anchor generated paper tones
+there. Its whole-image saturation is 0.400 against the corpus 0.451, so if
+anything, err **more muted**.
+
 ### Author cream-forward (Dan, 2026-08-04: "keep it all as creamy as possible")
 
 A standing bias for every generated asset: **prefer the cream / warm-stone /
