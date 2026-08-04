@@ -1739,18 +1739,28 @@ async function main() {
       const { ctx: offCtx2, page: offPage2 } = await bootForced(false);
       await offPage2.evaluate(() => window.__mcgrotDebug.gotoBookmark('skyline'));
       const offSky = await getInvariants(offPage2);
+      // E3d.0 raised the bar here from "the swap refunds SOME draw calls" to a
+      // floor on how many, because the LOD ruling now rests on the size of the
+      // refund rather than its sign: measured, the doll crowd costs 2.7x the
+      // meshed crowd's draw calls, and that ratio is why swapping back to
+      // dolls at distance buys nothing. An archetype regenerated with several
+      // sub-meshes would erode it long before it inverted, and direction-only
+      // would have stayed green the whole way. 2x, not 2.7x — the headroom is
+      // for ordinary scene churn, not for a fourth sub-mesh per vendor.
+      const refund = offSky.drawCalls / (onSky.drawCalls || 1);
       results.push({
         name: 'E3b: meshes cost triangles at skyline and refund draw calls',
-        pass: onSky.drawCalls < offSky.drawCalls,
-        detail: `skyline draw calls ${offSky.drawCalls} -> ${onSky.drawCalls}`,
+        pass: onSky.drawCalls < offSky.drawCalls && refund >= 2,
+        detail: `skyline draw calls ${offSky.drawCalls} -> ${onSky.drawCalls} ` +
+          `(${refund.toFixed(2)}x refund, floor 2x); triangles ${offSky.triangles} -> ${onSky.triangles}`,
       });
 
       // --- E3c: the tell moved to the body, and the note moved to the mesh ---
       //
       // The speaking tell used to be a head turn. A Trellis mesh has no
       // separable head, so a meshed vendor physically cannot perform it, and
-      // leaving it on the doll would mean the two LODs act differently and
-      // E3d's swap pops mid-sentence. Everything below is measured by driving
+      // leaving it on the doll would mean the doll and the mesh act
+      // differently. Everything below is measured by driving
       // stepFrame over one full rock cycle and reading world matrices, with a
       // SILENT pass over the same window as the control — the idle sway is on
       // the same two axes and never stops, so "the vendor moved" proves
@@ -1834,7 +1844,9 @@ async function main() {
         };
       }, useMesh);
 
-      // On the DOLL, which is still what ships and still the LOD in E3d.
+      // On the DOLL, which is still what ships until E3e flips the flag. It is
+      // no longer a distance LOD for anything — E3d.0 rejected that — so once
+      // the flag is on it is hidden geometry, and this arm is the off-state.
       const dollTell = await sampleTells(defPage, false);
       results.push({
         name: 'E3c: the speaking tell moves the doll body, and the head no longer moves at all',

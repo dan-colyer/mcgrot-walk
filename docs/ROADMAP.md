@@ -1487,10 +1487,10 @@ Two corrections, both measured:
   doll is 13 draw calls per vendor, because its head is a BoxGeometry carrying
   six materials, one per face; a meshed vendor is 3, of which the body is 1.
   The doll is the cheap LOD *in triangles* (134 against ~4,100) and the
-  expensive one *in draw calls*. Which of those binds is what E3d has to
+  expensive one *in draw calls*. Which of those binds is what E3d had to
   measure before choosing a crossover — "the doll is cheaper" is now known to
-  be false as a general claim. **E3d is conditional on that measurement as of
-  2026-08-04; see E3d.0 below.**
+  be false as a general claim. **E3d.0 measured it on 2026-08-04: draw calls
+  bind, the doll is the expensive end, and E3d is rejected. See below.**
 
 #### Units
 
@@ -1499,36 +1499,43 @@ Two corrections, both measured:
 | **E3a** | Generate and judge the five archetypes | ✅ landed — 5 glbs, 20,455 tris, 2,252KB |
 | **E3b** | Archetype selection + non-uniform scaling from the build triple, flag still off | ✅ landed — **greenlit**, squash 0.735–1.253, 5 gates |
 | **E3c** | Body-lean speaking tell; retire the head node; **the per-vendor tint that now has to carry the colour note** | ✅ landed — tell at speed parity with the one it replaced, note at 124 materials for **zero** extra draw calls, 5 gates |
-| **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ⬅ do this first, ~30 min |
-| **E3d** | Distance LOD, doll ↔ mesh, crossover measured not guessed | **conditional on E3d.0** — do not build it unless the number says to |
-| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | the next real milestone; the only commit that moves goldens |
+| **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ✅ landed — **no**, and the doll is the expensive end; gate strengthened |
+| ~~**E3d**~~ | ~~Distance LOD, doll ↔ mesh~~ | ❌ **rejected by E3d.0** — see below and `VALIDATION.md` |
+| **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ⬅ next; the only commit that moves goldens |
 | **E3f** | Leithers — 30 walkers, 124 meshes, reuse or leave as dolls | genuinely open, not a footnote |
 
-#### E3d is now conditional, and E3d.0 is what decides it (2026-08-04)
+#### E3d was rejected by measurement (E3d.0, 2026-08-04)
 
 E3b measured the swap as **−699 draw calls and +267,459 triangles**, which
 inverts the LOD's premise: swapping to dolls at distance SPENDS draw calls to
-SAVE triangles. So an LOD only pays if triangles are what bind, and nothing has
-shown that they do.
+SAVE triangles. So an LOD only pays if triangles are what bind. That was
+reasoned, not measured, so E3d was made conditional on measuring it rather than
+cancelled on the argument. E3d.0 measured it.
 
-**That last sentence is reasoned, not measured, and E3d.0 is the measurement.**
-The rule this project keeps relearning is that a no-go with no measurement
-behind it is a hypothesis promoted by repetition — `docs/VALIDATION.md` records
-four such grounds that E0.4 tested and three of which were wrong. So E3d is not
-being cancelled here; it is being made conditional on a number:
+**Triangles do not bind. Draw calls do, and the paper doll is the expensive
+end.** A doll is 13 draw calls per vendor against a mesh's 3, and at the
+heaviest pose in the game that is 1,335 against 525 — worth **+1.90ms** of CPU
+frame time against **+0.49ms**. Dolls do rasterise faster, by occluding the
+background rather than by being light, but the two effects cancel: at `skyline`
+it is a wash, and at `street-along` the doll crowd is the slower one on both
+the sum (4.99ms against 4.21ms) and the larger half (3.11ms against 2.51ms).
 
-- Frame time with `--characters=on` against `--characters=off`, at `skyline`
-  (the whole street, worst triangle load) and at a close pose (worst per-pixel
-  load), **on the mobile viewport at the DPR cap**, which is the only place
-  triangles plausibly bind.
-- The control is the same build with the flag off — `probe --characters=on|off`
-  already drives it, so this is a probe script, not a milestone.
-- If meshes cost no meaningful frame time: E3d is rejected, written up with its
-  numbers in `VALIDATION.md`, and struck from this table.
-- If they do: E3d proceeds, and the crossover comes from that curve rather than
-  from a guess.
+So an LOD reverting to dolls at range would make the heaviest frame *slower*.
+E3d is struck. Nothing is near a budget in any case — the worst pose measured
+is 3.1ms CPU and 2.9ms GPU against 16.7ms for 60fps.
 
-Either outcome is delivered work. A number that kills the unit is the point.
+Named blind spot: the harness is an Apple M4 through ANGLE Metal, not a phone,
+and a phone's GPU is weaker relative to its CPU. No measurement in this repo
+can close that. Full account, including the three harness defects that produced
+plausible wrong numbers first, in `docs/VALIDATION.md` § E3d.0.
+
+**What E3d.0 left in the suite.** No new gate — a frame-time gate would be
+machine-dependent and flaky. Instead the existing E3b draw-call gate was
+strengthened from "the swap refunds SOME draw calls" to a **≥2× floor**
+(measured 2.73×), because the ruling rests on the size of the refund rather
+than its sign. Fault-injected: four extra sub-meshes per vendor takes it to
+1.61× and red, while still refunding draw calls — i.e. still green under the
+old direction-only assertion.
 
 **E3f is not a footnote.** 30 walkers × 4 meshes is 124 ambient meshes that
 also move, and none of the E3a–E3c measurements covered them. Whether they take

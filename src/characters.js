@@ -61,8 +61,11 @@ const COMIC_CLEARANCE = 0.17;
 // The note is taken off the vendor's OWN SCARF MATERIAL rather than by
 // re-hashing its name. Same reason measure() reads world matrices: a mesh that
 // recomputed the hash would agree with the doll by construction, whereas this
-// one agrees because it read what the doll is actually wearing — and E3d's LOD
-// swap then cannot change a vendor's colour mid-street.
+// one agrees because it read what the doll is actually wearing. That mattered
+// most when E3d's LOD was still planned (a swap must not change a vendor's
+// colour mid-street); E3d.0 rejected the LOD, so the doll is now hidden rather
+// than swapped to, and this is a correctness property rather than a live
+// constraint.
 //
 // Applied as CHROMA ONLY. The scarf colours are dark (average ~0.2), and
 // multiplying an albedo map by one directly would both repaint and blacken the
@@ -134,8 +137,10 @@ export function selectArchetype(build) {
 // `height` is the doll's own top — not a constant. E3a normalised every
 // archetype to a flat 1.9m and that flattened exactly the height contrast the
 // set was chosen for: Runt stood as tall as Slab. Taking it from vendorDims()
-// instead means the mesh occupies the doll's silhouette exactly, which is also
-// what stops E3d's LOD swap popping.
+// instead means the mesh occupies the doll's silhouette exactly. That was also
+// what would have stopped E3d's LOD swap popping; E3d.0 rejected the LOD, but
+// the silhouette match is the reason the height contrast survives at all and
+// stands on its own.
 //
 // `squash` is the residual only. It multiplies X and Z equally, so a vendor is
 // never squeezed in one horizontal axis and not the other — the distortion is
@@ -169,8 +174,9 @@ export function buildCharacters(assets, world, scene, npcs) {
 
   // Each mesh is parented to its VENDOR's group rather than to a characters
   // group of its own: it then inherits the idle sway and the street-facing yaw
-  // for free, and E3c's body-lean tell and E3d's LOD swap both act on the same
-  // transform the doll already uses.
+  // for free, and E3c's body-lean tell acts on the same transform the doll
+  // already uses. (It was also what an E3d LOD swap would have needed; E3d.0
+  // rejected that, and the parenting earns its place without it.)
   //
   // Assign first, load second: one fetch per archetype however many vendors
   // want it, and a vendor whose archetype fails to load simply keeps its doll.

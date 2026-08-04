@@ -2585,6 +2585,169 @@ anything**. The standing note that `golden:skyline` is the outlier is wrong —
 change that legitimately moves a haar golden by 0.25% would land over tolerance
 for reasons that are mostly not its own.
 
+## Is a distance LOD needed at all? (E3d.0 — the measurement that rejected E3d)
+
+**E3d is rejected. The paper doll is not the cheap end of a distance LOD, and
+swapping back to it at range buys no frame time on any pose measured.**
+
+E3d was to be a distance LOD: generated meshes near, paper dolls far. E3b had
+already measured the swap the other way — **−699 draw calls and +267,459
+triangles** — which inverts the LOD's premise, since reverting to dolls at
+distance *spends* draw calls to *save* triangles. That only pays if triangles
+are what bind. Nothing had measured whether they do, and the roadmap said so
+plainly: a no-go with no measurement behind it is a hypothesis promoted by
+repetition. E3d.0 is the measurement.
+
+`scratchpad/e3d/frametime.mjs`, run through `probe -f`. Three full runs; run 3
+adds the crowd-free arm and is the one tabulated.
+
+### What it measures, and the four arms
+
+Four arms per viewport, each a separately booted page, run **one at a time**:
+
+| arm | what stands in the street |
+|---|---|
+| `none` | nothing — flag off *and* every doll part hidden |
+| `dolls` | the shipped default, 124 paper dolls |
+| `meshes` | `__mcgrotForceCharacters`, 124 generated meshes |
+| `dolls again` | a second `dolls` arm, run last |
+
+`none` is the control that makes the rest mean anything: without it the run can
+only say "meshes beat dolls", and the LOD question needs each representation
+priced against a street that has neither. `dolls again` is the noise floor —
+two arms differing in nothing, so any "cost" smaller than that gap is not a
+cost. Because the arms run sequentially, it also carries every drift the whole
+run accumulated, which makes it conservative rather than flattering.
+
+Two clocks, because they point opposite ways:
+
+- **GPU** — `EXT_disjoint_timer_query_webgl2`, available under the harness's
+  Metal ANGLE. `renderer.render()` only *queues* commands, so a JS stopwatch
+  measures submission and not rasterisation, which is exactly the cost the
+  triangle question is about.
+- **Whole frame (CPU)** — wall clock around `stepFrame`, so every updater in
+  `main.js`'s list plus the draw. This does **not** include GPU completion:
+  `gl.finish()` does not reliably sync across Chrome's command-buffer process
+  boundary, and several poses report a whole-frame number *below* their own GPU
+  number, which is the proof of it. Read it as CPU cost, not as frame time.
+
+### The numbers — mobile at the DPR cap (780×1688), the case that matters
+
+| pose | vendors in frame | | no crowd | dolls | meshes |
+|---|---|---|---|---|---|
+| `skyline` | 68 | GPU ms | 2.79 | **1.63** | 2.84 |
+| | | CPU ms | 1.02 | **2.58** | 1.42 |
+| | | draw calls | 263 | 1090 | 401 |
+| `street-along` | 80 | GPU ms | 2.73 | **1.88** | 2.51 |
+| | | CPU ms | 1.20 | **3.11** | 1.70 |
+| | | draw calls | 363 | 1335 | 525 |
+| `vendor-nose` | 1 | GPU ms | 2.83 | 2.87 | 2.89 |
+| | | CPU ms | 0.73 | 0.80 | 0.81 |
+
+Noise floor across every cell: **≤0.24ms**, worst round-to-round spread
+0.47ms. Desktop (1280×800, DPR 1) tells the same story at 0.8× the magnitude.
+
+Each representation against the crowd-free street, at `street-along`:
+
+| | dolls | meshes |
+|---|---|---|
+| GPU | **−0.85ms** | −0.22ms |
+| CPU | **+1.90ms** | +0.49ms |
+| GPU + CPU | +1.05ms | +0.27ms |
+
+### The three findings
+
+**1. Draw calls bind, and the doll is the expensive end.** A paper doll is 13
+draw calls (its head is a BoxGeometry carrying six materials, one per face); a
+meshed vendor is 3. At `street-along` that is 1,335 against 525, and it shows
+up as CPU: dolls cost **+1.90ms** of frame time against the crowd-free street,
+meshes **+0.49ms**. The LOD's premise — cheap dolls at distance — is false by a
+factor of about four.
+
+**2. Dolls are faster on the GPU, and the mechanism is occlusion, not
+lightness.** The crowd-free arm rasterises *slower* than the doll arm, which is
+impossible for geometry that was merely removed: 2.79ms with no crowd against
+1.63ms with 124 dolls in it. Adding 827 draw calls and 9,222 triangles cannot
+reduce rasterisation except by hiding what is behind them — three.js sorts
+opaque front-to-back, so the dolls take early-Z and the expensive background
+never shades. The within-data control is the pose count: the gap is 1.16ms at
+68 vendors and **0.04ms at one**, scaling with figures in frame exactly as
+occlusion would. (Mechanism inferred from those numbers, not separately
+instrumented.)
+
+**3. The two cancel, and at the heaviest pose the doll side loses both ways.**
+At `skyline` meshes cost +1.21ms of GPU and save 1.16ms of CPU against dolls —
+a wash. At `street-along` meshes are ahead on the sum (4.21ms against 4.99ms)
+*and* on the larger of the two (2.51ms against 3.11ms). So an LOD reverting to
+dolls at range would, at the heaviest pose in the game, make the frame slower.
+
+Nothing here is near a budget in any case: the worst pose measured is 3.1ms of
+CPU and 2.9ms of GPU, against 16.7ms for 60fps.
+
+### What this does not prove
+
+- **It is an Apple M4 through ANGLE Metal, not a phone.** A phone's GPU is far
+  weaker relative to its CPU, so the balance of finding 3 could tip toward the
+  doll side. It cannot be measured here, and no measurement in this repo can.
+  The mitigation is that finding 1 is a CPU cost and phone CPUs are weaker too,
+  so the doll side does not get a free ride from a device swap.
+- **`vendor-nose` frames exactly one vendor, and that is the street's fault,
+  not the pose's.** 124 vendors over ~1617m is one per 13m, and the densest 25m
+  radius anywhere holds five. No pose exists that puts many meshes at high fill.
+  So "worst fill" genuinely is one figure, and it costs +0.08ms.
+- **The whole-frame column is CPU only** (see above). It is not the frame time
+  a player sees, and the sums in finding 3 assume CPU and GPU serialise, which
+  is the pessimistic reading.
+
+### Three harness defects this measurement had first
+
+Each produced a plausible, wrong number before it was caught. They are recorded
+because the next throwaway probe will be built the same way.
+
+| defect | what it reported | what caught it |
+|---|---|---|
+| `nearestStreetPoint` read as `{x,z}` — it returns `{point:[x,z]}` — so the camera was at `NaN` | a confident +1.33ms at "nose distance". A NaN camera culls nothing, so the frame drew 2,035 calls and looked like a heavy pose | the `inFrame` vendor count, which said **0** |
+| the first close pose was `mid-550-close`, which frames no vendor at all | a +2.83ms crowd cost | the noise floor, which said **+2.82ms** — and byte-identical triangle counts on both arms |
+| per-frame timer queries under Metal, which batches command buffers across the query boundary | the same unchanging frame at either ~7.0ms or ~4.3ms, bimodal *within* one batch, whichever mode dominated deciding the median | four rounds per arm; one query per *batch* of 20 renders fixed it |
+
+A fourth was a design fault rather than a bug: the first version kept all four
+pages open and round-robined between them to spread thermal drift. Two arms
+booted from **identical** flags then rendered mobile `skyline` at 4.27ms and
+7.25ms, consistently across all four rounds — a systematic per-page difference
+three times larger than the effect being measured. One page at a time.
+
+Also fixed in passing: `probe --tint=on|off` never worked. `addInitScript`
+destructured `({ a, c })` and used `n`, so every probe boot since E3c threw a
+silent `ReferenceError: n is not defined` and the flag never reached the page.
+The smoke gate's own copy was correct, which is why E3c's numbers stand.
+
+### The gate this left behind
+
+No new gate. One existing gate was **strengthened**, because the ruling now
+rests on the *size* of the draw-call refund rather than its sign:
+
+`E3b: meshes cost triangles at skyline and refund draw calls` asserted only
+`onSky.drawCalls < offSky.drawCalls`. It now also requires the refund to be
+**≥2×** (measured 2.73×). An archetype regenerated with several sub-meshes
+would erode the ratio long before inverting it, and direction-only would have
+stayed green the whole way.
+
+Fault-injected by giving every vendor four extra sub-meshes:
+
+| | draw calls | refund | verdict |
+|---|---|---|---|
+| shipped | 1103 → 404 | 2.73× | PASS |
+| +2 sub-meshes per mesh | 1103 → 544 | 2.03× | PASS — *just*, and this is how fragile the margin is |
+| +4 sub-meshes per mesh | 1103 → 684 | 1.61× | **FAIL** |
+
+The injected build still refunds draw calls at every step, so the old
+direction-only assertion stayed green through all three rows.
+
+**What this gate deliberately does not prove.** Nothing about frame time. A
+frame-time gate would be machine-dependent and flaky, and the numbers above are
+a one-off ruling rather than a standing claim — what makes the ruling durable is
+the draw-call ratio it rests on, and that is what is pinned.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

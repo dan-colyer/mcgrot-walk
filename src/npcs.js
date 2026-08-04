@@ -50,9 +50,11 @@ const SCARF_COLORS = [0x6b3328, 0x705c23, 0x2e4640, 0x59422e, 0x3d3453, 0x664a1e
 //
 // WHY IT MOVED: a Trellis mesh is a single primitive with no separable head, so
 // a head-only animation is a tell the meshed vendor physically cannot perform.
-// Leaving it on the doll would mean the two LODs act differently and E3d's swap
-// pops mid-sentence. Both figures now share one transform, so both perform the
-// same thing.
+// Leaving it on the doll would mean the doll and the mesh act differently.
+// Both figures now share one transform, so both perform the same thing. The
+// original argument was about E3d's LOD swap popping mid-sentence; E3d.0
+// rejected the LOD, and the reason survives it — the mesh still has to perform
+// the tell, because the mesh is what the player sees once E3e flips the flag.
 //
 // WHY TWO RATES: the old tell was a 5-degree head turn at 4Hz. Transplanted
 // whole onto a 1.9m body that is a 6.6cm head excursion at 4Hz, which reads as

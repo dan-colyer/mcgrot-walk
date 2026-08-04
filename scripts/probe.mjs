@@ -107,7 +107,7 @@ try {
   // Set BEFORE any page script runs — main.js suppresses its first animate()
   // while this is set, so nothing renders on the wall clock and every frame
   // afterwards is one we asked for. Without it the scene drifts under you.
-  await context.addInitScript(({ a, c }) => {
+  await context.addInitScript(({ a, c, n }) => {
     window.__mcgrotFreezeAtBoot = true;
     // Same pinned day as scripts/smoke.mjs — a probe measurement of anything
     // date-derived (the HUD name, the arrival hour, reading phases) must
