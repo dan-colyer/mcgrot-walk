@@ -1,5 +1,15 @@
-// Generate grotesque NPC face textures via Gemini image gen.
-// Usage: GEMINI_API_KEY=... node scripts/gen-faces.mjs [rab morag kenneth]
+// Generate grotesque NPC face textures.
+//
+//   set -a; source .env.local; set +a
+//   node scripts/gen-faces.mjs [rab morag kenneth]
+//
+// Together AI + FLUX, NOT Gemini — the header said Gemini for as long as the
+// code said TOGETHER_API_KEY, which cost a session working out why a live
+// GEMINI_API_KEY was not being read.
+//
+// The style prompt carries the MEASURED palette from docs/STYLE.md as hex,
+// and every generated face is checked back against it:
+//   node scripts/comic-palette.mjs --only=assets/faces/<name>.jpg
 import { writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { dirname, join } from 'path';
@@ -8,9 +18,35 @@ import { fileURLToPath } from 'url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const KEY = process.env.TOGETHER_API_KEY;
 const MODEL = process.env.FLUX_MODEL || 'black-forest-labs/FLUX.2-pro';
-if (!KEY) { console.error('TOGETHER_API_KEY not set'); process.exit(1); }
+if (!KEY) {
+  console.error('TOGETHER_API_KEY not set. It is NOT the same key as GEMINI_API_KEY,\n'
+    + 'which is the one .env.local currently holds. Add it and re-source:\n'
+    + '  echo \'TOGETHER_API_KEY=...\' >> .env.local\n'
+    + '  set -a; source .env.local; set +a');
+  process.exit(1);
+}
 
-const STYLE = 'Flat 2D comic illustration, thick dark outlines, muted olive-mustard-khaki palette, matte flat colours, no gradients. Front-facing head and shoulders portrait, face centred and filling most of the frame, looking directly at the viewer, plain flat single-colour background. Grotesque caricature in the style of a sinister British comedy character.';
+// E8c: the palette goes in as HEX, not as adjectives. "muted olive-mustard-
+// khaki" was the previous wording and it is exactly the kind of description
+// docs/STYLE.md exists to replace — the numbers below are measured from the
+// comics (k-means in CIELAB over the corpus, calibrated against the newest).
+//
+// Cream-forward is deliberate and load-bearing, not a preference: the scene
+// supplies the darkness (median display luminance 0.139 at noon, 0.055 at
+// night) and ACES lifts on top of that, so a face authored at the palette's
+// dark end arrives in-scene as black mush. See docs/STYLE.md.
+const PALETTE = 'aged cream #e0c58c, warm stone #b2a27c, khaki gold #a08f51, '
+  + 'olive grey #737157, moss #555d29, dark brown #504726, rust accent #8b4e28, '
+  + 'ink near-black #212020';
+
+const STYLE = 'Flat 2D comic illustration, thick dark outlines, matte flat colours, '
+  + 'no gradients, no cel shading. Restricted palette, muted and desaturated, '
+  + `warm throughout with no cool or blue tones: ${PALETTE}. `
+  + 'Light overall — the artwork sits on aged cream paper and the mid-tones are '
+  + 'pale, not dark. Front-facing head and shoulders portrait, face centred and '
+  + 'filling most of the frame, looking directly at the viewer, plain flat '
+  + 'single-colour cream background. Grotesque caricature in the style of a '
+  + 'sinister British comedy character.';
 
 const FACES = {
   rab: `${STYLE} An enormous jowly middle-aged Scottish man: bulbous nose with burst capillaries, tiny tartan bunnet perched on a huge head, patchy ginger stubble, one eye squinting much smaller than the other, wide gap-toothed grin, thick neck.`,
