@@ -89,36 +89,26 @@ const GRAIN_FPS = 24;    // grain resamples on a 24fps step, not every frame
 const PRESS_EXPOSURE_LO = 0.50;  // the darkest palette stop (night, haar)
 const PRESS_EXPOSURE_HI = 1.46;  // the brightest (noon clear) — also the shipped default
 
-// Round 2's candidates: variants around `b`, the round-1 survivor (Dan,
-// 2026-08-03). `b` itself is carried forward unchanged apart from its press
-// becoming a pair, so the round always contains its own reference — a round of
-// variants with no baseline in it can only be judged against memory.
+// `b` is the standing candidate after two rounds (Dan, 2026-08-03 and
+// 2026-08-04). Round 1's a/c/d and round 2's b1/b2/b3 are all rejected, with
+// their reasons in docs/ROADMAP.md; the table is kept down to the survivor
+// deliberately, so a later session reaches for the decided look rather than
+// re-proposing one that has already been judged.
+//
+// The single reason both rounds' losers lost is worth stating here, because it
+// is the constraint any future candidate has to satisfy: EVERY variant that
+// made the print more visible — coarser screen, heavier halftone, stronger
+// stock, more lift — read as visual distraction over a street the player is
+// trying to walk down and look at. The print is a texture on this world, not a
+// filter over it. `b` is the lightest touch in the set and it won twice.
+//
+// Still a candidate, not a keeper: uStyle ships at 0 and nothing is hardened
+// into shader constants until docs/STYLE.md exists.
 const STYLE_PRESETS = {
-  // The reference. Round 1's survivor: the shipped murk kept nearly intact,
-  // print as texture rather than as a palette.
   b: { label: 'fine-litho', pressDay: 0.72, pressNight: 0.95, cell: 2.6, halftone: 0.35,
        highCut: 0.60, misreg: 0.7, sat: 0.85,
        shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
-  // b, warmer. The only change is the stock: does the comics' cream read
-  // better than b's near-neutral paper at the same light touch?
-  b1: { label: 'litho-warm', pressDay: 0.72, pressNight: 0.95, cell: 2.6, halftone: 0.35,
-        highCut: 0.60, misreg: 0.7, sat: 0.72,
-        shadowTint: [0.94, 0.97, 1.05], highTint: [1.08, 1.02, 0.90],
-        stock: 0.55, ink: [0.12, 0.09, 0.07], paper: [0.96, 0.92, 0.80], artefact: 0.06 },
-  // b, coarser. The only change is the screen: a 3.6px cell and a firmer
-  // halftone, to find where the dot starts reading as print rather than grain.
-  b2: { label: 'litho-coarse', pressDay: 0.72, pressNight: 0.95, cell: 3.6, halftone: 0.52,
-        highCut: 0.64, misreg: 0.7, sat: 0.85,
-        shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
-        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
-  // b, more press. Deliberately keeps b's palette and screen and pushes ONLY
-  // the exposure pair toward round 1's rejected values, so the sheet carries
-  // its own evidence for the finding rather than relying on the last round's.
-  b3: { label: 'litho-open', pressDay: 0.55, pressNight: 0.72, cell: 2.6, halftone: 0.35,
-        highCut: 0.60, misreg: 0.7, sat: 0.85,
-        shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
-        stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
 };
 
 const VERT = `

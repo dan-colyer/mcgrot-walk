@@ -63,7 +63,7 @@ const BOOKMARKS = [
 ];
 
 // Column key. 'none' first so every row starts from the shipped frame.
-const PRESETS = ['none', ...(arg('presets', 'b,b1,b2,b3').split(','))];
+const PRESETS = ['none', ...(arg('presets', 'b').split(','))];
 // Per-column border colour, so a cell lifted out of context is still
 // identifiable without text.
 const COL_COLOUR = ['0x808080', '0xff3333', '0x33ff66', '0x3399ff', '0xffcc00'];

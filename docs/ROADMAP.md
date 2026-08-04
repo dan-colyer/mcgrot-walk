@@ -2451,11 +2451,29 @@ previous round's captures.
 
 Suite green at 228 PASS / 0 FAIL / 71s, no golden moved, `uStyle` still 0.
 
-**Next:** Dan judges round 2. Then E8c — character treatments, which is its
-own unit: the post pass is full-screen and has no per-object mask, so a
-character axis means mesh and material work (inverted-hull outlines, flat-toon
-materials) in `src/npcs.js`, not another preset field. Pairing it with the
-grade was right; putting it in the same commit was not.
+### Round 2's verdict (Dan, 2026-08-04)
+
+**`b` stands, unchanged.** All three variants rejected:
+
+| | why not |
+|---|---|
+| `b1` warmer stock | the added warmth reads as a filter over the street rather than as the paper it is printed on |
+| `b2` coarser screen | visually distracting — a 3.6px cell competes with the thing the player is looking at |
+| `b3` over-pressed | confirms round 1 in its own sheet: more lift, less night |
+
+**The constraint both rounds discovered, and the one any future candidate has
+to satisfy:** every variant that made the print *more visible* — coarser
+screen, heavier halftone, stronger stock, more lift — was rejected, in both
+rounds, by the same reasoning. The print is a texture on this world, not a
+filter over it. `b` is the lightest touch in either set and it won twice.
+
+The preset table in `src/post.js` is now trimmed to `b` alone. That is
+deliberate: a later session should reach for the decided look rather than
+re-propose one that has already been judged twice.
+
+`b` is still a **candidate, not a keeper** — `uStyle` ships at 0 and nothing is
+hardened into shader constants until `docs/STYLE.md` exists. What promotes it
+is the colour work below, not another round of grade variants.
 
 ## E2g.1 — Night coverage and the picture gates — LANDED 2026-08-03
 
