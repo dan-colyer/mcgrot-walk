@@ -248,7 +248,19 @@ export function buildCharacters(assets, world, scene, npcs) {
     protoSubs.push(cb);
   };
 
-  for (const { arch, npcs: members } of wanted.values()) {
+  // EVERY archetype, not only the ones vendors asked for.
+  //
+  // This iterated `wanted` until E3h, and that was a bug the site could never
+  // show: 124 vendors want all five, so `wanted` and ARCHETYPES were the same
+  // set. The single-file artifact runs off the 3-comic manifest, wants one or
+  // two, and the 30 walkers assigned to the rest were never told anything —
+  // not loaded, not failed, just waiting. 29 of 30 stood there with no body.
+  //
+  // Loading a prototype no vendor instances costs a decode and nothing else:
+  // `wanted` still drives instancing, so `loaded` and `counts` stay
+  // vendor-derived, and in the artifact the bytes are already in the file.
+  for (const arch of ARCHETYPES) {
+    const members = (wanted.get(arch.name) || { npcs: [] }).npcs;
     (forceFail ? Promise.reject(new Error('forced')) : loader.loadAsync(assetUrl(assets, arch.file)))
       .then((gltf) => {
         const proto = normalise(gltf.scene);

@@ -82,7 +82,13 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // transitions and the 24h sweeps — 29.9s that used to be unskippable inside
 // `render`. It is the one region that opens in the MIDDLE of another: render
 // runs, weather runs, render resumes. See the note at the split.
-const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+// 'artifact' (E3h) is the only region that tests a BUILD OUTPUT rather than
+// the dev tree: it runs build.mjs and serves dist/ on a server of its own,
+// because the suite's server is rooted at src/ and the artifact's whole claim
+// is about what happens when nothing above the file is fetchable. Cheap —
+// build.mjs is 0.2s — and it is the only thing standing between the shareable
+// file and a divergence nobody notices until someone opens it.
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -115,6 +121,10 @@ const SINCE_RULES = [
   [/^package(-lock)?\.json$/, SINCE_ALL],
   [/^src\/(main|debug|assets|world|atmosphere)\.js$/, SINCE_ALL],
   [/^src\/index\.html$/, SINCE_ALL], // every overlay's DOM and CSS, plus the bundle stamp
+  // E3h: build.mjs produces the artifact and the site tree and nothing else,
+  // so it reaches exactly one region — but src/assets.js is the contract it
+  // writes into (assetUrl's data-URI maps) and that is SINCE_ALL above.
+  [/^build\.mjs$/, ['artifact']],
   // Leaf modules, narrowest first.
   [/^src\/journal\.js$/, ['journal', 'mobile']],
   [/^src\/(anchors|npcs)\.js$/, ['anchors', 'characters', 'onevoice', 'render', 'weather', 'determinism']],
@@ -2341,6 +2351,134 @@ async function main() {
 
     endRegion();
     } // end region: characters
+
+    if (region('artifact')) {
+    // --- E3h: the shareable single file ships the same crowd as the site ----
+    //
+    // The E3 phase gate's finding 5: all five character glbs 404 in the
+    // single-file build, so it fell back to paper dolls and showed a different
+    // street from the live site. E3h inlines them as data URIs.
+    //
+    // THIS IS THE ONLY GATE IN THE SUITE THAT LOOKS AT A BUILD OUTPUT, and it
+    // has to be: the artifact's failure mode is invisible from the dev tree,
+    // where every asset resolves. It is served from a server rooted at dist/,
+    // so nothing above the file is reachable — the same condition the phase
+    // gate measured the defect in, and the condition anyone opening the file
+    // is actually in.
+    console.log('[smoke] E3h artifact gate...');
+    {
+      const buildOut = spawnSync('node', [join(root, 'build.mjs')], { cwd: root, encoding: 'utf8' });
+      const artifactPath = join(root, 'dist/mcgrot-walk.html');
+      const built = buildOut.status === 0 && existsSync(artifactPath);
+      const sizeMB = built ? readFileSync(artifactPath).length / 1024 / 1024 : 0;
+
+      results.push({
+        name: 'E3h: the artifact builds, and stays under the size ceiling',
+        // ~8MB is the practical limit for the shareable file (see CLAUDE.md).
+        // 7.5 leaves headroom for a comic or a voice, and is a real ceiling
+        // rather than a wish: inlining the glbs spent 2.93MB of it at once.
+        pass: built && sizeMB > 1 && sizeMB <= 7.5,
+        detail: built
+          ? `dist/mcgrot-walk.html ${sizeMB.toFixed(2)} MB (ceiling 7.5 MB)`
+          : `build.mjs exited ${buildOut.status}: ${(buildOut.stderr || '').split('\n')[0]}`,
+      });
+
+      if (built) {
+        const aPort = await getFreePort();
+        const aServer = spawn('python3', [join(root, 'scripts/serve.py'), String(aPort)],
+          { cwd: join(root, 'dist'), stdio: 'ignore' });
+        try {
+          for (let i = 0; i < 100; i++) {
+            try {
+              const r = await fetch(`http://127.0.0.1:${aPort}/`, { signal: AbortSignal.timeout(1500) });
+              if (r.ok) break;
+            } catch { /* not up yet */ }
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+          await ctx.addInitScript(() => {
+            window.__mcgrotFreezeAtBoot = true;
+            window.__mcgrotForceDate = '2026-01-01';
+          });
+          const page = await ctx.newPage();
+          const netRequests = [];
+          const badResponses = [];
+          const pageErrors = [];
+          page.on('request', (r) => { if (!r.url().startsWith('data:')) netRequests.push(r.url()); });
+          page.on('response', (r) => { if (r.status() >= 400) badResponses.push(r.url()); });
+          page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 200)));
+
+          await page.goto(`http://localhost:${aPort}/mcgrot-walk.html`);
+          await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world),
+            null, { timeout: 60000 });
+          await page.click('#title-enter');
+          await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
+          await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+          await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+          await page.waitForFunction(() => {
+            const c = window.__mcgrotDebug.characters;
+            return c.loaded() + c.fellBack() === c.assigned;
+          }, null, { timeout: 60000 });
+
+          const art = await page.evaluate(() => {
+            const d = window.__mcgrotDebug;
+            const c = d.characters;
+            return {
+              vendors: d.npcs.npcs.length,
+              fellBack: c.fellBack(),
+              vendorsMeshed: d.npcs.npcs.filter((n) => n.group.children.some((o) => o.name === 'vendor-mesh')).length,
+              vendorDolls: d.npcs.npcs.filter((n) => n.hasDoll).length,
+              walkers: d.leithers.walkers.length,
+              walkersMeshed: d.leithers.walkers.filter((w) => w.mesh).length,
+              walkerDolls: d.leithers.walkers.filter((w) => w.hasDoll).length,
+            };
+          });
+
+          // Every figure generated, nothing fell back. The vendor count is
+          // whatever the 3-comic manifest carries, so it is not hard-coded —
+          // what is asserted is that ALL of them are meshed and NONE kept a
+          // doll, which is the difference from what the artifact used to do.
+          results.push({
+            name: 'E3h: the artifact stands the generated crowd, not the retired paper dolls',
+            pass: art.vendors > 0 && art.vendorsMeshed === art.vendors && art.vendorDolls === 0
+              && art.walkers === 30 && art.walkersMeshed === 30 && art.walkerDolls === 0
+              && art.fellBack === 0,
+            detail: `${art.vendorsMeshed}/${art.vendors} vendors meshed (${art.vendorDolls} dolls), `
+              + `${art.walkersMeshed}/${art.walkers} walkers meshed (${art.walkerDolls} boxed), `
+              + `${art.fellBack} vendors fell back (must be 0)`,
+          });
+
+          // THE BUG THIS GATE EXISTS FOR, and it is not the one E3h set out to
+          // fix. characters.js used to load only the archetypes VENDORS asked
+          // for. The site has 124 vendors and wants all five, so the two sets
+          // were identical and nothing could go wrong; the artifact runs off
+          // the 3-comic manifest, wanted one, and the 29 walkers assigned to
+          // the other four were never loaded, never failed, and never told —
+          // they simply stood there with no body. Only a build-output gate
+          // could see it, which is why the walker assertion above is here and
+          // not in the characters region.
+          const glbFetches = netRequests.filter((u) => /characters\/.*\.glb/.test(u)).length;
+          const faceFetches = netRequests.filter((u) => /assets\/faces\//.test(u)).length;
+          results.push({
+            name: 'E3h: the artifact fetches no character glb and no face texture',
+            pass: glbFetches === 0 && faceFetches === 0 && pageErrors.length === 0,
+            detail: `${glbFetches} character glb requests and ${faceFetches} face requests over the network `
+              + `(both must be 0 — they are data URIs, or gone), ${pageErrors.length} page errors`
+              + (badResponses.length
+                ? `. Still 404ing (not E3's, recorded not gated): ${
+                  [...new Set(badResponses.map((u) => u.split('/').pop()))].join(' ')}`
+                : ''),
+          });
+
+          await ctx.close();
+        } finally {
+          aServer.kill();
+        }
+      }
+    }
+
+    endRegion();
+    } // end region: artifact
 
     if (region('moments')) {
     // --- E5c: moments are links -------------------------------------------

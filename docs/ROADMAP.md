@@ -1504,7 +1504,37 @@ Two corrections, both measured:
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ✅ landed — 23 goldens recaptured, 6 baselines re-cut, 2 gates; **E3 is visible** |
 | **E3g** | Retire the paper doll from the shipped path | ✅ landed — **1,253 → 509 scene meshes**, 875 → 487 materials, 39 → 0 face fetches; 2 gates added, 2 re-based across boots; no golden moved |
 | **E3f** | Leithers — the 30 walkers stand on the same five archetypes | ✅ landed — **274 → 64 walker draw calls**, no new assets; 7 gates, 14 goldens recaptured, 4 baselines re-cut |
-| **E3h** | Decide the single-file artifact: inline the 2.2MB of glbs, or document that it ships dolls | Dan's call — and **the artifact now depends on E3g's fallback**, see below |
+| **E3h** | The single-file artifact: inline the glbs, retire the published faces | ✅ landed — 4.01 → **6.94 MB**, artifact crowd now matches the site; found a walker bug no source-tree gate could see |
+
+#### E3h landed (2026-08-05) — E3 is complete
+
+**The five glbs are inlined** as `model/gltf-binary` data URIs, read straight
+from `ARCHETYPES`. 4.01 → 6.94 MB against a ~8 MB practical limit; the artifact
+now stands the same crowd as the site instead of falling back to paper dolls.
+
+**The 39 faces and their credits section left together**, in the order § E3g
+fixed: the glbs had to be inlined first, because until they were, the doll
+fallback was the only thing keeping the artifact's street populated and the
+faces were what dressed it. The credits section is now conditional on the files
+actually being published, so re-publishing them without attribution cannot be a
+silent one-line change.
+
+**A new `artifact` region — the only gate in the suite that tests a build
+output.** It runs `build.mjs` (0.2s) and serves `dist/` on its own server,
+because the suite's server is rooted at `src/` and the artifact's whole claim
+is about what happens when nothing above the file is fetchable.
+
+**It immediately found a bug E3f had introduced and nothing else could see.**
+`characters.js` loaded only the archetypes *vendors* asked for. The site's 124
+vendors want all five, so the two sets were identical; the artifact wanted one,
+and **29 of 30 walkers had no body at all** — never loaded, never failed, never
+notified. Every existing gate ran against the dev tree where the full catalog
+resolves. A defect that only exists in a build output needs a gate that boots
+one.
+
+**Recorded, not gated:** the four car glbs still 404 in the artifact, so it has
+no wrecked vehicles. Pre-existing and not E3's; the gate prints them in its
+detail line rather than reddening for someone else's decision.
 
 #### E3f landed (2026-08-05)
 

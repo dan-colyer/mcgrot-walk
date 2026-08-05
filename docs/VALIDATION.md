@@ -3220,6 +3220,109 @@ attributable to whatever landed last.
   reachable from their girth range. Widening that range would reseed the crowd
   and move every golden, which is a cost E3f did not pay.
 
+## The single-file artifact (E3h)
+
+The E3 phase gate's finding 5: all five character glbs 404 in the single-file
+build, so it fell back to paper dolls and showed a different street from the
+live site. Survivable while the doll was the shipped figure; after E3e it meant
+the shareable file shipped the retired representation.
+
+**The five glbs are now inlined as `model/gltf-binary` data URIs.** GLTFLoader
+goes through `THREE.FileLoader`, which handles a `data:` URL like any other, so
+nothing in `characters.js` or `leithers.js` changed — only `assetUrl` grew a
+third map to check. The list is read straight from `ARCHETYPES` rather than
+hand-written, so a sixth archetype cannot be added without the build following
+it.
+
+| | before | after |
+|---|---|---|
+| `dist/mcgrot-walk.html` | 4.01 MB | **6.94 MB** (models 2.93 MB) |
+| character glb requests | 5, all 404 | **0** |
+| face texture requests | 3 | **0** |
+| vendors meshed | 0 of 3 | **3 of 3** |
+| walkers meshed | 0 of 30 | **30 of 30** |
+
+Base64 costs a third on top, so 2.20 MB of glb is 2.93 MB inlined. The gate's
+ceiling is 7.5 MB against the ~8 MB practical limit for the shareable file.
+
+### And the 39 faces finally leave
+
+E3g stopped the shipped scene fetching them but left `build.mjs` copying
+`assets/faces` into `dist-site/` and generating a credits section from
+`credits.json`. Both are gone now, together — **and the order was the point**.
+While the artifact's glbs 404'd, the doll fallback was the only thing keeping
+its street populated and the faces were what dressed it; dropping them first
+would have shipped a crowd of blank heads. That ordering was written down in
+§ E3g precisely so this unit did not get it wrong.
+
+The files stay in the repo — the doll still builds on the off arm and on the
+glb-404 fallback, both localhost-only — but they are not published. Attribution
+is owed for what ships, and crediting franchise stills the site no longer
+serves would claim a use that no longer happens. The credits section is now
+conditional on `dist-site/assets/faces` actually existing, checked after the
+copy runs, so re-publishing the faces without restoring their attribution is
+not a silent one-line change.
+
+### The bug this found, which E3h did not set out to fix
+
+`characters.js` loaded only the archetypes **vendors** asked for. The site has
+124 vendors and wants all five, so `wanted` and `ARCHETYPES` were the same set
+and nothing could go wrong. The artifact runs off the 3-comic manifest, wanted
+one — and the 29 walkers assigned to the other four were never loaded, never
+failed, and never notified. They stood at their spawn points with **no body at
+all**.
+
+Introduced by E3f (the walkers had no archetypes before it) and invisible to
+every gate in the suite, because every gate ran against the dev tree where the
+full catalog resolves. It took a gate that boots a *build output* to see it.
+`characters.js` now loads all five regardless of vendor demand; `wanted` still
+drives instancing, so `loaded` and `counts` stay vendor-derived, and in the
+artifact the bytes are already in the file.
+
+**The lesson is the gate's placement, not the bug.** A defect that only exists
+in a build output cannot be caught by a suite that only tests the source tree,
+however many assertions it carries.
+
+### The gates
+
+`artifact` is a new region, and the only one that tests a build output. It runs
+`build.mjs` (0.2s) and serves `dist/` on a server of its own — the suite's
+server is rooted at `src/`, and the artifact's entire claim is about what
+happens when nothing above the file is fetchable.
+
+| gate | what it holds |
+|---|---|
+| `E3h: the artifact builds, and stays under the size ceiling` | 6.94 MB against 7.5 |
+| `E3h: the artifact stands the generated crowd, not the retired paper dolls` | all vendors and all 30 walkers meshed, 0 dolls, 0 fell back |
+| `E3h: the artifact fetches no character glb and no face texture` | 0 and 0 over the network, 0 page errors |
+
+The vendor count is not hard-coded — it is whatever the 3-comic manifest
+carries — because what is asserted is that *all* of them are meshed and *none*
+kept a doll, which is the difference from what the artifact used to do.
+
+Fault-injected: removing the inlining took it to 4.01 MB with 3 dolls, 30 boxed
+walkers, 5 glb and 3 face requests — the old behaviour exactly. Reverting the
+archetype loop to `wanted` gave 1 of 30 walkers meshed, i.e. the bug above,
+reproduced on demand.
+
+### What E3h deliberately does not prove
+
+- **The artifact is still not the site.** It runs the 3-comic manifest, has no
+  façade atlas, and its buildings are untextured. E3h closes the *crowd*
+  divergence, which is the one E3 created; it does not claim the two builds
+  render the same street.
+- **The four car glbs still 404 there** — `sedan`, `hatchback-sports`, `van`,
+  `bus` — so the artifact has no wrecked vehicles. Pre-existing, nothing to do
+  with E3, and `cars.js` catches it cleanly. The gate **records** them in its
+  detail line and deliberately does not assert on them, so the next person sees
+  the divergence without this gate turning red for someone else's decision.
+- **Nothing about a real Claude Artifact iframe.** The gate serves the file
+  over localhost. `dist/mcgrot-walk-artifact.html` (the head+body fragment
+  variant) is built and not booted by anything.
+- **The size ceiling is a threshold, not a measurement of what fits.** 7.5 MB
+  is a line drawn under the ~8 MB practical limit; nobody has measured where
+  the artifact host actually refuses.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

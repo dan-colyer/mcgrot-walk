@@ -7,7 +7,10 @@ import { fileURLToPath } from 'url';
 import { build } from 'esbuild';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', mp3: 'audio/mpeg' };
+const MIME = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', mp3: 'audio/mpeg',
+  glb: 'model/gltf-binary',
+};
 
 // Matches the dev bundle script tag (any attribute order/spacing). Both builds
 // swap it out — the artifact for inlined JS, the site for a bundle.js src.
@@ -31,14 +34,31 @@ if (process.argv.includes('--site')) {
   process.exit(0);
 }
 
-const images = {}, audio = {};
+const images = {}, audio = {}, models = {};
 for (const c of manifest.comics) {
   images[c.image] = dataUri(c.image);
-  images[c.npc.face] = dataUri(c.npc.face);
   audio[c.audio] = dataUri(c.audio);
+  // NO npc.face. E3h: the five character glbs below are inlined, so the
+  // artifact meshes its crowd and never builds a paper doll — and the face
+  // JPEG only ever went on a doll's head. Inlining it would be ~112KB of
+  // base64 for a texture that cannot appear.
 }
 
-const prelude = `window.MCGROT_ASSETS=${JSON.stringify({ manifest, leith, readings, images, audio })};`;
+// E3h — the five archetypes, inlined.
+//
+// Before this the artifact 404'd on every one of them and fell back to paper
+// dolls, so the shareable file and the live site showed different crowds. That
+// was survivable while the doll was the shipped figure; after E3e it meant the
+// artifact shipped the retired representation, and the phase gate recorded it
+// as finding 5.
+//
+// Read straight from ARCHETYPES so a sixth archetype cannot be added without
+// this list following it — the alternative, a hand-written list of five
+// filenames, is exactly the kind of thing that silently stops matching.
+const { ARCHETYPES } = await import('./src/characters.js');
+for (const a of ARCHETYPES) models[a.file] = dataUri(a.file);
+
+const prelude = `window.MCGROT_ASSETS=${JSON.stringify({ manifest, leith, readings, images, audio, models })};`;
 
 const bundle = await build({
   entryPoints: [join(root, 'src/main.js')],
@@ -65,7 +85,7 @@ const headInner = html.match(/<head>([\s\S]*?)<\/head>/)[1]
 const bodyInner = html.match(/<body>([\s\S]*?)<\/body>/)[1];
 writeFileSync(join(root, 'dist/mcgrot-walk-artifact.html'), headInner + '\n' + bodyInner);
 
-console.log(`dist/mcgrot-walk.html — ${(html.length / 1024 / 1024).toFixed(2)} MB (js ${(js.length / 1024).toFixed(0)}KB, images ${(Object.values(images).join('').length / 1024 / 1024).toFixed(2)}MB, audio ${(Object.values(audio).join('').length / 1024 / 1024).toFixed(2)}MB, readings ${(JSON.stringify(readings).length / 1024).toFixed(1)}KB)`);
+console.log(`dist/mcgrot-walk.html — ${(html.length / 1024 / 1024).toFixed(2)} MB (js ${(js.length / 1024).toFixed(0)}KB, images ${(Object.values(images).join('').length / 1024 / 1024).toFixed(2)}MB, audio ${(Object.values(audio).join('').length / 1024 / 1024).toFixed(2)}MB, models ${(Object.values(models).join('').length / 1024 / 1024).toFixed(2)}MB, readings ${(JSON.stringify(readings).length / 1024).toFixed(1)}KB)`);
 
 // ---------------------------------------------------------------------------
 // --site: the full 418-comic build for GitHub Pages. Nothing is inlined; the
@@ -75,7 +95,12 @@ console.log(`dist/mcgrot-walk.html — ${(html.length / 1024 / 1024).toFixed(2)}
 
 async function buildSite() {
   const out = join(root, 'dist-site');
-  rmSync(out, { recursive: true, force: true });
+  // maxRetries because this throws ENOTEMPTY intermittently on macOS: Finder
+  // writes a .DS_Store back into dist-site while the recursive delete is
+  // walking it. Hit three times in a row during E3h, then not at all. It sits
+  // on `npm run deploy`'s path, where an intermittent crash reads as a broken
+  // build rather than as the operating system being busy.
+  rmSync(out, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   mkdirSync(join(out, 'assets'), { recursive: true });
 
   const siteBundle = await build({
@@ -95,14 +120,25 @@ async function buildSite() {
     const src = join(root, 'assets', rel);
     if (existsSync(src)) cpSync(src, join(out, 'assets', rel), { recursive: true });
   };
-  ['manifest.json', 'leith.json', 'catalog.json', 'readings.json', 'comics', 'audio', 'faces'].forEach(copy);
+  // NO 'faces'. E3h: nothing fetches them since E3g stopped building the paper
+  // doll on the shipped path, so 1.1MB of JPEGs and their whole credits
+  // section were shipping to be downloaded by nobody. They stay in the repo —
+  // the doll is still built on the off arm and on the glb-404 fallback, both
+  // of which are localhost-only — but they are not published.
+  //
+  // THE ORDER MATTERED. While the artifact's glbs 404'd, that fallback was the
+  // only thing keeping its street populated, and the faces were what dressed
+  // it. Dropping them before inlining the glbs would have shipped a crowd of
+  // blank heads. The glbs are inlined above; the faces can go now.
+  ['manifest.json', 'leith.json', 'catalog.json', 'readings.json', 'comics', 'audio'].forEach(copy);
   mkdirSync(join(out, 'assets/shopfronts'), { recursive: true });
   ['shopfronts/manifest.json', 'shopfronts/atlas-pages.json', 'shopfronts/atlas-pages', 'shopfronts/credits.json',
    'cars/sedan.glb', 'cars/hatchback-sports.glb', 'cars/van.glb', 'cars/bus.glb',
    'cars/Textures/colormap.png', 'comic-lines.json',
-   // E8d: copied even though characters.js is LANDED OFF, so flipping
-   // CHARACTERS_ENABLED is genuinely a one-line change rather than one line
-   // plus a missing asset nobody remembers. 480KB against a 95MB site build.
+   // The five archetype glbs. Copied speculatively in E8d while
+   // characters.js was landed off; load-bearing since E3e, when the flag
+   // flipped and they became the crowd, and doubly so since E3f gave the
+   // 30 walkers the same meshes. 2.2MB against a 95MB site build.
    'characters'].forEach(copy);
   // The 3 original v1 comics are still referenced by manifest.json.
   for (const c of manifest.comics) copy(c.image);
@@ -127,7 +163,16 @@ function renderCredits() {
   const read = (p) => (existsSync(join(root, p)) ? JSON.parse(readFileSync(join(root, p), 'utf8')) : {});
   const credits = read('assets/shopfronts/credits.json');
   const elevations = read('assets/shopfronts/elevations.json');
+  // E3h: the NPC face textures are no longer published (see the copy list
+  // above), so their credits section goes with them. Attribution is owed for
+  // what SHIPS — crediting franchise stills the site does not serve would be
+  // claiming a use that no longer happens. The files and this credits.json
+  // stay in the repo for the localhost doll arms.
+  //
+  // Read anyway, and asserted empty-or-unused below, so that re-publishing the
+  // faces without restoring their attribution is not a silent one-line change.
   const faces = read('assets/faces/credits.json');
+  const facesPublished = existsSync(join(root, 'dist-site/assets/faces'));
   const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
 
   // Credit the photographs that ACTUALLY SHIP, not everything ever fetched.
@@ -192,11 +237,18 @@ function renderCredits() {
 ${shopRows}
   </ul>
 
-  <h2>NPC face textures (${Object.keys(faces).length})</h2>
+  ${facesPublished ? `<h2>NPC face textures (${Object.keys(faces).length})</h2>
   <p>Temporary placeholders — franchise stills used for identification in a
      non-commercial fan project. All rights remain with their respective owners.</p>
   <ul>
 ${faceRows}
+  </ul>` : ''}
+
+  <h2>Character models</h2>
+  <ul>
+    <li>The five vendor and walker archetypes are generated 3D meshes
+        (Trellis), from prompts written for this project — see
+        <code>scripts/gen-character.mjs</code>.</li>
   </ul>
 
   <h2>Vehicle models</h2>

@@ -200,7 +200,15 @@ and does not report success until every changed file md5-matches the live URL.
 
 - `src/assets.js` — load-bearing contract: `window.MCGROT_ASSETS` (single-file build,
   data URIs) vs relative `assets/` fetches (dev). ALL asset URLs go through
-  `assetUrl(assets, path)`. `src/assets` is a symlink to `../assets` for dev serving.
+  `assetUrl(assets, path)`, which checks `images`, `audio` and (since E3h)
+  `models` — the five character glbs, inlined. `src/assets` is a symlink to
+  `../assets` for dev serving. **The dev/smoke server is rooted at `src/`**, so
+  `dist/` is not reachable from it; the E3h gate starts its own server there.
+- `assets/faces/` — 39 JPEGs, in the repo but **published by neither build**
+  since E3h. They only ever went on a paper doll's head, so they are reachable
+  only on localhost (the off arm, the glb-404 fallback). Republish them and the
+  credits section must come back with them — `build.mjs` makes that conditional
+  on the files actually shipping, deliberately.
 - `src/world.js` — street ribbons + 995 extruded OSM buildings (merged geometry),
   `streetLine` polyline (north→south, ~1617m), `nearestStreetPoint` for corridor clamp.
 - `src/npcs.js` / `src/characters.js` / `src/interact.js` — the 124 vendors.

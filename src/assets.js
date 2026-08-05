@@ -61,6 +61,10 @@ export function assetUrl(assets, path) {
   if (assets) {
     if (assets.images && assets.images[path]) return assets.images[path];
     if (assets.audio && assets.audio[path]) return assets.audio[path];
+    // E3h: the character glbs, as model/gltf-binary data URIs. GLTFLoader goes
+    // through THREE.FileLoader, which handles a data: URL the same as any
+    // other, so nothing in characters.js or leithers.js changes.
+    if (assets.models && assets.models[path]) return assets.models[path];
   }
   return `assets/${path}`;
 }
