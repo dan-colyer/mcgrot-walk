@@ -125,10 +125,12 @@ async function main() {
   buildGables(assets, world, scene);     // baked soot/blocked-window/ghost-sign dressing on blank gable walls
   buildChimneys(assets, world, scene);   // instanced chimney stacks + TV aerials along rooflines
   buildCars(assets, world, scene);       // abandoned wrecks in the parking lanes; the dead bus on the rails
-  // E3b, LANDED OFF (characters.js CHARACTERS_ENABLED = false): returns
-  // immediately and adds nothing to the scene until the flag is flipped.
+  // E3b/E3e: stands a generated mesh in each of the 124 vendors' groups.
   // Placed after buildCars so the two glb loaders sit together, and after
-  // buildNpcs because it parents a mesh to each vendor and hides its doll.
+  // buildNpcs — which since E3g leaves each vendor holding only its props.
+  // THIS CALL IS WHAT DECIDES WHETHER A VENDOR HAS A BODY AT ALL: it builds
+  // the paper doll when the crowd is switched off, and when an archetype's
+  // glb fails to load. Skip it and the street is 124 floating comics.
   const characters = buildCharacters(assets, world, scene, npcs);
   const scenery = buildScenery(world, scene);
   scenery.onArcFlash = () => ambience.triggerCrackle();

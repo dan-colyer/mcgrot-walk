@@ -1,6 +1,10 @@
 // E3b — five generated meshes standing in for 124 paper dolls.
 //
-// SHIPPING SINCE E3e. It landed OFF in E3b, exactly as ANCHORS_ENABLED did, so
+// SHIPPING SINCE E3e, and SINCE E3g THE ONLY FIGURE BUILT. The paper doll is
+// no longer constructed underneath — this file asks npcs.js for one only when
+// the crowd is off or an archetype fails to fetch.
+//
+// It landed OFF in E3b, exactly as ANCHORS_ENABLED did, so
 // that the scene stayed byte-identical until the flip could be paid for
 // properly; E3e paid for it — 23 goldens deleted and recaptured, six draw-call
 // baselines re-cut by hand (see docs/VALIDATION.md § E3e).
@@ -61,14 +65,14 @@ const COMIC_CLEARANCE = 0.17;
 // E3c — the per-vendor colour note, which the scarf used to carry and cannot
 // (see the swap below: two of the five archetypes have no neck).
 //
-// The note is taken off the vendor's OWN SCARF MATERIAL rather than by
-// re-hashing its name. Same reason measure() reads world matrices: a mesh that
-// recomputed the hash would agree with the doll by construction, whereas this
-// one agrees because it read what the doll is actually wearing. That mattered
-// most when E3d's LOD was still planned (a swap must not change a vendor's
-// colour mid-street); E3d.0 rejected the LOD, so the doll is now hidden rather
-// than swapped to, and this is a correctness property rather than a live
-// constraint.
+// The note is the vendor's own `noteColor`, a value npcs.js computes for every
+// vendor whether or not it ever builds a scarf to hang it on. Until E3g it was
+// read off the live scarf material, which was the stronger source — a mesh
+// that re-hashed the name would agree with the doll by construction, whereas
+// reading the scarf agreed because it read what the doll was wearing. E3g
+// stopped shipping the scarf, so that reading moved to the gate, which now
+// compares this vendor's mesh note against the same vendor's scarf on the
+// off-arm page. The independence is preserved; it just spans two boots.
 //
 // Applied as CHROMA ONLY. The scarf colours are dark (average ~0.2), and
 // multiplying an albedo map by one directly would both repaint and blacken the
@@ -169,11 +173,24 @@ export function buildCharacters(assets, world, scene, npcs) {
   const tinted = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceTint != null)
     ? !!window.__mcgrotForceTint
     : true;
+  // E3g — force every archetype fetch to fail, localhost only. The doll is now
+  // built ONLY on that failure path (that is what keeps the single-file
+  // artifact's street populated while its glbs 404), and a fallback nothing
+  // exercises is decoration. This is how the suite exercises it.
+  const forceFail = isLocal && typeof window !== 'undefined' && !!window.__mcgrotForceCharacterFail;
 
-  if (!enabled) return { enabled, tinted, loaded: () => 0, assigned: 0, counts: {} };
+  const all = npcs && Array.isArray(npcs.npcs) ? npcs.npcs : [];
 
-  const list = npcs && Array.isArray(npcs.npcs) ? npcs.npcs : [];
-  if (!list.length) return { enabled, tinted, loaded: () => 0, assigned: 0, counts: {} };
+  // E3g — THIS FUNCTION IS WHERE THE DOLL COMES FROM. npcs.js builds a
+  // vendor's props and stops; the box figure is constructed here, and only
+  // when the generated crowd is not going to stand in its place. Off, or no
+  // vendors to mesh, means every vendor gets its doll back.
+  if (!enabled || !all.length) {
+    for (const npc of all) npc.buildDoll();
+    return { enabled, tinted, loaded: () => 0, assigned: 0, counts: {} };
+  }
+
+  const list = all;
 
   // Each mesh is parented to its VENDOR's group rather than to a characters
   // group of its own: it then inherits the idle sway and the street-facing yaw
@@ -198,10 +215,10 @@ export function buildCharacters(assets, world, scene, npcs) {
   const loader = new GLTFLoader();
   const instances = [];
   let loaded = 0;
+  let failed = 0;
 
   for (const { arch, npcs: members } of wanted.values()) {
-    loader
-      .loadAsync(assetUrl(assets, arch.file))
+    (forceFail ? Promise.reject(new Error('forced')) : loader.loadAsync(assetUrl(assets, arch.file)))
       .then((gltf) => {
         const proto = normalise(gltf.scene);
         // The prototype's own width once it is 1.0 tall — the denominator the
@@ -237,8 +254,14 @@ export function buildCharacters(assets, world, scene, npcs) {
           if (tinted) tintInstance(inst, m.npc);
           inst.scale.set(m.height * m.squash, m.height, m.height * m.squash);
           m.npc.group.add(inst);
-          for (const part of m.npc.dollBody || []) part.visible = false;
-          // THE SCARF DOES NOT SURVIVE THE SWAP. The E3 plan kept it as the
+          // NOTHING TO HIDE. Until E3g the doll was built and then switched
+          // invisible here — 744 meshes and 16,368 triangles standing in the
+          // scene forever so the renderer could cull them every frame. It is
+          // simply not constructed now; npcs.js builds a vendor's props and
+          // waits to be asked for the figure. The `visible = false` loop that
+          // used to live on this line is what E3g deleted.
+          //
+          // THE SCARF DOES NOT SURVIVE THE SWAP EITHER. The E3 plan kept it as the
           // per-vendor colour note, but a neck-height accessory needs a neck
           // and two of the five archetypes have not got one: measured with
           // glb-proportions, Slab's and Stoop's width never dips between
@@ -248,7 +271,6 @@ export function buildCharacters(assets, world, scene, npcs) {
           // sits in Morag's hair. So the colour note comes from the per-vendor
           // tint above (the wreckify() pattern) instead — a change to the E3
           // plan, not an omission from it. E3c is where that landed.
-          if (m.npc.scarf) m.npc.scarf.visible = false;
           // The comic only needs Z. Its height and aspect are the comic's own
           // and stay untouched; `squash` is in there because a widened mesh has
           // a proportionally deeper belly too.
@@ -259,21 +281,34 @@ export function buildCharacters(assets, world, scene, npcs) {
           loaded++;
         }
       })
-      .catch(() => null); // assets absent (single-file artifact) — same as cars.js
+      // Assets absent — the single-file artifact, where the five glbs are not
+      // inlined and every fetch 404s. Before E3g this could be `() => null`,
+      // because the doll was already standing there and the hide loop above
+      // had simply not run yet. It is not standing there now, so this is the
+      // one thing between the artifact and an empty street: the vendors that
+      // wanted THIS archetype get their paper doll built, late.
+      .catch(() => { for (const m of members) { m.npc.buildDoll(); failed++; } });
   }
 
   const counts = {};
   for (const [name, w] of wanted) counts[name] = w.npcs.length;
-  return { enabled, tinted, loaded: () => loaded, assigned: list.length, counts, measure };
+  return { enabled, tinted, loaded: () => loaded, fellBack: () => failed, assigned: list.length, counts, measure };
 
   // What is actually standing in the street, per vendor, in plain numbers.
   //
   // Everything here is read off world matrices and geometry — nothing recomputes
   // the selection or the scale. That is the point: a gate that called
   // vendorTransform() again would pass whether or not the scene ever used it.
-  // `dollTop` in particular comes from the hidden box meshes' own geometry, so
-  // the height claim is checked against a second, independently-built figure
-  // rather than against the formula that positioned the first.
+  //
+  // E3g CHANGED WHERE THE OTHER HALF OF TWO COMPARISONS COMES FROM. This used
+  // to also return `dollTop` (off the hidden box geometry) and `scarfNote`
+  // (off the live scarf material), so the height and note gates each held two
+  // independently-built figures at once. The doll is not in this scene any
+  // more, so those two fields are gone rather than quietly re-derived from the
+  // formula that positioned the mesh — which is what "relaxing" them would
+  // have amounted to. The gates now read the doll side off the OFF-ARM page
+  // and join on vendor name: two separate scene builds, two separate
+  // construction paths, and no shared object that could satisfy both.
   function measure() {
     return instances.map(({ npc, arch, inst, protoAspect, protoColor }) => {
       // In the VENDOR's frame, not the world's. Leith Walk curves, so every
@@ -283,25 +318,15 @@ export function buildCharacters(assets, world, scene, npcs) {
       // 0.74-1.25 it is — the yaw swamping the signal, exactly the shape of
       // error the verification contract keeps warning about.
       const size = localSize(inst, npc.group);
-      let dollTop = 0;
-      for (const part of npc.dollBody || []) {
-        if (!part.geometry) continue;
-        part.geometry.computeBoundingBox();
-        dollTop = Math.max(dollTop, part.geometry.boundingBox.max.y + part.position.y);
-      }
-      // E3c's colour note, reported as two INDEPENDENTLY-SOURCED chroma
-      // vectors: what this mesh's material actually ended up with, and what
-      // this vendor's scarf is actually wearing. A gate compares them. Both
-      // are read off live materials — neither is the constant the tint was
-      // computed from, so a build that computed a beautiful note and applied
-      // it to the wrong vendor still fails.
+      // E3c's colour note: what this mesh's material ACTUALLY ended up with,
+      // read off the live material rather than recomputed. The gate compares
+      // it to the same vendor's scarf on the off-arm page.
       //
       // The mesh side is divided by the UNTINTED prototype's own colour first,
       // so what the gate sees is the tint's contribution alone rather than the
       // tint plus whatever albedo factor the glb shipped with.
       let meshMat = null;
       inst.traverse((o) => { if (!meshMat && o.isMesh && o.material) meshMat = o.material; });
-      const scarfCol = npc.scarf && npc.scarf.material ? npc.scarf.material.color : null;
       const applied = meshMat && protoColor ? new THREE.Color(
         meshMat.color.r / (protoColor.r || 1),
         meshMat.color.g / (protoColor.g || 1),
@@ -311,12 +336,10 @@ export function buildCharacters(assets, world, scene, npcs) {
         name: npc.name,
         archetype: arch.name,
         meshTop: size.y,
-        dollTop,
         // 1.0 = this vendor is wearing its archetype's own proportions.
         distortion: (size.x / (size.y || 1)) / (protoAspect || 1),
         materialId: meshMat ? meshMat.uuid : null,
         meshNote: applied ? chroma(applied) : null,
-        scarfNote: scarfCol ? chroma(scarfCol) : null,
       };
     });
   }
@@ -336,7 +359,12 @@ function chroma(c) {
 // REFERENCE, so 124 materials still share the one archetype texture. What the
 // clone costs is 124 sets of uniforms where there were 5, not 124 textures.
 function tintInstance(root, npc) {
-  const src = npc.scarf && npc.scarf.material ? npc.scarf.material.color : null;
+  // npc.noteColor, not npc.scarf.material.color: E3g stopped building the
+  // scarf on the shipped path, and the note moved to a value on the vendor.
+  // Same hex through the same sRGB->linear conversion, so the tint every
+  // vendor receives is bit-for-bit what it was — a prediction the golden set
+  // was made to test, and did (docs/VALIDATION.md § E3g).
+  const src = npc.noteColor;
   if (!src) return;
   const c = src.clone();
   const avg = (c.r + c.g + c.b) / 3;

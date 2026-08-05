@@ -1633,13 +1633,14 @@ async function main() {
     // computed a beautiful assignment and rendered none of it.
     console.log('[smoke] E3b characters gate...');
     {
-      const bootForced = async (on, tint = null) => {
+      const bootForced = async (on, tint = null, fail = false) => {
         const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
-        await ctx.addInitScript(({ v, t }) => {
+        await ctx.addInitScript(({ v, t, f }) => {
           window.__mcgrotFreezeAtBoot = true;
           if (v !== null) window.__mcgrotForceCharacters = v;
           if (t !== null) window.__mcgrotForceTint = t;
-        }, { v: on, t: tint });
+          if (f) window.__mcgrotForceCharacterFail = true;
+        }, { v: on, t: tint, f: fail });
         const page = await ctx.newPage();
         await page.goto(`http://localhost:${port}/`);
         await page.click('#title-enter');
@@ -1660,53 +1661,107 @@ async function main() {
       // the crowd is actually standing in it.
       //
       // Not "characters.enabled is true" — that only proves the flag reads
-      // true. 124 vendors tagged with an archetype and 744 doll parts hidden
-      // (620 boxes + 124 scarves) is what proves the swap ran on the scene the
+      // true. 124 vendors tagged with an archetype, each with a `vendor-mesh`
+      // actually parented to it, is what proves the swap ran on the scene the
       // player gets rather than only on the one the override builds.
+      //
+      // Until E3g this also required 744 HIDDEN doll parts, because the doll
+      // was built and switched off. The claim inverted with the code: there
+      // must now be no doll geometry in this scene at all.
+      const censusOf = () => {
+        const dbg = window.__mcgrotDebug;
+        let meshes = 0, tris = 0;
+        const mats = new Set();
+        dbg.scene.traverse((o) => {
+          if (!o.isMesh) return;
+          meshes++;
+          for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) mats.add(m.uuid);
+          const g = o.geometry;
+          if (!g) return;
+          tris += (g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0)) / 3;
+        });
+        return {
+          enabled: dbg.characters.enabled,
+          vendors: dbg.npcs.npcs.length,
+          tagged: dbg.npcs.npcs.filter((n) => n.archetype != null).length,
+          meshed: dbg.npcs.npcs.filter((n) => n.group.children.some((o) => o.name === 'vendor-mesh')).length,
+          dolls: dbg.npcs.npcs.filter((n) => n.hasDoll).length,
+          // Counted off the vendor's OWN children, not off the `dollBody`
+          // bookkeeping array: a build that forgot to push a part into
+          // dollBody but still added it to the group would read zero here if
+          // this trusted the array, and the whole point is what is in the
+          // scene. The nameplate is a Sprite and the generated figure is a
+          // Group, so every remaining Mesh child that is not the comic is
+          // doll: coat, boots, head, scarf and two hands, 6 per vendor.
+          dollPartsInScene: dbg.npcs.npcs.reduce((a, n) =>
+            a + n.group.children.filter((o) => o.isMesh && o !== n.comicMesh).length, 0),
+          sceneMeshes: meshes,
+          sceneMaterials: mats.size,
+          sceneTriangles: Math.round(tris),
+          faceRequests: performance.getEntriesByType('resource')
+            .filter((r) => /assets\/faces\//.test(r.name)).length,
+        };
+      };
+
       const { ctx: defCtx, page: defPage } = await bootForced(null);
       await defPage.waitForFunction(
         () => window.__mcgrotDebug.characters.loaded() === window.__mcgrotDebug.npcs.npcs.length,
         null, { timeout: 60000 }
       );
-      const shipped = await defPage.evaluate(() => {
-        const dbg = window.__mcgrotDebug;
-        return {
-          enabled: dbg.characters.enabled,
-          tagged: dbg.npcs.npcs.filter((n) => n.archetype != null).length,
-          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0)
-            + dbg.npcs.npcs.filter((n) => n.scarf && !n.scarf.visible).length,
-          vendors: dbg.npcs.npcs.length,
-        };
-      });
+      const shipped = await defPage.evaluate(censusOf);
       results.push({
         name: 'E3e: the shipped default stands the generated crowd in the street',
-        pass: shipped.enabled === true && shipped.tagged === 124 && shipped.hidden === 744
+        pass: shipped.enabled === true && shipped.tagged === 124 && shipped.meshed === 124
           && shipped.vendors === 124,
-        detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged} (must be 124), `
-          + `hidden doll parts=${shipped.hidden} (must be 744 = 620 boxes + 124 scarves)`,
+        detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged}, `
+          + `with a vendor-mesh parented=${shipped.meshed} (all three must be 124)`,
       });
 
       // The OFF override, which is now the one carrying the weight: every
       // comparison below boots one arm with it, so a `false` that quietly
       // meshed the crowd anyway would turn each of those A/B gates into an
-      // A/A that passes on any build. Same shape as the gate above, inverted
-      // — the scene has to come back, not just the flag.
-      const { ctx: offCtx0, page: offPage0 } = await bootForced(false);
-      const forcedOff = await offPage0.evaluate(() => {
-        const dbg = window.__mcgrotDebug;
-        return {
-          enabled: dbg.characters.enabled,
-          tagged: dbg.npcs.npcs.filter((n) => n.archetype != null).length,
-          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0)
-            + dbg.npcs.npcs.filter((n) => n.scarf && !n.scarf.visible).length,
-        };
-      });
-      await offCtx0.close();
+      // A/A that passes on any build. It carries MORE weight after E3g, not
+      // less — the doll it builds is the only surviving source for the height
+      // and note comparisons, which used to have both figures in one scene.
+      const { ctx: offCtx, page: offPage } = await bootForced(false);
+      // A resource timing entry only appears once the fetch COMPLETES, so this
+      // waits for the 39 face JPEGs rather than racing them. Swallowed on
+      // timeout deliberately: the gate below should go red with the count it
+      // actually saw, not blow up the whole region with a Playwright error.
+      await offPage.waitForFunction(() => performance.getEntriesByType('resource')
+        .filter((r) => /assets\/faces\//.test(r.name)).length >= 39, null, { timeout: 30000 })
+        .catch(() => {});
+      const forcedOff = await offPage.evaluate(censusOf);
       results.push({
         name: 'E3e: the off override genuinely puts the paper dolls back',
-        pass: forcedOff.enabled === false && forcedOff.tagged === 0 && forcedOff.hidden === 0,
-        detail: `enabled=${forcedOff.enabled}, tagged=${forcedOff.tagged} (must be 0), `
-          + `hidden doll parts=${forcedOff.hidden} (must be 0)`,
+        pass: forcedOff.enabled === false && forcedOff.tagged === 0 && forcedOff.meshed === 0
+          && forcedOff.dolls === 124 && forcedOff.dollPartsInScene === 744,
+        detail: `enabled=${forcedOff.enabled}, tagged=${forcedOff.tagged} / meshed=${forcedOff.meshed} `
+          + `(both must be 0), dolls built=${forcedOff.dolls} (must be 124), `
+          + `doll parts in the scene=${forcedOff.dollPartsInScene} (must be 744 = 620 boxes + 124 scarves)`,
+      });
+
+      // --- E3g: the doll is not built at all on the shipped path -----------
+      //
+      // The E3 phase gate counted what the hidden crowd cost: 744 meshes, 999
+      // scene materials, 16,368 triangles the renderer culled every frame, and
+      // 39 face JPEGs fetched to texture heads nobody could see. The two arms
+      // above are the SAME BUILD with one override between them, so the deltas
+      // below are the doll's price and not a number from another day.
+      //
+      // The face count is the part a mesh census cannot see: a texture fetch
+      // costs bytes and a round trip whether or not it lands on a visible
+      // face, and it is what E3h will have to inline or not.
+      results.push({
+        name: 'E3g: the shipped scene builds no paper doll, and fetches no face',
+        pass: shipped.dolls === 0 && shipped.dollPartsInScene === 0 && shipped.faceRequests === 0
+          && forcedOff.faceRequests === 39,
+        detail: `shipped: ${shipped.dolls} dolls, ${shipped.dollPartsInScene} doll parts, `
+          + `${shipped.faceRequests} face fetches (all must be 0) — `
+          + `off arm, same build: ${forcedOff.dolls} dolls, ${forcedOff.dollPartsInScene} parts, `
+          + `${forcedOff.faceRequests} face fetches (must be 39). `
+          + `Scene totals ${forcedOff.sceneMeshes} -> ${shipped.sceneMeshes} meshes, `
+          + `${forcedOff.sceneMaterials} -> ${shipped.sceneMaterials} materials`,
       });
 
       const { ctx: onCtx2, page: onPage2 } = await bootForced(true);
@@ -1717,37 +1772,79 @@ async function main() {
       const meshed = await onPage2.evaluate(() => {
         const dbg = window.__mcgrotDebug;
         const m = dbg.characters.measure();
-        const heightErr = m.map((r) => Math.abs(r.meshTop - r.dollTop) / (r.dollTop || 1));
         const dist = m.map((r) => r.distortion);
         return {
           n: m.length,
           counts: dbg.characters.counts,
-          worstHeightErrPct: Math.max(...heightErr) * 100,
-          worstHeightAt: m[heightErr.indexOf(Math.max(...heightErr))].name,
+          rows: m.map((r) => ({ name: r.name, meshTop: r.meshTop, meshNote: r.meshNote })),
           distMin: Math.min(...dist),
           distMax: Math.max(...dist),
-          hidden: dbg.npcs.npcs.reduce((a, n) => a + n.dollBody.filter((p) => !p.visible).length, 0),
+          dollPartsInScene: dbg.npcs.npcs.reduce((a, n) =>
+            a + n.group.children.filter((o) => o.isMesh && o !== n.comicMesh).length, 0),
         };
       });
       const archetypes = Object.keys(meshed.counts);
       results.push({
         name: 'E3b: every vendor is meshed, and all five archetypes are used',
-        pass: meshed.n === 124 && archetypes.length === 5 && meshed.hidden === 620
+        pass: meshed.n === 124 && archetypes.length === 5 && meshed.dollPartsInScene === 0
           && Object.values(meshed.counts).reduce((a, b) => a + b, 0) === 124,
         detail: `${meshed.n} meshes over ${archetypes.length} archetypes `
           + `(${archetypes.map((k) => `${k}:${meshed.counts[k]}`).join(' ')}), `
-          + `${meshed.hidden} doll parts hidden (must be 620 = 5 x 124)`,
+          + `${meshed.dollPartsInScene} doll parts in the scene (must be 0 since E3g)`,
       });
 
+      // The doll side of two comparisons, read off the OFF-ARM page.
+      //
+      // E3g is why this is here rather than inside characters.measure(). Until
+      // then both figures stood in one scene and measure() returned `dollTop`
+      // and `scarfNote` alongside the mesh's own numbers. The doll is not in
+      // the shipped scene any more, and the two ways of coping with that were
+      // to re-derive the doll side from vendorDims() — which turns each gate
+      // into a formula compared with itself, green on any build — or to go and
+      // read a real doll somewhere else. This reads a real doll: a separate
+      // boot, a separate construction path, joined on the vendor's name.
+      //
+      // Stronger than what it replaces, not weaker. The old comparison could
+      // in principle be satisfied by two views of one object; this one cannot,
+      // because the two objects are in different browser contexts.
+      const dollSide = await offPage.evaluate(() => {
+        const chroma = (c) => {
+          const avg = (c.r + c.g + c.b) / 3;
+          return avg > 0 ? [c.r / avg, c.g / avg, c.b / avg] : [1, 1, 1];
+        };
+        return window.__mcgrotDebug.npcs.npcs.map((n) => {
+          let dollTop = 0;
+          for (const part of n.dollBody) {
+            if (!part.geometry) continue;
+            part.geometry.computeBoundingBox();
+            dollTop = Math.max(dollTop, part.geometry.boundingBox.max.y + part.position.y);
+          }
+          return {
+            name: n.name,
+            dollTop,
+            scarfNote: n.scarf && n.scarf.material ? chroma(n.scarf.material.color) : null,
+          };
+        });
+      });
+      const dollByName = new Map(dollSide.map((r) => [r.name, r]));
+      // Names must line up 1:1 or the join is silently comparing nothing. A
+      // renamed vendor should redden this, not vanish from the sample.
+      const joined = meshed.rows.map((r) => ({ ...r, doll: dollByName.get(r.name) }));
+      const unmatched = joined.filter((r) => !r.doll).length;
+
       // The height claim, and the reason E3a's flat TARGET_HEIGHT had to go.
-      // `dollTop` is measured off the hidden box meshes' own geometry, so this
-      // compares two independently-built figures rather than one formula
-      // against itself. The tolerance is for the idle sway, which tilts a
-      // vendor by up to 0.01 rad — nothing here is allowed to drift on purpose.
+      // The tolerance is for the idle sway, which tilts a vendor by up to
+      // 0.01 rad — nothing here is allowed to drift on purpose.
+      const heightErr = joined.map((r) => (r.doll && r.doll.dollTop)
+        ? Math.abs(r.meshTop - r.doll.dollTop) / r.doll.dollTop : Infinity);
+      const worstHeight = Math.max(...heightErr);
       results.push({
         name: 'E3b: every mesh stands at exactly the height of the doll it replaces',
-        pass: meshed.worstHeightErrPct <= 0.5,
-        detail: `worst ${meshed.worstHeightErrPct.toFixed(3)}% (${meshed.worstHeightAt}), budget 0.5%`,
+        pass: unmatched === 0 && joined.length === 124 && worstHeight * 100 <= 0.5,
+        detail: unmatched
+          ? `${unmatched} of ${joined.length} meshed vendors have no same-named doll on the off arm — the join is broken`
+          : `worst ${(worstHeight * 100).toFixed(3)}% (${joined[heightErr.indexOf(worstHeight)].name}) `
+            + `across ${joined.length} vendors joined across two boots, budget 0.5%`,
       });
 
       // The bound the contact sheet was judged at. Selection does the coarse
@@ -1806,7 +1903,21 @@ async function main() {
       const sampleTells = (page, useMesh) => page.evaluate((mesh) => {
         const dbg = window.__mcgrotDebug;
         const list = dbg.npcs.npcs;
-        const heads = list.map((n) => {
+        // Doll arm only. The per-vendor face-point speeds below exist to
+        // compare the body tell against the RETIRED head tell, and the head
+        // that tell moved is doll geometry — since E3g it is built only on the
+        // off arm. The mesh arm measures travel at the generated figure's own
+        // head top instead, and asserts nothing about face speed.
+        //
+        // Returns a sentinel rather than throwing when the doll arm has no
+        // doll. Found by fault injection: breaking the off override's
+        // buildDoll() call killed this whole region on a null `head`, and a
+        // region that dies mid-way prints NO results — including the
+        // off-override gate that had already caught the same defect two
+        // screens earlier. A missing figure has to be a red gate, not a stack
+        // trace.
+        if (!mesh && list.some((n) => !n.head)) return { noDoll: true };
+        const heads = mesh ? [] : list.map((n) => {
           n.head.geometry.computeBoundingBox();
           return { n, fz: n.head.geometry.boundingBox.max.z };
         });
@@ -1828,6 +1939,10 @@ async function main() {
             // The figure's own head top, in world space: the named instance's
             // local (0,1,0) when meshed, the doll's head centre otherwise.
             const n0 = list[0];
+            // On the mesh arm `heads` is empty, so nothing above has flushed
+            // the transform this reads. Without it the loop samples one stale
+            // matrix 100 times and reports zero travel for a tell that works.
+            if (mesh) n0.group.updateWorldMatrix(true, true);
             const target = mesh ? n0.group.children.find((o) => o.name === 'vendor-mesh') : n0.head;
             if (target) {
               const e = target.matrixWorld.elements;
@@ -1852,15 +1967,16 @@ async function main() {
 
         for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; }
         const silent = run(() => {});
-        for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; n.head.rotation.set(0, 0, 0); }
+        for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; if (n.head) n.head.rotation.set(0, 0, 0); }
         const oldTell = run((t) => {
           for (const n of list) {
+            if (!n.head) continue;
             const w = t * 25 + n.phase;
             n.head.rotation.y = Math.sin(w) * 0.09;
             n.head.rotation.x = (Math.sin(w * 0.5) + 1) * 0.05;
           }
         });
-        for (const n of list) { n.head.rotation.set(0, 0, 0); n.setSpeaking(true); n.leanAmp = 1; }
+        for (const n of list) { if (n.head) n.head.rotation.set(0, 0, 0); n.setSpeaking(true); n.leanAmp = 1; }
         const bodyTell = run(() => { for (const n of list) n.leanAmp = 1; });
         for (const n of list) { n.setSpeaking(false); n.leanAmp = 0; }
 
@@ -1876,15 +1992,18 @@ async function main() {
         };
       }, useMesh);
 
-      // On the DOLL, which is still what ships until E3e flips the flag. It is
-      // no longer a distance LOD for anything — E3d.0 rejected that — so once
-      // the flag is on it is hidden geometry, and this arm is the off-state.
-      const dollTell = await sampleTells(defPage, false);
+      // On the DOLL, which since E3g exists only on the off arm. These two
+      // gates are claims about the RETIRED representation and about the
+      // amplitude constant that was derived from it — the second one needs a
+      // head to rotate, so it has to run where the head is. What the player
+      // actually sees is covered by the mesh gate below.
+      const dollTell = await sampleTells(offPage, false);
       results.push({
         name: 'E3c: the speaking tell moves the doll body, and the head no longer moves at all',
-        pass: dollTell.speakingTravelCm > dollTell.silentTravelCm * 4
+        pass: !dollTell.noDoll && dollTell.speakingTravelCm > dollTell.silentTravelCm * 4
           && dollTell.headRotWhileSpeaking === 0 && dollTell.headRotSilent === 0,
-        detail: `head top travel silent ${dollTell.silentTravelCm.toFixed(2)}cm -> speaking `
+        detail: dollTell.noDoll ? 'the off arm built no paper doll — nothing to measure the retired tell on' :
+          `head top travel silent ${dollTell.silentTravelCm.toFixed(2)}cm -> speaking `
           + `${dollTell.speakingTravelCm.toFixed(2)}cm `
           + `(${(dollTell.speakingTravelCm / dollTell.silentTravelCm).toFixed(1)}x, need 4x), `
           + `head rotation ${dollTell.headRotWhileSpeaking} (must be exactly 0)`,
@@ -1896,8 +2015,9 @@ async function main() {
       // goes red if someone bumps SPEAK_ROCK, with a number that says why.
       results.push({
         name: 'E3c: the body tell moves the face at the speed the retired head tell did',
-        pass: dollTell.speedRatioMedian >= 0.8 && dollTell.speedRatioMedian <= 1.3,
-        detail: `face peak speed, new/old across 124 vendors: median `
+        pass: !dollTell.noDoll && dollTell.speedRatioMedian >= 0.8 && dollTell.speedRatioMedian <= 1.3,
+        detail: dollTell.noDoll ? 'the off arm built no paper doll — the retired head tell cannot be reproduced' :
+          `face peak speed, new/old across 124 vendors: median `
           + `${dollTell.speedRatioMedian.toFixed(3)} (allowed 0.80-1.30), `
           + `range ${dollTell.speedRatioMin.toFixed(2)}-${dollTell.speedRatioMax.toFixed(2)}`,
       });
@@ -1926,30 +2046,37 @@ async function main() {
       // vendor's scarf is wearing. Equal direction is the claim; equal length
       // is E3c's own ruling, since the palette's six entries carry 2.7x
       // different amounts of colour and a weak one vanished on a whole figure.
+      // The scarf side comes off the off-arm page (see the join above). Since
+      // E3g the tint reads `npc.noteColor` rather than the scarf material, so
+      // the two sides are the same hex through two different code paths in two
+      // different scenes — which is exactly the mismatch this gate exists to
+      // catch, and would not be caught by comparing the tint to its own input.
+      const dev = (a) => [a[0] - 1, a[1] - 1, a[2] - 1];
+      const cos = joined.map((r) => {
+        if (!r.doll || !r.doll.scarfNote || !r.meshNote) return 0;
+        const u = dev(r.meshNote), v = dev(r.doll.scarfNote);
+        const nu = Math.hypot(...u), nv = Math.hypot(...v);
+        return (nu && nv) ? (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv) : 0;
+      });
+      const strength = joined.map((r) => Math.hypot(...dev(r.meshNote)));
       const notes = await onPage2.evaluate(() => {
         const m = window.__mcgrotDebug.characters.measure();
-        const dev = (a) => [a[0] - 1, a[1] - 1, a[2] - 1];
-        const cos = m.map((r) => {
-          const u = dev(r.meshNote), v = dev(r.scarfNote);
-          const nu = Math.hypot(...u), nv = Math.hypot(...v);
-          return (nu && nv) ? (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv) : 0;
-        });
-        const strength = m.map((r) => Math.hypot(...dev(r.meshNote)));
         return {
           materials: new Set(m.map((r) => r.materialId)).size,
           distinctNotes: new Set(m.map((r) => r.meshNote.map((x) => x.toFixed(4)).join(','))).size,
-          cosMin: Math.min(...cos),
-          strengthMin: Math.min(...strength),
-          strengthMax: Math.max(...strength),
         };
       });
+      const cosMin = Math.min(...cos);
+      const strengthMin = Math.min(...strength);
+      const strengthMax = Math.max(...strength);
       results.push({
         name: 'E3c: every meshed vendor wears its own scarf\'s note, at one strength',
-        pass: notes.materials === 124 && notes.distinctNotes === 6 && notes.cosMin > 0.999
-          && (notes.strengthMax - notes.strengthMin) < 1e-6,
+        pass: unmatched === 0 && notes.materials === 124 && notes.distinctNotes === 6
+          && cosMin > 0.999 && (strengthMax - strengthMin) < 1e-6,
         detail: `${notes.materials} materials / ${notes.distinctNotes} notes, `
-          + `worst mesh-vs-scarf hue agreement ${notes.cosMin.toFixed(4)} (need >0.999), `
-          + `strength ${notes.strengthMin.toFixed(3)}-${notes.strengthMax.toFixed(3)}`,
+          + `worst mesh-vs-scarf hue agreement ${cosMin.toFixed(4)} (need >0.999, `
+          + `scarves read off the off-arm boot and joined on name), `
+          + `strength ${strengthMin.toFixed(3)}-${strengthMax.toFixed(3)}`,
       });
 
       // What the note COST. E3b bought its draw-call refund partly by sharing
@@ -1974,8 +2101,60 @@ async function main() {
           + `materials -> ${onSky.drawCalls} / ${onSky.triangles} with ${notes.materials} per-vendor ones`,
       });
 
+      // --- E3g: the artifact's fallback, exercised ---------------------------
+      //
+      // The single-file build does not inline the five character glbs, so every
+      // archetype fetch 404s there. Before E3g that was harmless: the doll was
+      // already standing and the hide loop simply never ran. Now the doll is
+      // built BY the catch handler, and if that handler is wrong the artifact
+      // is 124 floating comics over an empty pavement — a failure no other gate
+      // in this suite can see, because the suite never loads the artifact.
+      //
+      // `__mcgrotForceCharacterFail` makes every fetch reject on the same
+      // build, so this is the fallback itself and not a simulation of it. The
+      // face count is in here because the doll now appears LATE: the batch
+      // face-loading pass npcs.js used to run at build time would have finished
+      // long before these heads existed, and a faceless crowd was the specific
+      // way this could half-work.
+      const { ctx: failCtx, page: failPage } = await bootForced(null, null, true);
+      await failPage.waitForFunction(() => {
+        const c = window.__mcgrotDebug.characters;
+        return c.loaded() + c.fellBack() === c.assigned;
+      }, null, { timeout: 60000 });
+      // Only 103 of the 124 carry a face path in the catalog; the other 21
+      // wear the bare flat head colour and always did. So the claim is "every
+      // vendor that HAS a face got it", with the 103 spelled out — a catalog
+      // that lost its face assignments would drop both numbers together and
+      // still satisfy "all of them", which is why both are asserted.
+      await failPage.waitForFunction(() => window.__mcgrotDebug.npcs.npcs
+        .filter((n) => n.hasDoll && n.comic.npc.face && n.dollBody[2].material[4].map)
+        .length >= 103, null, { timeout: 30000 }).catch(() => {});
+      const fellBack = await failPage.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        return {
+          loaded: dbg.characters.loaded(),
+          fellBack: dbg.characters.fellBack(),
+          bodies: dbg.npcs.npcs.filter((n) => n.hasDoll
+            || n.group.children.some((o) => o.name === 'vendor-mesh')).length,
+          wantFace: dbg.npcs.npcs.filter((n) => n.comic.npc.face).length,
+          faced: dbg.npcs.npcs.filter((n) => n.hasDoll && n.comic.npc.face
+            && n.dollBody[2].material[4].map).length,
+        };
+      });
+      await failCtx.close();
+      results.push({
+        name: 'E3g: an archetype that fails to load puts that vendor\'s paper doll back',
+        pass: fellBack.loaded === 0 && fellBack.fellBack === 124 && fellBack.bodies === 124
+          && fellBack.wantFace === 103 && fellBack.faced === 103,
+        detail: `all five glbs forced to 404: ${fellBack.loaded} meshed / ${fellBack.fellBack} fell back `
+          + `(must be 0 / 124), ${fellBack.bodies} of 124 vendors have a body, `
+          + `${fellBack.faced} of the ${fellBack.wantFace} with a face path got their texture `
+          + `(both must be 103; the other 21 vendors carry no face in the catalog)`,
+      });
+
       await defCtx.close();
       await onCtx2.close();
+      await offCtx.close();
       await offCtx2.close();
       await flatCtx.close();
     }

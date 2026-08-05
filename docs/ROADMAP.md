@@ -1502,9 +1502,41 @@ Two corrections, both measured:
 | **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ✅ landed — **no**, and the doll is the expensive end; gate strengthened |
 | ~~**E3d**~~ | ~~Distance LOD, doll ↔ mesh~~ | ❌ **rejected by E3d.0** — see below and `VALIDATION.md` |
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ✅ landed — 23 goldens recaptured, 6 baselines re-cut, 2 gates; **E3 is visible** |
-| **E3g** | Retire the paper doll: delete the hidden geometry and the 39 retired face JPEGs | ⬅ next — 744 of 1,253 scene meshes are invisible, measured at the gate |
-| **E3f** | Leithers — 30 walkers, still box columns beside modelled vendors | after E3g; "leave them as dolls" is **no longer an option**, see the gate |
-| **E3h** | Decide the single-file artifact: inline the 2.2MB of glbs, or document that it ships dolls | Dan's call |
+| **E3g** | Retire the paper doll from the shipped path | ✅ landed — **1,253 → 509 scene meshes**, 875 → 487 materials, 39 → 0 face fetches; 2 gates added, 2 re-based across boots; no golden moved |
+| **E3f** | Leithers — 30 walkers, still box columns beside modelled vendors | ⬅ next; "leave them as dolls" is **no longer an option**, see the gate |
+| **E3h** | Decide the single-file artifact: inline the 2.2MB of glbs, or document that it ships dolls | Dan's call — and **the artifact now depends on E3g's fallback**, see below |
+
+#### E3g landed (2026-08-05)
+
+**The doll was not deleted.** It is built by `npc.buildDoll()` and called from
+`characters.js` in exactly two situations — the crowd is off, or an archetype's
+glb 404s. The runtime win is identical to a deletion's, and keeping the
+construction path is what pays for six gates' control arm and for the
+artifact's only fallback. Numbers, the fault injections and the golden control
+are in `VALIDATION.md` § E3g.
+
+**The unit was the gates, not the deletion.** `E3b`'s height check and `E3c`'s
+note check each held two independently-built figures in one scene, which is
+precisely what stopped them being a formula compared with itself. They now read
+the doll side off the **off-arm page and join on vendor name** — two scene
+builds, two construction paths, no shared object. Fault-injected to 19.355%
+height error and −0.9302 hue agreement respectively.
+
+**A harness defect fell out of the injection**: a null `head` killed the whole
+characters region, and a region that throws prints no results — so six red
+gates became one stack trace. Fixed; the same injection now reports all six.
+
+**`goldens:audit` reports 23 false positives on every run, for any change.**
+Its 0.02% floor is far below what six of the poses reproduce at. Confirmed by
+re-running the audit in a worktree at `0128b1c`, which lists the same 23 at the
+same magnitudes with none of E3g's code present. Read the audit against a
+control until the floor is per-pose, or it will hand you six poses of standing
+noise as your change's blast radius.
+
+**E3h's ordering is now fixed rather than open.** The artifact's 404 fallback
+is what keeps its street populated, and that fallback needs `assets/faces`. So
+the faces cannot be dropped from the build until the glbs are inlined —
+E3h inlines first, then the faces and their credits section go together.
 
 #### E3d was rejected by measurement (E3d.0, 2026-08-04)
 

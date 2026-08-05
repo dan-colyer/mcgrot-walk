@@ -2887,6 +2887,171 @@ so the regex now requires the colon.
   golden proves the harness agrees with itself. These were recaptured under
   chromium/metal, and remain renderer-specific.
 
+## Retiring the paper doll (E3g)
+
+E3e stood a generated mesh in each vendor's place and switched the doll
+invisible. The E3 phase gate counted what that cost and left it as finding 1:
+744 of the scene's 1,253 meshes were never drawn. E3g stops building them.
+
+**The doll was not deleted, and that is the ruling, not a hedge.** It is still
+constructed — by `npc.buildDoll()` in `src/npcs.js`, called from
+`src/characters.js` and nowhere else, in exactly two situations: the crowd is
+switched off, or an archetype's glb failed to load. The runtime win is the same
+either way, and keeping the construction path buys two things a deletion would
+have spent:
+
+- **The off arm is the control for six gates**, and after E3g it is the only
+  place a paper doll exists at all. Delete it and the height and note
+  comparisons below have nothing to compare against.
+- **The single-file artifact still 404s on all five glbs.** Before E3g that was
+  harmless — the doll was already standing and the hide loop simply never ran.
+  Now the fallback is load-bearing, and without it the artifact would be 124
+  floating comics over empty pavement.
+
+### What it cost the scene, measured on one build
+
+Both columns are the same commit with one localhost override between them, so
+these are the doll's price and not a figure from another day.
+
+| | off arm (dolls) | shipped (meshes) |
+|---|---|---|
+| scene meshes | 1,129 | **509** |
+| scene materials | 875 | **487** |
+| doll parts in the vendor groups | 744 | **0** |
+| face JPEGs fetched | 39 | **0** |
+
+744 meshes and 388 materials gone, and 39 texture fetches that existed only to
+paint heads nobody could see. The `skyline` draw-call refund is unchanged at
+2.73x — invisible objects were never drawn, so the saving here is scene-graph
+traversal, material bookkeeping and 1.1MB of texture fetch, not rasterisation.
+
+### The two gates this broke, and how they were fixed
+
+This is the whole unit; the deletion was twenty minutes.
+
+`E3b: every mesh stands at exactly the height of the doll it replaces` compared
+`meshTop` against `dollTop` measured off the hidden box geometry.
+`E3c: every meshed vendor wears its own scarf's note` compared the mesh's
+material against the live scarf material. Both were deliberately built to hold
+two independently-constructed figures, so that neither could be satisfied by
+the formula that produced it. Remove the doll and each collapses into a
+comparison of `vendorDims()` with itself, green on any build.
+
+**They now join across two boots on the vendor's name.** The mesh side is read
+from the shipped page, the doll side from the off-arm page, and the gate
+matches them by name — with the unmatched count asserted at zero, so a renamed
+vendor reddens the gate rather than quietly leaving the sample. This is
+*stronger* than what it replaces: the old comparison could in principle be
+satisfied by two views of one object, and two objects in two browser contexts
+cannot be.
+
+Both were fault-injected. Restoring E3a's flat `TARGET_HEIGHT` (`height = 1.9`)
+took the worst height error to **19.355%** against a 0.5% budget. Re-hashing
+each vendor's note with 32 instead of 31 — same six notes, same equal strength,
+wrong vendor — took the worst hue agreement to **-0.9302** against a >0.999
+floor. Neither is caught by anything else in the region.
+
+### The gates added
+
+| gate | what it holds |
+|---|---|
+| `E3g: the shipped scene builds no paper doll, and fetches no face` | 0 dolls, 0 doll parts, 0 face fetches on the shipped path; 124 / 744 / 39 on the off arm of the same build |
+| `E3g: an archetype that fails to load puts that vendor's paper doll back` | all five glbs forced to 404: 0 meshed, 124 fell back, 124 vendors have a body, 103 late-built heads got their face |
+
+Doll parts are counted off **each vendor's own children**, not off the
+`dollBody` array: a build that added a part to the group but forgot to record
+it would read zero if the gate trusted the bookkeeping, and what is in the
+scene is the entire question.
+
+The face count in the fallback gate is 103, not 124, because **21 of the 124
+vendors carry no face path in the catalog** and never did — they wear the bare
+flat head colour. The gate asserts both numbers, so a catalog that lost its
+face assignments would drop them together and still satisfy "all of them".
+
+`__mcgrotForceCharacterFail` is what makes the second gate possible: it rejects
+every archetype fetch on the same build, so the gate exercises the real
+fallback rather than a simulation of it.
+
+### A defect the fault injection found in the harness
+
+Breaking the off override's `buildDoll()` call killed the entire characters
+region on a null `head` — and a region that throws prints **no results at all**,
+including the off-override gate that had already caught the same defect two
+screens earlier. The suite still exited 1, but with a stack trace instead of six
+red gates naming what was wrong. `sampleTells` now returns a sentinel when the
+doll arm has no doll, and the injection produces six named failures and a
+complete report. A gate that cannot report is only half a gate.
+
+### The goldens did not move — and 23 of them move anyway
+
+The prediction was that removing invisible geometry moves no pixels. Invisible
+objects do not render, so this ought to be free.
+
+`npm run goldens:audit` reported **23 goldens beyond its 0.02% noise floor**,
+which looks like the prediction failing. It is not. The audit was re-run in a
+clean worktree at `0128b1c`, the commit *before* E3g, against its own committed
+goldens — and it reports **the same 23 goldens at the same magnitudes**:
+
+| golden | pre-E3g control | with E3g |
+|---|---|---|
+| `golden-haar:mid-805-far` | 0.372% | 0.335% |
+| `golden:mid-805-far` | 0.336% | 0.319% |
+| `golden-clear:elm-row-hero` | 0.121% | 0.127% |
+| `golden:skyline` | 0.050% | 0.059% |
+| `golden:north-250-far` | 0.021% | 0.035% |
+
+Same set, same order of magnitude, several *lower* with E3g than without. So
+E3g moves nothing, no golden was recaptured, and `budget.json` was not touched.
+
+**The standing finding is about the tool, not the change.** `goldens:audit`
+prints a `<=0.02% sky-FBM noise floor` and 23 goldens sit permanently above it,
+so it reports 23 false positives on every run for every change — the same class
+of defect as the phantom 24th golden E3e fixed, and a much better disguise,
+because 23 plausible-looking entries read as "your change did this". The floor
+is right for the poses that hold still and far too tight for `mid-805-far`,
+`elm-row-hero`, `skyline`, `foot-1500-far`, `north-250-far` and
+`lamp-hero-night`, which E3e already recorded reproducing at 0.05–0.35%.
+
+**Until that is fixed, the audit is only readable against a control**: run it
+in a worktree at the previous commit and diff the two lists. Reading the raw
+list as a change's blast radius will attribute six poses' worth of standing
+noise to whatever landed last.
+
+### The picture
+
+E3g authors nothing the player watches, so the claim is that nothing changed —
+which is what the golden control above establishes for the shipped scene. The
+frame that had never been looked at is the **fallback**: before E3g the doll was
+simply already standing, and it is now built by an error handler, late, after
+the batch face-loading pass that used to run at build time would have finished.
+
+Captured at `skyline` and `foot-1500-far`, three arms of one build:
+
+| | `skyline` | `foot-1500-far` |
+|---|---|---|
+| off arm vs forced-404 fallback | 0.049% | 0.048% |
+| shipped (meshes) vs off arm (dolls) | 0.238% | 0.507% |
+
+The fallback reproduces the off arm to **within the 0.058% boot-to-boot floor
+E3e measured** — the late-built street is the same street, faces and all. The
+second row is the mesh-versus-doll difference, and is the size it should be.
+
+### What E3g deliberately does not prove
+
+- **Nothing about the artifact's actual bytes.** The 39 face JPEGs are no
+  longer *fetched* by the shipped scene, but `build.mjs` still copies
+  `assets/faces` into `dist-site/` and still generates the credits section
+  from `credits.json`. Removing them is E3h's business, not E3g's, and the
+  order matters: while the artifact's glbs 404 the fallback needs those faces,
+  so deleting them before inlining the glbs would ship a faceless crowd.
+- **Nothing about the Leithers.** The 30 ambient walkers are still paper dolls
+  and still build the whole figure at boot. That is E3f.
+- **The off arm's picture is not the shipped picture.** Six gates now read
+  their control from a scene the player never sees. That was already true of
+  the draw-call refund gate; E3g makes it true of the height and note gates
+  too, and the risk it carries is that a defect confined to the shipped
+  construction path has one fewer place to show up.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

@@ -4,6 +4,15 @@
 // entry (falling back to the 3-comic manifest for the single-file artifact),
 // lines them along the whole street, and returns a manager with update(dt, t).
 //
+// THE DOLL IS NO LONGER BUILT BY DEFAULT (E3g). buildNpc() constructs a
+// vendor's PROPS — comic, nameplate — and the box figure itself only when
+// something asks for it via npc.buildDoll(). src/characters.js is the only
+// caller: it builds the doll when the generated crowd is switched off, and
+// when an archetype's glb fails to load (the single-file artifact, where the
+// glbs are absent). Shipping the doll hidden underneath the meshes cost 744
+// meshes, 999 materials and 16,368 never-drawn triangles for nothing; see
+// docs/VALIDATION.md § E3g for the measured figures.
+//
 // Scaled for a crowded street (100+):
 //  - each character's coat/boot boxes are merged to 2 draws (was ~8 meshes);
 //  - face textures are SHARED — each unique face JPEG is loaded once and reused
@@ -252,12 +261,31 @@ export function buildNpcs(assets, world, scene, camera) {
   const streetLine = world.streetLine || [];
   const npcs = [];
 
-  // Unique face JPEG -> list of materials waiting for it (load once, share).
-  const faceMats = new Map();
+  // Unique face JPEG -> its texture, loaded once and shared.
+  //
+  // Loaded on FIRST REGISTRATION rather than in a batch pass after the layout
+  // loop (E3g). A doll can now be built late — the artifact builds its dolls
+  // only once an archetype's glb has failed to load, which is several ticks
+  // after that pass would have run — so a batch pass would leave every late
+  // doll faceless. A material registering a path already loaded gets the
+  // texture immediately.
+  const faceTex = new Map();
+  const facePending = new Map();
+  const applyFace = (mat, tex) => {
+    mat.map = tex;
+    mat.color.setScalar(mat.userData.anchorGlow || LIT_ALBEDO_GAIN);
+    mat.needsUpdate = true;
+  };
   const registerFace = (path, mat) => {
     if (!path) return;
-    if (!faceMats.has(path)) faceMats.set(path, []);
-    faceMats.get(path).push(mat);
+    if (faceTex.has(path)) { applyFace(mat, faceTex.get(path)); return; }
+    if (facePending.has(path)) { facePending.get(path).push(mat); return; }
+    facePending.set(path, [mat]);
+    loadSRGB(assetUrl(assets, path), (tex) => {
+      faceTex.set(path, tex);
+      for (const m of facePending.get(path)) applyFace(m, tex);
+      facePending.set(path, []);
+    });
   };
 
   // localhost-only override (mirrors __mcgrotForceDaySeed etc — see debug.js)
@@ -284,13 +312,6 @@ export function buildNpcs(assets, world, scene, camera) {
     scene.add(npc.group);
     npcs.push(npc);
   });
-
-  // Load each unique face once, apply to every material that registered it.
-  for (const [path, mats] of faceMats) {
-    loadSRGB(assetUrl(assets, path), (tex) => {
-      for (const m of mats) { m.map = tex; m.color.setScalar(m.userData.anchorGlow || LIT_ALBEDO_GAIN); m.needsUpdate = true; }
-    });
-  }
 
   const _p = new THREE.Vector3();
   function update(dt, time) {
@@ -346,72 +367,22 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
   const build = comic.npc.build || DEFAULT_BUILD;
 
   const group = new THREE.Group();
-  const coatMat = clothMat(coatColor, false);
-  const bootMat = new THREE.MeshLambertMaterial({ color: 0x15140f, flatShading: true });
 
   const {
     bootH, legH, bodyW, bodyD, bodyH, headSize,
     legTopY, bodyTopY, headCenterY, headTopY, legX,
   } = vendorDims(build);
 
-  // Merge the coat boxes (legs + body + arms) into one mesh, boots into another.
-  const coatGeos = [];
-  const bootGeos = [];
-
-  for (const sx of [-1, 1]) {
-    const g = new THREE.BoxGeometry(bodyW * 0.4, bootH, bodyD * 1.5);
-    g.translate(sx * legX, bootH * 0.5, bodyD * 0.2);
-    bootGeos.push(g);
-  }
-  for (const sx of [-1, 1]) {
-    const g = new THREE.BoxGeometry(bodyW * 0.36, legH, bodyD * 0.75);
-    g.translate(sx * legX, bootH + legH * 0.5, 0);
-    coatGeos.push(g);
-  }
-  {
-    const g = new THREE.BoxGeometry(bodyW, bodyH, bodyD);
-    g.translate(0, legTopY + bodyH * 0.5, 0);
-    coatGeos.push(g);
-  }
-  const shoulderY = bodyTopY - bodyH * 0.14;
-  const armLen = bodyH * 0.62;
-  for (const sx of [-1, 1]) {
-    const g = new THREE.BoxGeometry(0.13, armLen, 0.13);
-    g.rotateX(-1.15);          // swing forward to cradle the comic
-    g.rotateZ(sx * 0.25);      // draw hands together in front
-    g.translate(sx * (bodyW * 0.5 + 0.02), shoulderY - armLen * 0.28, bodyD * 0.5 + 0.06);
-    coatGeos.push(g);
-  }
-
-  const coatMesh = new THREE.Mesh(mergeGeometries(coatGeos), coatMat);
-  const bootMesh = new THREE.Mesh(mergeGeometries(bootGeos), bootMat);
-  group.add(coatMesh, bootMesh);
-
-  // Oversized head — face JPEG on +Z (front, unlit); the other 5 faces wear a
-  // knitted hood (darker than the coat) instead of bare coat colour, so the
-  // head reads as a hooded person rather than a coat-coloured block.
-  const hoodMat = clothMat(new THREE.Color(coatColor).multiplyScalar(0.62).getHex(), true);
-  const faceMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x8a8472).multiplyScalar(LIT_ALBEDO_GAIN * glow) });
-  // Read by buildNpcs' shared-face loader (below), which resets .color after
-  // the JPEG loads and doesn't otherwise know which vendors are anchors.
-  faceMat.userData.anchorGlow = LIT_ALBEDO_GAIN * glow;
-  registerFace(comic.npc.face, faceMat);
-  // BoxGeometry material order: +X,-X,+Y,-Y,+Z,-Z — index 4 is the front.
-  const headMats = [hoodMat, hoodMat, hoodMat, hoodMat, faceMat, hoodMat];
-  const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize * 0.85), headMats);
-  head.position.set(0, headCenterY, 0);
-  group.add(head);
-
-  // Scarf — a thin box at the collar, the one colour note per vendor, picked
-  // deterministically from the vendor's name.
+  // The vendor's ONE colour note, picked deterministically from its name. This
+  // is a value, not a mesh: the scarf that used to carry it is doll geometry
+  // and no longer ships, but the note itself is the vendor's identity and is
+  // what src/characters.js tints its mesh with. The Color conversion matches
+  // what MeshLambertMaterial({color: hex}) does exactly, so the tint a meshed
+  // vendor receives is unchanged by the doll going away.
   let nameHash = 0;
   for (const ch of comic.npc.name || '') nameHash = (nameHash * 31 + ch.charCodeAt(0)) | 0;
-  const scarf = new THREE.Mesh(
-    new THREE.BoxGeometry(headSize * 0.95, 0.09, headSize * 0.85),
-    new THREE.MeshLambertMaterial({ color: SCARF_COLORS[Math.abs(nameHash) % SCARF_COLORS.length], flatShading: true })
-  );
-  scarf.position.set(0, bodyTopY + 0.02, 0);
-  group.add(scarf);
+  const noteHex = SCARF_COLORS[Math.abs(nameHash) % SCARF_COLORS.length];
+  const noteColor = new THREE.Color(noteHex);
 
   // Comic plane — unlit, grubby-newsprint placeholder until its texture loads.
   const comicH = bodyH * 0.55;
@@ -422,34 +393,31 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
   comicMesh.scale.set(comicH * 0.7, comicH, 1);
   group.add(comicMesh);
 
-  // Hands gripping the comic's bottom corners — without them the comic floats.
-  const handMat = new THREE.MeshLambertMaterial({ color: 0x84745e, flatShading: true });
-  const hands = [];
-  for (const sx of [-1, 1]) {
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.06), handMat);
-    hand.position.set(sx * comicH * 0.28, legTopY + bodyH * 0.55 - comicH * 0.48, bodyD * 0.5 + 0.18);
-    group.add(hand);
-    hands.push(hand);
-  }
-
   const plate = makeNamePlate(comic.npc.name, comic.npc.blurb);
   plate.position.set(0, headTopY + 0.42, 0);
   group.add(plate);
 
   const npc = {
     group,
-    head,
-    scarf,
     comicMesh,
     comic,
     build,
-    // The box figure itself, separable from the things it is HOLDING. E3b
-    // stands a generated mesh in the doll's place and hides these five — coat,
-    // boots, head and the two gripping hands, all of them box geometry sized
-    // from the build triple. The comic, the scarf and the nameplate are the
-    // vendor's props, are positioned in the group's own frame, and stay.
-    // Nothing reads this unless src/characters.js is enabled.
-    dollBody: [coatMesh, bootMesh, head, ...hands],
+    noteColor,
+    // The box figure, built on request and not before (E3g). Empty on the
+    // shipped path: coat, boots, head, scarf and the two gripping hands are
+    // 6 meshes and 8 materials per vendor that the generated mesh replaces,
+    // and standing them in the scene invisible cost 744 meshes and 16,368
+    // triangles the renderer culled every frame forever.
+    //
+    // `head` and `scarf` are null until buildDoll() runs. The gates that read
+    // them (E3b's height check, E3c's note and head-tell checks) boot the
+    // OFF arm, where the doll is what stands in the street — see
+    // docs/VALIDATION.md § E3g for why those comparisons moved across boots
+    // rather than being relaxed.
+    head: null,
+    scarf: null,
+    dollBody: [],
+    hasDoll: false,
     name: comic.npc.name,
     blurb: comic.npc.blurb,
     voice: null,       // PositionalAudio, attached lazily by proximity-audio.js
@@ -469,6 +437,89 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
           comicMesh.scale.set(comicH * (img.width / img.height), comicH, 1);
         }
       });
+    },
+    // E3g — construct the paper doll into this vendor's group. Idempotent, and
+    // callable at any time: src/characters.js calls it at build time when the
+    // generated crowd is off, and LATE (from the glb loader's catch) when an
+    // archetype fails to fetch, which is what keeps the single-file artifact
+    // populated while its character glbs 404.
+    buildDoll() {
+      if (npc.hasDoll) return npc;
+      npc.hasDoll = true;
+
+      const coatMat = clothMat(coatColor, false);
+      const bootMat = new THREE.MeshLambertMaterial({ color: 0x15140f, flatShading: true });
+
+      // Merge the coat boxes (legs + body + arms) into one mesh, boots into another.
+      const coatGeos = [];
+      const bootGeos = [];
+
+      for (const sx of [-1, 1]) {
+        const g = new THREE.BoxGeometry(bodyW * 0.4, bootH, bodyD * 1.5);
+        g.translate(sx * legX, bootH * 0.5, bodyD * 0.2);
+        bootGeos.push(g);
+      }
+      for (const sx of [-1, 1]) {
+        const g = new THREE.BoxGeometry(bodyW * 0.36, legH, bodyD * 0.75);
+        g.translate(sx * legX, bootH + legH * 0.5, 0);
+        coatGeos.push(g);
+      }
+      {
+        const g = new THREE.BoxGeometry(bodyW, bodyH, bodyD);
+        g.translate(0, legTopY + bodyH * 0.5, 0);
+        coatGeos.push(g);
+      }
+      const shoulderY = bodyTopY - bodyH * 0.14;
+      const armLen = bodyH * 0.62;
+      for (const sx of [-1, 1]) {
+        const g = new THREE.BoxGeometry(0.13, armLen, 0.13);
+        g.rotateX(-1.15);          // swing forward to cradle the comic
+        g.rotateZ(sx * 0.25);      // draw hands together in front
+        g.translate(sx * (bodyW * 0.5 + 0.02), shoulderY - armLen * 0.28, bodyD * 0.5 + 0.06);
+        coatGeos.push(g);
+      }
+
+      const coatMesh = new THREE.Mesh(mergeGeometries(coatGeos), coatMat);
+      const bootMesh = new THREE.Mesh(mergeGeometries(bootGeos), bootMat);
+      group.add(coatMesh, bootMesh);
+
+      // Oversized head — face JPEG on +Z (front, unlit); the other 5 faces wear
+      // a knitted hood (darker than the coat) instead of bare coat colour, so
+      // the head reads as a hooded person rather than a coat-coloured block.
+      const hoodMat = clothMat(new THREE.Color(coatColor).multiplyScalar(0.62).getHex(), true);
+      const faceMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x8a8472).multiplyScalar(LIT_ALBEDO_GAIN * glow) });
+      // Read by buildNpcs' shared-face loader, which resets .color once the
+      // JPEG arrives and doesn't otherwise know which vendors are anchors.
+      faceMat.userData.anchorGlow = LIT_ALBEDO_GAIN * glow;
+      registerFace(comic.npc.face, faceMat);
+      // BoxGeometry material order: +X,-X,+Y,-Y,+Z,-Z — index 4 is the front.
+      const headMats = [hoodMat, hoodMat, hoodMat, hoodMat, faceMat, hoodMat];
+      const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize * 0.85), headMats);
+      head.position.set(0, headCenterY, 0);
+      group.add(head);
+
+      // Scarf — a thin box at the collar, wearing the note computed above.
+      const scarf = new THREE.Mesh(
+        new THREE.BoxGeometry(headSize * 0.95, 0.09, headSize * 0.85),
+        new THREE.MeshLambertMaterial({ color: noteHex, flatShading: true })
+      );
+      scarf.position.set(0, bodyTopY + 0.02, 0);
+      group.add(scarf);
+
+      // Hands gripping the comic's bottom corners — without them it floats.
+      const handMat = new THREE.MeshLambertMaterial({ color: 0x84745e, flatShading: true });
+      const hands = [];
+      for (const sx of [-1, 1]) {
+        const hand = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.06), handMat);
+        hand.position.set(sx * comicH * 0.28, legTopY + bodyH * 0.55 - comicH * 0.48, bodyD * 0.5 + 0.18);
+        group.add(hand);
+        hands.push(hand);
+      }
+
+      npc.head = head;
+      npc.scarf = scarf;
+      npc.dollBody = [coatMesh, bootMesh, head, ...hands];
+      return npc;
     },
     setSpeaking(v) {
       npc.speaking = !!v;

@@ -204,9 +204,13 @@ and does not report success until every changed file md5-matches the live URL.
 - `src/world.js` — street ribbons + 995 extruded OSM buildings (merged geometry),
   `streetLine` polyline (north→south, ~1617m), `nearestStreetPoint` for corridor clamp.
 - `src/npcs.js` / `src/characters.js` / `src/interact.js` — the 124 vendors.
-  npcs.js still BUILDS the paper doll (box body, face JPEG on head front) and
-  characters.js hides it and stands a generated mesh in its place — shipping
-  since E3e, so the doll is constructed and never drawn. Proximity prompt →
+  npcs.js builds a vendor's PROPS (comic, nameplate) and characters.js stands a
+  generated mesh in the group. The paper doll (box body, face JPEG on head
+  front) is behind `npc.buildDoll()` and is NOT built on the shipped path since
+  E3g — characters.js is the only caller, and only when the crowd is switched
+  off or an archetype's glb 404s (the single-file artifact's one fallback).
+  Six gates read their doll-side control from the off arm, joined on vendor
+  name across two boots; see docs/VALIDATION.md § E3g before touching it. Proximity prompt →
   overlay + audio. `src/leithers.js` — 30 ambient walkers who listen and
   comment, still paper dolls of their own (they share only `clothMat`). `src/litter.js` — readable comics on the ground. `src/scenery.js` —
   tram, catenary + arc flashes, smoke, debris (seeded PRNG: layout must stay
