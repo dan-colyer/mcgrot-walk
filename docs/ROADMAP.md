@@ -1503,8 +1503,42 @@ Two corrections, both measured:
 | ~~**E3d**~~ | ~~Distance LOD, doll ↔ mesh~~ | ❌ **rejected by E3d.0** — see below and `VALIDATION.md` |
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ✅ landed — 23 goldens recaptured, 6 baselines re-cut, 2 gates; **E3 is visible** |
 | **E3g** | Retire the paper doll from the shipped path | ✅ landed — **1,253 → 509 scene meshes**, 875 → 487 materials, 39 → 0 face fetches; 2 gates added, 2 re-based across boots; no golden moved |
-| **E3f** | Leithers — 30 walkers, still box columns beside modelled vendors | ⬅ next; "leave them as dolls" is **no longer an option**, see the gate |
+| **E3f** | Leithers — the 30 walkers stand on the same five archetypes | ✅ landed — **274 → 64 walker draw calls**, no new assets; 7 gates, 14 goldens recaptured, 4 baselines re-cut |
 | **E3h** | Decide the single-file artifact: inline the 2.2MB of glbs, or document that it ships dolls | Dan's call — and **the artifact now depends on E3g's fallback**, see below |
+
+#### E3f landed (2026-08-05)
+
+**No new assets.** The walkers reuse the five archetypes the vendors are
+already standing on, published through an `onArchetype` subscription in
+`characters.js`. 274 → 64 draw calls across the 30, `skyline` 413 → 315.
+
+**The unit was the judgement, and it went in off first.** Reuse could have read
+as five clones, or dissolved the "crowd is anonymous, readers are characters"
+separation. The flag landed off with the seeded layout diffed against the
+previous commit — all 30 walkers identical — so the frames could be opened
+before a golden was paid for. The pair shot (vendor and walker 3.4m apart, both
+screen positions asserted, camera on their perpendicular bisector) is decisive:
+the box was a box, the mesh is a passer-by. The densest walker cluster on the
+whole street is two, so the clone risk is structurally low.
+
+**A synthesised head axis was rejected by measurement.** Walkers have no
+authored `headScale`, and inventing one bought no extra archetype variety while
+pushing the worst walker to 1.341 squash — outside the 0.70–1.30 bound E3b's
+contact sheet was judged at. They select on girth alone.
+
+**Drawing that invented value from the shared PRNG reseeded the entire crowd**
+while the flag was off and the scene was supposed to be untouched. Caught by
+diffing the seeded layout against a worktree at the previous commit, not by
+looking at pixels. E3f values now come from their own stream.
+
+**The recapture set was measured, not inferred.** The audit listed 24 goldens,
+23 of which move on every run regardless (§ E3g). Projecting all 30 walkers
+into each bookmark's camera named the three poses that actually contain one;
+`lamp-hero-night` was added on the strength of its −98 draw calls when its
+golden had barely moved — **the budget saw what the golden could not**.
+
+**Weakest claim, named as such:** the anonymity separation now rests on height,
+tint and shade rather than on a faceless head, and was judged on two frames.
 
 #### E3g landed (2026-08-05)
 
@@ -1606,7 +1640,16 @@ module's internals. That coupling is exactly what makes findings 1 and 2
 awkward to fix, and E3g should resolve it by moving the doll's construction
 behind a switch in `npcs.js` rather than by hiding it from outside.
 
-**E3f is not a footnote, and is no longer optional.****E3 is visible as of E3e.** `CHARACTERS_ENABLED` ships true: 124 vendors
+**E3f is not a footnote, and is no longer optional.** Finding 4 above is the
+one a player sees: the 30 ambient walkers are box columns standing a couple of
+metres from fully modelled vendors, and E3e made that contrast worse rather
+than better. The capture behind it asserted both figures' screen positions
+before the frame was read, after two earlier attempts photographed tarmac and a
+building wall. *(This paragraph was truncated when the phase-gate section was
+first written — it ran straight into the E3e note below with its evidence
+missing. Restored and completed by E3f, which measured it.)*
+
+**E3 is visible as of E3e.** `CHARACTERS_ENABLED` ships true: 124 vendors
 stand as generated meshes instead of box stacks. 23 goldens were deleted and
 recaptured, six draw-call baselines re-cut by hand, and `skyline` went from
 1112 draw calls to 413. The gate that asserted the shipped default was

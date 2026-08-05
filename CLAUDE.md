@@ -210,9 +210,18 @@ and does not report success until every changed file md5-matches the live URL.
   E3g — characters.js is the only caller, and only when the crowd is switched
   off or an archetype's glb 404s (the single-file artifact's one fallback).
   Six gates read their doll-side control from the off arm, joined on vendor
-  name across two boots; see docs/VALIDATION.md § E3g before touching it. Proximity prompt →
-  overlay + audio. `src/leithers.js` — 30 ambient walkers who listen and
-  comment, still paper dolls of their own (they share only `clothMat`). `src/litter.js` — readable comics on the ground. `src/scenery.js` —
+  name across two boots; see docs/VALIDATION.md § E3g before touching it.
+  Proximity prompt → overlay + audio.
+- `src/leithers.js` — 30 ambient walkers who listen and comment. Since E3f they
+  stand on the SAME five archetypes as the vendors, taken through
+  `characters.onArchetype` rather than fetched (they still own their carrier
+  bags, and `clothMat` is still shared with npcs.js). Their box column is
+  behind `w.buildDoll()`, built only when meshing is off, characters are off,
+  or the archetype 404s. They select on girth alone — synthesising the head
+  axis they lack was measured and rejected. **Anything E3f-specific draws from
+  its own PRNG**: the walkers' layout comes off a fixed `rand` sequence and one
+  extra draw reseeds the whole crowd and every golden with it.
+- `src/litter.js` — readable comics on the ground. `src/scenery.js` —
   tram, catenary + arc flashes, smoke, debris (seeded PRNG: layout must stay
   deterministic). `src/ambience.js` — WebAudio only, must start from a user gesture
   (title card).

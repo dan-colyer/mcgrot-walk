@@ -118,10 +118,10 @@ const SINCE_RULES = [
   // Leaf modules, narrowest first.
   [/^src\/journal\.js$/, ['journal', 'mobile']],
   [/^src\/(anchors|npcs)\.js$/, ['anchors', 'characters', 'onevoice', 'render', 'weather', 'determinism']],
-  // characters.js is landed off, so it cannot move a golden — but npcs.js now
-  // exports vendorDims() for it, and 'characters' is where a wrong number
-  // there shows up.
-  [/^src\/characters\.js$/, ['characters']],
+  // characters.js ships the vendor crowd (E3e) and publishes the archetype
+  // prototypes the walkers stand on (E3f), so it reaches every region that
+  // renders a figure.
+  [/^src\/characters\.js$/, ['characters', 'render', 'weather', 'determinism', 'anchors', 'mobile']],
   [/^src\/moments\.js$/, ['moments']],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
   [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
@@ -142,8 +142,12 @@ const SINCE_RULES = [
   // move a golden, and most of it feeds geomHash. 'weather' for the same
   // reason as post.js: the four non-overcast columns are goldens of the same
   // scene, so anything that moves an overcast golden moves them too.
-  [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|leithers|placeholders|legs|lighting-constants)\.js$/,
+  [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|placeholders|legs|lighting-constants)\.js$/,
     ['render', 'weather', 'determinism', 'lamps']],
+  // leithers.js left this list at E3f: the walkers now stand on the archetype
+  // meshes, so 'characters' is where their gates live, and 'mobile' renders
+  // them too.
+  [/^src\/leithers\.js$/, ['render', 'weather', 'determinism', 'lamps', 'characters', 'mobile']],
   [/^assets\//, ['render', 'weather', 'determinism', 'alignment']],
 ];
 
@@ -2101,6 +2105,154 @@ async function main() {
           + `materials -> ${onSky.drawCalls} / ${onSky.triangles} with ${notes.materials} per-vendor ones`,
       });
 
+      // --- E3f: the 30 ambient walkers stand on the same five meshes --------
+      //
+      // The last paper dolls in the street. They reuse the archetypes
+      // characters.js has already fetched, so this costs no bytes — what it
+      // costs and refunds is below, measured against the SAME build booted
+      // with __mcgrotForceLeitherMesh=false rather than against the doll
+      // numbers recorded on the day.
+      console.log('[smoke] E3f leithers gate...');
+      const walkerCensus = () => {
+        const d = window.__mcgrotDebug;
+        const ws = d.leithers.walkers;
+        let meshes = 0, draws = 0, tris = 0;
+        const mats = new Set(), geos = new Set();
+        for (const w of ws) w.group.traverse((o) => {
+          if (!o.isMesh) return;
+          meshes++;
+          const ms = Array.isArray(o.material) ? o.material : [o.material];
+          // One draw call per material on the mesh: three splits a
+          // multi-material mesh into a group per material, which is exactly
+          // why a boxed head costs six and a generated body costs one.
+          draws += ms.filter(Boolean).length;
+          for (const m of ms) if (m) mats.add(m.uuid);
+          if (!o.geometry) return;
+          geos.add(o.geometry.uuid);
+          const g = o.geometry;
+          tris += (g.index ? g.index.count : g.attributes.position.count) / 3;
+        });
+        const sq = ws.filter((w) => w.mesh).map((w) => w.squash);
+        return {
+          n: ws.length,
+          meshed: ws.filter((w) => w.mesh).length,
+          boxed: ws.filter((w) => w.hasDoll).length,
+          // Every Mesh a walker owns that is neither its generated figure nor
+          // a carrier bag is box body. Counted off the scene, not off a
+          // bookkeeping array — same rule as E3g's vendor census.
+          bodyParts: ws.reduce((a, w) => a + w.dollBody.length, 0),
+          archetypes: [...new Set(ws.map((w) => w.archetype).filter(Boolean))].sort(),
+          squashMin: sq.length ? Math.min(...sq) : 0,
+          squashMax: sq.length ? Math.max(...sq) : 0,
+          // The join key for the height check below: the layout is seeded, so
+          // walker i is the same walker in both arms, and this proves it
+          // rather than assuming it.
+          layout: ws.map((w) => `${w.s.toFixed(4)}|${w.headTopY.toFixed(4)}`),
+          meshTops: ws.map((w) => (w.mesh ? w.mesh.scale.y : 0)),
+          // Read off the box geometry, so the off arm can supply the
+          // independent height the meshed arm has nothing to compare against.
+          dollTops: ws.map((w) => {
+            let top = 0;
+            for (const p of w.dollBody) {
+              if (!p.geometry) continue;
+              p.geometry.computeBoundingBox();
+              top = Math.max(top, p.geometry.boundingBox.max.y + p.position.y);
+            }
+            return top;
+          }),
+          meshes, materials: mats.size, geometries: geos.size,
+          draws, triangles: Math.round(tris),
+        };
+      };
+
+      const bootLeithers = async (m, extra = {}) => {
+        const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+        await ctx.addInitScript(({ v, f }) => {
+          window.__mcgrotFreezeAtBoot = true;
+          if (v !== null) window.__mcgrotForceLeitherMesh = v;
+          if (f) window.__mcgrotForceCharacterFail = true;
+        }, { v: m, f: !!extra.fail });
+        const page = await ctx.newPage();
+        await page.goto(`http://localhost:${port}/`);
+        await page.click('#title-enter');
+        await page.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+        await page.evaluate(() => window.__mcgrotDebug.pauseAuto());
+        await page.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+        await page.evaluate(() => window.__mcgrotDebug.setWeather('overcast'));
+        await page.waitForFunction(() => {
+          const c = window.__mcgrotDebug.characters;
+          return c.loaded() + c.fellBack() === c.assigned;
+        }, null, { timeout: 60000 });
+        return { ctx, page };
+      };
+
+      const { ctx: lwOnCtx, page: lwOnPage } = await bootLeithers(null);
+      const lwOn = await lwOnPage.evaluate(walkerCensus);
+      const { ctx: lwOffCtx, page: lwOffPage } = await bootLeithers(false);
+      const lwOff = await lwOffPage.evaluate(walkerCensus);
+      await lwOnCtx.close();
+
+      results.push({
+        name: 'E3f: every ambient walker stands on a generated mesh, and none keeps a box body',
+        pass: lwOn.n === 30 && lwOn.meshed === 30 && lwOn.boxed === 0 && lwOn.bodyParts === 0
+          && lwOn.archetypes.length >= 3,
+        detail: `${lwOn.meshed} of ${lwOn.n} walkers meshed, ${lwOn.boxed} boxed, `
+          + `${lwOn.bodyParts} box body parts in the scene (must be 0), `
+          + `archetypes used: ${lwOn.archetypes.join(' ') || 'none'}`,
+      });
+
+      // The off arm is the control and has to genuinely restore the boxes,
+      // for the same reason E3e's off override does: every comparison below
+      // is against it.
+      results.push({
+        name: 'E3f: the off override genuinely puts the box columns back',
+        pass: lwOff.meshed === 0 && lwOff.boxed === 30 && lwOff.bodyParts === 90,
+        detail: `${lwOff.meshed} meshed (must be 0), ${lwOff.boxed} boxed (must be 30), `
+          + `${lwOff.bodyParts} box body parts (must be 90 = coat + boots + head x 30)`,
+      });
+
+      // What the swap costs and refunds, one build, one override between the
+      // arms. Same shape as the vendors' and the same direction: a boxed head
+      // carries six materials and so costs six draw calls, and a generated
+      // body costs one.
+      const lwRefund = lwOff.draws / (lwOn.draws || 1);
+      results.push({
+        name: 'E3f: meshed walkers cost triangles and refund draw calls',
+        pass: lwOn.draws < lwOff.draws && lwRefund >= 3 && lwOn.triangles > lwOff.triangles,
+        detail: `walker draw calls ${lwOff.draws} -> ${lwOn.draws} (${lwRefund.toFixed(2)}x refund, floor 3x), `
+          + `meshes ${lwOff.meshes} -> ${lwOn.meshes}, materials ${lwOff.materials} -> ${lwOn.materials}, `
+          + `triangles ${lwOff.triangles} -> ${lwOn.triangles}`,
+      });
+
+      // The bound the VENDOR crowd was judged at, applied to the walkers.
+      // They select on girth alone (see leithers.js): the first version
+      // synthesised a head axis and pushed the worst walker to 1.341, outside
+      // this range, which is the measurement that killed it.
+      results.push({
+        name: 'E3f: no walker is scaled past the distortion the crowd was judged at',
+        pass: lwOn.squashMin >= 0.70 && lwOn.squashMax <= 1.30,
+        detail: `squash ${lwOn.squashMin.toFixed(3)}-${lwOn.squashMax.toFixed(3)}, allowed 0.70-1.30`,
+      });
+
+      // Height, joined across the two boots exactly as E3g does for the
+      // vendors — the meshed arm has no box to measure against, so the box
+      // side comes off the off-arm page. The join key is the seeded layout
+      // itself: if walker i is not the same walker in both arms, the whole
+      // comparison is meaningless, so that is asserted before the heights are.
+      const layoutMatches = lwOn.layout.length === lwOff.layout.length
+        && lwOn.layout.every((v, i) => v === lwOff.layout[i]);
+      const lwHeightErr = lwOn.meshTops.map((t, i) => (lwOff.dollTops[i]
+        ? Math.abs(t - lwOff.dollTops[i]) / lwOff.dollTops[i] : Infinity));
+      const lwWorst = Math.max(...lwHeightErr);
+      results.push({
+        name: 'E3f: every walker mesh stands at the height of the box column it replaces',
+        pass: layoutMatches && lwWorst * 100 <= 0.5,
+        detail: layoutMatches
+          ? `worst ${(lwWorst * 100).toFixed(3)}% over 30 walkers joined across two boots, budget 0.5%`
+          : 'the seeded walker layout DIFFERS between the meshed and boxed arms — '
+            + 'the join is meaningless and something reseeded the crowd',
+      });
+
       // --- E3g: the artifact's fallback, exercised ---------------------------
       //
       // The single-file build does not inline the five character glbs, so every
@@ -2151,6 +2303,34 @@ async function main() {
           + `${fellBack.faced} of the ${fellBack.wantFace} with a face path got their texture `
           + `(both must be 103; the other 21 vendors carry no face in the catalog)`,
       });
+
+      // E3f rides the same fallback. A walker whose archetype never arrives
+      // has no doll standing behind it either, and unlike a vendor it has no
+      // comic or nameplate to mark where it should have been — it would
+      // simply not be there. Measured on the forced-404 arm above's twin.
+      const { ctx: lwFailCtx, page: lwFailPage } = await bootLeithers(true, { fail: true });
+      const lwFail = await lwFailPage.evaluate(walkerCensus);
+      await lwFailCtx.close();
+      results.push({
+        name: 'E3f: a walker whose archetype fails to load keeps its box column',
+        pass: lwFail.meshed === 0 && lwFail.boxed === 30 && lwFail.bodyParts === 90,
+        detail: `all five glbs forced to 404 with walker meshing ON: ${lwFail.meshed} meshed `
+          + `(must be 0), ${lwFail.boxed} fell back to a box (must be 30), `
+          + `${lwFail.bodyParts} box body parts (must be 90)`,
+      });
+
+      // And the coupling to the vendor flag: characters off means no generated
+      // figures in this street at all. A half-meshed off arm would stop being
+      // a control for the vendor gates above.
+      const lwCharsOff = await offPage.evaluate(walkerCensus);
+      results.push({
+        name: 'E3f: switching the vendor crowd off boxes the walkers too',
+        pass: lwCharsOff.meshed === 0 && lwCharsOff.boxed === 30,
+        detail: `__mcgrotForceCharacters=false: ${lwCharsOff.meshed} walkers meshed (must be 0), `
+          + `${lwCharsOff.boxed} boxed (must be 30)`,
+      });
+
+      await lwOffCtx.close();
 
       await defCtx.close();
       await onCtx2.close();

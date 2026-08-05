@@ -132,6 +132,10 @@ async function main() {
   // the paper doll when the crowd is switched off, and when an archetype's
   // glb fails to load. Skip it and the street is 124 floating comics.
   const characters = buildCharacters(assets, world, scene, npcs);
+  // E3f: the 30 walkers reuse the five archetypes characters.js just asked
+  // for. Here rather than inside buildLeithers because the glbs land
+  // asynchronously and buildLeithers has already run — see leithers.js.
+  leithers.useArchetypes(characters);
   const scenery = buildScenery(world, scene);
   scenery.onArcFlash = () => ambience.triggerCrackle();
 

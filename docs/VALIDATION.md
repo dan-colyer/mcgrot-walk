@@ -3052,6 +3052,174 @@ second row is the mesh-versus-doll difference, and is the size it should be.
   too, and the risk it carries is that a defect confined to the shipped
   construction path has one fewer place to show up.
 
+## Meshing the ambient crowd (E3f)
+
+The E3 phase gate's finding 4: the 30 ambient walkers were box columns standing
+2m from fully modelled vendors. E3f stands them on the same five archetypes.
+
+**They reuse the vendors' meshes; nothing new was generated or fetched.** By the
+time a walker could want a prototype, 124 vendors are already standing on it —
+so 30 more figures cost 30 clones and 30 materials, no bytes and no round
+trips. `characters.js` publishes each normalised prototype through an
+`onArchetype` subscription (and publishes `null` on a failed fetch, so a walker
+waiting on an archetype that never arrives falls back rather than waiting
+forever); `main.js` wires the two together after both are built.
+
+### What it cost, measured on one build
+
+Both arms are the same commit with `__mcgrotForceLeitherMesh` between them.
+
+| across the 30 walkers | boxed | meshed |
+|---|---|---|
+| draw calls | 274 | **64** (4.28x refund) |
+| meshes | 124 | **64** |
+| materials | 102 | **60** |
+| triangles | 3,288 | **123,793** |
+
+A boxed head is six draw calls because its BoxGeometry carries six materials,
+one per face; a generated body is one. That is the same trade E3d.0 measured
+for the vendors and ruled on — **draw calls bind, triangles do not** — so this
+is that ruling applied, not re-litigated.
+
+At the bookmarks: `skyline` 413 → **315** and `lamp-hero-night` 421 → **323**,
+an identical −98 in both, which is the same 14 walkers in both frames.
+
+### The picture, which is what the unit was actually for
+
+Reuse was not obviously right. The risk was that 30 walkers on shared meshes
+read as five clones, or that the "crowd is anonymous, readers are characters"
+separation collapsed once every walker had a face. So the flag landed off, the
+machinery went in byte-identical, and the frames were opened.
+
+**The pair shot.** Closest vendor/walker pair with both on open street, camera
+on the **perpendicular bisector** of the two figures, both screen positions
+asserted before the frame was read. Ishbel Dewar (spindle, 1.81m) and a walker
+(slab, 1.57m) at a 3.39m gap, 346px apart on screen. Boxed, the walker is a
+grey column with a blue box hanging off it. Meshed, it is a bulky figure in a
+dark coat carrying its bag, shorter than the vendor, plainly a passer-by rather
+than a character. It reads.
+
+**The clone shot.** The densest cluster of walkers anywhere on the street is
+**two** — 30 walkers over ~1,400m of usable street, both sides. Those two are
+both `slab`, at 1.67m and 1.73m, and at 22m they read as two different people;
+the height difference and the per-walker coat tint carry it. The clone risk is
+structurally low because you essentially never see more than two at once.
+
+**What the separation now rests on.** The doll said "anonymous" with a dark
+plane where a face would be. A Trellis mesh is a single primitive with the face
+painted in and cannot. So it is carried by three things instead: walkers are
+shorter (1.53–1.77m against the vendors' ~1.9m, and the mesh takes each
+walker's own height exactly), drabber (tinted toward their own drab coat at
+`LEITHER_TINT` 0.34, stronger than the vendors' 0.27 colour note), and darker
+(`LEITHER_SHADE` 0.78). **This is the weakest claim in E3f** — it is a look, it
+was judged on two frames, and a walker at close range does now have a face.
+
+### The invented head axis, rejected by measurement
+
+`selectArchetype` takes girth and headScale. The 124 vendors have an authored
+headScale in the catalog; the 30 walkers are procedural and have none. The
+first version synthesised one from a seeded stream inside the vendors' own
+spread, which looked reasonable and was invented data.
+
+| head weight | archetypes used | squash range |
+|---|---|---|
+| 0.25 (synthesised axis) | runt 13, spindle 5, slab 12 | 0.836 – **1.341** |
+| 0 (girth alone) | runt 15, slab 14, stoop 1 | 0.900 – 1.148 |
+
+Three of five either way, so it bought no extra variety — and it pushed the
+worst walker to 1.341, outside the 0.70–1.30 bound the crowd was judged at in
+E3b. A figure distorted further than anything anyone has looked at, in exchange
+for nothing. `selectArchetype` grew a `headWeight` parameter and the walkers
+pass 0.
+
+Only three archetypes are reachable, and that is the walkers' own girth range
+rather than a defect: 0.80–1.25 never gets nearer `bulk` (1.42) than `slab`
+(1.195), nor nearer `spindle` (0.68) than `runt` (0.918).
+
+### A reseeding bug the byte-identical claim caught
+
+Drawing that synthesised value from the shared `rand` stream shifted every
+subsequent draw by one — walker 2 inherited walker 1's coat and the whole crowd
+reseeded. The flag was off at the time, so the scene was supposed to be
+untouched and was not.
+
+Caught by diffing the seeded layout (`s`, side, dir, speed, offset, phase,
+height) for all 30 walkers against a worktree at the previous commit, rather
+than by looking at pixels. E3f-only values now come from their own PRNG.
+
+### The gates
+
+| gate | what it holds |
+|---|---|
+| `E3f: every ambient walker stands on a generated mesh, and none keeps a box body` | 30 meshed, 0 boxed, 0 box parts, ≥3 archetypes |
+| `E3f: the off override genuinely puts the box columns back` | the control arm: 0 meshed, 30 boxed, 90 parts |
+| `E3f: meshed walkers cost triangles and refund draw calls` | 274 → 64, floor 3x, both arms one build |
+| `E3f: no walker is scaled past the distortion the crowd was judged at` | 0.900–1.148 inside 0.70–1.30 |
+| `E3f: every walker mesh stands at the height of the box column it replaces` | joined across two boots, **with the join key asserted first** |
+| `E3f: a walker whose archetype fails to load keeps its box column` | forced 404: 0 meshed, 30 boxed |
+| `E3f: switching the vendor crowd off boxes the walkers too` | the coupling the vendor gates' control depends on |
+
+The height gate uses E3g's cross-boot join, because the meshed arm has no box
+to measure against. Walkers have no names, so the join is by index — and an
+index join is only meaningful if walker *i* is the same walker in both arms, so
+**the seeded layout is compared first** and the gate reports "something
+reseeded the crowd" rather than a height number when it is not. That is the
+guard the reseeding bug above would have tripped.
+
+Fault-injected, all restored: keeping the box under the mesh → 90 parts and the
+refund inverted to 0.90x; the fallback stopping → "0 fell back to a box (must
+be 30)"; a flat 1.9m mesh height → 23.837% worst error; the two arms' layouts
+diverging → the join-key message rather than a number; dropping the coupling to
+the vendor flag → 0 boxed on the characters-off arm.
+
+### The goldens: which moved, and which only looked like it
+
+The audit listed 24 beyond its floor. 23 of those move on every run regardless
+(see § E3g), so the list on its own could not say what E3f did.
+
+The recapture set was chosen by **measuring which poses contain a walker**,
+projecting all 30 into each bookmark's camera:
+
+| pose | walkers in frame | recaptured |
+|---|---|---|
+| `skyline` | 14 (nearest 13.4m) | yes — 4 variants |
+| `north-250-far` | 1 (23.3m) | yes — 4 variants |
+| `elm-row-hero` | 1 (20.9m) | yes — 5 variants |
+| `lamp-hero-night` | not projectable (custom night pose) — but **−98 draw calls, identical to `skyline`** | yes |
+| `mid-805-far` | 0 | no |
+| `foot-1500-far` | 0 | no |
+| `north-150-close`, `mid-550-close`, `fascia-close` | 0 | no |
+| `mobile:hud` | 0 | no |
+
+14 recaptured, four draw-call baselines re-cut by hand (`north-250-far` 47→40,
+`elm-row-hero` 48→41, `skyline` 413→315, `lamp-hero-night` 421→323). No
+`--update-goldens`.
+
+`lamp-hero-night` is the instructive one: its golden moved 0.061%, comfortably
+inside its standing band, and its draw calls fell by 98. At night the walkers
+are dark enough that swapping a box for a figure barely repaints, but the pose
+plainly contains the change — so **the budget saw what the golden could not**,
+and the golden was recaptured on that evidence rather than left because its
+number looked quiet.
+
+`mid-805-far` is the mirror image: 0.307% of movement and **no walker in
+frame**, which independently corroborates § E3g's finding that its noise is not
+attributable to whatever landed last.
+
+### What E3f deliberately does not prove
+
+- **Nothing about the anonymity holding at close range.** The judgement was
+  made at 3.4m and 22m on two frames. A player who walks up to a walker now
+  sees an archetype face they have also seen on vendors.
+- **Nothing about the walkers being the goldens' noise source.** They move, and
+  each weather variant captures at a different simulated moment, which is a
+  plausible mechanism for the standing noise on far poses — but `mid-805-far`,
+  the noisiest, has no walker in frame at all, so it cannot be the whole story.
+  Named as a hypothesis, not a finding.
+- **Nothing about a fourth or fifth archetype for walkers.** Only three are
+  reachable from their girth range. Widening that range would reseed the crowd
+  and move every golden, which is a cost E3f did not pay.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

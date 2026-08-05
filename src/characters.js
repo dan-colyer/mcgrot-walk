@@ -125,14 +125,19 @@ const HEAD_SD = 0.1239;
 // worst case as 0.15) and the next step up costs 30% more squash.
 const HEAD_WEIGHT = 0.25;
 
-export function selectArchetype(build) {
+// `headWeight` is a parameter and defaults to the measured knee above, because
+// E3f found a caller with no head axis to give. The 124 vendors' headScale is
+// authored in the catalog; the 30 ambient walkers are procedural and have
+// none, and synthesising one for them made the assignment measurably worse —
+// see docs/VALIDATION.md § E3f. They pass 0 and select on girth alone.
+export function selectArchetype(build, headWeight = HEAD_WEIGHT) {
   const b = build || DEFAULT_BUILD;
   let best = ARCHETYPES[0];
   let bestD = Infinity;
   for (const a of ARCHETYPES) {
     const dg = (b.girth - a.girth) / GIRTH_SD;
     const dh = (b.headScale - a.headScale) / HEAD_SD;
-    const d = dg * dg + HEAD_WEIGHT * dh * dh;
+    const d = dg * dg + headWeight * dh * dh;
     if (d < bestD) { bestD = d; best = a; }
   }
   return best;
@@ -187,7 +192,10 @@ export function buildCharacters(assets, world, scene, npcs) {
   // vendors to mesh, means every vendor gets its doll back.
   if (!enabled || !all.length) {
     for (const npc of all) npc.buildDoll();
-    return { enabled, tinted, loaded: () => 0, assigned: 0, counts: {} };
+    // onArchetype never fires, so the Leithers keep their dolls too. That is
+    // the right coupling: __mcgrotForceCharacters=false means "no generated
+    // figures in this street", not "no generated VENDORS".
+    return { enabled, tinted, loaded: () => 0, assigned: 0, counts: {}, onArchetype: () => {} };
   }
 
   const list = all;
@@ -216,6 +224,29 @@ export function buildCharacters(assets, world, scene, npcs) {
   const instances = [];
   let loaded = 0;
   let failed = 0;
+
+  // E3f — the normalised prototypes, published to anyone else who wants to
+  // stand a figure in the street. src/leithers.js is the only subscriber: the
+  // 30 ambient walkers reuse these five meshes rather than fetching anything
+  // of their own, so meshing the crowd costs no bytes and no round trips.
+  //
+  // A subscription rather than a returned Map because the glbs land
+  // asynchronously and buildLeithers has already run by then. Late subscribers
+  // are replayed the archetypes that already arrived, so the walkers do not
+  // depend on which module happened to be constructed first.
+  const protoReady = new Map();
+  const protoSubs = [];
+  const fire = (cb, arch, proto) => {
+    try { cb(arch, proto); } catch (e) { console.error('archetype subscriber failed', arch.name, e); }
+  };
+  const publish = (arch, proto) => {
+    protoReady.set(arch.name, { arch, proto });
+    for (const cb of protoSubs) fire(cb, arch, proto);
+  };
+  const onArchetype = (cb) => {
+    for (const { arch, proto } of protoReady.values()) fire(cb, arch, proto);
+    protoSubs.push(cb);
+  };
 
   for (const { arch, npcs: members } of wanted.values()) {
     (forceFail ? Promise.reject(new Error('forced')) : loader.loadAsync(assetUrl(assets, arch.file)))
@@ -280,6 +311,10 @@ export function buildCharacters(assets, world, scene, npcs) {
           instances.push({ npc: m.npc, arch, inst, protoAspect, protoColor });
           loaded++;
         }
+        // AFTER the vendors, and each subscriber isolated: the vendor crowd is
+        // what ships and must not be taken down by whatever else wants a copy
+        // of this mesh. A subscriber that throws loses its own figures only.
+        publish(arch, proto);
       })
       // Assets absent — the single-file artifact, where the five glbs are not
       // inlined and every fetch 404s. Before E3g this could be `() => null`,
@@ -287,12 +322,22 @@ export function buildCharacters(assets, world, scene, npcs) {
       // had simply not run yet. It is not standing there now, so this is the
       // one thing between the artifact and an empty street: the vendors that
       // wanted THIS archetype get their paper doll built, late.
-      .catch(() => { for (const m of members) { m.npc.buildDoll(); failed++; } });
+      .catch(() => {
+        for (const m of members) { m.npc.buildDoll(); failed++; }
+        // Subscribers hear about the failure too, with a null prototype. A
+        // walker waiting on an archetype that never arrives has to fall back
+        // to its own doll, and silence is indistinguishable from "still
+        // loading" — which is how it would end up with no body at all.
+        publish(arch, null);
+      });
   }
 
   const counts = {};
   for (const [name, w] of wanted) counts[name] = w.npcs.length;
-  return { enabled, tinted, loaded: () => loaded, fellBack: () => failed, assigned: list.length, counts, measure };
+  return {
+    enabled, tinted, loaded: () => loaded, fellBack: () => failed,
+    assigned: list.length, counts, measure, onArchetype,
+  };
 
   // What is actually standing in the street, per vendor, in plain numbers.
   //

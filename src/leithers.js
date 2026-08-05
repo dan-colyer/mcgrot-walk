@@ -13,6 +13,71 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clothMat } from './npcs.js';
+import { selectArchetype } from './characters.js';
+
+// E3f — stand the walkers on the same five generated meshes the vendors use.
+//
+// SHIPPING. The machinery went in byte-identical first (the seeded walker
+// layout was diffed against the previous commit, all 30 identical) so the
+// picture could be judged before any golden was paid for; it was judged and
+// it reads. `window.__mcgrotForceLeitherMesh` overrides it on localhost, and
+// that off direction is the control for every A/B below.
+//
+// WHY REUSE RATHER THAN GENERATE. The five archetypes are already fetched,
+// decoded and resident by the time a walker could want one, so 30 more figures
+// cost no bytes, no round trips and no new geometry buffers — only 30 clones
+// and 30 materials. Generating walker-specific meshes was the alternative and
+// is not obviously better: it spends money and asset budget to solve a problem
+// (do 30 walkers read as five clones?) that the crowd of 124 vendors already
+// answers no to at 24.8x reuse.
+//
+// WHAT KEEPS THEM ANONYMOUS. The readers are the characters; the crowd is the
+// town. The doll said that with a dark shadow plane where a face would be, and
+// a generated mesh cannot — it is a single primitive with the face painted in.
+// So the separation is carried by the three things that are still true of a
+// walker and not of a vendor: they are SHORTER (1.53-1.77m against the
+// vendors' 1.9m, and the mesh takes the walker's own height exactly, as the
+// vendors' do), they are DRABBER (tinted from their own drab coat colour at a
+// stronger strength than the vendors' colour note), and they are DARKER
+// overall by LEITHER_SHADE. Whether that is enough is the thing E3f had to
+// look at rather than assert; see docs/VALIDATION.md § E3f.
+export const LEITHERS_MESHED = true;
+
+// Deliberately stronger than the vendors' 0.27 note. A vendor's tint is a
+// colour NOTE on a figure the player is meant to walk up to and read; a
+// walker's is meant to sink it into the background, and the leither coat
+// palette is drab greys and olives, so a strong pull toward it is a pull
+// toward the pavement rather than toward a costume.
+const LEITHER_TINT = 0.34;
+// And darker. The vendors' tint is normalised to average 1.0 precisely so it
+// recolours without darkening; this one is allowed to darken, because "further
+// away and less important" is the whole intent.
+const LEITHER_SHADE = 0.78;
+
+// Select a walker's archetype on GIRTH ALONE, and this is a measured ruling
+// rather than a simplification.
+//
+// The vendors weight the head axis at 0.25 because their headScale is authored
+// per vendor in the catalog, carries real variation, and has nowhere to go
+// except selection. A walker has no headScale at all. The first version of
+// E3f synthesised one from a seeded stream inside the vendors' own spread,
+// which looked reasonable and was invented data. Measured across the 30:
+//
+//   head weight          archetypes used        squash range
+//   0.25 (synthesised)   runt 13 spindle 5 slab 12   0.836 - 1.341
+//   0 (girth only)       runt 15 slab 14 stoop 1     0.900 - 1.148
+//
+// Three of five archetypes either way, so the invented axis bought no extra
+// variety — and it pushed the worst walker to 1.341, past the 1.30 bound the
+// crowd was judged at in E3b. A figure distorted further than anything anyone
+// has looked at, in exchange for nothing. Girth alone keeps every walker
+// inside the judged range with room to spare.
+//
+// Only three archetypes are reachable and that is the walkers' own girth
+// range, not a defect: 0.80-1.25 never gets nearer `bulk` (1.42) than `slab`
+// (1.195), nor nearer `spindle` (0.68) than `runt` (0.918). 30 walkers over 3
+// meshes is 10x reuse against the vendors' 24.8x.
+const LEITHER_HEAD_WEIGHT = 0;
 
 const COUNT = 30;
 const PAVEMENT_OFFSET = 7.6;  // outside the vendor line (6m), on the slabs
@@ -36,15 +101,16 @@ const COMMENT_TEMPLATES = [
   "he's away wi it — \"%Q\"",
 ];
 
-const rand = (() => {
-  let s = 0x1e17e4;
+const prng = (seed) => {
+  let s = seed;
   return () => {
     s |= 0; s = (s + 0x6d2b79f5) | 0;
     let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-})();
+};
+const rand = prng(0x1e17e4);
 
 export function buildLeithers(assets, world, scene, readers) {
   const streetLine = world.streetLine || [];
@@ -58,6 +124,11 @@ export function buildLeithers(assets, world, scene, readers) {
   const group = new THREE.Group();
   group.name = 'leithers';
   scene.add(group);
+
+  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
+  const meshed = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceLeitherMesh != null)
+    ? !!window.__mcgrotForceLeitherMesh
+    : LEITHERS_MESHED;
 
   const walkers = [];
   for (let i = 0; i < COUNT; i++) {
@@ -75,6 +146,56 @@ export function buildLeithers(assets, world, scene, readers) {
     w.bubbleT = 0;
     group.add(w.group);
     walkers.push(w);
+  }
+
+  // E3g's rule applied to the walkers: build the box figure, or the generated
+  // one, but never both. With meshing off the doll goes up now; with it on
+  // every walker waits for its archetype and falls back to a doll if that
+  // archetype never arrives.
+  if (!meshed) for (const w of walkers) w.buildDoll();
+
+  // E3f — take the five prototypes characters.js has already fetched.
+  //
+  // Called from main.js AFTER buildCharacters, because the glbs land
+  // asynchronously and neither module can be sure which was constructed first.
+  // Nothing here fetches: a walker's mesh is a clone of a buffer that is
+  // already resident because 124 vendors are standing on it.
+  function useArchetypes(characters) {
+    if (!meshed) return;
+    // Characters switched off means no generated figures in this street at
+    // all, walkers included — otherwise the off arm would be half meshed and
+    // would stop being a control for anything.
+    if (!characters || !characters.onArchetype || !characters.enabled) {
+      for (const w of walkers) w.buildDoll();
+      return;
+    }
+    const wanted = new Map();
+    for (const w of walkers) {
+      const arch = selectArchetype(w.build, LEITHER_HEAD_WEIGHT);
+      w.archetype = arch.name;
+      w.squash = w.build.girth / arch.girth;
+      if (!wanted.has(arch.name)) wanted.set(arch.name, []);
+      wanted.get(arch.name).push(w);
+    }
+    characters.onArchetype((arch, proto) => {
+      const members = wanted.get(arch.name);
+      if (!members) return;
+      for (const w of members) {
+        // A null prototype is characters.js telling us the fetch failed. The
+        // walker keeps its own box figure, same as the vendor beside it.
+        if (!proto) { w.buildDoll(); continue; }
+        const inst = proto.clone(true);
+        inst.name = 'leither-mesh';
+        tintLeither(inst, w.coat);
+        // The walker's OWN head top, so the mesh occupies the silhouette the
+        // doll would have. Same rule as the vendors, and it is what keeps the
+        // walkers visibly shorter than them rather than normalising the
+        // street to one height.
+        inst.scale.set(w.headTopY * w.squash, w.headTopY, w.headTopY * w.squash);
+        w.group.add(inst);
+        w.mesh = inst;
+      }
+    });
   }
 
   let bubbleCount = 0;
@@ -246,7 +367,7 @@ export function buildLeithers(assets, world, scene, readers) {
     return true;
   }
 
-  return { walkers, update, summonReader };
+  return { walkers, update, summonReader, useArchetypes, meshed };
 }
 
 // ---------------------------------------------------------------------------
@@ -261,10 +382,6 @@ function buildLeither() {
   const coat = COAT_COLORS[Math.floor(rand() * COAT_COLORS.length)];
 
   const group = new THREE.Group();
-  const coatM = clothMat(coat, false);
-  const hoodM = clothMat(multScalarHex(coat, 0.62), true);
-  const bootM = new THREE.MeshLambertMaterial({ color: 0x181610, flatShading: true });
-
   const bootH = 0.1;
   const legH = H * 0.32;
   const bodyW = 0.44 * G;
@@ -275,45 +392,109 @@ function buildLeither() {
   const bodyTopY = legTopY + bodyH;
   const headTopY = bodyTopY + headSize + 0.02;
 
-  const coatGeos = [];
-  for (const sx of [-1, 1]) {
-    const leg = new THREE.BoxGeometry(bodyW * 0.34, legH, bodyD * 0.7);
-    leg.translate(sx * bodyW * 0.24, bootH + legH * 0.5, 0);
-    coatGeos.push(leg);
-    const arm = new THREE.BoxGeometry(0.11, bodyH * 0.7, 0.11);
-    arm.translate(sx * (bodyW * 0.5 + 0.05), bodyTopY - bodyH * 0.62, 0);
-    coatGeos.push(arm);
-  }
-  const torso = new THREE.BoxGeometry(bodyW, bodyH, bodyD);
-  torso.translate(0, legTopY + bodyH * 0.5, 0);
-  coatGeos.push(torso);
-  group.add(new THREE.Mesh(mergeGeometries(coatGeos), coatM));
-
-  const boots = [];
-  for (const sx of [-1, 1]) {
-    const b = new THREE.BoxGeometry(bodyW * 0.36, bootH, bodyD * 1.3);
-    b.translate(sx * bodyW * 0.24, bootH * 0.5, bodyD * 0.15);
-    boots.push(b);
-  }
-  group.add(new THREE.Mesh(mergeGeometries(boots), bootM));
-
-  // Hooded head, face in shadow — a dark plane, not a photo.
-  const shadowM = new THREE.MeshLambertMaterial({ color: 0x221e18, flatShading: true });
-  const headMats = [hoodM, hoodM, hoodM, hoodM, shadowM, hoodM];
-  const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize * 0.9), headMats);
-  head.position.set(0, bodyTopY + headSize * 0.5 + 0.02, 0);
-  group.add(head);
-
-  // The messages: a carrier bag (sometimes two) hanging at hand height.
-  const bagM = new THREE.MeshLambertMaterial({ color: BAG_COLORS[Math.floor(rand() * BAG_COLORS.length)], flatShading: true });
+  // The messages: a carrier bag (sometimes two) hanging at hand height. Always
+  // built — it is what a walker is DOING, not what they are made of, and it is
+  // the prop that still reads them as shopping when the figure underneath is a
+  // generated mesh rather than a box.
+  //
+  // Drawn from the seeded stream before anything conditional below, so the
+  // bag colours and sides are identical whether the walker ends up meshed or
+  // boxed. Move this after a branch and the whole layout reseeds.
+  const bagColor = BAG_COLORS[Math.floor(rand() * BAG_COLORS.length)];
   const bagSides = rand() < 0.3 ? [-1, 1] : [rand() < 0.5 ? -1 : 1];
+  const bagM = new THREE.MeshLambertMaterial({ color: bagColor, flatShading: true });
   for (const sx of bagSides) {
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.11), bagM);
     bag.position.set(sx * (bodyW * 0.5 + 0.1), legTopY + bodyH * 0.12, 0.02);
     group.add(bag);
   }
 
-  return { group, headTopY };
+  const w = {
+    group,
+    headTopY,
+    coat,
+    // The same shape src/npcs.js gives a vendor, minus the head axis a walker
+    // does not have — see LEITHER_HEAD_WEIGHT. `headScale` is carried at the
+    // default so the triple is still the shape vendorDims() and
+    // selectArchetype() expect, and is multiplied by zero on the way in.
+    build: { height: H, girth: G, headScale: 1.5 },
+    archetype: null,
+    squash: 1,
+    mesh: null,
+    hasDoll: false,
+    // E3g's rule: constructed on request, never built and hidden. Called when
+    // meshing is off, when characters are off, or when this walker's archetype
+    // failed to load.
+    buildDoll() {
+      if (w.hasDoll) return w;
+      w.hasDoll = true;
+      const coatM = clothMat(coat, false);
+      const hoodM = clothMat(multScalarHex(coat, 0.62), true);
+      const bootM = new THREE.MeshLambertMaterial({ color: 0x181610, flatShading: true });
+
+      const coatGeos = [];
+      for (const sx of [-1, 1]) {
+        const leg = new THREE.BoxGeometry(bodyW * 0.34, legH, bodyD * 0.7);
+        leg.translate(sx * bodyW * 0.24, bootH + legH * 0.5, 0);
+        coatGeos.push(leg);
+        const arm = new THREE.BoxGeometry(0.11, bodyH * 0.7, 0.11);
+        arm.translate(sx * (bodyW * 0.5 + 0.05), bodyTopY - bodyH * 0.62, 0);
+        coatGeos.push(arm);
+      }
+      const torso = new THREE.BoxGeometry(bodyW, bodyH, bodyD);
+      torso.translate(0, legTopY + bodyH * 0.5, 0);
+      coatGeos.push(torso);
+      const coatMesh = new THREE.Mesh(mergeGeometries(coatGeos), coatM);
+      group.add(coatMesh);
+
+      const boots = [];
+      for (const sx of [-1, 1]) {
+        const b = new THREE.BoxGeometry(bodyW * 0.36, bootH, bodyD * 1.3);
+        b.translate(sx * bodyW * 0.24, bootH * 0.5, bodyD * 0.15);
+        boots.push(b);
+      }
+      const bootMesh = new THREE.Mesh(mergeGeometries(boots), bootM);
+      group.add(bootMesh);
+
+      // Hooded head, face in shadow — a dark plane, not a photo.
+      const shadowM = new THREE.MeshLambertMaterial({ color: 0x221e18, flatShading: true });
+      const headMats = [hoodM, hoodM, hoodM, hoodM, shadowM, hoodM];
+      const head = new THREE.Mesh(new THREE.BoxGeometry(headSize, headSize, headSize * 0.9), headMats);
+      head.position.set(0, bodyTopY + headSize * 0.5 + 0.02, 0);
+      group.add(head);
+
+      w.dollBody = [coatMesh, bootMesh, head];
+      w.head = head;
+      return w;
+    },
+    dollBody: [],
+    head: null,
+  };
+  return w;
+}
+
+// A walker's tint: pulled toward its own drab coat colour, and darkened.
+//
+// Deliberately NOT the vendors' tintInstance(). That one normalises the note
+// to average 1.0 so it recolours a character without dimming them, which is
+// the right call for a figure the player walks up to and reads. A walker wants
+// the opposite: further back, dimmer, part of the pavement. Same mechanism,
+// opposite intent, so it is a separate function rather than a parameter — the
+// two will drift and should be allowed to.
+function tintLeither(root, coatHex) {
+  const c = new THREE.Color(coatHex);
+  const avg = (c.r + c.g + c.b) / 3;
+  if (avg > 0) c.multiplyScalar(1 / avg);
+  const dev = [c.r - 1, c.g - 1, c.b - 1];
+  const len = Math.hypot(dev[0], dev[1], dev[2]);
+  const k = len > 0 ? LEITHER_TINT / len : 0;
+  const mul = new THREE.Color(1 + dev[0] * k, 1 + dev[1] * k, 1 + dev[2] * k)
+    .multiplyScalar(LEITHER_SHADE);
+  root.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    o.material = o.material.clone();
+    o.material.color.multiply(mul);
+  });
 }
 
 function multScalarHex(hex, k) {
