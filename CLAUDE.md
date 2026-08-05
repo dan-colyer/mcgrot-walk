@@ -203,9 +203,12 @@ and does not report success until every changed file md5-matches the live URL.
   `assetUrl(assets, path)`. `src/assets` is a symlink to `../assets` for dev serving.
 - `src/world.js` — street ribbons + 995 extruded OSM buildings (merged geometry),
   `streetLine` polyline (north→south, ~1617m), `nearestStreetPoint` for corridor clamp.
-- `src/npcs.js` / `src/interact.js` — paper-doll NPCs (face JPEG on head front),
-  proximity prompt → overlay + audio. `src/leithers.js` — ambient walkers who listen
-  and comment. `src/litter.js` — readable comics on the ground. `src/scenery.js` —
+- `src/npcs.js` / `src/characters.js` / `src/interact.js` — the 124 vendors.
+  npcs.js still BUILDS the paper doll (box body, face JPEG on head front) and
+  characters.js hides it and stands a generated mesh in its place — shipping
+  since E3e, so the doll is constructed and never drawn. Proximity prompt →
+  overlay + audio. `src/leithers.js` — 30 ambient walkers who listen and
+  comment, still paper dolls of their own (they share only `clothMat`). `src/litter.js` — readable comics on the ground. `src/scenery.js` —
   tram, catenary + arc flashes, smoke, debris (seeded PRNG: layout must stay
   deterministic). `src/ambience.js` — WebAudio only, must start from a user gesture
   (title card).

@@ -1502,7 +1502,9 @@ Two corrections, both measured:
 | **E3d.0** | **One measurement, not a milestone**: is a distance LOD needed at all? | ✅ landed — **no**, and the doll is the expensive end; gate strengthened |
 | ~~**E3d**~~ | ~~Distance LOD, doll ↔ mesh~~ | ❌ **rejected by E3d.0** — see below and `VALIDATION.md` |
 | **E3e** | Flip `CHARACTERS_ENABLED`; deliberate baseline + golden recapture | ✅ landed — 23 goldens recaptured, 6 baselines re-cut, 2 gates; **E3 is visible** |
-| **E3f** | Leithers — 30 walkers, 124 meshes, reuse or leave as dolls | ⬅ next, and genuinely open |
+| **E3g** | Retire the paper doll: delete the hidden geometry and the 39 retired face JPEGs | ⬅ next — 744 of 1,253 scene meshes are invisible, measured at the gate |
+| **E3f** | Leithers — 30 walkers, still box columns beside modelled vendors | after E3g; "leave them as dolls" is **no longer an option**, see the gate |
+| **E3h** | Decide the single-file artifact: inline the 2.2MB of glbs, or document that it ships dolls | Dan's call |
 
 #### E3d was rejected by measurement (E3d.0, 2026-08-04)
 
@@ -1537,11 +1539,42 @@ than its sign. Fault-injected: four extra sub-meshes per vendor takes it to
 1.61× and red, while still refunding draw calls — i.e. still green under the
 old direction-only assertion.
 
-**E3f is not a footnote.** 30 walkers × 4 meshes is 124 ambient meshes that
-also move, and none of the E3a–E3c measurements covered them. Whether they take
-archetypes, stay as dolls, or want something cheaper again is unmeasured.
+#### E3 phase gate — findings (2026-08-05)
 
-**E3 is visible as of E3e.** `CHARACTERS_ENABLED` ships true: 124 vendors
+Run by Opus at Dan's request rather than by Fable. **That is worth discounting
+for**: the gate exists to catch false claims in a phase's own summaries, and
+this phase's summaries were written by the same session that audited them. It
+was weighted towards re-derivable measurement for that reason, and one of its
+own findings had to be withdrawn mid-audit (below).
+
+| | finding | evidence |
+|---|---|---|
+| **1** | **39 face JPEGs still load, decode and upload to the GPU. None is on a visible mesh.** The E3 plan said the photo-collage faces "retire"; they became invisible instead. 1.1MB of assets and 103 live materials. | scene traverse: 103 face materials, `onVisibleMesh: 0` |
+| **2** | **744 of 1,253 scene meshes (59%) are permanently hidden doll parts**, carrying 16,368 never-drawn triangles and most of the scene's 999 unique materials. Since E3d.0 rejected the LOD they have no runtime role at all — only the scarf's *colour* and the gates' off-arm still need them. | scene traverse, visibility resolved through parents |
+| **3** | **The comic plane's belly clearance is gated by nothing.** `comicMesh` appears nowhere in `smoke.mjs`, yet E3b records "half the crowd wearing their comics inside their stomachs" as a defect only the contact sheet caught, and the fix is five hand-measured `frontZ` constants that `characters.js` itself says must be re-measured whenever an archetype is regenerated. | currently CORRECT: 13.0–17.9cm across all 124, against an intended 17cm |
+| **4** | **The walkers are box columns standing 2m from fully modelled vendors.** | capture with both figures' screen positions asserted before reading it |
+| **5** | **The shareable artifact and the live site now show different crowds.** All five glbs 404 in the single-file build, so `.catch(() => null)` leaves the dolls visible. Consistent with the existing cars behaviour, but E3 is the phase that made it matter. | served `dist/` with no `assets/`: every character glb 404 |
+
+**Finding 3 was nearly reported as a live defect and was wrong.** The first
+measurement compared each comic to its mesh's frontmost vertex *anywhere*,
+which is a nose or a knee on some archetypes, and it reported 18 runt vendors
+wearing comics inside their bellies. Restricted to the comic's own height band
+the count is zero. The lesson is the one E3d.0 already paid for twice: a
+plausible number from a measurement nobody checked is worse than no number.
+
+**What the gate did NOT find.** No regression in anything E3 claimed: the
+height match, distortion range, tell parity, tint agreement and draw-call
+refund all re-measure where their commits said. The suite is 239 green. The
+architecture held — `characters.js` stayed additive and the flag genuinely
+gates the scene both ways.
+
+**The one architectural drift worth naming**: `characters.js` reaches into
+`npc.dollBody`, `npc.scarf` and `npc.comicMesh` to hide and reposition another
+module's internals. That coupling is exactly what makes findings 1 and 2
+awkward to fix, and E3g should resolve it by moving the doll's construction
+behind a switch in `npcs.js` rather than by hiding it from outside.
+
+**E3f is not a footnote, and is no longer optional.****E3 is visible as of E3e.** `CHARACTERS_ENABLED` ships true: 124 vendors
 stand as generated meshes instead of box stacks. 23 goldens were deleted and
 recaptured, six draw-call baselines re-cut by hand, and `skyline` went from
 1112 draw calls to 413. The gate that asserted the shipped default was
