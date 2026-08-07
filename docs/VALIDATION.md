@@ -3323,6 +3323,89 @@ reproduced on demand.
   is a line drawn under the ~8 MB practical limit; nobody has measured where
   the artifact host actually refuses.
 
+## E3 phase gate (Fable, 2026-08-07) — method and rationale
+
+The independent audit the phase's own Opus-run gate could not be. Rulings in
+`docs/ROADMAP.md` (§ "E3 — phase-gate audit" and § "Direction ruling"); this
+section records how they were reached and what they rest on.
+
+### A read-only gate, and why that was sound here
+
+This gate ran no suite, no goldens, no probe and no build (Dan's
+constraint: everything a run would show is already recorded). What replaces
+execution is cross-checking three independent records against each other —
+the numbers in this file, the commit messages, and the code as it stands —
+on the load-bearing claims: the archetype constants and `HEAD_WEIGHT` knee
+in `characters.js` match § E3b's sweep; the E3h fix (iterate `ARCHETYPES`,
+not `wanted`) is in the code with the bug's history in its comment; the
+cross-boot join gates, the E3f own-PRNG isolation, and `build.mjs`'s
+conditional credits all read as documented. No contradiction was found at
+any sampled point. What a read-only gate deliberately cannot do is catch a
+claim that all three records repeat *consistently and wrongly* — the
+defence against that class remains the suite's fault injections, which this
+phase used heavily and documented per unit.
+
+### Why collision (E6a) claims zero golden movement
+
+Every golden, bookmark and moment capture poses the camera through the
+debug API, which writes `camera.position` directly. Collision resolution
+lives only in `controls.update()`'s movement integration — the same place
+as the corridor clamp, which has never moved a golden for the same reason.
+So the claim is structural, not statistical: no suite code path passes
+through the collision test. The gate for it is still measured (audit vs a
+control worktree), because "structural" is exactly the kind of reasoning
+the verification contract says to check rather than trust.
+
+### The `goldens:audit` fix, specified
+
+23 goldens sit permanently above the flat 0.02% floor (§ E3g), so every
+run hands the operator six poses of standing noise as their change's blast
+radius. Fix: commit `docs/smoke/goldens/noise.json` — per-golden observed
+bands measured over ≥3 consecutive runs on a quiet tree — and the audit
+flags only above `max(0.02%, 2× band)`. A recapture deletes its band entry
+and the next audit run re-measures it, so the bands can never describe a
+golden that no longer exists. Scheduled for E8 close because that unit
+recaptures the whole set anyway; measuring bands before it would mean
+measuring them twice. Until then: the audit is readable only against a
+control worktree at the previous commit.
+
+What the standing noise says about the golden set's worth: for the ~33
+quiet poses the 0.5% tolerance and the audit both work as designed. For
+the six noisy poses the golden's effective sensitivity is ~0.3–0.5%, and
+real sensitivity is carried by the draw-call baselines — `lamp-hero-night`
+was recaptured on a −98 draw-call move its golden registered as 0.061%
+(§ E3f). The golden-plus-budget *pair* is the instrument; a pose where one
+half is coarse leans on the other.
+
+### The off-arm control pattern — sound, with a boundary
+
+Six gates read their doll-side comparand from the
+`__mcgrotForceCharacters=false` arm, a scene no player sees. Ruled sound:
+a control's job is independence, not realism, and the cross-boot name-join
+(§ E3g) made these comparisons strictly harder to satisfy by accident than
+the single-scene versions they replaced. The boundary to keep: **the off
+arm is a lab fixture and must never be cited as evidence about the shipped
+picture** — shipped-picture claims go through goldens, budgets and the
+capture-and-look rule. Corollary: the paper doll and the 39 faces stay in
+the repo, unpublished. Retiring them would orphan the six gates'
+independent comparand; their carrying cost is repo bytes that ship in
+neither build.
+
+### The blind spot the walker bug still points at
+
+E3h's lesson was that a defect existing only in a build output needs a
+gate that boots one. The suite now boots `dist/`; nothing boots
+`dist-site/`, the build people actually visit. Deploy md5-verifies files
+it knows about and cannot see a missing copy or a runtime 404. Named, not
+fixed here: E7a (the hosting move) carries a booted-site gate — one boot
+of the deployed tree asserting the crowd is meshed and no request 404s —
+and any earlier unit that touches `build.mjs --site` should pull it
+forward. Related, recorded: if `assets/characters/` ever 404s on the live
+site, the doll fallback now dresses a crowd with faces the site no longer
+publishes — blank heads. Accepted as a degraded safety net for a failure
+mode the deploy gate already defends; do not read blank heads as a mesh
+bug.
+
 ## Seeding map (E5 phase gate — the one-story view)
 
 Every source of variation, who owns it, and why the copies that exist are

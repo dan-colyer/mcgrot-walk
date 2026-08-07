@@ -30,6 +30,11 @@ world and the game's world are the same place. Every system should pull toward
 - **The Role** (added 2026-08-02, Dan-directed) — you are not a tourist. You
   wake behind the counter of a shop on the Walk; Leithers come in and deal
   with you; the street is your street. → E9.
+- **The Canon** (added 2026-08-07, Dan-directed) — the comics' named cast is
+  in the game: McGrot at the Gullet, Pomplé, Keth with One Eye, Mike English,
+  the Taxman and the Inspector. The canon table lives in `docs/CANON.md`;
+  the ruling on who the player is and which canon entries are cut lives in
+  the Direction ruling below. → E10 (plus riders in E4/E9b/E∞).
 
 Two standing rules join the constraints: the **Central Bar test** (every joke
 must get a laugh in the Central Bar, said aloud, with Leithers present — punch
@@ -37,13 +42,16 @@ at institutions with letterheads, never at Leith), and **Scots is the prestige
 register** (the language of wit and authority; the RP students are the ones
 out of their depth).
 
-**Sequence: E2f → E5 → E8 → E9a → E3 → E4 → E9b → E6 → E7** (E9c rides with
-E7), E∞ continuous. E8 (style) goes before E3 (characters) deliberately: the
-character pipeline spike must evaluate candidates *under the McGrot grade*,
-because the grade changes what character fidelity is worth buying. E9a (the
-shop, the role) goes before the character/social phases because it is pure
-build with no cast dependency; E9b (the visitor theatre) comes after E4
-because the visitors ARE E4's cast performing in your doorway.
+**Sequence (re-set at the E3 phase gate, 2026-08-07): E6a → E8 close → E10a
+→ E9a → E4 (E10b rides inside it) → E9b → E6b → E7** (E9c rides with E7), E∞
+continuous, E2f queue-jumping whenever Dan's phone is in hand. E10 is the
+canon phase — see "Direction ruling" below. The original rationale stands
+where it still applies: E9a before the social phases because it is pure
+build; E9b after E4 because the visitors ARE E4's cast. E8-before-E3 was
+honoured in the event (E8a–E8d chose grade `b` and the character pipeline
+before E3a generated a mesh); what remains of E8 is close-out, not a loop.
+*(Historical sequence, superseded: E2f → E5 → E8 → E9a → E3 → E4 → E9b → E6
+→ E7.)*
 
 ## How this roadmap is used (the three tiers)
 
@@ -108,7 +116,10 @@ exception left is E7a's mechanical hosting migration.
 | E4 systems, flag-first | medium | street behaviour behind flags |
 | E4 enable commits | **high (review)** | walker changes move leither-bearing goldens |
 | E9b visitor theatre | medium | interior-only; corpus gated by Central Bar test |
-| E6a collision | medium | player-only clamp; bookmarks unaffected |
+| E6a.1 collision: buildings + props — NEXT | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
+| E6a.2 collision: characters | medium | circles on existing groups; prompt-radius ordering gated |
+| E8 close | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
+| E10a the Gullet | medium; **high (review)** on the enable+recapture | new scene geometry, flag-first |
 | E6b the tram | **high (review)** | camera parenting, update order, suspended clamps |
 | E7a hosting move | medium | mechanical migration |
 | E7b presence | medium | plus a hard verify of the silent single-player fallback |
@@ -2601,6 +2612,10 @@ while rendering nine seconds of black. Two additions, binding:
 
 ## Sequencing check (E5 phase gate)
 
+*Superseded by the Direction ruling below (E3 phase gate, 2026-08-07): E3
+landed, and E6a now jumps the queue on Dan's steer. Kept as the record of
+why the order stood at E5.*
+
 **E6 is not the next phase, and neither is anything new.** The standing
 order (E2f → E5 → **E8 → E9a → E3 → E4 → E9b → E6 → E7**) survives E5's
 outcome on re-examination, with one small unit inserted first:
@@ -2662,6 +2677,93 @@ E6a's player-only scope would today protect a street the player mostly
 cannot yet be *in* wrongly (no interiors, no boarding). The reasons E5
 jumped E3 do not transfer to E6 jumping E8 — E8 is cheaper, feeds E3's
 character decisions, and its judging set is pure Dan-delight per hour spent.
+
+## Direction ruling (E3 phase gate, 2026-08-07, Fable)
+
+Dan put the McGrot canon cast on the table (the authoritative table is now
+`docs/CANON.md`) with the steer that these characters and this style need to
+be involved, and asked whether the E-line still points at the game the comics
+describe. It does, with one phase added, one unit promoted, and a short cut
+list. The rulings, so no later session relitigates them:
+
+### The player is the keeper, not McGrot
+
+E9's premise (you wake behind the counter of a daily-seeded shop) and the
+canon's implied premise (the player is McGrot, with a dog) cannot both hold.
+**The keeper wins.** The deciding argument is first-person with no player
+model: "you are McGrot" could only ever be *told* to the player, never shown
+— the canon's entire visual identity (the vest, the apron, the ladle, the
+stoop) would be spent on the one body in the game nobody can see. Standing
+McGrot in the street as its principal NPC spends it where the player looks.
+
+What choosing McGrot-as-player would have cost, recorded because the option
+was genuinely weighed: E9's daily-seeded identity and its share thesis ("who
+did you get today?"), E9c/E7's every-player-is-a-different-keeper presence
+design, and the McGrot-sightings delight — three load-bearing designs struck
+for a nameplate. The game is the street the comics describe; the comics
+describe McGrot from outside, and so does the game.
+
+Pomplé needs no course change: E9b already has him wandering into the
+player's shop, and E10a gives him his canonical post at the Gullet.
+
+### The cast is three tiers, and nothing subsumes anything
+
+- **Principals — the canon cast** (`docs/CANON.md`): named individuals with
+  fixed addresses and date-seeded behaviour. McGrot, Pomplé, Keth with One
+  Eye, Mike English, the Taxman, the Inspector, the Leith Badger. → E10.
+- **Archetypes — the fifteen Leithers** (`docs/LEITH.md`): the sociological
+  crowd, E4's cast, the visitor theatre's repertory. Unchanged. The canon's
+  two customer rows (Local, Tourist) are **subsumed here** — the Auld Boy,
+  the Posh Students and the Gentrifier already are those customers, with
+  better lines.
+- **Chorus — the generated 124 vendors and 30 walkers**: the comic-reading
+  instrument itself. **A stepping stone to nothing — it is the piece**, and
+  it stays. The canon principals stand on the same pipeline (FLUX → Trellis
+  → Lambert re-material → grade `b`), so E3's phase is also the canon's
+  production line: E10a's meshes are three more glbs on a proven path.
+
+### E8 still works as written, and is nearly done
+
+The brief's worry — five Trellis meshes with baked-in lighting are now the
+crowd — was paid for in E3a: `characters.js` strips every glb material to
+Lambert at 0.42 tint precisely because Trellis bakes its key light into the
+albedo, and E8d captured the crowd under grade `b` and judged it ("print on
+a figure rather than noise"). The grade is a post pass over the frame; it
+never cared what the geometry was. What remains of E8 is close-out, not a
+loop: harden preset `b` (`uStyle` enable + wholesale recapture, the
+containment landing as specified), write `docs/STYLE.md` § 2, and the two
+DOM levers (caption boxes, title card as a cover) at whatever size they
+justify. One unit — "E8 close" in the sequence.
+
+### Collision jumps the queue — E6a is next
+
+Dan's steer, and the gate agrees on the merits: E5's "collision buys most
+after the street has its look and its people" was correct and is now
+*satisfied* — E3 spent a phase making 154 figures read as people, and the
+player can stand inside every one of them. The E6a section below is
+decomposed to milestone units and is the next work. E6b (the tram) does not
+move — it still wants E4's cast.
+
+### Cut, because it serves a street this game is not building
+
+- **The dream world — McWonka, the Grot Loompas — cut from the POC.** A
+  whole second level with its own factory geometry, for a game whose piece
+  is one street. If it ever returns it is a phase behind a title card, not a
+  rider. (McWonka survives at most as a date-seeded costume on McGrot — see
+  E10a's variant note.)
+- **The Nether Leithers — parked to references.** An established faction,
+  but it implies a subterranean location the POC has no phase for. They
+  survive as speech (Keth and the Street Drinker Philosopher both know about
+  them) and as one comic-derived prop — a sealed tunnel door, never opened.
+  Cheap canon presence; no location build.
+- **The generic Rival Vendor template — cut.** Mike English is the rival.
+  A template row generalising him is the generic street's version of a
+  specific joke.
+- **The two customer rows — subsumed** into the LEITH.md archetypes, above.
+- **The E∞ McGrot-sightings cryptid — superseded**, not cut: once McGrot
+  has an address, "glimpsed at distance, gone when approached" becomes
+  date-seeded *presence at the Gullet* (see E10a). The share thesis
+  survives as "McGrot was in the day" — stronger, because it is checkable.
 
 ## E8a — The grade rig and round 1 — LANDED 2026-08-03
 
@@ -3007,26 +3109,138 @@ class and takes the **late** gate red (mean 4.5, stddev 7.9) — which is why
 the unit shipped two frames rather than the one specified, and why the bands
 are set from the injection rather than from the shipped reading.
 
+## E3 — phase-gate audit (2026-08-07, Fable): PASSED
+
+The independent read the Opus-run gate could not be. Method note: this gate
+ran **without executing the suite** — every claim was cross-checked between
+the recorded numbers (`VALIDATION.md` §§ E3b–E3h), the commit record and the
+code as it stands, which agree with each other at every point sampled
+(archetype constants, the E3h all-five loading fix, the cross-boot join
+gates, the E3f PRNG isolation, build.mjs's conditional credits). Rationale
+in `VALIDATION.md` § "E3 phase gate (Fable)". Findings and rulings:
+
+1. **The class the Opus gate missed is still open, one build over.** The
+   walker bug's lesson was "a defect that only exists in a build output
+   needs a gate that boots one" — and the suite now boots `dist/` (the
+   artifact) but still nothing boots **`dist-site/`**, the build people
+   actually visit. Deploy md5-verifies files that exist; it cannot see a
+   file that was never copied or a path that 404s at runtime. Named blind
+   spot; **E7a's hosting move carries a booted-site gate** (one boot of the
+   deployed tree, assert crowd meshed + zero 404s), and any earlier unit
+   that touches `build.mjs --site` should pull it forward.
+2. **The site build's fallback quietly degraded.** If `assets/characters/`
+   ever 404s on the live site (bad deploy, CDN hiccup), the doll fallback
+   now dresses heads with faces the site no longer publishes — a
+   blank-headed crowd. Accepted: the fallback is a safety net for a failure
+   mode the deploy gate already defends, and republishing 39 franchise
+   stills to dress a failure state would be backwards. Recorded so nobody
+   reads the blank heads as a mesh bug.
+3. **`goldens:audit`'s 23 standing false positives get fixed, at E8 close.**
+   The fix: commit per-golden noise bands (`docs/smoke/goldens/noise.json`,
+   measured over ≥3 consecutive quiet runs), audit floor = max(0.02%, 2×
+   band); a recapture invalidates its band and re-measures it. E8 close is
+   the moment — it recaptures everything anyway, so the bands are measured
+   once on the new set instead of twice. Until then the control-worktree
+   reading (§ E3g) stands. **Does the noise change the golden set's
+   worth?** For 33 of 39 poses, no. For the six noisy ones the golden is a
+   coarse instrument (~0.3–0.5% effective floor) and sensitivity is carried
+   by the draw-call baselines — which is exactly how E3f caught
+   `lamp-hero-night` (−98 calls under a 0.061% pixel move). The pairing is
+   the instrument; neither half alone is.
+4. **The off-arm control pattern is sound, with its boundary named.** Six
+   gates read their doll-side control from a scene no player sees. That is
+   what a control *is* — a fixture, not a product — and the cross-boot
+   name-join made the comparisons stronger, not weaker. The liability is
+   only ever forgetting the boundary: the off arm must never be cited as
+   evidence about the shipped picture. Consequently the paper doll and the
+   39 faces are **kept, in-repo, unpublished** — retiring them entirely
+   would orphan six gates' independent comparand to save repo bytes that
+   ship nowhere. Refused.
+5. **The four car glbs staying recorded-not-gated in the artifact is
+   correct** — the gate prints the divergence without reddening for a
+   decision that predates E3. If the artifact is ever the primary
+   deliverable, cars join the inlining question then.
+6. **The ambient-crowd anonymity claim stays the weakest in the phase**, as
+   E3f itself recorded. Rider: E10a's judging sheet includes one
+   close-range walker frame, so the claim gets a third look the next time
+   character content is judged anyway.
+7. **`assets/comics/WhatsApp Image 2026-08-04 at 06.51.18.jpeg`** is a real
+   comic (STYLE.md's palette-calibration source, "The Sandwich Incident")
+   sitting outside the pipeline with a space in its name that already broke
+   deploy once. Ingest it through `prep-comics.mjs` like the other 418
+   (hashed name, joins the transcription queue), delete the original.
+   Standing-trickle-sized; ride it with any convenient commit.
+
+**Architecture:** no drift beyond what the phase already recorded. The
+coupling the Opus gate named (characters.js reaching into npcs.js
+internals) was resolved by E3g in the prescribed direction; the one new
+seam — characters.js as archetype *publisher* to leithers.js — is a clean
+subscription with replay and failure notification, and E3h's bug was in its
+first consumer's demand-driven loading, not in the seam itself. The E3
+plan's one silent casualty (the scarf, neckless archetypes) was documented
+where it died. Phase passed.
+
 ## E6 — Getting About (collision, and a tram that runs)
 
-*Dan's call, 2026-07-27. Two items, and the first is a hard prerequisite for the
-second: you cannot ride a tram you can walk through.*
+*Dan's call, 2026-07-27. Two items, no longer sequenced together: E6a jumped
+the queue at the E3 phase gate (2026-08-07, Dan-steered); E6b stays after E4.
+Collision remains a hard prerequisite for the tram: you cannot ride a tram
+you can walk through.*
 
-### E6a — Collision
+### E6a — Collision — NEXT (promoted at the E3 phase gate)
 
-- **The data is already there.** `leith.buildings[].footprint` is a polygon list
-  (`src/world.js:365`), which is what collision wants. The rendered buildings are
-  merged into one geometry, so per-building meshes do not exist and never should
-  — collide against the source footprints, not the mesh.
-- Broadphase: a uniform grid keyed on chainage. The Walk is ~1617m and the player
-  is soft-clamped within `MAX_OFFSET` of the street line already
-  (`src/controls.js`), so the candidate set per frame is tiny.
-- **Player-only first.** Giving leithers collision changes their pathing, which
-  moves them in every golden that has one in frame — a full recapture for a
-  benefit nobody asked for. `computeGeomHash` excludes them, so the determinism
-  check would not even catch the change. Do the player, measure, stop.
-- Also wants collision: the tram hulk, the wrecked cars, the roadworks cones.
-  These are placed by seeded PRNG, so their boxes are static and cheap.
+*Scope: the player stops passing through buildings, characters and street
+props. Blocking is one-way — the world blocks the player; nothing pushes an
+NPC. Decomposed for Opus; the design rulings here are taken, not open.*
+
+**Design rulings (Fable, 2026-08-07):**
+
+- **Collision lives in `controls.update()`'s movement integration only** —
+  the same place the `MAX_OFFSET` corridor clamp already is, resolved the
+  same way (pull the proposed position back to the boundary, slide along
+  it). The debug API's programmatic posing (`goto`, bookmarks, `place`)
+  sets `camera.position` directly and MUST stay exempt: that exemption is
+  what keeps every bookmark, golden and capture byte-identical, and it is
+  why the whole unit's golden claim is **zero movement** (verified against
+  a control worktree, per the goldens:audit ruling in `VALIDATION.md`).
+- **Collide against source data, not meshes.** Buildings:
+  `leith.buildings[].footprint` polygons (`src/world.js`) — the rendered
+  street is one merged geometry and stays that way. Characters: circles at
+  each vendor/walker group's x/z (radius from the archetype's scaled
+  width). Props: seeded static boxes/circles for the tram hulk, wrecked
+  cars, hoarding and cones, derived from the same seeded placements
+  scenery.js already computes — no new randomness, nothing enters
+  `computeGeomHash`.
+- **Broadphase: a uniform grid keyed on chainage**, built once at boot. The
+  corridor clamp already bounds the player to ±16m of the street line, so
+  the per-frame candidate set is a handful of cells.
+- **`#p=` moments and the boot spawn must resolve out of solids.** The
+  corridor overlaps building interiors (façades sit well inside 16m), so a
+  shared moment link can currently place the player inside a wall — today
+  they can walk out, under collision they would be trapped. `moments.js`'s
+  boot clamp gains a second step: if the clamped point is inside a
+  footprint or prop box, project to the nearest free point. Gate it.
+- **Walkers walk through the player, deliberately.** The 30 walkers' 1D
+  paths do not path-find; a walker who could be blocked by a standing
+  player can be pinned forever. The player cannot pass through them, they
+  can pass through the player, and at their densities the asymmetry is
+  invisible.
+
+| unit | scope | acceptance shape |
+|---|---|---|
+| **E6a.1** | Buildings + static props: footprint/box data, chainage grid, slide resolution in `controls.update()`, moment/spawn free-point resolution | opposed pair: collision suspended → a scripted walk-at-a-façade run ends inside the footprint, enabled → it ends outside every footprint with forward progress along the wall (the slide, not a dead stop); **zero golden movement vs a control worktree**; moment-inside-a-wall resolves to a free point (fault-inject: disable resolution, gate must redden); determinism — grid build draws nothing from the shared PRNG, `geomHash` untouched |
+| **E6a.2** | Characters: per-figure circles for 124 vendors + 30 walkers, same resolution path | walk-at-a-vendor run stops at the circle and slides off it; the reading interaction still triggers (the prompt radius must exceed the collision radius — assert the ordering for all 124); walkers still pass through the player (opposed-pair on the asymmetry) |
+
+**Named risks:** corner traps where a footprint meets the corridor clamp
+(two constraints resolving against each other can oscillate — resolve
+collision first, corridor second, and assert no-jitter on a scripted run
+along a clamped wall); touch hold-to-walk shares the same integration path
+so it needs no special case, but the mobile pass should include one
+wall-slide; `EYE_HEIGHT` steps — footprints are 2D, the Walk climbs 27m,
+and terraced building bases mean a footprint edge can sit below a raised
+skirt: collide in plan (x/z) only, exactly as the corridor clamp does.
+**Effort:** E6a.1 medium, **high (review)** on the zero-golden claim;
+E6a.2 medium.
 
 ### E6b — The living tram
 
@@ -3251,6 +3465,11 @@ is your street. The player stops being a tourist and becomes a Leither with
 an address. Decomposed into three milestone-sized units; dependencies and
 gates stated per unit so Opus can brief each directly.*
 
+*Identity confirmed at the E3 phase gate (2026-08-07): the player is the
+keeper, **not** McGrot — the ruling and its costed alternative are in the
+Direction ruling section. Nothing in E9 changes; McGrot enters the game as
+E10a's principal NPC.*
+
 **Design decisions taken here (Fable), so briefs don't relitigate them:**
 
 - **Interiors are staged sets, not carved geometry.** Each enterable shop is
@@ -3361,6 +3580,84 @@ hiding among NPC keepers exactly as walkers hide among walkers. Async
 traces extend indoors (a tended shop shows it). Scope deliberately thin
 here: it inherits its design from E7b + E9a/b rather than adding new ideas.
 
+## E10 — The Canon (McGrot's own cast) — added at the E3 phase gate, 2026-08-07
+
+*The comics' named cast enters the street. Authoritative reference:
+`docs/CANON.md` — its established/suggested column binds; established facts
+are canon to honour, suggested details are design freedom. The player-is-
+the-keeper ruling and the cut list live in the Direction ruling above.*
+
+### E10a — The Gullet (after E8 close)
+
+McGrot's pitch, standing on the street every day; McGrot himself,
+date-seeded. One milestone, mostly on pipelines that already exist:
+
+1. **The Gullet**: a rogue food stall/van at a fixed, chosen chainage (Dan
+   picks the spot — mid-Walk, where footfall passes it daily). New prop
+   geometry on the seeded-scenery path (append to draw order, never
+   insert), dressed from the canon row: hoarding, ladle, sauce bottles, a
+   hand-lettered price board in the comics' lettering. It is there every
+   day — the fixed point the date-seed varies around.
+2. **McGrot, date-seeded.** Generated via the proven pipeline (FLUX from
+   the canon row's established features → Trellis form variant → Lambert
+   re-material → judged under grade `b` on a contact sheet before
+   landing). He is at the Gullet on a seeded subset of days; other days
+   the stall is shut ("AWAY. BACK NEVER. — McG"). Supersedes the E∞
+   cryptid: "McGrot was in the day" is the share sentence, and it is
+   checkable. When present he is a vendor — a reading station like the
+   other 124, wrapper phrasing his own, comic text verbatim as ever. His
+   station gets priority in the TTS trickle's hero-cast lane.
+   *Variant note:* Exoskeleton and Ailment McGrot are date-seeded
+   appearance variants of this one NPC (extra straps, extra bandages —
+   dressing, not systems), the same axis "which McGrot did you get".
+   McWonka stays cut with the dream world.
+3. **Pomplé.** A small dog mesh (same pipeline; the canon row is
+   established: dog, judgemental stare, occasional hat). Posted at the
+   Gullet when McGrot is in; wanders near it when he is not. Minimal
+   motion by canon — long stares and small head tilts, which is the
+   static-NPC playbook applied to a dog and costs almost nothing. NPCs
+   already know him by name (E∞, approved); E9b's shop visits stand.
+
+Gates: flag-first landing (the Gullet behind a localhost flag, goldens
+untouched, then one enable+recapture commit for whichever poses frame it);
+draw-call budget at affected bookmarks; date determinism (same date → same
+presence, opposed pair across two dates); the reading gates extend to
+McGrot's station unchanged. Risks: the stall competes with an existing
+vendor's pitch at the chosen chainage (pick an empty stretch — density
+pockets doctrine says a quiet stretch gains most); Pomplé at dog height is
+below every gate's camera line — he needs his own capture in the judging
+sheet or he ships unlooked-at.
+
+### E10b — The principals (rides inside E4)
+
+Keth with One Eye, Mike English, the Taxman and the Inspector are E4 hero
+cast alongside the fifteen LEITH.md archetypes, built on E4's own
+machinery rather than new systems:
+
+- **Keth with One Eye** — a fixed post (a corner, a bench), local-knowledge
+  warning lines through the existing comment machinery: the haar, the
+  hinge, the Nether Leithers, "dinnae step intae it". He is the street's
+  diegetic tutorial and the ending's foreshadow.
+- **Mike English** — the rival van, pitched provocatively near the Gullet.
+  Immaculate, branded, fake accent slipping under pressure; the LEITH.md
+  incomer-anxiety rules apply (the joke is his pretension, and he is
+  allowed to be won over). A two-actor McGrot–Mike event joins E4's street
+  events list.
+- **The Taxman and the Inspector** — recurring two-actor street events at
+  the Gullet ("the audit", "the inspection"), on E4's events-not-agents
+  pattern. Clipboards versus ladle; punching at bodies with letterheads,
+  which is the Central Bar test's home fixture. **The implied systems —
+  debt timers, shutdown threats, compliance pressure — are deliberately
+  NOT built in the POC.** They are theatre here; if they ever become
+  mechanics that is a Dan-directed phase of its own.
+- **The Leith Badger** — E∞ delight, not a unit: a burrow by the Gullet,
+  undermined cobbles, date-seeded appearances. Established canon at prop
+  cost.
+
+Acceptance shapes inherit E4's (corpus through the Central Bar review step,
+event determinism from the seed, no golden movement outside deliberate
+enables). No new engine surface.
+
 ## E∞ — The Delight Ledger (continuous)
 
 A maintained list in `docs/DELIGHTS.md` of second- and third-pass discoveries.
@@ -3397,10 +3694,10 @@ Survey-fed additions (E2 phase gate, attributions inline):
   noise is not.
 Delight-arc additions (2026-08-01, from the comics themselves):
 
-- **McGrot sightings.** The man in the beret is in the comics — so, rarely,
-  he is on the street: a date-seeded cryptid, glimpsed at distance, gone
-  when approached, one or two days a month. Players comparing sightings is
-  the daily-seed share thesis in its purest form.
+- ~~**McGrot sightings.**~~ **Superseded by E10a (E3 phase gate,
+  2026-08-07):** McGrot has an address now — the Gullet — and the cryptid
+  mechanic became date-seeded presence there. The share thesis survives as
+  "McGrot was in the day".
 - **Pomple.** The dug — both sample comics feature the same wee dog, and
   his name is Pomple (Dan, 2026-08-01). He exists: a recurring dog that
   follows vendors, sometimes the player, and appears in the background of
