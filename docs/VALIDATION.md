@@ -3323,6 +3323,114 @@ reproduced on demand.
   is a line drawn under the ~8 MB practical limit; nobody has measured where
   the artifact host actually refuses.
 
+## Collision against buildings and static props (E6a.1)
+
+`src/collision.js` is a plan-view solid registry the player is resolved
+against inside `controls.update()`. 1,178 solids at boot: 995 building
+footprints, 53 Heras panels, 113 standing cones, 16 wrecks (14 cars/vans, the
+bus, the tram hulk) and the hoarding.
+
+### The control is a second implementation, deliberately
+
+Every "is the player inside a building" decision in the `collision` region is
+made in node, by a point-in-polygon test over `assets/leith.json` — the same
+source `world.js` extrudes from, and a different implementation from
+`src/collision.js`'s. Asking the collision module whether the player is inside
+a wall would pass whether or not the scene ever calls it. That is the "gates
+test the calculator, not the product" trap, and this region is where it would
+have been easiest to fall into.
+
+The opposed pair runs on ONE boot, from one start point, holding the same two
+keys, with the corridor clamp active in both arms. The single difference is
+`collision.setEnabled`.
+
+| gate | what it holds |
+|---|---|
+| `E6a: every building footprint is registered as a solid` | 995 of 995 |
+| `E6a: static props registered (tram/bus/car/fence/hoarding/cone)` | 1 / 1 / 14 / 53 / 1 / 113, each named separately |
+| `E6a: the default spawn is already free (no settle displacement)` | 0.000000 m |
+| `E6a: control — with collision suspended the walk ends up inside a building` | 25 of 120 frames inside a footprint |
+| `E6a: with collision on the same walk never enters a footprint` | 0 of 120 |
+| `E6a: the player slides along the wall rather than stopping dead` | 25.41 m travelled, 0 of 120 frames advanced under 0.05 m |
+| `E6a: control — the requested moment really is inside a wall` | the `#p=` link's target is inside a footprint |
+| `E6a: a moment inside a wall resolves to a free point` | arrives 7.01 m away, outside every footprint |
+
+Each prop class is named separately on the E3h lesson: a whole class of thing
+can silently stop registering while every other gate stays green.
+
+### Fault-injected, each family separately
+
+| injection | what went red |
+|---|---|
+| `controls.update()` never calls `resolveMove` | walk-with-collision 25/120 frames inside (control unchanged at 25) |
+| moment/spawn resolution removed | arrives 0.05 m from a link that is inside a wall; its control gate stayed green, proving the control is independent |
+| tangent projection removed from `resolveMove` | 9.10 m travelled, 81/120 frames stalled — the slide gate red, "never enters a footprint" still green |
+| cone registration removed | 0 cone solids |
+
+### Zero golden movement, measured against a control worktree
+
+`geomHash c0751fc1` and `realtimeHash 6e5cd57b` are **identical** at
+`8d6dd99` (a worktree at the commit before this one) and after the change.
+Nothing entered the shared PRNG and no geometry moved.
+
+`goldens:audit` reports **the same 25 poses** above its 0.02% floor in both
+trees — the standing false positives documented under § "Golden diffs", all
+sky-visible, all far under the 0.5% gate. The magnitudes are not identical
+between runs (`mid-805-far` 0.101% in the control, 0.221% here); that is the
+sky FBM's run-to-run range on those poses, and it is why the geomHash equality
+above is the load-bearing measurement and the audit is the corroboration.
+
+`mobile: hold-to-walk moves camera` was the named risk — it drives real
+movement through `update()` and would fail outright if `MOBILE_WALK_BOOKMARK`'s
+forward path met a façade. Measured before any code was written: the path
+clears every footprint by **5.93 m**, and the gate still reports 7.00 m
+unchanged after the change.
+
+### Design decisions, with the measurement behind them
+
+- **Accept-or-reject, not push-out.** The first cut pushed the moving point out
+  of every solid it overlapped, iterating. Two edges of one concave tenement
+  footprint each pushed the player back into the other, the iteration ran out,
+  and the wall-slide became a dead stop 39 frames in (9.10 m, then 0.0000 m per
+  frame for 81 frames). Movement now only ever accepts a free candidate
+  position or discards it, so there is nothing to oscillate. Push-out survives
+  for spawn/moment resolution, where there is no previous free position to fall
+  back to.
+- **The slide is the wall's tangent, not an axis.** Leith Walk runs SSW, so an
+  axis-decomposed fallback would slide the player sideways off a wall that is
+  at 30 degrees to both axes.
+- **Solids first, corridor second.** Two constraints resolving against each
+  other can oscillate; fixing the order gives the corridor the last word, and
+  the corridor clamp is radial and cannot itself trap. The slide run reaches
+  the 16 m corridor boundary as well as a footprint, so the no-jitter number
+  above is measured with both constraints active at once.
+- **A uniform x/z grid, not chainage buckets.** The E6a ruling said "keyed on
+  chainage"; keying on chainage would need the proposed position projected onto
+  the street line before the grid could be consulted, which is a second
+  `nearestStreetPoint`-class cost per query for the same candidate set. An 8 m
+  x/z cell is O(1) and gives 7,099 cells over the whole map.
+- **Plan (x/z) only**, exactly as the corridor clamp does: footprints are 2D,
+  the Walk climbs 27 m, and a terraced building base means a footprint edge can
+  sit below a raised skirt.
+- **PLAYER_RADIUS 0.35 m** — shoulder half-width, not a body.
+
+### What E6a.1 deliberately does not prove
+
+- **Nothing about characters.** Vendors and walkers are still walk-through;
+  that is E6a.2. Its prompt-radius ordering (a vendor you cannot reach is a
+  vendor you cannot hear) is decided but unbuilt: the collision circle must be
+  smaller than `interact.js`'s 8 m prompt range, asserted for all 124.
+- **Debris, spoil heaps and lifted tarmac are not solids.** All under 0.7 m,
+  and blocking on them would make the roadworks read as a wall rather than a
+  mess. Tipped cones are excluded for the same reason.
+- **The single-file artifact has no wreck solids.** The four car glbs 404 there
+  (pre-existing, see § "The single-file artifact"), so `cars.js` registers
+  nothing. The census gate runs against the dev build and would not see it.
+- **The grid is never rebuilt.** Solids can be added at any time and are
+  indexed on arrival, but nothing is ever removed. Nothing in the scene moves
+  or disappears today; a moving tram (E6b) would need more than this.
+- **No vertical anything.** No steps, no ducking, no walking onto the tram.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

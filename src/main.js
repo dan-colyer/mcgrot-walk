@@ -104,12 +104,13 @@ async function main() {
   const defaultSpawn = { x: p0[0], z: p0[1], yaw: Math.atan2(-(p1[0] - p0[0]), -(p1[1] - p0[1])) };
   // E5c: a shared link overrides where you arrive. Already corridor-clamped
   // by readMoment, and null for every ordinary visit.
-  const spawn = readMoment(world.nearestStreetPoint) || defaultSpawn;
+  const spawn = readMoment(world.nearestStreetPoint, world.collision) || defaultSpawn;
 
   const controls = createControls(camera, canvas, {
     nearestStreetPoint: world.nearestStreetPoint,
     spawn,
     groundHeight: world.groundHeight,
+    collision: world.collision, // E6a — solids, resolved before the corridor clamp
   });
   controls.setEnabled(false); // gated until the title card is dismissed
 
@@ -251,6 +252,14 @@ async function main() {
       ambience.start(sharedCtx);        // AudioContext creation needs this user gesture
       proximityAudio.resume();          // ...and so does the positional-audio listener
       entered = true;                   // E5c: the URL hash starts tracking from here
+      // E6a: settle the spawn against EVERY solid, not just the buildings that
+      // existed when readMoment ran. The wrecks arrive on a glb promise, so
+      // this cannot be done at boot; here is the last moment before the player
+      // can move, and it costs one query. A visitor whose shared link points
+      // at the inside of the dead bus arrives beside it instead of inside it.
+      const [fx, fz] = world.collision.resolveFree(camera.position.x, camera.position.z);
+      camera.position.x = fx;
+      camera.position.z = fz;
     },
   });
 

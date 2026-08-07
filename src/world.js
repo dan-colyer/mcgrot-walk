@@ -9,6 +9,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { makeTarmacTexture, makePavementTexture, makeEarthTexture, makeGardenTexture, TARMAC_METRES, PAVEMENT_METRES, EARTH_METRES, hash2, fbmP, finishTexture } from './road.js';
 import { buildStreetChain, makeNearestStreetPoint } from './frontage.js';
 import { createTerrain } from './terrain.js';
+import { createCollision } from './collision.js';
 
 const CARRIAGEWAY_HALF_WIDTH = 7; // 14m carriageway
 const PAVEMENT_WIDTH = 3; // each side
@@ -122,6 +123,14 @@ export function buildWorld(leith) {
   const buildingsMesh = buildBuildings(leith.buildings, groundHeight);
   if (buildingsMesh) group.add(buildingsMesh);
 
+  // E6a: the player collides against the SOURCE footprints, not the merged
+  // geometry above. Registered here — before any prop module runs and before
+  // moments.js resolves the spawn — because a building is the one solid that
+  // exists from the first frame. Props add their own boxes later; the
+  // registry takes them at any time (see src/collision.js).
+  const collision = createCollision();
+  for (const b of leith.buildings) collision.addPolygon(b.footprint, 'building');
+
   group.add(buildGround(leith, groundHeight));
   group.add(buildGardenIsland(groundHeight));
   const lights = addLighting(group);
@@ -132,6 +141,9 @@ export function buildWorld(leith) {
     group,
     streetLine,
     nearestStreetPoint: makeNearestStreetPoint(streetLine),
+    // E6a. Handed to controls.js (movement), moments.js (spawn resolution)
+    // and every prop module, all of which already receive `world`.
+    collision,
     fog,
     groundHeight,
     setExaggeration: terrain.setExaggeration,

@@ -211,6 +211,19 @@ and does not report success until every changed file md5-matches the live URL.
   on the files actually shipping, deliberately.
 - `src/world.js` — street ribbons + 995 extruded OSM buildings (merged geometry),
   `streetLine` polyline (north→south, ~1617m), `nearestStreetPoint` for corridor clamp.
+  Since E6a it also owns `world.collision`, built here so it exists before any
+  prop module and before `readMoment` resolves the spawn.
+- `src/collision.js` — plan-view (x/z) solids the PLAYER is resolved against;
+  nothing pushes anything else. Buildings register their `leith.json`
+  footprints; scenery/cars/roadworks register boxes and circles from
+  placements they already compute — **never a new `rand()` draw**. Consulted
+  ONLY from `controls.update()`'s movement integration, before the corridor
+  clamp; the debug API poses `camera.position` directly and stays exempt,
+  which is what keeps every bookmark and golden unchanged. Movement
+  accepts-or-discards candidate positions and slides along the wall's tangent
+  — it does NOT push out, which oscillates in a concave footprint (see
+  docs/VALIDATION.md § E6a.1). Push-out (`resolveFree`) is for spawn and
+  `#p=` moments only.
 - `src/npcs.js` / `src/characters.js` / `src/interact.js` — the 124 vendors.
   npcs.js builds a vendor's PROPS (comic, nameplate) and characters.js stands a
   generated mesh in the group. The paper doll (box body, face JPEG on head

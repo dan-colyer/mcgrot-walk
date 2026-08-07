@@ -88,7 +88,7 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // is about what happens when nothing above the file is fetchable. Cheap —
 // build.mjs is 0.2s — and it is the only thing standing between the shareable
 // file and a divergence nobody notices until someone opens it.
-const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -132,14 +132,19 @@ const SINCE_RULES = [
   // prototypes the walkers stand on (E3f), so it reaches every region that
   // renders a figure.
   [/^src\/characters\.js$/, ['characters', 'render', 'weather', 'determinism', 'anchors', 'mobile']],
-  [/^src\/moments\.js$/, ['moments']],
+  [/^src\/moments\.js$/, ['moments', 'collision']],
+  // E6a: collision.js is read by controls (movement), moments (spawn) and the
+  // three prop modules. It draws nothing and renders nothing, so it cannot
+  // move a golden — but 'mobile' is in the list because hold-to-walk drives
+  // the same integration path, and that is measured, not reasoned.
+  [/^src\/collision\.js$/, ['collision', 'moments', 'mobile']],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
   [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
   [/^src\/legs\.js$/, ['legs', 'ending']],
   [/^src\/ending\.js$/, ['ending']],
   [/^src\/(proximity-audio|ambience)\.js$/, ['alignment', 'onevoice']],
   [/^src\/interact\.js$/, ['journal', 'onevoice', 'mobile']],
-  [/^src\/(controls|title|keys)\.js$/, ['mobile']],
+  [/^src\/(controls|title|keys)\.js$/, ['mobile', 'collision']],
   // 'mobile' is not obvious and was measured, not reasoned: the full-screen
   // pass reaches the mobile captures too. Raising VIGNETTE 0.28 -> 0.85 and
   // running the whole gate moved 30 goldens AND golden-mobile:hud, while
@@ -152,7 +157,12 @@ const SINCE_RULES = [
   // move a golden, and most of it feeds geomHash. 'weather' for the same
   // reason as post.js: the four non-overcast columns are goldens of the same
   // scene, so anything that moves an overcast golden moves them too.
-  [/^src\/(road|roadworks|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|scenery|cars|birds|vermin|rain|forth|litter|placeholders|legs|lighting-constants)\.js$/,
+  // roadworks/scenery/cars register E6a's static prop solids, so they reach
+  // 'collision' too — the census gate there is what catches a prop class that
+  // silently stops registering.
+  [/^src\/(roadworks|scenery|cars)\.js$/,
+    ['render', 'weather', 'determinism', 'lamps', 'collision']],
+  [/^src\/(road|shopfronts|frontage|gables|chimneys|windows|sky|terrain|flora|birds|vermin|rain|forth|litter|placeholders|legs|lighting-constants)\.js$/,
     ['render', 'weather', 'determinism', 'lamps']],
   // leithers.js left this list at E3f: the walkers now stand on the archetype
   // meshes, so 'characters' is where their gates live, and 'mobile' renders
@@ -2479,6 +2489,203 @@ async function main() {
 
     endRegion();
     } // end region: artifact
+
+    if (region('collision')) {
+    // --- E6a.1: the world stops the player --------------------------------
+    //
+    // THE CONTROL IS THE JUDGE, NOT THE MODULE. Every "inside a building"
+    // decision below is made here, in node, by a point-in-polygon test over
+    // assets/leith.json — the same source world.js extrudes from, and a
+    // different implementation from src/collision.js's. Asking the collision
+    // module whether the player is inside a wall would pass whether or not
+    // the scene ever calls it: that is the "gates test the calculator" trap,
+    // and this region is exactly where it would have been easy to fall into.
+    const leithData = JSON.parse(readFileSync(join(root, 'assets/leith.json'), 'utf8'));
+    const FOOTPRINTS = leithData.buildings.map((b) => b.footprint).filter((f) => f && f.length > 2);
+    const insideAny = (x, z) => FOOTPRINTS.some((pts) => {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const [xi, zi] = pts[i];
+        const [xj, zj] = pts[j];
+        if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+      }
+      return inside;
+    });
+
+    const { context: colCtx, page: colPage } = await bootPage(browser, port);
+
+    const census = await colPage.evaluate(() => window.__mcgrotDebug.world.collision.stats());
+    results.push({
+      name: 'E6a: every building footprint is registered as a solid',
+      pass: census.byTag.building === FOOTPRINTS.length,
+      detail: `${census.byTag.building} building solids (leith.json has ${FOOTPRINTS.length} usable footprints), ${census.cells} grid cells`,
+    });
+    // The E3h lesson one build over: a whole class of thing can silently fail
+    // to register and every other gate still passes. Each prop class is named
+    // separately, so losing one of them cannot hide behind the other three.
+    for (const [tag, min] of [['tram', 1], ['bus', 1], ['car', 8], ['fence', 20], ['hoarding', 1], ['cone', 40]]) {
+      results.push({
+        name: `E6a: static props registered (${tag})`,
+        pass: (census.byTag[tag] || 0) >= min,
+        detail: `${census.byTag[tag] || 0} ${tag} solids (min ${min})`,
+      });
+    }
+
+    // The spawn must not have moved. main.js resolves the camera out of
+    // solids when the title card is dismissed, and if that ever displaced the
+    // default spawn it would move every capture taken from it — this is the
+    // gate that keeps the whole unit's "zero golden movement" claim honest
+    // rather than merely observed once.
+    const spawnCheck = await colPage.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const p0 = dbg.world.streetLine[0];
+      return { dx: dbg.camera.position.x - p0[0], dz: dbg.camera.position.z - p0[1] };
+    });
+    const spawnShift = Math.hypot(spawnCheck.dx, spawnCheck.dz);
+    results.push({
+      name: 'E6a: the default spawn is already free (no settle displacement)',
+      pass: spawnShift < 1e-9,
+      detail: `spawn moved ${spawnShift.toFixed(6)}m when the title card was dismissed`,
+    });
+
+    // The opposed pair. Both arms are the SAME boot, the SAME start point and
+    // the SAME held keys; the only difference is collision.setEnabled. The
+    // corridor clamp runs in both, so what separates them is this unit alone.
+    const WALK_FRAMES = 120;
+    const walkAt = (enabled) => colPage.evaluate(({ frames, on, chainage }) => {
+      const dbg = window.__mcgrotDebug;
+      const line = dbg.world.streetLine;
+      let acc = 0;
+      let sx = line[0][0];
+      let sz = line[0][1];
+      for (let i = 1; i < line.length; i++) {
+        const d = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+        if (acc + d >= chainage) { sx = line[i][0]; sz = line[i][1]; break; }
+        acc += d;
+      }
+      dbg.world.collision.setEnabled(on);
+      dbg.controls.setEnabled(true);
+      dbg.camera.position.x = sx;
+      dbg.camera.position.z = sz;
+      const key = (code, down) => window.dispatchEvent(
+        new KeyboardEvent(down ? 'keydown' : 'keyup', { code, bubbles: true }));
+      // Forward AND strafe: a head-on push has no along-wall component to
+      // preserve, so a dead stop would be the correct answer and the slide
+      // would go untested. The diagonal is what makes "it slid" measurable.
+      key('KeyW', true);
+      key('KeyA', true);
+      const path = [];
+      for (let i = 0; i < frames; i++) {
+        dbg.stepFrames(1);
+        path.push([dbg.camera.position.x, dbg.camera.position.z]);
+      }
+      key('KeyW', false);
+      key('KeyA', false);
+      dbg.world.collision.setEnabled(true);
+      return { start: [sx, sz], path };
+    }, { frames: WALK_FRAMES, on: enabled, chainage: 550 });
+
+    const armOff = await walkAt(false);
+    const armOn = await walkAt(true);
+    const insideFrames = (arm) => arm.path.filter(([x, z]) => insideAny(x, z)).length;
+    const netTravel = (arm) => Math.hypot(
+      arm.path[arm.path.length - 1][0] - arm.start[0],
+      arm.path[arm.path.length - 1][1] - arm.start[1]);
+
+    const offInside = insideFrames(armOff);
+    const onInside = insideFrames(armOn);
+    results.push({
+      name: 'E6a: control — with collision suspended the walk ends up inside a building',
+      pass: offInside > 0,
+      detail: `${offInside}/${WALK_FRAMES} frames inside a footprint, travelled ${netTravel(armOff).toFixed(2)}m`,
+    });
+    results.push({
+      name: 'E6a: with collision on the same walk never enters a footprint',
+      pass: onInside === 0,
+      detail: `${onInside}/${WALK_FRAMES} frames inside a footprint (control arm: ${offInside})`,
+    });
+
+    // ...and it is a slide, not a dead stop. Both halves matter: total
+    // progress rules out being pinned, and the per-frame floor rules out the
+    // oscillation the first cut of the resolver actually produced (it stopped
+    // dead 39 frames in and never moved again).
+    const steps = armOn.path.map((p, i) => {
+      const q = i ? armOn.path[i - 1] : armOn.start;
+      return Math.hypot(p[0] - q[0], p[1] - q[1]);
+    });
+    const stalled = steps.filter((s) => s < 0.05).length;
+    results.push({
+      name: 'E6a: the player slides along the wall rather than stopping dead',
+      pass: netTravel(armOn) >= 10 && stalled <= WALK_FRAMES * 0.1,
+      detail: `travelled ${netTravel(armOn).toFixed(2)}m (min 10m), ${stalled}/${WALK_FRAMES} frames advanced <0.05m (max ${Math.floor(WALK_FRAMES * 0.1)})`,
+    });
+
+    // A shared link that points at the inside of a wall. Before collision the
+    // visitor could walk out; now they would be trapped, so moments.js and
+    // main.js resolve the arrival to a free point. The target is picked here
+    // from leith.json — a footprint vertex-average that the corridor clamp
+    // leaves alone, so the clamp cannot be what rescues it.
+    const trapTarget = await colPage.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      return { line: dbg.world.streetLine, maxOff: 16 };
+    }).then(({ line, maxOff }) => {
+      const nearest = (x, z) => {
+        let best = Infinity;
+        for (let i = 1; i < line.length; i++) {
+          const [ax, az] = line[i - 1];
+          const [bx, bz] = line[i];
+          const ddx = bx - ax;
+          const ddz = bz - az;
+          const L = ddx * ddx + ddz * ddz;
+          let t = L ? ((x - ax) * ddx + (z - az) * ddz) / L : 0;
+          t = t < 0 ? 0 : t > 1 ? 1 : t;
+          best = Math.min(best, Math.hypot(x - (ax + ddx * t), z - (az + ddz * t)));
+        }
+        return best;
+      };
+      for (const pts of FOOTPRINTS) {
+        let cx = 0;
+        let cz = 0;
+        for (const [x, z] of pts) { cx += x; cz += z; }
+        cx /= pts.length;
+        cz /= pts.length;
+        if (insideAny(cx, cz) && nearest(cx, cz) < maxOff - 1) return { x: cx, z: cz };
+      }
+      return null;
+    });
+    if (!trapTarget) {
+      results.push({
+        name: 'E6a: a moment inside a wall resolves to a free point',
+        pass: false,
+        detail: 'no building centroid inside the corridor — the fixture, not the feature, is broken',
+      });
+    } else {
+      const trapCtx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+      await trapCtx.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
+      const trapPage = await trapCtx.newPage();
+      const hash = `#p=${trapTarget.x.toFixed(1)},${trapTarget.z.toFixed(1)},0`;
+      await trapPage.goto(`http://localhost:${port}/?trap=1${hash}`);
+      await trapPage.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await trapPage.click('#title-enter');
+      const arrived = await trapPage.evaluate(() => ({
+        x: window.__mcgrotDebug.camera.position.x,
+        z: window.__mcgrotDebug.camera.position.z,
+      }));
+      results.push({
+        name: 'E6a: control — the requested moment really is inside a wall',
+        pass: insideAny(trapTarget.x, trapTarget.z),
+        detail: `link asked for ${trapTarget.x.toFixed(1)},${trapTarget.z.toFixed(1)}`,
+      });
+      results.push({
+        name: 'E6a: a moment inside a wall resolves to a free point',
+        pass: !insideAny(arrived.x, arrived.z),
+        detail: `arrived at ${arrived.x.toFixed(1)},${arrived.z.toFixed(1)}, ${Math.hypot(arrived.x - trapTarget.x, arrived.z - trapTarget.z).toFixed(2)}m from the link`,
+      });
+      await trapCtx.close();
+    }
+
+    await colCtx.close();
+    }
 
     if (region('moments')) {
     // --- E5c: moments are links -------------------------------------------

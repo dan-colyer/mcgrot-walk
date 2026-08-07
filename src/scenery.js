@@ -46,7 +46,7 @@ export function buildScenery(world, scene) {
   scene.add(group);
 
   const poles = buildCatenaryPoles(streetLine, group, groundHeight);
-  buildTram(streetLine, group, groundHeight);
+  buildTram(streetLine, group, groundHeight, world.collision);
   buildDebris(streetLine, group, groundHeight);
   const smoke = buildSmoke(streetLine, group, groundHeight);
   const arcSites = buildArcFlashes(poles, group);
@@ -273,7 +273,7 @@ function updateArcFlashes(sites, time, onFlash) {
 // Derelict tram hulk — boxy rusted body, slight tilt, smashed-window quads
 // ---------------------------------------------------------------------------
 
-function buildTram(streetLine, group, groundHeight) {
+function buildTram(streetLine, group, groundHeight, collision) {
   const sample = sampleStreet(streetLine, TRAM_DIST);
   if (!sample) return;
 
@@ -315,6 +315,12 @@ function buildTram(streetLine, group, groundHeight) {
   mesh.rotation.y = yaw;
   mesh.rotation.z = 0.09; // slight tilt — derailed, not parked
   group.add(mesh);
+
+  // E6a: the hulk blocks. Half-extents from the body box above (2.6 x 11),
+  // read off the same numbers rather than measured from the mesh — this draws
+  // nothing new from `rand`, so the seeded scatter below is untouched. The
+  // 0.09 rad tilt is ignored: collision is plan-only.
+  if (collision) collision.addBox(cx, cz, 1.3, 5.5, yaw, 'tram');
 }
 
 // ---------------------------------------------------------------------------

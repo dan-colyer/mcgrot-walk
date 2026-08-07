@@ -8,6 +8,10 @@
 // - Player is soft-clamped within MAX_OFFSET metres of the street
 //   centreline: if a move would push further away, it's pulled back to the
 //   boundary radially, so the player can still slide along the corridor.
+// - Since E6a the proposed position is also pushed out of the world's solids
+//   (building footprints, static props) BEFORE that corridor clamp. Only this
+//   movement path collides: the debug API poses the camera directly and stays
+//   exempt, which is what keeps every bookmark and golden unchanged.
 
 const WALK_SPEED = 14; // m/s
 const EYE_HEIGHT = 1.7;
@@ -27,7 +31,7 @@ const MOVE_KEYS = {
   ArrowRight: 'right',
 };
 
-export function createControls(camera, domElement, { nearestStreetPoint, spawn, groundHeight }) {
+export function createControls(camera, domElement, { nearestStreetPoint, spawn, groundHeight, collision }) {
   let yaw = spawn.yaw || 0;
   let pitch = 0;
 
@@ -165,6 +169,16 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
 
       let nx = camera.position.x + dx;
       let nz = camera.position.z + dz;
+
+      // E6a: solids first, corridor second. Two constraints resolving against
+      // each other can oscillate at a corner where a footprint meets the
+      // corridor boundary; fixing the order means the corridor always has the
+      // last word, and the corridor clamp is radial and cannot itself trap.
+      if (collision) {
+        const [cx, cz] = collision.resolveMove(camera.position.x, camera.position.z, nx, nz);
+        nx = cx;
+        nz = cz;
+      }
 
       const { point, distance } = nearestStreetPoint(nx, nz);
       if (point && distance > MAX_OFFSET) {

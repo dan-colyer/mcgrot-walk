@@ -61,9 +61,19 @@ export function buildRoadworks(world, scene) {
   const fencePanels = [];
   const spoil = [];
 
-  buildTrench(line, group, spoil, cones, fencePosts, fencePanels, groundHeight);
+  buildTrench(line, group, spoil, cones, fencePosts, fencePanels, groundHeight, world.collision);
   scatterCones(line, cones, groundHeight);
-  buildHoarding(line, group, groundHeight);
+  buildHoarding(line, group, groundHeight, world.collision);
+
+  // E6a: standing cones block, tipped ones do not — a cone lying on its side
+  // is something you walk over, and half the point of the tipped ones is that
+  // nobody has been here to right them. Spoil heaps and lifted tarmac slabs
+  // are deliberately NOT registered: under 0.35m, and blocking on them would
+  // make the works read as a wall rather than a mess. Derived from the cone
+  // list that already exists, so no new draw enters this module's PRNG.
+  if (world.collision) {
+    for (const c of cones) if (!c.tipped) world.collision.addCircle(c.x, c.z, 0.26, 'cone');
+  }
 
   emitCones(cones, group);
   emitFence(fencePosts, fencePanels, group);
@@ -125,7 +135,7 @@ function place(line, dist, off, groundHeight) {
 // The trench: painted floor, real spoil, real lip, real fence
 // ---------------------------------------------------------------------------
 
-function buildTrench(line, group, spoil, cones, posts, panels, groundHeight) {
+function buildTrench(line, group, spoil, cones, posts, panels, groundHeight, collision) {
   const trenchTex = makeTrenchTexture();
   const decals = [];
   const HALF_W = 1.5; // the trench straddles where the rails would have continued
@@ -195,28 +205,37 @@ function buildTrench(line, group, spoil, cones, posts, panels, groundHeight) {
 
   // Heras panels: a corridor down both sides of the works, and a run thrown
   // across the carriageway at the far end where the job was simply abandoned.
-  fenceRun(line, WORKS_START, WORKS_END, 4.4, posts, panels, groundHeight);
-  fenceRun(line, WORKS_START, WORKS_END, -4.4, posts, panels, groundHeight);
-  fenceAcross(line, WORKS_END + 2, posts, panels, groundHeight);
+  fenceRun(line, WORKS_START, WORKS_END, 4.4, posts, panels, groundHeight, collision);
+  fenceRun(line, WORKS_START, WORKS_END, -4.4, posts, panels, groundHeight, collision);
+  fenceAcross(line, WORKS_END + 2, posts, panels, groundHeight, collision);
 }
 
 // A run of panels down one side of the works, parallel to the street.
-function fenceRun(line, from, to, off, posts, panels, groundHeight) {
+function fenceRun(line, from, to, off, posts, panels, groundHeight, collision) {
   for (let dist = from; dist < to; dist += FENCE_PANEL_W + 0.1) {
     const p = place(line, dist + FENCE_PANEL_W / 2, off, groundHeight);
     if (!p) break;
     if (rand() < 0.12) continue; // panels missing — someone's had them away
     addPanel(p.x, p.z, p.y, p.yaw, posts, panels, rand() < 0.18);
+    addPanelSolid(collision, p.x, p.z, p.yaw);
   }
 }
 
 // A run of panels thrown ACROSS the street: the point where the job stopped.
-function fenceAcross(line, dist, posts, panels, groundHeight) {
+function fenceAcross(line, dist, posts, panels, groundHeight, collision) {
   for (let off = -6; off <= 6; off += FENCE_PANEL_W + 0.1) {
     const p = place(line, dist, off + FENCE_PANEL_W / 2, groundHeight);
     if (!p) continue;
     addPanel(p.x, p.z, p.y, p.yaw + Math.PI / 2, posts, panels, rand() < 0.25);
+    addPanelSolid(collision, p.x, p.z, p.yaw + Math.PI / 2);
   }
+}
+
+// E6a: a Heras panel as a thin plan slab. Registered by the two callers above
+// rather than inside addPanel, because a panel that was skipped (missing, had
+// away) must not leave a solid behind. The lean is ignored — plan only.
+function addPanelSolid(collision, x, z, yaw) {
+  if (collision) collision.addBox(x, z, FENCE_PANEL_W / 2, 0.13, yaw, 'fence');
 }
 
 // One Heras panel: a frame of thin bars (real geometry) plus a single quad
@@ -340,7 +359,7 @@ function emitCones(cones, group) {
 // The hoarding
 // ---------------------------------------------------------------------------
 
-function buildHoarding(line, group, groundHeight) {
+function buildHoarding(line, group, groundHeight, collision) {
   const p = place(line, HOARDING_AT, HOARDING_OFF, groundHeight);
   if (!p) return;
 
@@ -369,6 +388,9 @@ function buildHoarding(line, group, groundHeight) {
   merged.rotateY(facing);
   merged.translate(p.x, p.y + ROAD_Y, p.z);
   group.add(new THREE.Mesh(merged, new THREE.MeshLambertMaterial({ color: 0x4a4438 })));
+
+  // E6a: the board itself, 4.2m of it. Same `facing` the geometry took.
+  if (collision) collision.addBox(p.x, p.z, W / 2, 0.15, facing, 'hoarding');
 }
 
 function makeHoardingTexture() {

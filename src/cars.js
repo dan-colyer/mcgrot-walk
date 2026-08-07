@@ -62,7 +62,7 @@ export function buildCars(assets, world, scene) {
       if (prepped[i]) (byKind[MODELS[i].kind] ??= []).push(prepped[i]);
     }
     if (!byKind.car && !byKind.van && !byKind.bus) return; // assets absent (single-file artifact)
-    placeAll(byKind, line, group, world.groundHeight);
+    placeAll(byKind, line, group, world.groundHeight, world.collision);
   });
 
   return { group };
@@ -82,7 +82,32 @@ function prep(root, m) {
   root.position.y = -box2.min.y; // wheels on the tarmac whatever the kit's origin
   const wrapper = new THREE.Group();
   wrapper.add(root);
+  // E6a: plan half-extents for collision, taken from the prepped model rather
+  // than from targetLen — a kit glb's long axis is not reliably +Z, and this
+  // is the only description of a wreck's shape that exists. Local frame here
+  // (nothing is parented yet), so the caller rotates it by the wreck's yaw.
+  const plan = new THREE.Box3().setFromObject(root);
+  wrapper.userData.plan = {
+    halfW: (plan.max.x - plan.min.x) / 2,
+    halfD: (plan.max.z - plan.min.z) / 2,
+    cx: (plan.max.x + plan.min.x) / 2,
+    cz: (plan.max.z + plan.min.z) / 2,
+  };
   return wrapper;
+}
+
+// One wreck's box, in world plan coordinates.
+function addWreckSolid(collision, obj, tag) {
+  const p = obj.userData && obj.userData.plan;
+  if (!collision || !p) return;
+  const yaw = obj.rotation.y;
+  const s = Math.sin(yaw);
+  const c = Math.cos(yaw);
+  collision.addBox(
+    obj.position.x + p.cx * c + p.cz * s,
+    obj.position.z - p.cx * s + p.cz * c,
+    p.halfW, p.halfD, yaw, tag,
+  );
 }
 
 function wreckify(root, burned) {
@@ -104,7 +129,7 @@ function wreckify(root, burned) {
   });
 }
 
-function placeAll(byKind, line, group, groundHeight) {
+function placeAll(byKind, line, group, groundHeight, collision) {
   const carPool = [...(byKind.car || []), ...(byKind.van || [])];
 
   if (carPool.length) {
@@ -126,6 +151,7 @@ function placeAll(byKind, line, group, groundHeight) {
       clone.rotation.y = yaw + (rand() - 0.5) * 0.12;
       clone.rotation.z = (rand() - 0.5) * 0.05; // flat tyres, slumped springs
       group.add(clone);
+      addWreckSolid(collision, clone, 'car');
     }
   }
 
@@ -141,6 +167,7 @@ function placeAll(byKind, line, group, groundHeight) {
       b.rotation.y = Math.atan2(s.tangent[0], s.tangent[1]) + 0.06;
       b.rotation.z = 0.07;
       group.add(b);
+      addWreckSolid(collision, b, 'bus');
     }
   }
 }

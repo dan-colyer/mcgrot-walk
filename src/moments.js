@@ -65,7 +65,13 @@ export function parseMoment(hash) {
 // The clamp matters: controls.js only enforces MAX_OFFSET while you are
 // *moving*, so an out-of-corridor spawn would otherwise stick until the first
 // keypress, and a hand-edited link could drop someone inside a building.
-export function readMoment(nearestStreetPoint) {
+// E6a adds a second step. The corridor is 16m and façades sit well inside
+// that, so the clamp alone can put an arriving visitor inside a wall. Before
+// collision they could walk out; under collision they would be trapped, so a
+// clamped point that lands in a solid is projected to the nearest free one.
+// Only buildings are registered this early (props build later) — main.js
+// re-runs the same resolution once the static props are in.
+export function readMoment(nearestStreetPoint, collision) {
   const m = parseMoment(typeof location === 'undefined' ? '' : location.hash);
   if (!m) return null;
   if (nearestStreetPoint) {
@@ -75,6 +81,11 @@ export function readMoment(nearestStreetPoint) {
       m.x = point[0] + (m.x - point[0]) * scale;
       m.z = point[1] + (m.z - point[1]) * scale;
     }
+  }
+  if (collision) {
+    const [fx, fz] = collision.resolveFree(m.x, m.z);
+    m.x = fx;
+    m.z = fz;
   }
   return m;
 }

@@ -116,7 +116,7 @@ exception left is E7a's mechanical hosting migration.
 | E4 systems, flag-first | medium | street behaviour behind flags |
 | E4 enable commits | **high (review)** | walker changes move leither-bearing goldens |
 | E9b visitor theatre | medium | interior-only; corpus gated by Central Bar test |
-| E6a.1 collision: buildings + props — NEXT | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
+| E6a.1 collision: buildings + props — **LANDED** | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
 | E6a.2 collision: characters | medium | circles on existing groups; prompt-radius ordering gated |
 | E8 close | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
 | E10a the Gullet | medium; **high (review)** on the enable+recapture | new scene geometry, flag-first |
@@ -3228,7 +3228,7 @@ NPC. Decomposed for Opus; the design rulings here are taken, not open.*
 
 | unit | scope | acceptance shape |
 |---|---|---|
-| **E6a.1** | Buildings + static props: footprint/box data, chainage grid, slide resolution in `controls.update()`, moment/spawn free-point resolution | opposed pair: collision suspended → a scripted walk-at-a-façade run ends inside the footprint, enabled → it ends outside every footprint with forward progress along the wall (the slide, not a dead stop); **zero golden movement vs a control worktree**; moment-inside-a-wall resolves to a free point (fault-inject: disable resolution, gate must redden); determinism — grid build draws nothing from the shared PRNG, `geomHash` untouched |
+| **E6a.1** — LANDED | Buildings + static props: footprint/box data, chainage grid, slide resolution in `controls.update()`, moment/spawn free-point resolution | opposed pair: collision suspended → a scripted walk-at-a-façade run ends inside the footprint, enabled → it ends outside every footprint with forward progress along the wall (the slide, not a dead stop); **zero golden movement vs a control worktree**; moment-inside-a-wall resolves to a free point (fault-inject: disable resolution, gate must redden); determinism — grid build draws nothing from the shared PRNG, `geomHash` untouched |
 | **E6a.2** | Characters: per-figure circles for 124 vendors + 30 walkers, same resolution path | walk-at-a-vendor run stops at the circle and slides off it; the reading interaction still triggers (the prompt radius must exceed the collision radius — assert the ordering for all 124); walkers still pass through the player (opposed-pair on the asymmetry) |
 
 **Named risks:** corner traps where a footprint meets the corridor clamp
@@ -3241,6 +3241,40 @@ and terraced building bases mean a footprint edge can sit below a raised
 skirt: collide in plan (x/z) only, exactly as the corridor clamp does.
 **Effort:** E6a.1 medium, **high (review)** on the zero-golden claim;
 E6a.2 medium.
+
+#### E6a.1 — what landed (2026-08-07)
+
+`src/collision.js`: a plan-view solid registry, 1,178 solids at boot — 995
+building footprints from `leith.json`, 53 Heras panels, 113 standing cones,
+14 wrecked cars/vans, the bus, the tram hulk, the hoarding. Consulted from
+`controls.update()` before the corridor clamp, and from `moments.js` /
+`main.js` for spawn resolution. Thirteen gates in a new `collision` region,
+each family fault-injected. Full detail in `docs/VALIDATION.md` § E6a.1.
+
+**The zero-golden claim held, and was measured rather than reasoned.**
+`geomHash c0751fc1` and `realtimeHash 6e5cd57b` are identical in a control
+worktree at `8d6dd99` and after the change; `goldens:audit` names the same 25
+standing poses in both trees. The named risk — `mobile: hold-to-walk moves
+camera`, the one gate that drives real movement — was falsified first: that
+bookmark's forward path clears every footprint by 5.93 m, and the gate still
+reports 7.00 m.
+
+**Rejected by measurement:** push-out resolution for movement. Pushing the
+moving point out of every solid it overlaps oscillates in a concave tenement
+footprint's re-entrant corner — the wall-slide became a dead stop 39 frames
+in. Movement now accepts or discards candidate positions and never pushes;
+push-out survives only for spawn resolution, which has no free position to
+fall back to.
+
+**Deviation from the ruling, with the reason:** the broadphase is a uniform
+8 m x/z grid (7,099 cells), not chainage buckets. Keying on chainage would
+need the proposed position projected onto the street line before the grid
+could be consulted — a second `nearestStreetPoint`-class cost per query for
+the same candidate set.
+
+**Decided for E6a.2, not built:** a vendor's collision circle must be smaller
+than `interact.js`'s 8 m prompt range, asserted for all 124 — a vendor you
+cannot reach is a vendor you cannot hear.
 
 ### E6b — The living tram
 
