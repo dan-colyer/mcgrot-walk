@@ -3249,22 +3249,48 @@ async function main() {
     // is off on the shipped path, so there is nothing here for a golden to
     // protect yet — the enable commit is where that changes.
     if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
-    await gulOnPg.evaluate(({ px, pz, py, yaw }) => {
-      const dbg = window.__mcgrotDebug;
-      const cx = px + Math.sin(yaw) * 8;
-      const cz = pz + Math.cos(yaw) * 8;
-      dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 1.7, cz);
-      dbg.camera.lookAt(px, py + 1.4, pz);
-      dbg.stepFrames(30);
-    }, { px: gulOn.placement.x, pz: gulOn.placement.z, py: gulOn.placement.y, yaw: gulOn.placement.yaw });
-    const gulShot = await gulOnPg.screenshot();
+    const framePose = { px: gulOn.placement.x, pz: gulOn.placement.z, py: gulOn.placement.y, yaw: gulOn.placement.yaw };
+    const shootStall = async (pg) => {
+      await pg.evaluate(({ px, pz, py, yaw }) => {
+        const dbg = window.__mcgrotDebug;
+        const cx = px + Math.sin(yaw) * 6;
+        const cz = pz + Math.cos(yaw) * 6;
+        dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 1.7, cz);
+        dbg.camera.lookAt(px, py + 1.4, pz);
+        dbg.stepFrames(30);
+      }, framePose);
+      return pg.screenshot();
+    };
+    const gulShot = await shootStall(gulOnPg);
+    const gulCtlShot = await shootStall(gulOffPg);
     writeFileSync(join(captureDir, 'gullet-front.png'), gulShot);
-    const gulLum = luminanceStats(PNG.sync.read(gulShot));
+    writeFileSync(join(captureDir, 'gullet-front-control.png'), gulCtlShot);
+
+    // IS THE STALL ACTUALLY IN SHOT. The contrast floor below cannot answer
+    // that, and this was measured rather than assumed: at this pose NOTHING
+    // could be injected that took the frame under the floor — a camera buried
+    // 40m, an exposure override and a sky-only pose all still scored stddev
+    // 30-48 against a floor of 8. A gate that will not go red is decoration
+    // (E2g.1), so the real gate is the pair: the same pose on both arms, and
+    // the difference between them is the stall.
+    const gulOnPng = PNG.sync.read(gulShot);
+    const gulOffPng = PNG.sync.read(gulCtlShot);
+    const gulDiffPx = pixelmatch(gulOnPng.data, gulOffPng.data, null, gulOnPng.width, gulOnPng.height, { threshold: 0.1 });
+    const gulDiffPct = (gulDiffPx / (gulOnPng.width * gulOnPng.height)) * 100;
     results.push({
-      name: 'E10a.1: the stall is a picture, not a silhouette',
+      name: 'E10a.1: the stall occupies the frame a reviewer looks at',
+      pass: gulDiffPct >= 3,
+      detail: `${gulDiffPct.toFixed(2)}% of pixels differ from the same pose with the flag off (want >=3%) — ` +
+        'this is what stops the stall shipping unlooked-at, the Pomplé risk one part early. ' +
+        'Both frames in docs/smoke/captures/ (gullet-front.png, gullet-front-control.png)',
+    });
+
+    const gulLum = luminanceStats(gulOnPng);
+    results.push({
+      name: 'E10a.1: the stall is a picture, not a blackout',
       pass: gulLum.stddev >= SUBSTRATE_MIN_STDDEV && gulLum.mean >= 18 && gulLum.mean <= 200,
       detail: `mean luminance ${gulLum.mean.toFixed(1)} (want 18-200), stddev ${gulLum.stddev.toFixed(1)} ` +
-        `(want >=${SUBSTRATE_MIN_STDDEV}). Frame written to docs/smoke/captures/gullet-front.png`,
+        `(want >=${SUBSTRATE_MIN_STDDEV}). NOT falsifiable at this pose — see the gate above`,
     });
 
     await gulOffCtx.close();

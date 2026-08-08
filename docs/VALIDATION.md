@@ -3918,8 +3918,63 @@ was unaffected; the compass label was wrong.
   off — not with collision suspended. Suspending collision would prove the
   resolver runs; this proves the *Gullet* is what stopped you, because every
   other solid on the street is present in both arms.
-- **The frame is a picture** (mean 80.4, stddev 47.8), on the E5d rule that a
-  numeric gate cannot see a blackout.
+- **The stall occupies the frame** — 7.17% of pixels differ from the SAME pose
+  with the flag off, against a floor of 3%. See below: this replaced a
+  contrast floor that could not be made to fail.
+- **The frame is not a blackout** (mean 74.8, stddev 45.8), kept as a cheap
+  second read on the E5d rule, and labelled in its own detail line as not
+  falsifiable at this pose.
+
+### A contrast floor that could not go red
+
+The first cut of the picture gate was the E5d shape alone: luminance stddev
+≥ 8 and mean in 18–200. It passed, and then it passed everything. Injected in
+turn, all still green:
+
+| Injection | mean | stddev |
+|---|---|---|
+| camera buried 40 m underground | 70.9 | 38.0 |
+| `toneMappingExposure = 0.02` before the render | 80.4 | 47.8 |
+| camera pointed at empty sky | 96.6 | 30.7 |
+
+The exposure override is undone by atmosphere.js on the next frame, and the
+other two still frame something textured — clouds and halftone grain alone
+clear a floor of 8 four times over. **An unfalsified gate is decoration**, so
+the floor stopped being the gate and became a footnote.
+
+The replacement compares the SAME pose across the flag's two arms, so what it
+measures is the stall itself rather than the scene's general legibility. It
+fails to 0.00% when the capture pose is turned away — which is exactly the
+"Pomplé is below every gate's camera line" risk the roadmap flags for E10a.3,
+caught one part early. The pose moved from 8 m to 6 m for margin: at 8 m the
+stall registered 3.07% against a 3% floor, which is not a gate, it is a
+coin toss.
+
+### Fault injection: what went red
+
+Run against the committed build, restored after each. Every gate that could
+be made to fail was made to fail:
+
+| Injection | Gates that went red |
+|---|---|
+| `if (false && world.collision)` | registered (0 solids, want 2) |
+| chainage 740 → 752 | placement; vendor clearance (nearest 3.65 m); the van stops the player (11/180 frames inside) |
+| offset 7.6 → 22 m | not inside a building (1/4 corners) |
+| mutate the merged building geometry from inside gullet.js | reseeds nothing (geomHash d15895cd vs c0751fc1) |
+| capture pose turned to the sky | occupies the frame (0.00%) |
+
+The chainage injection is worth its own line: moving the stall 12 m put a
+vendor 3.65 m away, inside the 8 m prompt radius. That is the roadmap's named
+E10a risk — "the stall competes with an existing vendor's pitch" — reproduced
+on demand, which is the best evidence that the clearance gate is measuring
+something real rather than a number that happens to be large.
+
+**The reseed gate is the weak one, and it is weak structurally.** gullet.js is
+built after world, npcs, characters and scenery, so nothing it does can move
+what `geomHash` covers unless it reaches in and mutates it — which is what the
+injection above had to do. The gate is live, but it would only catch a genuine
+shared-PRNG reseed if the Gullet were ever moved earlier in main.js's build
+order. If that happens, this gate becomes load-bearing; today it is insurance.
 
 ### Two fixture bugs the first run caught
 
