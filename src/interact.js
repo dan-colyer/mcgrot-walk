@@ -149,7 +149,9 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     // the overlay — walking past a busking vendor (proximityAudio's own
     // ambient play()) never reaches this function, so only an actually-
     // started reading counts. credit() is idempotent per comic id.
-    if (journal && npc.comic) {
+    // skipJournal: E10a.3's McGrot is a reading station but not part of the
+    // 124-comic collection the journal counts — see src/gullet.js.
+    if (journal && npc.comic && !npc.skipJournal) {
       journal.credit(npc.comic.id, 'heard');
       // E5b.2: an anchor is credited on this same past-the-hush event, never
       // on the keypress that opens the overlay — walking past one earns
@@ -185,7 +187,11 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     // Overlay + ducking land now, before the reading starts — and suspends
     // every other busking voice (see proximity-audio.js's setOverlayOpen).
     proximityAudio.setOverlayOpen(true);
-    setPlayIcon(true);
+    // E10a.3: McGrot is the first station whose comic has no rendered clip
+    // (his is queued in the TTS hero lane), and until this the overlay showed
+    // the PAUSE icon — "now playing" — over silence. Every one of the 124 has
+    // audio, so this path had never been reachable before.
+    setPlayIcon(!!(npc.comic && npc.comic.audio));
     setReading(true);
 
     hushPending = true;
@@ -342,5 +348,8 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     return !!(openNpc || openLitter);
   }
 
-  return { update, dispose, setReadAlong, isOpen, range: RANGE };
+  // readerCount: E10a.3's gate needs the length of the list this module was
+  // actually handed, not npcs.npcs — the whole point of that unit is that
+  // the two differ by one on the days McGrot is in.
+  return { update, dispose, setReadAlong, isOpen, range: RANGE, readerCount: () => npcs.length };
 }

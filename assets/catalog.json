@@ -2672,10 +2672,11 @@
       "srcDir": "/Users/dan/Desktop/screenshots/mcgrot",
       "md5": "3c6b637b1de383996f7291bd42aeed4c",
       "done": false,
-      "title": null,
+      "title": "McGrot — The Badger Consultancy",
       "audio": null,
-      "promptFile": null,
-      "npc": null
+      "promptFile": "3c6b637b.txt",
+      "npc": null,
+      "hero": true
     },
     {
       "id": "3d68e45a",

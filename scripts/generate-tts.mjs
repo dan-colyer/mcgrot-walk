@@ -84,7 +84,12 @@ const targets = catalog.comics.filter((c) => {
   if (idsArg && !idsArg.includes(c.id)) return false;
   const audioRel = c.audio || `audio/${c.id}.mp3`;
   return !existsSync(join(root, 'assets', audioRel));    // skip already-rendered
-}).slice(0, limit);
+})
+  // E10a.3: the hero-cast lane. Catalog order otherwise, so `hero` is the only
+  // thing that jumps a queue ~295 comics long — McGrot's own station is
+  // useless without a voice and would sit behind the whole backlog.
+  .sort((a, b) => (b.hero ? 1 : 0) - (a.hero ? 1 : 0))
+  .slice(0, limit);
 
 if (!targets.length) { console.log('nothing to do — all transcribed entries already have audio.'); process.exit(0); }
 console.log(`TTS: ${targets.length} clip(s) to generate.\n`);
@@ -147,6 +152,16 @@ for (const [i, comic] of targets.entries()) {
   const dur = parseFloat(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', out]).toString().trim()) || 0;
 
   ok++;
+  // WRITE THE PATH BACK. A catalog entry that claims an mp3 which is not on
+  // disk is a 404 every time a player opens that station, and the console
+  // error it logs would fail the suite's console-clean gate for whichever
+  // gate happened to open it. So `audio` stays null until the clip exists and
+  // is filled in here — E10a.3, after McGrot's station shipped with a
+  // hopeful path and duly 404'd on the first open.
+  if (!comic.audio) {
+    comic.audio = `audio/${comic.id}.mp3`;
+    writeFileSync(join(root, 'assets/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`);
+  }
   delete progress.failed[comic.id];
   if (!progress.done.includes(comic.id)) progress.done.push(comic.id);
   writeFileSync(progressPath, JSON.stringify(progress, null, 2));

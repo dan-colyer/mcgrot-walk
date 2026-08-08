@@ -172,9 +172,17 @@ async function main() {
   let proxDuck = false;
   const applyDuck = () => ambience.setDucked(readingDuck || proxDuck);
 
+  // E10a.3: McGrot reads too, but he is NOT one of the 124 — a separate array
+  // so npcs.npcs (which geomHash, the vendor census and the journal's
+  // denominator all hang off) stays exactly 124 long. proximityAudio gets him
+  // as well as interact: his catalog entry carries an audio path the trickle
+  // has not rendered yet, and the ambient busking loop skips a vendor whose
+  // clip will not load, so this is inert today and correct the day it lands.
+  const readers = gullet.reader ? [...npcs.npcs, gullet.reader] : npcs.npcs;
+
   const proximityAudio = createProximityAudio({
     camera,
-    npcs: npcs.npcs,
+    npcs: readers,
     assets,
     onActiveChange: (n) => { proxDuck = n > 0; applyDuck(); },
   });
@@ -187,7 +195,7 @@ async function main() {
 
   interact = createInteract({
     assets,
-    npcs: npcs.npcs,
+    npcs: readers,
     camera,
     controls,
     proximityAudio,

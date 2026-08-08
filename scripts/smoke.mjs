@@ -14,7 +14,7 @@
 
 import { spawn, execSync, spawnSync } from 'child_process';
 import { createServer } from 'net';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { chromium } from 'playwright';
@@ -3039,6 +3039,7 @@ async function main() {
     // uses. src/gullet.js exports its placement, and reading that back would
     // pass whether or not the group ever reached the scene.
     const gulletLeith = JSON.parse(readFileSync(join(root, 'assets/leith.json'), 'utf8'));
+    const gulCatalog = JSON.parse(readFileSync(join(root, 'assets/catalog.json'), 'utf8'));
     const GULLET_FOOTPRINTS = gulletLeith.buildings.map((b) => b.footprint).filter((f) => f && f.length > 2);
     const gulletInside = (x, z) => GULLET_FOOTPRINTS.some((pts) => {
       let inside = false;
@@ -3337,6 +3338,9 @@ async function main() {
           castSolids: (dbg.world.collision.stats().byTag['gullet-cast'] || 0),
           meshes: g.meshes(),
           shutSign: !!g.group.getObjectByName('gullet-shut-sign'),
+          readers: dbg.interact.readerCount(),
+          vendors: dbg.npcs.npcs.length,
+          journalDenominator: dbg.journal.counts().denominator,
           mcgrot: fig(g.mcgrot),
           pomple: fig(g.pomple),
           placement: g.placement,
@@ -3501,6 +3505,137 @@ async function main() {
       detail: `${pomPct.toFixed(2)}% of pixels differ from the same pose on a day the dog is elsewhere ` +
         '(want >=1%). docs/smoke/captures/gullet-pomple.png — open it; a dog at 0.42m is exactly the ' +
         'thing that ships unlooked-at',
+    });
+
+    // --- E10a.3: McGrot is the 125th reading station ----------------------
+    //
+    // He satisfies interact.js's and proximity-audio.js's vendor contract
+    // without being one of the 124. The three counts that must NOT move are
+    // asserted first, because "he works" is worth nothing if it cost the
+    // vendor census, the journal denominator or geomHash.
+    results.push({
+      name: 'E10a.3: McGrot is a reader without becoming vendor 125',
+      pass: castIn.state.readers === 125 && castIn.state.vendors === 124
+        && castOut.state.readers === 124 && castOut.state.vendors === 124
+        && castIn.state.journalDenominator === 124 && castOut.state.journalDenominator === 124,
+      detail: `in-day: ${castIn.state.readers} readers / ${castIn.state.vendors} vendors / ` +
+        `journal denominator ${castIn.state.journalDenominator}; out-day: ${castOut.state.readers} / ` +
+        `${castOut.state.vendors} / ${castOut.state.journalDenominator} (vendors and denominator must ` +
+        'be 124 on both days — his comic deliberately has no `npc` block)',
+    });
+
+    // The prompt. Standing 3m out in the road in front of him, which is inside
+    // RANGE and outside every neighbour's, must offer his station by name.
+    const promptAt = async (pg, hasReader) => pg.evaluate((has) => {
+      const dbg = window.__mcgrotDebug;
+      const g = dbg.gullet;
+      const p = has ? g.reader.group.position : g.mcgrotAnchorForGate || g.placement;
+      const cx = p.x + Math.sin(g.placement.yaw) * 3;
+      const cz = p.z + Math.cos(g.placement.yaw) * 3;
+      dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 1.7, cz);
+      dbg.stepFrames(5);
+      const el = document.getElementById('npc-prompt');
+      const lab = document.getElementById('npc-prompt-label');
+      return {
+        shown: !!(el && el.style.display === 'block'),
+        label: (lab && lab.textContent) || '',
+      };
+    }, hasReader);
+    const promptIn = await promptAt(castIn.page, true);
+    // The control stands at the SAME spot on the out-day, where the station is
+    // not. Any other vendor's prompt appearing there would mean the in-day
+    // reading was somebody else's.
+    const promptOut = await castOut.page.evaluate((pos) => {
+      const dbg = window.__mcgrotDebug;
+      dbg.camera.position.set(pos.x, dbg.world.groundHeight(pos.x, pos.z) + 1.7, pos.z);
+      dbg.stepFrames(5);
+      const el = document.getElementById('npc-prompt');
+      const lab = document.getElementById('npc-prompt-label');
+      return { shown: !!(el && el.style.display === 'block'), label: (lab && lab.textContent) || '' };
+    }, await castIn.page.evaluate(() => {
+      const g = window.__mcgrotDebug.gullet;
+      const p = g.reader.group.position;
+      return { x: p.x + Math.sin(g.placement.yaw) * 3, z: p.z + Math.cos(g.placement.yaw) * 3 };
+    }));
+    results.push({
+      name: 'E10a.3: his station offers itself by name, and only when he is in',
+      pass: promptIn.shown && /McGrot/.test(promptIn.label) && !promptOut.shown,
+      detail: `in-day prompt "${promptIn.label}" (shown=${promptIn.shown}); ` +
+        `control — same spot on the out-day: shown=${promptOut.shown} "${promptOut.label}"`,
+    });
+
+    // Opening it. The overlay must carry HIS comic and HIS name, the image
+    // must actually decode, and the journal must NOT move: he is a station,
+    // not part of the 124-comic collection it counts against a fixed
+    // denominator.
+    const opened = await castIn.page.evaluate(async () => {
+      const dbg = window.__mcgrotDebug;
+      const before = dbg.journal.counts().heard;
+      document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE', bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE', bubbles: true }));
+      await new Promise((r) => setTimeout(r, 1200));
+      const img = document.getElementById('comic-image');
+      return {
+        display: document.getElementById('comic-overlay').style.display,
+        title: document.getElementById('comic-title').textContent,
+        meta: document.getElementById('comic-meta').textContent,
+        imgDecoded: img.naturalWidth > 0,
+        playIcon: document.getElementById('comic-playpause').textContent,
+        heardBefore: before,
+        heardAfter: dbg.journal.counts().heard,
+      };
+    });
+    results.push({
+      name: 'E10a.3: the overlay opens on his own comic',
+      pass: opened.display === 'flex' && /Badger Consultancy/.test(opened.title)
+        && /McGrot/.test(opened.meta) && opened.imgDecoded,
+      detail: `display=${opened.display}, title="${opened.title}", meta="${opened.meta}", ` +
+        `image decoded=${opened.imgDecoded}`,
+    });
+    results.push({
+      name: 'E10a.3: hearing him does not credit the 124-comic journal',
+      pass: opened.heardAfter === opened.heardBefore,
+      detail: `journal heard ${opened.heardBefore} -> ${opened.heardAfter} (must not move; his comic ` +
+        'is not in the collection the denominator counts)',
+    });
+    // The unvoiced path, which McGrot is the FIRST station to reach: all 124
+    // vendors have a rendered clip. The overlay must not claim to be playing.
+    results.push({
+      name: 'E10a.3: an unvoiced station does not show a playing icon',
+      pass: opened.playIcon === '▶',
+      detail: `play/pause reads "${opened.playIcon}" (want ▶ — his clip is queued in the TTS hero ` +
+        'lane and does not exist yet; the pause icon over silence is what this replaced)',
+    });
+
+    // NO DANGLING AUDIO PATH ANYWHERE. This is the gate the 404 taught: a
+    // catalog entry claiming an mp3 that is not on disk logs a console error
+    // on every open, and the console-clean gate only catches it if some gate
+    // happens to open that station. Checked over the WHOLE catalog, in node,
+    // so it covers all 418 rather than the one this unit touched.
+    const audioOnDisk = new Set(readdirSync(join(root, 'assets/audio')).filter((f) => f.endsWith('.mp3')));
+    const dangling = gulCatalog.comics
+      .filter((c) => c.audio && !audioOnDisk.has(c.audio.split('/').pop()))
+      .map((c) => c.id);
+    results.push({
+      name: 'E10a.3: no catalog entry claims an mp3 that is not on disk',
+      pass: dangling.length === 0,
+      detail: `${dangling.length} dangling audio path(s) across ${gulCatalog.comics.length} catalog ` +
+        `entries${dangling.length ? `: ${dangling.slice(0, 5).join(', ')}` : ''} — ` +
+        'generate-tts.mjs writes the path back on success, so `audio` stays null until the clip exists',
+    });
+
+    // He is queued FIRST for a voice. Without this his station is silent until
+    // the trickle grinds through ~295 untranscribed comics ahead of him.
+    const heroes = gulCatalog.comics.filter((c) => c.hero);
+    const transcribedUnvoiced = gulCatalog.comics.filter((c) => c.promptFile && !c.audio);
+    results.push({
+      name: 'E10a.3: his clip is at the front of the TTS queue',
+      pass: heroes.length === 1 && heroes[0].id === '3c6b637b'
+        && existsSync(join(root, 'scripts/tts-prompts/3c6b637b.txt'))
+        && transcribedUnvoiced.length > 0 && transcribedUnvoiced[0].id === '3c6b637b',
+      detail: `${heroes.length} hero-lane entr(y/ies); the next ${transcribedUnvoiced.length} ` +
+        `transcribed-but-unvoiced comic(s) start with ${transcribedUnvoiced[0] && transcribedUnvoiced[0].id} ` +
+        '(generate-tts.mjs sorts hero-first)',
     });
 
     await castIn.context.close();

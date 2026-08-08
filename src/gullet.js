@@ -75,6 +75,16 @@ const MCGROT_IN_DENOMINATOR = 8;
 // and stays exactly as written.
 const SHUT_SIGN = ['AWAY.', 'BACK NEVER.', '— McG'];
 
+// E10a.3. McGrot's own comic, and the identity that makes his station read
+// like the other 124's. The comic is a REAL catalog entry (transcribed for
+// this unit into scripts/tts-prompts/3c6b637b.txt) and deliberately one of the
+// 294 without an `npc` block: giving it one would make him vendor 125 inside
+// npcs.js, which moves geomHash, the vendor census and every count that hangs
+// off 124. He is a principal, not a catalog vendor.
+const MCGROT_COMIC_ID = '3c6b637b';
+const MCGROT_NAME = 'McGrot';
+const MCGROT_BLURB = 'Proprietor o\' the Gullet';
+
 const VAN_LENGTH = 4.4;   // along the street
 const VAN_DEPTH = 2.6;    // across it
 const VAN_BODY_H = 2.05;  // body box height, above the chassis
@@ -126,7 +136,7 @@ export function buildGullet(assets, world, scene) {
   const enabled = gulletEnabled();
   const noop = {
     enabled: false, group: null, placement: null, solids: 0,
-    dayKey: null, mcgrotIn: false, mcgrot: null, pomple: null, meshes: () => 0,
+    dayKey: null, mcgrotIn: false, mcgrot: null, pomple: null, reader: null, meshes: () => 0,
   };
   if (!enabled || !world || !scene) return noop;
 
@@ -245,6 +255,7 @@ export function buildGullet(assets, world, scene) {
   };
 
   if (mcgrotIn) stand(MCGROT_FILE, mcgrotLocal, MCGROT_HEIGHT, 'mcgrot', MCGROT_LIFT);
+  const reader = mcgrotIn ? buildReader(assets, figures.mcgrot) : null;
   stand(POMPLE_FILE, pompleLocal, POMPLE_HEIGHT, 'pomple');
 
   return {
@@ -256,6 +267,7 @@ export function buildGullet(assets, world, scene) {
     mcgrotIn,
     mcgrot: figures.mcgrot,
     pomple: figures.pomple,
+    reader,
     meshes: () => meshesLoaded,
     placement: { chainage: GULLET_CHAINAGE, side: GULLET_SIDE, offset: GULLET_OFFSET, x: cx, y: cy, z: cz, yaw },
   };
@@ -448,6 +460,46 @@ function buildPriceBoard(group) {
   mesh.position.set(-1.4, CHASSIS_H + 1.34, VAN_DEPTH * 0.5 + 0.13);
   mesh.rotation.y = 0.12;
   group.add(mesh);
+}
+
+// E10a.3: the object interact.js and proximity-audio.js consume. It is shaped
+// like an npcs.js vendor because those two iterate a list and read fields off
+// it — `group`, `comic`, `name`, `blurb`, `setSpeaking`, `voice` — and the
+// cheapest way to be a reading station is to satisfy that contract rather than
+// to teach both modules about a second kind of thing.
+//
+// WHAT IS DELIBERATELY DIFFERENT FROM A VENDOR:
+//
+//   skipJournal   The journal tracks the 124-comic collection against a fixed
+//                 denominator. Crediting McGrot would let `heard` reach 125/124
+//                 and would put a comic in the collection that is not in it.
+//   isAnchor      false. Anchors are the landmark shopfronts (E5b.2); the
+//                 Gullet is not one and must not earn an anchor credit.
+//   no buildDoll  There is no paper-doll fallback for a canon principal. If
+//                 his glb 404s the stall simply stands unattended.
+//
+// `group` is the SAME holder the mesh is parented to, so the proximity scan
+// measures to where he actually stands rather than to a second position that
+// could drift from it.
+function buildReader(assets, figure) {
+  const catalog = (assets && assets.catalog && Array.isArray(assets.catalog.comics))
+    ? assets.catalog.comics : [];
+  const comic = catalog.find((c) => c.id === MCGROT_COMIC_ID);
+  // The single-file artifact ships a 3-comic manifest, not the catalog. No
+  // comic means no station — the stall and the figure still stand.
+  if (!comic || !figure) return null;
+  return {
+    group: figure.holder,
+    comic,
+    name: MCGROT_NAME,
+    blurb: MCGROT_BLURB,
+    isAnchor: false,
+    skipJournal: true,
+    collisionRadius: MCGROT_RADIUS,
+    voice: null,
+    speaking: false,
+    setSpeaking(v) { this.speaking = !!v; },
+  };
 }
 
 // The board that covers the hatch on the days he is not in. Hung over the
