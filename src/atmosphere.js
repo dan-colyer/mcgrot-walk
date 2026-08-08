@@ -736,11 +736,22 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   // sampling state() itself would not.
   let lamps = null;
 
-  // E5d part 2: while suspended, applyPalette is not called and the ending
-  // sequence owns fog.color/fog.density and toneMappingExposure. Resuming
-  // reapplies the full palette on the next update, so nothing the sequence
-  // left behind can persist.
-  let suspended = false;
+  // E5d part 2: while suspended, applyPalette is not called and whoever holds
+  // the suspend owns fog.color/fog.density and toneMappingExposure. Releasing
+  // reapplies the full palette immediately, so nothing the holder left behind
+  // can persist.
+  //
+  // E9a.1: this was a bare boolean, which supports exactly one suspender. The
+  // E5 phase gate ruled that the seam graduates to an OWNED hand-off before a
+  // second consumer arrives, and the interior is that second consumer — it
+  // needs its own fog and its own exposure while the street clock runs on,
+  // and the ending can be reached from indoors. Ownership is now a token:
+  // acquireSuspend(owner) returns one or returns NULL if someone else already
+  // holds it. Re-entry is refused rather than nested, and a caller that gets
+  // null must not paint. release() is idempotent and ignores a stale token,
+  // so a late release from a previous holder cannot steal the palette back
+  // from the current one.
+  let suspendToken = null;
   const hemi = world.lights && world.lights.hemi;
   const sun = world.lights && world.lights.sun;
   const ambient = world.lights && world.lights.ambient;
@@ -1060,7 +1071,7 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     // palette every frame, so anything written from outside is overwritten
     // before it is ever seen. The clock still advances while suspended, so
     // resuming lands on the time it would have been.
-    if (suspended) {
+    if (suspendToken) {
       if (rate !== 0) hours = (((hours + rate * (dt / 60)) % 24) + 24) % 24;
       return;
     }
@@ -1232,14 +1243,35 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     if (lamps) lamps.setGlow(sLastApplied.windowGlow);
   }
 
-  function setSuspended(v) {
-    const was = suspended;
-    suspended = !!v;
-    // Resuming must repaint immediately rather than waiting for the next
-    // frame: the ending leaves fog and exposure somewhere arbitrary, and a
-    // single frame of that after "keep walking" is a visible flash.
-    if (was && !suspended) update(0, 0);
+  // Take exclusive ownership of fog and exposure. Returns a token, or null if
+  // another owner already holds it — the caller MUST check, because painting
+  // without the token means two writers on the same fields and atmosphere
+  // wins on the next frame anyway (silently, which is the failure mode this
+  // replaces).
+  function acquireSuspend(owner) {
+    if (typeof owner !== 'string' || !owner) throw new Error('atmosphere.acquireSuspend needs a named owner');
+    if (suspendToken) return null;
+    suspendToken = { owner, released: false };
+    return suspendToken;
   }
 
-  return { update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps, nudge, setSuspended, isSuspended: () => suspended };
+  // Idempotent, and a no-op for any token that is not the current holder.
+  function releaseSuspend(token) {
+    if (!token || token !== suspendToken) return false;
+    suspendToken = null;
+    token.released = true;
+    // Releasing must repaint immediately rather than waiting for the next
+    // frame: the holder leaves fog and exposure somewhere arbitrary, and a
+    // single frame of that after "keep walking" is a visible flash.
+    update(0, 0);
+    return true;
+  }
+
+  return {
+    update, setTime, getTime, setRate, setWeather, setWeatherSchedule, state, setLamps, nudge,
+    acquireSuspend,
+    releaseSuspend,
+    isSuspended: () => !!suspendToken,
+    suspendOwner: () => (suspendToken ? suspendToken.owner : null),
+  };
 }

@@ -50,6 +50,14 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
   // API when posing a custom elevated bookmark (skyline), whose absolute
   // camera.y would otherwise be clamped straight back to ground+eye.
   let yFollow = true;
+  // E9a.1: while the player is inside a shop, movement resolves against a
+  // rectangle and a couple of boxes instead of against the street. Not a
+  // second collision system and not allowed to become one (ROADMAP § E9:
+  // "movement bounds, not collision") — src/collision.js knows only about the
+  // street scene, and an interior is a different scene at a different origin,
+  // so consulting it in here would resolve the player against solids that are
+  // nowhere near them.
+  let room = null;
 
   function applyLook() {
     camera.rotation.set(pitch, yaw, 0);
@@ -170,6 +178,17 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
       let nx = camera.position.x + dx;
       let nz = camera.position.z + dz;
 
+      if (room) {
+        // One axis at a time, each resolved against the position the previous
+        // one settled at, so a move into a wall still SLIDES along it rather
+        // than stopping dead. Same accept-or-slide shape as the street's
+        // resolveMove, arrived at for the same reason (E6a: pushing out
+        // oscillates in a corner).
+        camera.position.x = roomFree(nx, camera.position.z) ? nx : camera.position.x;
+        camera.position.z = roomFree(camera.position.x, nz) ? nz : camera.position.z;
+        return;
+      }
+
       // E6a: solids first, corridor second. Two constraints resolving against
       // each other can oscillate at a corner where a footprint meets the
       // corridor boundary; fixing the order means the corridor always has the
@@ -191,9 +210,33 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
       camera.position.z = nz;
     }
 
-    if (groundHeight && yFollow) {
+    // The floor indoors is flat and is the ROOM's, not the terrain's. Kept
+    // outside the movement branch above so it holds while standing still —
+    // the street's ground-follow would otherwise drag the camera to whatever
+    // the terrain height happens to be at the interior's local coordinates,
+    // which are nowhere near the shop.
+    if (room && yFollow) {
+      camera.position.y = room.bounds.floorY + EYE_HEIGHT;
+    } else if (groundHeight && yFollow) {
       camera.position.y = groundHeight(camera.position.x, camera.position.z) + EYE_HEIGHT;
     }
+  }
+
+  // Inside the bounds rectangle and outside every solid.
+  function roomFree(x, z) {
+    const b = room.bounds;
+    if (x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) return false;
+    for (const s of room.solids) {
+      if (x > s.minX && x < s.maxX && z > s.minZ && z < s.maxZ) return false;
+    }
+    return true;
+  }
+
+  // Hand the movement integration a room, or null to put it back on the
+  // street. Passing a room does NOT move the camera — main.js owns where the
+  // player lands, because it also owns the scene swap and the exposure token.
+  function setRoom(r) {
+    room = r && r.bounds ? r : null;
   }
 
   function dispose() {
@@ -215,7 +258,11 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
     if (Number.isFinite(y)) yaw = y;
   }
 
-  return { update, dispose, setEnabled, setForward, setYaw, setYFollow: (v) => { yFollow = !!v; } };
+  return {
+    update, dispose, setEnabled, setForward, setYaw, setRoom,
+    inRoom: () => !!room,
+    setYFollow: (v) => { yFollow = !!v; },
+  };
 }
 
 function clamp(v, min, max) {

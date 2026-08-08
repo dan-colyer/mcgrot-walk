@@ -3649,6 +3649,74 @@ suspender: this unit graduates it to an owned hand-off (a token, or a
 named owner with re-entry refused) before two callers can fight over it
 (E5 phase-gate ruling).
 
+#### E9a.1 landed (2026-08-08) — the room, and the seam that lets it own the air
+
+`src/interior.js` behind `__mcgrotForceInterior`, shipped default OFF. Suite
+**318 PASS / 0 FAIL sharded (102s)**, goldens audited afterwards: *nothing
+moved, no recapture needed*. New `interior` region, **13 gates**, and every
+one of them driven red under fault injection — the table is in
+`docs/VALIDATION.md` § "The `interior` region".
+
+**The shop is Valvona & Crolla, 19 Elm Row** — building 424, chainage 1486,
+west side. Picked on a measurement, not a feel: the design asks for a category
+with obvious stock, and of the 24 façades in `assets/facade-registry.json`
+backed by a real rectified photo it is the only deli
+(`edinburgh-18-19-elm-row`, confidence 0.72).
+
+What it costs: **3 draw calls and 4,245 triangles** for a furnished 7×9m room,
+against the street's ~950-call heaviest pose. Everything opaque accumulates
+into one merged vertex-coloured mesh; the glazing is the only second material.
+
+**The E5 phase gate's deliverable landed with it.** `atmosphere.setSuspended`
+is gone, replaced by `acquireSuspend(owner)` → token / `releaseSuspend(token)`.
+Re-entry is refused, a stale token's release is ignored, and `ending.js` now
+REFUSES to begin if it cannot get the token — so the close is unavailable from
+indoors, which is right: the haar is a thing you walk into at the Foot.
+
+**Design decisions taken here, so E9a.2–.4 do not relitigate them:**
+
+- **Seeded from the shop slug, not from the day.** A deli does not rearrange
+  its fittings overnight, and a date-varying interior would put every future
+  interior golden at the mercy of `SMOKE_DATE` — the exact blind spot E10a had
+  to write down when it turned out no golden had ever seen McGrot in. Stock and
+  visitors are what vary by day, and both are E9b's.
+- **Suspended-indoors is a named set in `main.js`**, not a flag each module
+  reads: litter, shopfronts, interact, proximityAudio, legs, ending, moments,
+  captions. Everything else keeps running, which is what makes stepping back
+  out not a level load.
+
+*Rejected, measured — three gates that could not go red.* All three were mine,
+not the code's, and all three are the same error in different clothes:
+
+1. **The street-unchanged gate read only `renderer.info`.** An injection that
+   cloned the room mesh into the STREET scene stayed green, because the
+   interior's local origin is ~1300m from `elm-row-hero` and the clone was
+   frustum-culled. Fixed with a whole-scene census by traversal.
+2. **Both arms of the movement gates called `setRoom` themselves.** They passed
+   an injection that deleted that call from `enterInterior` entirely — testing
+   the clamp, not the shop. The held arm now touches nothing; only the control
+   overrides. Third time this project has hit "gates test the product, not the
+   calculator".
+3. **An `isInside()` guard made the ownership token dead weight.** An injection
+   handing every caller a token stayed green because nothing reached the
+   acquire twice. `enterInterior` now acquires FIRST and the token is the only
+   lock on re-entry.
+
+*And one bug no assert would ever have found.* The room-hidden control frame
+had `[E] HEAR ISA STRUTHERS READ` printed across the whole shop. Skipping an
+updater stops it thinking, not showing — `interact` was correctly held, and the
+prompt it raised on the last street frame stayed in the DOM. `interact.suspend()`
+and `captions.suspend()` now bring their own DOM down on the way in. It was
+caught by *opening the capture*, which is the entire case for that rule.
+
+**Next: E9a.2, the transition** — a door prompt on the Valvona & Crolla façade
+at chainage 1486, the panel wipe both ways, and the interaction with
+`interact.js`'s existing NPC proximity prompt at the same frontage (the risk
+this section already names). Two things E9a.1 deliberately left for it: the
+glazing is a constant pale light box at every hour, and there is no ambience
+ducking indoors — the moment the door works, the two sides have to agree about
+the time and about what you can hear.
+
 ### E9b — Open for Business (the visitor theatre) — after E4
 
 The interaction engine, using E4's machinery end to end:

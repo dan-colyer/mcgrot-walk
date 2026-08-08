@@ -13,10 +13,16 @@
 //
 // THE HAND-OFF. atmosphere.js reapplies the whole palette every frame, so a
 // sequence that wrote fog and exposure directly would be overwritten before
-// any of it was seen. `atmosphere.setSuspended(true)` stops it painting and
-// hands those fields over; resuming repaints immediately, so nothing this
-// module leaves behind can persist. That is the only correct seam here, and
-// there is a gate comparing a resumed boot against one that never ended.
+// any of it was seen. `atmosphere.acquireSuspend('ending')` stops it painting
+// and hands those fields over; releasing repaints immediately, so nothing
+// this module leaves behind can persist. That is the only correct seam here,
+// and there is a gate comparing a resumed boot against one that never ended.
+//
+// E9a.1 made the seam an owned token rather than a boolean, and that changes
+// one behaviour here: if something else already holds it — the interior does,
+// for as long as you are behind a counter — the acquire returns null and
+// begin() REFUSES. The close is not available from indoors, which is right:
+// the haar is a thing you walk into at the Foot.
 
 const SEQUENCE_SECONDS = 10;
 const FOG_FROM_MULTIPLIER = 1;
@@ -63,6 +69,7 @@ export function createEnding({ camera, world, legs, atmosphere, ambience, contro
   let startPos = null;
   let baseFogDensity = 0;
   let startExposure = 1;
+  let suspend = null;          // atmosphere's ownership token, held for the sequence
   const startFogColour = { r: 0, g: 0, b: 0 };
   const haar = { r: ((HAAR_COLOUR >> 16) & 255) / 255, g: ((HAAR_COLOUR >> 8) & 255) / 255, b: (HAAR_COLOUR & 255) / 255 };
 
@@ -81,6 +88,12 @@ export function createEnding({ camera, world, legs, atmosphere, ambience, contro
 
   function begin() {
     if (!canOffer()) return false;
+    // Ownership first: everything below writes fog and exposure, and if the
+    // acquire fails none of it may run. Refusing here rather than painting
+    // anyway is the whole point of the token.
+    const token = atmosphere.acquireSuspend('ending');
+    if (!token) return false;
+    suspend = token;
     phase = 'running';
     elapsed = 0;
     showPrompt(false);
@@ -95,8 +108,6 @@ export function createEnding({ camera, world, legs, atmosphere, ambience, contro
       startFogColour.g = world.fog.color.g;
       startFogColour.b = world.fog.color.b;
     }
-    // Hand fog and exposure over. Everything below owns them until resume().
-    atmosphere.setSuspended(true);
     if (controls) controls.setEnabled(false);
     // The voices merge rather than stop — ducking the bed is the closest the
     // current ambience API gets, and it is the right direction.
@@ -112,7 +123,8 @@ export function createEnding({ camera, world, legs, atmosphere, ambience, contro
     if (startPos) camera.position.copy(startPos);
     // Repaints immediately, so the arbitrary fog/exposure the sequence left
     // behind never survives into a visible frame.
-    atmosphere.setSuspended(false);
+    atmosphere.releaseSuspend(suspend);
+    suspend = null;
     if (controls) controls.setEnabled(true);
     if (ambience) ambience.setDucked(false);
     return true;

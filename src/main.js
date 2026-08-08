@@ -9,6 +9,7 @@ import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
 import { buildGullet } from './gullet.js';
+import { buildInterior, INTERIOR_EXPOSURE } from './interior.js';
 import { buildLamps } from './lamps.js';
 import { createLegs } from './legs.js';
 import { createEnding } from './ending.js';
@@ -146,6 +147,12 @@ async function main() {
   // Its own module and its own seed — it must never draw from scenery's.
   const gullet = buildGullet(assets, world, scene);
 
+  // E9a.1: the shop interior. Its own scene at its own origin — built here so
+  // it exists before anything can ask to go inside, and costing nothing while
+  // the flag is off (buildInterior returns an inert stub). Nothing adds it to
+  // `scene`: it IS a scene, and enterInterior below swaps which one renders.
+  const interior = buildInterior();
+
   // E2g: street lights, hung off scenery's catenary poles. Built after
   // scenery (it needs the pole positions) and handed to atmosphere, which
   // stays the sole authority for how lit the street is at a given hour.
@@ -165,6 +172,86 @@ async function main() {
     if (ending.state().phase === 'ended') ending.resume();
     else ending.begin();
   });
+
+  // E9a.1: which scene renders. The street is the default and the interior
+  // swaps in whole — post.render() takes whatever this points at.
+  let activeScene = scene;
+  // The camera lives in whichever scene is being drawn (it has children — the
+  // torch light and the sky dome — that have to travel with it), so entering
+  // reparents it and leaving puts it back.
+  let streetPose = null;      // where the player was standing when they went in
+  let interiorToken = null;   // atmosphere's ownership of toneMappingExposure
+
+  function enterInterior() {
+    if (!interior.enabled) return false;
+    // OWNERSHIP FIRST, and it is the acquire — not a local `isInside` check —
+    // that refuses re-entry. Deliberate: an `if (interior.isInside()) return
+    // false` guard ahead of this line made the token dead weight, and a fault
+    // injection that handed every caller a token stayed green because nothing
+    // ever reached the acquire twice. The token is the only lock, so the gate
+    // on re-entry is a gate on the token.
+    //
+    // A failed acquire means someone else owns the exposure (the ending, mid
+    // sequence), and then we do not go in at all rather than going in and
+    // being repainted. See atmosphere.js's acquireSuspend.
+    const token = atmosphere.acquireSuspend('interior');
+    if (!token) return false;
+    interiorToken = token;
+    streetPose = {
+      x: camera.position.x, y: camera.position.y, z: camera.position.z,
+      rx: camera.rotation.x, ry: camera.rotation.y, rz: camera.rotation.z,
+    };
+    interior.enter();
+    interior.scene.add(camera);           // reparents out of the street scene
+    if (sky.mesh) sky.mesh.visible = false;    // there is no sky in a shop
+    if (torch.light) torch.light.visible = false; // the room has its own rig
+    camera.position.set(interior.spawn.x, interior.spawn.y, interior.spawn.z);
+    controls.setYaw(interior.spawn.yaw);
+    camera.rotation.set(0, interior.spawn.yaw, 0);
+    controls.setRoom(interior);
+    renderer.toneMappingExposure = INTERIOR_EXPOSURE;
+    activeScene = interior.scene;
+    // Skipping an updater stops it THINKING, not showing. A vendor prompt
+    // raised on the last street frame hung over the whole room, and the first
+    // capture of the interior had "[E] HEAR ISA STRUTHERS READ" printed across
+    // it — caught by the room-hidden control frame, not by any assert.
+    // Anything these two put in the DOM comes down on the way in.
+    interact.suspend();
+    captions.suspend();
+    return true;
+  }
+
+  function exitInterior() {
+    if (!interior.enabled || !interior.isInside()) return false;
+    interior.exit();
+    scene.add(camera);
+    if (sky.mesh) sky.mesh.visible = true;
+    if (torch.light) torch.light.visible = true;
+    if (streetPose) {
+      camera.position.set(streetPose.x, streetPose.y, streetPose.z);
+      camera.rotation.set(streetPose.rx, streetPose.ry, streetPose.rz);
+      controls.setYaw(streetPose.ry);
+      streetPose = null;
+    }
+    controls.setRoom(null);
+    activeScene = scene;
+    // Repaints the street palette on this call rather than next frame, so the
+    // interior's exposure never survives into a visible frame outside.
+    atmosphere.releaseSuspend(interiorToken);
+    interiorToken = null;
+    return true;
+  }
+
+  // Updaters that read the player's position AGAINST THE STREET. Indoors the
+  // camera sits at the interior's own local origin, which in world coordinates
+  // is up by the Foot of the Walk — so left running, these would page the
+  // wrong façades in, offer a comic from a vendor 1.5km away, and write a
+  // share link pointing at a place the player is not. Everything NOT in this
+  // set keeps running while you are inside, which is the design: the clock,
+  // the weather and the walkers carry on without you (ROADMAP § E9).
+  const SUSPENDED_INDOORS = new Set([
+    'litter', 'shopfronts', 'interact', 'proximityAudio', 'legs', 'ending', 'moments', 'captions',
+  ]);
 
   // Duck the ambience bed whenever a comic is being read to camera OR a nearby
   // busker is audible — both feed one combined ducking state.
@@ -333,11 +420,15 @@ async function main() {
   // so the settled state is identical — measured pixel-identical (0.000% at
   // north-150-close). See docs/VALIDATION.md.
   function updateFrame(dt, t) {
-    for (const u of updaters) u.update(dt, t);
+    const indoors = interior.isInside();
+    for (const u of updaters) {
+      if (indoors && SUSPENDED_INDOORS.has(u.name)) continue;
+      u.update(dt, t);
+    }
   }
   function renderNow() {
     renderer.info.reset();
-    post.render(scene, camera);
+    post.render(activeScene, camera);
   }
   function runFrame(dt, t) {
     updateFrame(dt, t);
@@ -378,6 +469,8 @@ async function main() {
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
       moments, shareUi, lamps, legs, ending, characters, captions, gullet,
+      interior, enterInterior, exitInterior,
+      getActiveScene: () => activeScene,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

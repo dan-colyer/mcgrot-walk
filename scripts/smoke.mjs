@@ -88,7 +88,7 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // is about what happens when nothing above the file is fetchable. Cheap —
 // build.mjs is 0.2s — and it is the only thing standing between the shareable
 // file and a divergence nobody notices until someone opens it.
-const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'captions', 'gullet', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'captions', 'gullet', 'interior', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -133,6 +133,14 @@ const SINCE_RULES = [
   // renders a figure.
   [/^src\/characters\.js$/, ['characters', 'render', 'weather', 'determinism', 'anchors', 'mobile']],
   [/^src\/moments\.js$/, ['moments', 'collision']],
+  // E9a.1: the shop interior. Its own region, plus `collision` because
+  // controls.js's movement integration is the one place the room's bounds and
+  // the street's solids share a code path. Landed flag-off, so it reaches no
+  // rendering region yet — when the enable commit flips the default it must
+  // grow `render`, `weather`, `mobile` and `determinism`, exactly as the
+  // gullet's rule had to.
+  [/^src\/interior\.js$/, ['interior', 'collision']],
+  [/^src\/controls\.js$/, ['interior', 'collision', 'moments', 'legs', 'mobile']],
   // E6a: collision.js is read by controls (movement), moments (spawn) and the
   // three prop modules. It draws nothing and renders nothing, so it cannot
   // move a golden — but 'mobile' is in the list because hold-to-walk drives
@@ -3653,6 +3661,405 @@ async function main() {
 
     await castIn.context.close();
     await castOut.context.close();
+    }
+
+    if (region('interior')) {
+    // --- E9a.1: the shop ---------------------------------------------------
+    //
+    // The room lands behind __mcgrotForceInterior with INTERIOR_ENABLED =
+    // false, so on the shipped path this region's ON arm is the only thing in
+    // the suite that has ever been inside it. Same hazard as `gullet`: nothing
+    // else would notice if the module quietly stopped building.
+    //
+    // WHAT THIS REGION IS ACTUALLY FOR. An interior is a scene swap and a
+    // renderer-global hand-off, which is a far bigger blast radius than a
+    // prop. The three claims worth gating are, in order: building the room
+    // costs the STREET nothing; standing in it renders a picture rather than a
+    // dark box; and while you are in it the street keeps running and its
+    // palette stays out of the room's exposure.
+    const { context: intOffCtx, page: intOffPg } = await bootPage(browser, port, { __mcgrotForceInterior: false });
+    const { context: intOnCtx, page: intOnPg } = await bootPage(browser, port, { __mcgrotForceInterior: true });
+
+    const readStreet = (pg) => pg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.gotoBookmark('elm-row-hero');
+      dbg.stepFrames(5);
+      const inv = dbg.invariants();
+      return {
+        enabled: !!dbg.interior.enabled,
+        geomHash: inv.geomHash,
+        realtimeHash: inv.realtimeHash,
+        triangles: inv.triangles,
+        drawCalls: inv.drawCalls,
+        exposure: dbg.renderer.toneMappingExposure,
+        updaters: inv.updaterNames.join(','),
+        canEnter: typeof dbg.enterInterior === 'function',
+        // A WHOLE-SCENE CENSUS, not just what this frustum drew. The rendered
+        // counts above are blind to anything outside the view — a fault
+        // injection that added the room mesh to the STREET scene stayed green
+        // through every one of them, because the interior's local origin sits
+        // ~1300m from this bookmark and the clone was frustum-culled. Counted
+        // by traversal so position cannot hide it.
+        census: (() => {
+          let objects = 0;
+          let tris = 0;
+          dbg.scene.traverse((o) => {
+            objects += 1;
+            const g = o.geometry;
+            if (!g || !g.attributes || !g.attributes.position) return;
+            const n = g.index ? g.index.count / 3 : g.attributes.position.count / 3;
+            tris += n * (o.isInstancedMesh ? o.count : 1);
+          });
+          return { objects, tris };
+        })(),
+      };
+    });
+    const intOff = await readStreet(intOffPg);
+    const intOn = await readStreet(intOnPg);
+
+    // THE FLAG-FIRST CLAIM. This is what lets the milestone land against
+    // goldens nobody recaptured, and it is a stronger claim than the gullet's
+    // was: the room is not merely absent from the street scene, it is a whole
+    // second scene that must cost the first one nothing at all. Every one of
+    // these five numbers is read at the same bookmark on both arms.
+    results.push({
+      name: 'E9a.1: control — with the flag off there is no room to enter',
+      pass: !intOff.enabled && (await intOffPg.evaluate(() => window.__mcgrotDebug.enterInterior())) === false,
+      detail: `flag off: interior.enabled=${intOff.enabled}, enterInterior() refused (want false/refused)`,
+    });
+    results.push({
+      name: 'E9a.1: building the room changes nothing on the street',
+      pass: intOn.geomHash === intOff.geomHash
+        && intOn.realtimeHash === intOff.realtimeHash
+        && intOn.triangles === intOff.triangles
+        && intOn.drawCalls === intOff.drawCalls
+        && intOn.exposure === intOff.exposure
+        && intOn.census.objects === intOff.census.objects
+        && intOn.census.tris === intOff.census.tris,
+      detail: `at elm-row-hero, flag on vs off — geomHash ${intOn.geomHash}/${intOff.geomHash}, ` +
+        `realtimeHash ${intOn.realtimeHash}/${intOff.realtimeHash}, drawn triangles ${intOn.triangles}/${intOff.triangles}, ` +
+        `draw calls ${intOn.drawCalls}/${intOff.drawCalls}, exposure ${intOn.exposure}/${intOff.exposure}, ` +
+        `whole-street census ${intOn.census.objects}/${intOff.census.objects} objects and ` +
+        `${intOn.census.tris}/${intOff.census.tris} triangles ` +
+        '(all must MATCH — the interior is a second scene and must not be drawn, lit, hashed or PARENTED ' +
+        'into the first; the census is there because the rendered counts cannot see a frustum-culled clone)',
+    });
+    // ...and the discriminator, so the gate above is not vacuously green on a
+    // build where the room was never constructed. The `enabled` flag alone
+    // would pass whether or not the module ever produced geometry.
+    const intBuilt = await intOnPg.evaluate(() => {
+      const it = window.__mcgrotDebug.interior;
+      return { tris: it.triangles, hash: it.layoutHash, lights: it.scene.children.filter((o) => o.isLight).length };
+    });
+    results.push({
+      name: 'E9a.1: with the flag on the room exists, furnished and lit',
+      pass: intBuilt.tris > 3000 && intBuilt.lights >= 3,
+      detail: `interior scene: ${intBuilt.tris} triangles, ${intBuilt.lights} lights, layoutHash ` +
+        `${intBuilt.hash.toString(16)} (want >3000 tris and >=3 lights; the control arm has no scene at all)`,
+    });
+
+    // STANDING IN IT. Everything below runs on the ON arm, inside the room.
+    const enterAt = (pg, x, z, yaw) => pg.evaluate(({ px, pz, py }) => {
+      const dbg = window.__mcgrotDebug;
+      if (!dbg.interior.isInside()) dbg.enterInterior();
+      dbg.camera.position.set(px, 1.7, pz);
+      dbg.controls.setYaw(py);
+      dbg.camera.rotation.set(0, py, 0);
+      dbg.stepFrames(20);
+      const inv = dbg.invariants();
+      return { drawCalls: inv.drawCalls, triangles: inv.triangles, exposure: dbg.renderer.toneMappingExposure };
+    }, { px: x, pz: z, py: yaw });
+
+    // The two poses a reviewer opens: the customer's view of the counter, and
+    // the keeper's view back out through the shopfront. The second is the one
+    // E9a.3's boot lands on, so it is the one that must never ship unlooked-at.
+    const poseCounter = await enterAt(intOnPg, 0.4, 3.1, 0);
+    const shotCounter = await intOnPg.screenshot();
+    const poseKeeper = await enterAt(intOnPg, -0.6, -2.9, Math.PI);
+    const shotKeeper = await intOnPg.screenshot();
+    writeFileSync(join(captureDir, 'interior-counter.png'), shotCounter);
+    writeFileSync(join(captureDir, 'interior-keeper.png'), shotKeeper);
+
+    // Draw calls. A furnished nine-metre room is ONE merged vertex-coloured
+    // mesh plus the glazing plus the post quad, which is the whole reason the
+    // module kit accumulates boxes instead of adding objects. The ceiling is
+    // set well above the measurement so a future fitting does not trip it, and
+    // well below the street's ~950 so a regression that stops merging is
+    // caught long before it is a performance problem.
+    const intMaxCalls = Math.max(poseCounter.drawCalls, poseKeeper.drawCalls);
+    results.push({
+      name: 'E9a.1: an interior pose stays inside its draw-call budget',
+      pass: intMaxCalls <= 8,
+      detail: `counter pose ${poseCounter.drawCalls} calls / ${poseCounter.triangles} tris, keeper pose ` +
+        `${poseKeeper.drawCalls} / ${poseKeeper.triangles} (budget 8; the street's heaviest pose is ~950)`,
+    });
+
+    // IS THE ROOM IN SHOT. A luminance floor alone cannot answer that — the
+    // E10a lesson, where nothing injectable could take the frame under the
+    // floor. So the real gate is an isolation: the same pose with the room
+    // mesh hidden. What is left is the fog colour and the glazing, and the
+    // difference between the two frames is the room itself.
+    const shotNoRoom = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.interior.scene.getObjectByName('interior-room').visible = false;
+      dbg.stepFrames(1);
+    }).then(() => intOnPg.screenshot());
+    await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.interior.scene.getObjectByName('interior-room').visible = true;
+      dbg.stepFrames(1);
+    });
+    writeFileSync(join(captureDir, 'interior-keeper-control.png'), shotNoRoom);
+    const intKeeperPng = PNG.sync.read(shotKeeper);
+    const intNoRoomPng = PNG.sync.read(shotNoRoom);
+    const intRoomDiffPx = pixelmatch(intKeeperPng.data, intNoRoomPng.data, null,
+      intKeeperPng.width, intKeeperPng.height, { threshold: 0.1 });
+    const intRoomDiffPct = (intRoomDiffPx / (intKeeperPng.width * intKeeperPng.height)) * 100;
+    results.push({
+      name: 'E9a.1: the room occupies the frame a reviewer looks at',
+      pass: intRoomDiffPct >= 30,
+      detail: `${intRoomDiffPct.toFixed(2)}% of pixels differ from the same pose with the room mesh hidden ` +
+        '(want >=30%). The floor is an order of magnitude above the gullet stall\'s 3% — a room fills the ' +
+        'frame where a prop occupies a corner of it — and well under the measurement, because the control ' +
+        'frame keeps the glazing and the fog and those legitimately do not move. Both frames in ' +
+        'docs/smoke/captures/ (interior-keeper.png, interior-keeper-control.png)',
+    });
+
+    // ...and it is LIT BY ITS OWN RIG, not by whatever ambient happens to be
+    // lying around. E5d shipped nine seconds of black past every numeric
+    // assert it had; the control here kills the room's lights and measures
+    // how much of the picture was theirs.
+    const intLumOn = luminanceStats(intKeeperPng);
+    const shotDark = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.interior.scene.children.filter((o) => o.isLight).forEach((l) => { l.visible = false; });
+      dbg.stepFrames(1);
+    }).then(() => intOnPg.screenshot());
+    await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.interior.scene.children.filter((o) => o.isLight).forEach((l) => { l.visible = true; });
+      dbg.stepFrames(1);
+    });
+    const intLumDark = luminanceStats(PNG.sync.read(shotDark));
+    results.push({
+      name: 'E9a.1: the room is a picture, and its own rig is what makes it one',
+      pass: intLumOn.stddev >= SUBSTRATE_MIN_STDDEV && intLumOn.mean >= 18 && intLumOn.mean <= 200
+        && intLumDark.mean < intLumOn.mean * 0.5,
+      detail: `lit: mean ${intLumOn.mean.toFixed(1)} (want 18-200), stddev ${intLumOn.stddev.toFixed(1)} ` +
+        `(want >=${SUBSTRATE_MIN_STDDEV}); control — same pose with the interior's own lights hidden: ` +
+        `mean ${intLumDark.mean.toFixed(1)} (must be under half, or the rig is not what is lighting it)`,
+    });
+
+    // MOVEMENT BOUNDS, NOT COLLISION. Walk hard into each wall for 180 frames
+    // and stay in the room; the control replaces the bounds with a rectangle
+    // ten times the size and measures how far the same walk goes without them.
+    // Note what this isolates: the same key presses, the same integration, the
+    // same solids — only the rectangle changes.
+    // NOTE the asymmetry, and that it is the point. The held arm calls
+    // NOTHING on controls — it walks with whatever enterInterior() left set,
+    // which is the product. Only the control arm overrides. A first version
+    // had both arms call setRoom(dbg.interior) explicitly and it passed a
+    // fault injection that deleted that call from enterInterior entirely: the
+    // gate was testing the clamp, not the shop.
+    const walkRoom = (pg, bounds) => pg.evaluate(({ b }) => {
+      const dbg = window.__mcgrotDebug;
+      const out = [];
+      for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        if (!dbg.interior.isInside()) dbg.enterInterior();
+        if (b) dbg.controls.setRoom({ bounds: b, solids: [] });
+        dbg.camera.position.set(0.4, 1.7, 1.2);
+        dbg.controls.setYaw(Math.atan2(-dx, -dz));
+        dbg.camera.rotation.set(0, Math.atan2(-dx, -dz), 0);
+        const code = 'KeyW';
+        window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+        for (let i = 0; i < 180; i += 1) dbg.stepFrame(1 / 60, i / 60);
+        window.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+        out.push([+dbg.camera.position.x.toFixed(2), +dbg.camera.position.z.toFixed(2)]);
+      }
+      if (b) { dbg.exitInterior(); dbg.enterInterior(); }   // put the product's own room back
+      return out;
+    }, { b: bounds });
+    const walkIn = await walkRoom(intOnPg, null);
+    const walkFree = await walkRoom(intOnPg, { minX: -35, maxX: 35, minZ: -45, maxZ: 45, floorY: 0 });
+    const insideRoom = ([x, z]) => Math.abs(x) <= 3.1 && Math.abs(z) <= 4.1;
+    const escaped = walkFree.filter((p) => !insideRoom(p)).length;
+    results.push({
+      name: 'E9a.1: the room holds the player, and the bounds are what hold them',
+      pass: walkIn.every(insideRoom) && escaped === 4,
+      detail: `180 frames of forward against each wall ends at ${walkIn.map((p) => `(${p})`).join(' ')} ` +
+        '— all must be inside x±3.1 z±4.1; control — the same four walks with the bounds replaced by a ' +
+        `70x90m rectangle escape the room ${escaped}/4 times, ending ${walkFree.map((p) => `(${p})`).join(' ')}`,
+    });
+
+    // The counter is solid from the customer side. Same shape of control: the
+    // identical walk with the solids list emptied.
+    const pushCounter = (pg, solids) => pg.evaluate(({ s }) => {
+      const dbg = window.__mcgrotDebug;
+      if (!dbg.interior.isInside()) dbg.enterInterior();
+      // Same asymmetry as the walk above: the held arm touches nothing.
+      if (!s) dbg.controls.setRoom({ bounds: dbg.interior.bounds, solids: [] });
+      dbg.camera.position.set(-0.6, 1.7, 1.4);
+      dbg.controls.setYaw(0);
+      dbg.camera.rotation.set(0, 0, 0);
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
+      for (let i = 0; i < 120; i += 1) dbg.stepFrame(1 / 60, i / 60);
+      window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', bubbles: true }));
+      const z = dbg.camera.position.z;
+      if (!s) { dbg.exitInterior(); dbg.enterInterior(); }
+      return +z.toFixed(2);
+    }, { s: solids });
+    const counterHeld = await pushCounter(intOnPg, true);
+    const counterFree = await pushCounter(intOnPg, false);
+    results.push({
+      name: 'E9a.1: the counter is solid from the customer side',
+      pass: counterHeld > -1.1 && counterFree < -1.1,
+      detail: `120 frames walking at the counter ends at z=${counterHeld} (the counter face plus the player ` +
+        `radius sits at z=-1.14, so this must stay above -1.1); control — the same walk with the solids ` +
+        `list emptied ends at z=${counterFree}`,
+    });
+
+    // THE HAND-OFF. This is the E5 phase gate's deliverable, and it is tested
+    // through the product rather than through atmosphere's API: move the CLOCK
+    // to 3am while the player is inside. The street's palette at 3am is
+    // nothing like 13:00's, so if atmosphere were still painting, the room's
+    // exposure would move. It must not — and it must snap to the 3am value the
+    // instant the player steps out, with no frame of the interior's exposure
+    // surviving outdoors.
+    const seam = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      if (!dbg.interior.isInside()) dbg.enterInterior();
+      const inside13 = dbg.renderer.toneMappingExposure;
+      dbg.setTime(3);
+      dbg.stepFrames(60);
+      const inside3 = dbg.renderer.toneMappingExposure;
+      dbg.exitInterior();
+      const outside3 = dbg.renderer.toneMappingExposure;   // read BEFORE any further frame
+      dbg.stepFrames(5);
+      const outsideSettled = dbg.renderer.toneMappingExposure;
+      return { inside13, inside3, outside3, outsideSettled };
+    });
+    const seamControl = await intOffPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const before = dbg.renderer.toneMappingExposure;
+      dbg.setTime(3);
+      dbg.stepFrames(60);
+      return { before, after: dbg.renderer.toneMappingExposure };
+    });
+    results.push({
+      name: 'E9a.1: indoors the room owns the exposure and the clock cannot repaint it',
+      pass: seam.inside13 === seam.inside3
+        && seam.outside3 !== seam.inside3
+        && seamControl.after !== seamControl.before,
+      detail: `inside, moving the clock 13:00->03:00 left exposure at ${seam.inside3} (was ${seam.inside13}); ` +
+        `control — the same clock move on the street took it ${seamControl.before} -> ${seamControl.after}. ` +
+        `Stepping back out repainted to ${seam.outside3} on the release call itself, before any further frame ` +
+        `(settled ${seam.outsideSettled}) — that immediacy is what stops a flash of the room's stop outdoors`,
+    });
+    // ...and re-entry is refused rather than nested. Two owners on a
+    // renderer-global is the bug the token replaced.
+    const reEntry = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const first = dbg.enterInterior();
+      const second = dbg.enterInterior();
+      const out = dbg.exitInterior();
+      const outAgain = dbg.exitInterior();
+      return { first, second, out, outAgain };
+    });
+    results.push({
+      name: 'E9a.1: the suspend token refuses a second owner and a stale release',
+      pass: reEntry.first === true && reEntry.second === false
+        && reEntry.out === true && reEntry.outAgain === false,
+      detail: `enter=${reEntry.first}, enter again=${reEntry.second} (must refuse), exit=${reEntry.out}, ` +
+        'exit again=' + reEntry.outAgain + ' (must refuse) — a bare boolean supported exactly one suspender',
+    });
+
+    // THE STREET CARRIES ON WITHOUT YOU. The walkers and the clock keep
+    // running while you are behind a counter, which is what makes stepping
+    // back out not a level load.
+    //
+    // THE CONTROL IS THE SUSPENDED SET, MEASURED OVER THE SAME FRAMES. An
+    // earlier version compared "240 indoor frames" against "two reads with no
+    // frames between them" and that was not a control at all: invariants()
+    // steps a frame itself, so the supposed zero-frame read had already
+    // advanced the world and reported a different hash. Here both halves come
+    // out of ONE 240-frame indoor run — the walkers moved, the suspended
+    // updater did not tick once — which isolates the suspension rather than
+    // the passage of time.
+    const carriesOn = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      if (!dbg.interior.isInside()) dbg.enterInterior();
+      const walker = dbg.leithers.walkers ? dbg.leithers.walkers[0] : null;
+      const p0 = walker ? walker.group.position.clone() : null;
+      const clock0 = dbg.invariants().time;
+      const a = dbg.invariants().realtimeHash;
+      const capt0 = dbg.captions.state().shown;
+      dbg.setRate(60);                     // an hour a minute, so 240 frames is visible on the clock
+      dbg.stepFrames(240);
+      const b = dbg.invariants().realtimeHash;
+      const moved = walker ? walker.group.position.distanceTo(p0) : 0;
+      const out = {
+        a, b, moved: +moved.toFixed(3),
+        clockMoved: +(dbg.invariants().time - clock0).toFixed(3),
+        captionsTicked: dbg.captions.state().shown !== capt0,
+      };
+      dbg.setRate(0);
+      dbg.exitInterior();
+      return out;
+    });
+    results.push({
+      name: 'E9a.1: the street keeps running while the player is indoors',
+      pass: carriesOn.a !== carriesOn.b && carriesOn.moved > 0.5
+        && carriesOn.clockMoved > 0 && !carriesOn.captionsTicked,
+      detail: `over 240 indoor frames a walker travelled ${carriesOn.moved}m and the clock advanced ` +
+        `${carriesOn.clockMoved}h (realtimeHash ${carriesOn.a} -> ${carriesOn.b}); control — across those same ` +
+        `frames the suspended set did not run at all (captions raised: ${carriesOn.captionsTicked ? 'yes' : 'none'})`,
+    });
+
+    // ...but the updaters that read the player's position AGAINST the street
+    // are held. Indoors the camera sits at the room's own origin, which in
+    // world coordinates is up by the Foot — left running, moments would write
+    // a share link pointing at a place the player is not standing.
+    const hashIndoors = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      dbg.stepFrames(5);
+      const before = location.hash;
+      dbg.enterInterior();
+      dbg.camera.position.set(-3.0, 1.7, 3.9);
+      dbg.stepFrames(120);
+      const during = location.hash;
+      dbg.exitInterior();
+      dbg.camera.position.set(dbg.camera.position.x + 40, dbg.camera.position.y, dbg.camera.position.z + 40);
+      dbg.stepFrames(120);
+      return { before, during, after: location.hash };
+    });
+    results.push({
+      name: 'E9a.1: indoors the share link is not rewritten to the room\'s local origin',
+      pass: hashIndoors.during === hashIndoors.before && hashIndoors.after !== hashIndoors.during,
+      detail: `URL hash "${hashIndoors.before}" -> indoors "${hashIndoors.during}" (must NOT change) -> ` +
+        `back outside and moved 56m "${hashIndoors.after}" (must change, or the control proves nothing)`,
+    });
+
+    // DETERMINISM. The layout is seeded from the shop slug, not from the day,
+    // so the same room stands on every date — the deliberate difference from
+    // the gullet, whose cast IS date-keyed. Two boots on two different dates.
+    const { context: intDateCtx, page: intDatePg } = await bootPage(browser, port,
+      { __mcgrotForceInterior: true, __mcgrotForceDate: '2027-06-14' });
+    const layoutOther = await intDatePg.evaluate(() => ({
+      hash: window.__mcgrotDebug.interior.layoutHash,
+      tris: window.__mcgrotDebug.interior.triangles,
+    }));
+    results.push({
+      name: 'E9a.1: the shop is the same shop on every date',
+      pass: layoutOther.hash === intBuilt.hash && layoutOther.tris === intBuilt.tris,
+      detail: `layoutHash on ${SMOKE_DATE} ${intBuilt.hash.toString(16)} vs on 2027-06-14 ` +
+        `${layoutOther.hash.toString(16)}, triangles ${intBuilt.tris}/${layoutOther.tris} (must MATCH — a deli ` +
+        'does not rearrange its fittings overnight, and a date-varying interior would put every interior ' +
+        'golden at the mercy of SMOKE_DATE)',
+    });
+    await intDateCtx.close();
+
+    await intOffCtx.close();
+    await intOnCtx.close();
     }
 
     if (region('moments')) {

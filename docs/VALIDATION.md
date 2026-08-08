@@ -4250,6 +4250,141 @@ off. Left for the enable commit to decide.
   nothing tears the stall down and rebuilds it if a session outlives
   midnight, so McGrot would stay in (or stay away) until reload.
 
+## The `interior` region (E9a.1)
+
+The shop lands behind `__mcgrotForceInterior` with `INTERIOR_ENABLED = false`,
+so on the shipped path this region's ON arm is the only thing in the suite
+that has ever been inside it — the same hazard the `gullet` region carries,
+and the same answer: an opposed pair on every claim.
+
+An interior is a bigger blast radius than a prop. It is a second
+`THREE.Scene`, a camera reparent, a swap of what `post.render()` is handed,
+and a hand-off of a renderer GLOBAL (`toneMappingExposure`). Three claims
+carry the unit, and the thirteen gates are grouped under them.
+
+### 1. Building the room costs the street nothing
+
+`geomHash`, `realtimeHash`, drawn triangles, draw calls and exposure, read at
+`elm-row-hero` on both arms, must all MATCH. This is what let the milestone
+land against forty goldens nobody recaptured.
+
+**Plus a whole-scene census** — object count and total triangles by
+traversal, not by frustum. That term exists because a fault injection that
+cloned the room mesh into the STREET scene stayed green through every
+rendered count: the interior's local origin is ~1300m from that bookmark, so
+the clone was frustum-culled and drew nothing. A gate reading `renderer.info`
+can only see what the camera happened to be pointing at.
+
+The discriminator is separate — the interior scene must hold >3000 triangles
+and >=3 lights — because "the flag is on" would otherwise pass on a build
+where the module produced nothing at all.
+
+### 2. Standing in it renders a picture
+
+Two poses are captured every run and are meant to be OPENED:
+`interior-counter.png` (the customer's view of the counter) and
+`interior-keeper.png` (the keeper's view back out through the shopfront —
+the pose E9a.3's boot will land on).
+
+- **Is the room in shot** — the same pose with the room mesh hidden must
+  differ by >=30% of pixels. The floor is an order of magnitude above the
+  gullet stall's 3%, because a room fills a frame where a prop occupies a
+  corner of it, and well under the measured 51% because the control keeps the
+  glazing and the fog, which legitimately do not move.
+- **Its own rig is what lights it** — mean luminance 18–200 and stddev >= 8,
+  AND the same pose with the interior's lights hidden must come in under half
+  the lit mean. E5d shipped nine seconds of black past every numeric assert it
+  had; a luminance floor with no control is not an answer to that.
+
+**This is also the gate that found the bug no assert did.** The room-hidden
+control frame had `[E] HEAR ISA STRUTHERS READ` printed across it. Skipping an
+updater stops it THINKING, not showing: `interact` was correctly held while
+indoors, and the prompt it had raised on the last street frame simply stayed
+in the DOM over the whole shop. `interact.suspend()` and `captions.suspend()`
+now bring their own DOM down on the way in. Nothing numeric would ever have
+caught it.
+
+### 3. The room owns the exposure, and the street keeps running
+
+- **The hand-off, tested through the product**: move the CLOCK to 03:00 while
+  the player is inside. The street's 3am palette is nothing like 13:00's, so
+  if atmosphere were still painting, the exposure would move. It holds at
+  1.05, and snaps to 0.58 on the release CALL — before any further frame,
+  which is what stops a flash of the room's stop outdoors. Control: the same
+  clock move on the street takes exposure 1.378 → 0.58.
+- **The token refuses a second owner.** `enterInterior` acquires BEFORE it
+  checks anything else, and there is no `isInside()` guard ahead of the
+  acquire — deliberately. A first version had one, and an injection that
+  handed every caller a token stayed green because nothing ever reached the
+  acquire twice. The token is the only lock, so a gate on re-entry is a gate
+  on the token.
+- **The street carries on**: over 240 indoor frames a walker travels 3.3m and
+  the clock advances 4.0h. The control is the SUSPENDED SET measured over
+  those same frames — captions raise nothing — which isolates the suspension
+  rather than the passage of time. An earlier version compared 240 frames
+  against "two reads with no frames between them" and that was not a control
+  at all: `invariants()` steps a frame itself, so the supposed zero-frame read
+  had already advanced the world.
+- **The share link is not rewritten** to the room's local origin. Indoors the
+  camera sits at the interior's own (0,0), which in world coordinates is up by
+  the Foot — `moments` left running would write a link pointing at a place the
+  player is not.
+
+### Movement bounds, and the asymmetry that makes them a product gate
+
+Four 180-frame walks into four walls stay inside x±3.1 z±4.1; the control
+replaces the bounds with a 70×90m rectangle and all four escape. A separate
+pair does the counter.
+
+**The held arm calls nothing on `controls`.** It walks with whatever
+`enterInterior()` left set. Only the control arm overrides. A first version
+had both arms call `setRoom(interior)` explicitly and it passed an injection
+that deleted that call from `enterInterior` entirely — the gate was measuring
+the clamp, not the shop. This is the "gates test the product, not the
+calculator" rule biting for the third time in this project.
+
+### Fault injection — every gate driven red
+
+| Injection | Went red |
+|---|---|
+| enter does not swap the rendered scene | draw-call budget; room in shot; own rig |
+| the room mesh is cloned into the street scene | the street is unchanged |
+| enter does not hand controls the room bounds | bounds; counter solid |
+| the room reports no solids | counter solid |
+| enter sets the exposure without taking the token | the room owns the exposure |
+| `acquireSuspend` hands a token to every caller | the token refuses a second owner |
+| nothing is suspended indoors | the share link is not rewritten |
+| the layout is seeded from the day | the same shop on every date |
+| the room is built with no lights | furnished and lit; own rig |
+| the room mesh is built but never shown | room in shot |
+| the camera is not reparented | room in shot; own rig |
+| the flag is ignored and the room always builds | control — flag off |
+
+### What this region deliberately does NOT prove
+
+- **Nothing about how you get in.** There is no door prompt and no
+  transition; the room is reachable only from `dbg.enterInterior()`. Whether
+  a door on the Valvona & Crolla façade at chainage 1486 can be found, and
+  whether the panel wipe is deterministic, is E9a.2's to gate.
+- **Nothing about the keeper.** The spawn is the customer's side of the
+  counter. The boot that wakes you BEHIND it moves the mobile street golden,
+  and lands flag-first in E9a.3.
+- **No golden.** The interior has no captured golden at all while the flag is
+  off, so the two captures are a reviewer's instrument and not a regression
+  one. That is deliberate: a golden of a room nobody can enter locks in a
+  picture before the transition and the boot have had their say. The enable
+  commit is where an interior golden is worth having.
+- **Nothing about audio indoors.** `proximityAudio` is held while inside, so
+  the street's busking simply stops rather than muffling. Ambience ducking
+  indoors-vs-out is named in the roadmap under E9a.2 and is not measured here.
+- **The glazing is a constant.** The shopfront reads as a pale light box at
+  every hour, because the room does not consult the street clock. At 3am it
+  will still be a bright window. Known, and it belongs with the transition —
+  the moment the door works, the two sides have to agree about the time.
+- **One shop.** Everything here is Valvona & Crolla. Nothing gates that a
+  SECOND interior could be built from the same module kit, which is E9c's
+  claim and not a claim this unit makes.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

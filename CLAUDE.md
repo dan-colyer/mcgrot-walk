@@ -152,6 +152,7 @@ npm run goldens:noise # re-measure those floors -- 3 full suites, clean tree onl
 npm run deploy       # smoke:par -> build -> secret scan -> push gh-pages -> md5-verify live
 npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
 npm run style        # E8's judging round -> docs/smoke/captures/style/, 24s
+npm run probe -- --interior=on --shot=/tmp/shop.png -e "(dbg.enterInterior(), dbg.stepFrames(20), 'in')"
 node scripts/comic-palette.mjs --only=<img> --swatch=<out.png>   # is this asset on-palette?
 ```
 
@@ -252,6 +253,27 @@ and does not report success until every changed file md5-matches the live URL.
   tram, catenary + arc flashes, smoke, debris (seeded PRNG: layout must stay
   deterministic). `src/ambience.js` — WebAudio only, must start from a user gesture
   (title card).
+- `src/interior.js` — the Shop (E9a.1). Valvona & Crolla, its OWN
+  `THREE.Scene` at its own origin, axis-aligned — NOT a room carved out of the
+  street mesh and not at the building's real coordinates. Behind
+  `__mcgrotForceInterior`, shipped default OFF. `main.js` owns the swap, not
+  this module: `activeScene` is what `post.render()` gets, `enterInterior()`
+  reparents the camera, hides the sky dome and torch, takes atmosphere's
+  suspend token for `toneMappingExposure`, and hands `controls` the room. The
+  room's own fog needs no token — it belongs to a scene object atmosphere never
+  sees. Layout is seeded from the SHOP SLUG, never the day. `SUSPENDED_INDOORS`
+  in main.js names the updaters held while inside; **skipping an updater stops
+  it thinking, not showing**, so anything that puts DOM on screen also needs a
+  `suspend()` (interact and captions have one). Boot it with
+  `npm run probe -- --interior=on`. When the enable commit flips the default,
+  `SINCE_RULES` must grow `render`, `weather`, `mobile` and `determinism`.
+- **`atmosphere.acquireSuspend(owner)` is the ONLY way to own fog/exposure**
+  (E9a.1, on the E5 phase-gate ruling). It returns a token or NULL if someone
+  else holds it; `releaseSuspend(token)` is idempotent and ignores a stale
+  token. The two owners are `ending` and `interior`, and a caller that gets
+  null must not paint — the ending refuses to begin from indoors. Do not put an
+  `isInside`-style guard ahead of an acquire: it makes the token dead weight
+  and a fault injection on the lock stays green.
 - `src/flags.js` — the ONE localhost-gated feature flag helper,
   `flag('Lamps', LAMPS_ENABLED)` reading `window.__mcgrotForceLamps`. Every
   flagged module goes through it since E10a.1; do not copy the old inline

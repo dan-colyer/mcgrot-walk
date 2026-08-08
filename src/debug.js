@@ -240,7 +240,7 @@ export function createDebugApi(ctx) {
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
     vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs, ending,
-    characters, captions, gullet,
+    characters, captions, gullet, interior, enterInterior, exitInterior, getActiveScene,
   } = ctx;
 
   const consoleErrors = [];
@@ -503,6 +503,10 @@ export function createDebugApi(ctx) {
     // --- back-compat: existing probe fields keep working unchanged ---
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
     journal, countVendorsWithAudio, captions, gullet,
+    // E9a.1: the shop. `interior` is the live instance main.js holds, and
+    // enter/exit are main.js's — the room module deliberately does not own
+    // the scene swap, the exposure token or the movement bounds.
+    interior, enterInterior, exitInterior, getActiveScene,
     stepFrame,
     stepFrames,
 

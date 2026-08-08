@@ -5,6 +5,7 @@
 //   node scripts/probe.mjs -f my-probe.mjs          # module default-exports async ({page, dbg...}) => any
 //   node scripts/probe.mjs -e "..." --anchors=off --hour=3 --weather=haar
 //   node scripts/probe.mjs -e "..." --gullet=on
+//   node scripts/probe.mjs -e "..." --interior=on
 //   node scripts/probe.mjs --characters=on --shot=/tmp/crowd.png
 //   node scripts/probe.mjs -e "..." --mobile --shot=/tmp/look.png
 //
@@ -50,6 +51,7 @@ const anchors = arg('anchors', null);      // 'on' | 'off' | null (shipped defau
 const characters = arg('characters', null); // ditto, for E3b's generated meshes
 const tint = arg('tint', null);             // E3c's per-vendor colour note, on by default
 const gullet = arg('gullet', null);         // E10a.1's stall at chainage 740, off by default
+const interior = arg('interior', null);     // E9a.1's shop room, off by default
 const mobile = flag('mobile');
 const keepOpen = flag('keep-open');        // leave the browser up for a human look
 
@@ -109,7 +111,7 @@ try {
   // Set BEFORE any page script runs — main.js suppresses its first animate()
   // while this is set, so nothing renders on the wall clock and every frame
   // afterwards is one we asked for. Without it the scene drifts under you.
-  await context.addInitScript(({ a, c, n, g }) => {
+  await context.addInitScript(({ a, c, n, g, i }) => {
     window.__mcgrotFreezeAtBoot = true;
     // Same pinned day as scripts/smoke.mjs — a probe measurement of anything
     // date-derived (the HUD name, the arrival hour, reading phases) must
@@ -119,7 +121,8 @@ try {
     if (c !== null) window.__mcgrotForceCharacters = c === 'on';
     if (n !== null) window.__mcgrotForceTint = n === 'on';
     if (g !== null) window.__mcgrotForceGullet = g === 'on';
-  }, { a: anchors, c: characters, n: tint, g: gullet });
+    if (i !== null) window.__mcgrotForceInterior = i === 'on';
+  }, { a: anchors, c: characters, n: tint, g: gullet, i: interior });
 
   const page = await context.newPage();
   const consoleErrors = [];

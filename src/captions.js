@@ -120,8 +120,23 @@ export function createCaptions({ camera, streetLine, isEnabled }) {
     raise(BANDS[next].name);
   }
 
+  // E9a.1: going indoors. Same reasoning as interact.js's — main.js stops
+  // calling update() in a shop, and a caption raised on the last street frame
+  // would otherwise sit over the room for its full hold. It also resets the
+  // band, so coming back out re-announces where you are rather than treating
+  // the interior's local origin as a walk.
+  function suspend() {
+    timer = 0;
+    current = null;
+    band = null;
+    lastX = null;
+    lastZ = null;
+    if (el) { el.style.display = 'none'; el.classList.remove('fading'); }
+  }
+
   return {
     update,
+    suspend,
     // Read by the gate: which band the player is in, what is on screen, and
     // how many captions this session has raised.
     state: () => ({ band, name: BANDS[band === null ? 0 : band].name, current, shown, timer }),

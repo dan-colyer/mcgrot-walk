@@ -351,5 +351,18 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
   // readerCount: E10a.3's gate needs the length of the list this module was
   // actually handed, not npcs.npcs — the whole point of that unit is that
   // the two differ by one on the days McGrot is in.
-  return { update, dispose, setReadAlong, isOpen, range: RANGE, readerCount: () => npcs.length };
+  // E9a.1: going indoors. main.js already stops calling update() while the
+  // player is in a shop — the camera is at the interior's own origin and a
+  // street proximity test from there is meaningless — but stopping the
+  // updater does not clear what the last street frame left on screen. A
+  // vendor's prompt hung over the whole interior, and the first capture of the
+  // room had "[E] HEAR ISA STRUTHERS READ" printed across it. Anything the
+  // module has put in the DOM comes down here.
+  function suspend() {
+    close();
+    hidePrompt();
+    nearest = null;   // so the prompt re-shows on the way back out
+  }
+
+  return { update, dispose, setReadAlong, suspend, isOpen, range: RANGE, readerCount: () => npcs.length };
 }
