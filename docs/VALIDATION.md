@@ -3993,6 +3993,86 @@ straight through — which is the exact behaviour the gate exists to
 demonstrate. It counts frames inside the footprint instead: 11/180 with the
 flag off, 0/180 with it on.
 
+### E10a.2 — McGrot and Pomplé
+
+Eight more gates on the same flag, all turning on one axis: the calendar. The
+opposed pair is two full boots of the same build differing only in
+`__mcgrotForceDate` — 2026-01-03 (in) against 2026-01-01 (out).
+
+- **The date decides.** in=true then in=false. One arm alone proves nothing.
+- **Presence reaches the scene, both ways.** McGrot's mesh loaded and no shut
+  sign on the in-day; no McGrot and a shut sign on the out-day. This is the
+  join between `mcgrotIsIn()` and the product — without it the presence flag
+  could be a field nothing reads.
+- **The solid count follows the cast**, on a SEPARATE tag. The stall's fixed
+  boxes are `gullet` (always 2); the figures are `gullet-cast` (2 in, 1 out).
+  Splitting them is the E3h lesson: a whole class can stop registering while
+  every other gate stays green. Note the gate reads the collision registry's
+  own census, not the module's `castSolids` field — commenting out the
+  counter changed nothing, which is the correct result.
+- **The distribution, joined to the boots.** 136/365 days in (37.3%, design
+  fraction 3/8 = 37.5%), swept node-side over a year, AND the node-side hash
+  agreeing with what both booted scenes actually produced. The join is what
+  keeps this from being a reimplementation testing itself — raising the
+  numerator to 7 fails on `agrees`, not on the percentage.
+- **Both figures stand on something.** McGrot 0.0000 m off the van floor
+  (`CHASSIS_H` above the road), Pomplé 0.0000 m off the road.
+- **Pomplé moves** — 2.64 m between the two days' positions. Canon gives the
+  dog minimal motion, so "wanders" is a different fixed spot per day rather
+  than a walk cycle; but a different spot it must be, or the out-day stall is
+  the in-day stall with a sign on it.
+- **The two days look different from the same spot** — 7.73%.
+- **Pomplé is in a frame somebody looks at** — 2.85% against the same pose on
+  a day he is elsewhere. This is the roadmap's named E10a risk, gated.
+
+#### The van had to become a shell
+
+E10a.1's body was one solid `BoxGeometry` with a black panel painted where the
+hatch goes. When E10a.2 stood McGrot at his own counter, the capture showed
+his **boots under the chassis and nothing else** — he was inside the box. The
+body is now six panels with a real opening, plus a soot interior liner:
+without it the shell's inner faces were the same dirty cream as the outside,
+and the far end panel caught the sun and read through the hole as a bright
+white slab. Still one merged mesh, still one draw call.
+
+`OPENING_SILL` is the dimension the whole tableau hangs off. It sits at chest
+height on a 1.72 m McGrot standing on the van FLOOR, which is `CHASSIS_H`
+above the road; standing him on the road put his head below the sill.
+
+None of that came from a design note. It came from opening the frame.
+
+#### E10a.2 fault injection
+
+| Injection | Gates that went red |
+|---|---|
+| shut sign built on the wrong day | presence reaches the scene |
+| `MCGROT_LIFT = 0` (stand him on the road) | both figures stand on something (0.62 m off) |
+| numerator 3 → 7 | the date decides; distribution (on `agrees`, not the percentage) |
+| Pomplé's position no longer day-dependent | Pomplé moves; the two days differ (0.08%); Pomplé in frame (0.10%) |
+| skip the cast's `addCircle` | the solid count follows the cast (0 and 0) |
+
+#### The Pomplé generation was rejected by content moderation, twice
+
+Black Forest Labs's **output** moderation flagged the first two attempts
+("the generated content was flagged"). The trigger was never identified. The
+wording that passed first time drops "mongrel", drops the "no collar, no lead,
+no hat" negations and unstacks the repeated "shaggy"; it is in
+`scripts/gen-character.mjs` with a comment saying not to reinstate the
+original as a tidy-up.
+
+`gen-character.mjs` also gained per-character framing and size overrides.
+The shared `FRAMING` string is written for a standing human — "arms slightly
+away from the sides, feet apart" is nonsense for a dog — and a quadruped in a
+768×1024 portrait frame spends the pixels the reconstruction needs on empty
+background. Pomplé generates side-on three-quarter at 1024×768.
+
+Both meshes went through Trellis at `mesh_simplify=0.98, texture_size=512` —
+settled at E3a and **not re-swept**, on that unit's finding that decimation is
+the wrong lever and texture size is the right one. McGrot 3,952 tris / 451 KB,
+Pomplé 6,946 tris / 591 KB, both 1 primitive = 1 draw call, both in line with
+the five crowd archetypes (5,254 tris / 480 KB). Total spend for E10a.2:
+**$0.04** across two Trellis runs, plus three FLUX generations.
+
 ### What this region deliberately does not prove
 
 - **Nothing about the shipped page.** The flag is off, so no visitor sees any
@@ -4003,8 +4083,14 @@ flag off, 0/180 with it on.
   nothing more. The judging captures under `docs/smoke/captures/gullet/` are
   the record that a human opened it — front and oblique at 13:00, both again
   at 22:00 under the shipped grade.
-- **Nothing about McGrot or Pomplé.** Neither exists yet. The stall is the
-  fixed point they vary around, and it is all E10a.1 contains.
+- **Nothing about McGrot as a reading station.** He stands at the counter and
+  he is solid; he does not speak, hold a comic, or answer the proximity
+  prompt. That is E10a.3, and until it lands the 8 m `RANGE` clearance gate is
+  protecting a station that does not exist yet.
+- **Nothing about the day rolling over mid-session.** `mcgrotIsIn` is read
+  ONCE at build time and cached on the returned object, deliberately — but
+  nothing tears the stall down and rebuilds it if a session outlives
+  midnight, so McGrot would stay in (or stay away) until reload.
 
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 

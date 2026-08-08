@@ -258,12 +258,17 @@ and does not report success until every changed file md5-matches the live URL.
   boilerplate back in. Never reachable off localhost — the gates boot the same
   build twice and attribute a measured difference to the flag, which is only
   sound if nothing else differs.
-- `src/gullet.js` — E10a.1's stall at a FIXED chainage 740, side +1, offset
-  7.6m. Behind `__mcgrotForceGullet`, shipped default OFF. Its own seeded PRNG,
-  never scenery's, and the `gullet` region gates that by requiring `geomHash`
-  to MATCH across the flag's two arms. `npm run probe -- --gullet=on` boots it.
-  When the enable commit flips the default, `SINCE_RULES` must grow `render`,
-  `weather` and `mobile` for this path.
+- `src/gullet.js` — the stall at a FIXED chainage 740, side +1, offset 7.6m,
+  plus McGrot and Pomplé (E10a.2). Behind `__mcgrotForceGullet`, shipped
+  default OFF. Its own seeded PRNG, never scenery's, and the `gullet` region
+  gates that by requiring `geomHash` to MATCH across the flag's two arms.
+  Presence is date-keyed through `mcgrotIsIn(dayKey)`, read ONCE at build time
+  — do not call it again downstream or the stall shuts with McGrot still in
+  it. Two collision tags, counted separately: `gullet` is the stall's fixed
+  boxes (always 2), `gullet-cast` is the figures (2 in, 1 out). Boot it with
+  `npm run probe -- --gullet=on`; add `--hour=` and a `__mcgrotForceDate` init
+  script to pick a day. When the enable commit flips the default,
+  `SINCE_RULES` must grow `render`, `weather` and `mobile` for this path.
 
 ## Gotchas
 

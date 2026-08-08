@@ -3700,6 +3700,23 @@ the-keeper ruling and the cut list live in the Direction ruling above.*
 
 ### E10a — The Gullet (after E8 close)
 
+**E10a.2 LANDED 2026-08-08** — McGrot and Pomplé, date-seeded. He is at the
+Gullet 3 days in 8 (136/365 = 37.3% measured); on the other days the shut sign
+goes up over the hatch. Pomplé is posted at the kerb end when McGrot is in and
+at a different day-seeded spot when he is not. Both meshes through the E3a
+pipeline at `mesh_simplify=0.98, texture_size=512`, not re-swept: McGrot 3,952
+tris / 451KB, Pomplé 6,946 tris / 591KB, one draw call each. Spend: $0.04.
+Eight more gates, all fault-injected; suite 298 PASS / 0 FAIL.
+
+*The van became a shell.* E10a.1's body was one solid box and McGrot stood
+inside it — the capture showed his boots under the chassis and nothing else.
+Six panels with a real serving opening now, plus a soot interior liner. Still
+one draw call. See VALIDATION.md.
+
+*Still to do in E10a:* **E10a.3**, McGrot as the 125th reading station
+(interact, comic, the TTS hero-cast lane) — he is scenery with a collision
+circle today, not a vendor. Then the enable+recapture commit.
+
 **E10a.1 LANDED 2026-08-08** — the stall alone, behind `__mcgrotForceGullet`
 with the shipped default OFF. Suite 289 PASS / 0 FAIL sharded (92s), every
 golden 0.000–0.012%. New `gullet` region, 10 gates; see `docs/VALIDATION.md` §
