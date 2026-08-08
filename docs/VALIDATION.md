@@ -4073,6 +4073,83 @@ Pomplé 6,946 tris / 591 KB, both 1 primitive = 1 draw call, both in line with
 the five crowd archetypes (5,254 tris / 480 KB). Total spend for E10a.2:
 **$0.04** across two Trellis runs, plus three FLUX generations.
 
+### E10a.3 — the 125th reading station
+
+Seven gates. McGrot satisfies interact.js's and proximity-audio.js's vendor
+contract without being one of the 124, and the three counts that must NOT move
+are asserted first — "he works" is worth nothing if it cost the vendor census,
+the journal denominator or `geomHash`.
+
+- **Reader without becoming vendor 125.** in-day 125 readers / 124 vendors /
+  journal denominator 124; out-day 124 / 124 / 124. His comic (`3c6b637b`) is
+  deliberately one of the 294 with no `npc` block: giving it one makes him a
+  real vendor inside npcs.js, and the injection proves it (126 readers, 125
+  vendors).
+- **The station offers itself by name**, "[E] Hear McGrot read", with the
+  control standing at the SAME spot on the out-day, where no prompt appears.
+- **The overlay opens on his own comic** — title, meta, and the image actually
+  decoded (`naturalWidth > 0`, not merely a `src` attribute).
+- **Hearing him does not credit the journal.** The journal counts the
+  124-comic collection against a fixed denominator; crediting him would let
+  `heard` reach 125/124 and would put a comic in the collection that is not in
+  it. `interact.js` honours a `skipJournal` flag for this.
+- **The play icon follows whether the comic has a clip.**
+- **No catalog entry claims an mp3 that is not on disk** — checked over all
+  418, in node.
+- **The hero lane exists and delivered his clip.**
+
+#### Two defects this unit surfaced, both newly reachable
+
+McGrot is the first station in the project whose comic had **no rendered
+clip** — all 124 vendors have one — so two paths that had never executed did.
+
+**A dangling audio path 404s on every open.** His catalog entry was given
+`audio: "audio/3c6b637b.mp3"` before the clip existed, matching the 124's
+convention. Opening his overlay logged a console error and a 404. Nothing in
+the suite would have caught it: the console-clean gate only sees it if some
+gate happens to open that particular station. Fixed at the source —
+`generate-tts.mjs` now writes the path back into the catalog on success, so
+`audio` stays null until the file exists — and gated over the whole catalog
+rather than over the one entry this unit touched.
+
+**The overlay showed the PAUSE icon over silence.** `open()` called
+`setPlayIcon(true)` unconditionally, which was indistinguishable from correct
+while every station had audio. Now driven by `npc.comic.audio`.
+
+#### Two gates that passed vacuously
+
+Under the first fault injection — the reader never wired into the readers
+array — "hearing him does not credit the journal" and the play-icon gate both
+stayed **green**. No overlay means the journal cannot move and the icon is
+whatever it was left as. Both are now guarded on `display === 'flex'`. A gate
+that is green on a scene with no station is not measuring the station, and
+this is the second time in E10a that a gate needed its precondition asserted
+rather than assumed.
+
+#### E10a.3 fault injection
+
+| Injection | Gates that went red |
+|---|---|
+| reader never added to the readers array | reader-not-vendor-125; offers itself by name; overlay opens (+ the two vacuous ones, after guarding) |
+| give his comic an `npc` block | reader-not-vendor-125 (126 readers, 125 vendors) |
+| restore the dangling `audio` path | no dangling path; play icon (⏸ over silence) |
+| `skipJournal: false` | journal credit (0 → 1) |
+| drop the `hero` flag | the hero lane |
+
+#### What his comic is, and the verbatim rule
+
+`3c6b637b` — "McGrot — The Badger Consultancy", transcribed for this unit
+following `scripts/catalog-batches/BRIEF.md` (full-res source read, then
+thirds-crops for the fiddly lines). Every printed line is reproduced exactly:
+*ybudget*, *admim*, *beestie* are what is on the page and are not typos to
+fix. Pomplé is in panel 5 of it, and the badgers are the canon row's "badgers
+undermining the Gullet".
+
+`assets/comic-lines.json` was deliberately **not** touched. `litter.js` builds
+its pool from `comics.filter(c => lines[c.id] && ...)`, so a 96th key reshuffles
+the litter layout and moves goldens — a real cost for no gain while the flag is
+off. Left for the enable commit to decide.
+
 ### What this region deliberately does not prove
 
 - **Nothing about the shipped page.** The flag is off, so no visitor sees any
@@ -4083,10 +4160,10 @@ the five crowd archetypes (5,254 tris / 480 KB). Total spend for E10a.2:
   nothing more. The judging captures under `docs/smoke/captures/gullet/` are
   the record that a human opened it — front and oblique at 13:00, both again
   at 22:00 under the shipped grade.
-- **Nothing about McGrot as a reading station.** He stands at the counter and
-  he is solid; he does not speak, hold a comic, or answer the proximity
-  prompt. That is E10a.3, and until it lands the 8 m `RANGE` clearance gate is
-  protecting a station that does not exist yet.
+- **Nothing about him being audible from the street.** The ambient busking
+  loop now has him in its list and his clip exists, so he should mutter like
+  any other vendor when you walk past — that is asserted nowhere. The `onevoice`
+  region's mixer rule is measured against the 124 only.
 - **Nothing about the day rolling over mid-session.** `mcgrotIsIn` is read
   ONCE at build time and cached on the returned object, deliberately — but
   nothing tears the stall down and rebuilds it if a session outlives

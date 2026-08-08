@@ -3700,6 +3700,27 @@ the-keeper ruling and the cut list live in the Direction ruling above.*
 
 ### E10a — The Gullet (after E8 close)
 
+**E10a.3 LANDED 2026-08-08** — McGrot is a reading station: prompt, overlay,
+his own comic (`3c6b637b`, "McGrot — The Badger Consultancy", transcribed for
+this unit), a rendered clip through the new TTS hero lane, and a read-along
+transcript. He is NOT vendor 125 — 125 readers, 124 vendors, journal
+denominator 124 — because his comic deliberately carries no `npc` block. Seven
+gates, all fault-injected; suite 305 PASS / 0 FAIL. Spend: ~$0.01.
+
+*Two latent defects it surfaced,* both newly reachable because he is the first
+station whose comic had no clip: a catalog entry claiming an mp3 that is not on
+disk 404s on every open (fixed at source — `generate-tts.mjs` writes the path
+back on success), and the overlay showed the PAUSE icon over silence.
+
+*Rejected, measured:* adding his lines to `assets/comic-lines.json`.
+`litter.js` builds its pool from that map, so a 96th key reshuffles the litter
+layout and moves goldens — a real cost for no gain while the flag is off.
+
+*Still to do in E10a:* the enable+recapture commit — flip `GULLET_ENABLED`,
+grow `SINCE_RULES` for `src/gullet.js` to `render`/`weather`/`mobile`, delete
+and recapture whichever poses frame chainage 740, then re-run
+`npm run goldens:noise`.
+
 **E10a.2 LANDED 2026-08-08** — McGrot and Pomplé, date-seeded. He is at the
 Gullet 3 days in 8 (136/365 = 37.3% measured); on the other days the shut sign
 goes up over the hatch. Pomplé is posted at the kerb end when McGrot is in and
@@ -3712,10 +3733,6 @@ Eight more gates, all fault-injected; suite 298 PASS / 0 FAIL.
 inside it — the capture showed his boots under the chassis and nothing else.
 Six panels with a real serving opening now, plus a soot interior liner. Still
 one draw call. See VALIDATION.md.
-
-*Still to do in E10a:* **E10a.3**, McGrot as the 125th reading station
-(interact, comic, the TTS hero-cast lane) — he is scenery with a collision
-circle today, not a vendor. Then the enable+recapture commit.
 
 **E10a.1 LANDED 2026-08-08** — the stall alone, behind `__mcgrotForceGullet`
 with the shipped default OFF. Suite 289 PASS / 0 FAIL sharded (92s), every

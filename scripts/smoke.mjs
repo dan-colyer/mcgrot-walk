@@ -3594,17 +3594,28 @@ async function main() {
     });
     results.push({
       name: 'E10a.3: hearing him does not credit the 124-comic journal',
-      pass: opened.heardAfter === opened.heardBefore,
+      // Guarded on the overlay having opened. Both this and the play-icon gate
+      // below passed VACUOUSLY under fault injection when the station was
+      // unwired: no overlay means the journal cannot move and the icon is
+      // whatever it was left as. A gate that is green on a scene with no
+      // station is not measuring the station.
+      pass: opened.display === 'flex' && opened.heardAfter === opened.heardBefore,
       detail: `journal heard ${opened.heardBefore} -> ${opened.heardAfter} (must not move; his comic ` +
         'is not in the collection the denominator counts)',
     });
-    // The unvoiced path, which McGrot is the FIRST station to reach: all 124
-    // vendors have a rendered clip. The overlay must not claim to be playing.
+    // The play icon must follow whether the comic HAS a clip, not be pinned on.
+    // McGrot was the first station to reach the unvoiced path at all — every
+    // one of the 124 has a rendered clip — and the overlay showed PAUSE ("now
+    // playing") over silence. His own clip has since been rendered through the
+    // hero lane, so the assertion is written against the audio field rather
+    // than against him: it stays correct for the 294 comics still unvoiced.
+    const mcgrotComic = gulCatalog.comics.find((c) => c.id === '3c6b637b');
+    const wantIcon = mcgrotComic && mcgrotComic.audio ? '⏸' : '▶';
     results.push({
-      name: 'E10a.3: an unvoiced station does not show a playing icon',
-      pass: opened.playIcon === '▶',
-      detail: `play/pause reads "${opened.playIcon}" (want ▶ — his clip is queued in the TTS hero ` +
-        'lane and does not exist yet; the pause icon over silence is what this replaced)',
+      name: 'E10a.3: the play icon follows whether the comic has a clip',
+      pass: opened.display === 'flex' && opened.playIcon === wantIcon,
+      detail: `play/pause reads "${opened.playIcon}", comic audio is ` +
+        `${mcgrotComic && mcgrotComic.audio ? mcgrotComic.audio : 'null'} so it must read "${wantIcon}"`,
     });
 
     // NO DANGLING AUDIO PATH ANYWHERE. This is the gate the 404 taught: a
@@ -3629,13 +3640,16 @@ async function main() {
     const heroes = gulCatalog.comics.filter((c) => c.hero);
     const transcribedUnvoiced = gulCatalog.comics.filter((c) => c.promptFile && !c.audio);
     results.push({
-      name: 'E10a.3: his clip is at the front of the TTS queue',
+      name: 'E10a.3: the hero lane exists and delivered his clip',
+      // His clip has landed, so the queue assertion is now "the lane exists and
+      // did its job": one hero entry, its prompt on disk, and the clip
+      // rendered. Asserting he is still AT the front would fail the moment the
+      // lane worked, which is the wrong direction for a gate to fail in.
       pass: heroes.length === 1 && heroes[0].id === '3c6b637b'
         && existsSync(join(root, 'scripts/tts-prompts/3c6b637b.txt'))
-        && transcribedUnvoiced.length > 0 && transcribedUnvoiced[0].id === '3c6b637b',
-      detail: `${heroes.length} hero-lane entr(y/ies); the next ${transcribedUnvoiced.length} ` +
-        `transcribed-but-unvoiced comic(s) start with ${transcribedUnvoiced[0] && transcribedUnvoiced[0].id} ` +
-        '(generate-tts.mjs sorts hero-first)',
+        && existsSync(join(root, 'assets/audio/3c6b637b.mp3')),
+      detail: `${heroes.length} hero-lane entr(y/ies), prompt on disk, clip rendered; ` +
+        `${transcribedUnvoiced.length} transcribed-but-unvoiced comic(s) left in the queue behind it`,
     });
 
     await castIn.context.close();

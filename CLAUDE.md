@@ -267,7 +267,11 @@ and does not report success until every changed file md5-matches the live URL.
   it. Two collision tags, counted separately: `gullet` is the stall's fixed
   boxes (always 2), `gullet-cast` is the figures (2 in, 1 out). Boot it with
   `npm run probe -- --gullet=on`; add `--hour=` and a `__mcgrotForceDate` init
-  script to pick a day. When the enable commit flips the default,
+  script to pick a day. Since E10a.3 he is also a READING STATION and not
+  vendor 125: main.js builds a separate `readers` array for interact.js and
+  proximity-audio.js, so `npcs.npcs` stays exactly 124 and geomHash, the vendor
+  census and the journal denominator are untouched. His comic (`3c6b637b`)
+  deliberately has no `npc` block — adding one makes him a real vendor. When the enable commit flips the default,
   `SINCE_RULES` must grow `render`, `weather` and `mobile` for this path.
 
 ## Gotchas
@@ -304,6 +308,11 @@ and does not report success until every changed file md5-matches the live URL.
   (`atan2(-tx, -tz)`; controls' forward is `(-sin yaw, -cos yaw)`).
 - No pointer lock assumption: drag-look is primary (artifact iframe blocks pointer lock).
 - Audio is MP3 (Safari won't play OGG/Opus). Keep the final HTML under ~8MB.
+- **A catalog entry must not claim an mp3 that is not on disk.** It 404s on
+  every overlay open and logs a console error, and the console-clean gate only
+  catches it if some gate happens to open that station. `generate-tts.mjs`
+  writes `audio` back on success, so leave it null until the clip exists; the
+  `gullet` region checks all 418 entries.
 - `window.__mcgrotDebug` (main.js) is a dev probe — hostname-gated to localhost.
 - Asset regeneration (TTS/faces/OSM): see README.md; keys in `.env.local` (gitignored).
 - Texture/bundle URLs are content-hash versioned (atlas/strips etags, stamp-bundle) —
