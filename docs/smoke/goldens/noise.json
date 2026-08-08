@@ -1,0 +1,609 @@
+{
+  "measured": "2026-08-08",
+  "note": "Per-golden run-to-run noise. See scripts/goldens-noise.mjs. Re-measure after any recapture.",
+  "renderer": "chromium/metal",
+  "runs": 3,
+  "goldensMtimeMs": 1786183728724.4626,
+  "bands": {
+    "golden-clear:elm-row-hero": {
+      "band": 0.129,
+      "meanBand": 3.9849,
+      "runs": 3,
+      "samples": [
+        0.125,
+        0.129,
+        0.112
+      ],
+      "meanSamples": [
+        3.9733,
+        3.9849,
+        3.9658
+      ]
+    },
+    "golden-clear:fascia-close": {
+      "band": 0,
+      "meanBand": 4.79,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        4.79,
+        4.79,
+        4.79
+      ]
+    },
+    "golden-clear:foot-1500-far": {
+      "band": 0.062,
+      "meanBand": 3.2047,
+      "runs": 3,
+      "samples": [
+        0.062,
+        0.061,
+        0.054
+      ],
+      "meanSamples": [
+        3.203,
+        3.2047,
+        3.1965
+      ]
+    },
+    "golden-clear:mid-550-close": {
+      "band": 0,
+      "meanBand": 4.8831,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        4.8831,
+        4.8831,
+        4.8831
+      ]
+    },
+    "golden-clear:mid-805-far": {
+      "band": 0.114,
+      "meanBand": 3.7978,
+      "runs": 3,
+      "samples": [
+        0.113,
+        0.114,
+        0.096
+      ],
+      "meanSamples": [
+        3.7937,
+        3.7978,
+        3.7793
+      ]
+    },
+    "golden-clear:mid-805-far-08": {
+      "band": 0.12,
+      "meanBand": 4.7565,
+      "runs": 3,
+      "samples": [
+        0.116,
+        0.12,
+        0.1
+      ],
+      "meanSamples": [
+        4.7517,
+        4.7565,
+        4.7357
+      ]
+    },
+    "golden-clear:north-150-close": {
+      "band": 0,
+      "meanBand": 4.9516,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        4.9516,
+        4.9516,
+        4.9516
+      ]
+    },
+    "golden-clear:north-250-far": {
+      "band": 0.112,
+      "meanBand": 3.9785,
+      "runs": 3,
+      "samples": [
+        0.109,
+        0.112,
+        0.107
+      ],
+      "meanSamples": [
+        3.974,
+        3.9785,
+        3.9731
+      ]
+    },
+    "golden-clear:skyline": {
+      "band": 0.098,
+      "meanBand": 3.6786,
+      "runs": 3,
+      "samples": [
+        0.098,
+        0.09,
+        0.08
+      ],
+      "meanSamples": [
+        3.6786,
+        3.6715,
+        3.6612
+      ]
+    },
+    "golden-drizzle:elm-row-hero": {
+      "band": 0.097,
+      "meanBand": 3.6517,
+      "runs": 3,
+      "samples": [
+        0.097,
+        0.095,
+        0.093
+      ],
+      "meanSamples": [
+        3.6517,
+        3.6503,
+        3.6494
+      ]
+    },
+    "golden-drizzle:mid-805-far": {
+      "band": 0.236,
+      "meanBand": 3.6575,
+      "runs": 3,
+      "samples": [
+        0.164,
+        0.164,
+        0.236
+      ],
+      "meanSamples": [
+        3.6143,
+        3.6137,
+        3.6575
+      ]
+    },
+    "golden-haar:elm-row-hero": {
+      "band": 0.132,
+      "meanBand": 0.9452,
+      "runs": 3,
+      "samples": [
+        0.108,
+        0.119,
+        0.132
+      ],
+      "meanSamples": [
+        0.9284,
+        0.9359,
+        0.9452
+      ]
+    },
+    "golden-haar:fascia-close": {
+      "band": 0,
+      "meanBand": 1.0609,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.0609,
+        1.0609,
+        1.0609
+      ]
+    },
+    "golden-haar:foot-1500-far": {
+      "band": 0.035,
+      "meanBand": 0.7348,
+      "runs": 3,
+      "samples": [
+        0.033,
+        0.033,
+        0.035
+      ],
+      "meanSamples": [
+        0.7327,
+        0.734,
+        0.7348
+      ]
+    },
+    "golden-haar:mid-550-close": {
+      "band": 0,
+      "meanBand": 1.2046,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.2046,
+        1.2046,
+        1.2046
+      ]
+    },
+    "golden-haar:mid-805-far": {
+      "band": 0.15,
+      "meanBand": 0.9073,
+      "runs": 3,
+      "samples": [
+        0.078,
+        0.088,
+        0.15
+      ],
+      "meanSamples": [
+        0.8474,
+        0.8534,
+        0.9073
+      ]
+    },
+    "golden-haar:north-150-close": {
+      "band": 0,
+      "meanBand": 1.3505,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.3505,
+        1.3505,
+        1.3505
+      ]
+    },
+    "golden-haar:north-250-far": {
+      "band": 0.038,
+      "meanBand": 0.9932,
+      "runs": 3,
+      "samples": [
+        0.035,
+        0.034,
+        0.038
+      ],
+      "meanSamples": [
+        0.9913,
+        0.9905,
+        0.9932
+      ]
+    },
+    "golden-haar:skyline": {
+      "band": 0.042,
+      "meanBand": 0.7203,
+      "runs": 3,
+      "samples": [
+        0.037,
+        0.041,
+        0.042
+      ],
+      "meanSamples": [
+        0.7155,
+        0.7176,
+        0.7203
+      ]
+    },
+    "golden-mobile:comic": {
+      "band": 0,
+      "meanBand": 0.0186,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        0.0186,
+        0.0186,
+        0.0186
+      ]
+    },
+    "golden-mobile:hud": {
+      "band": 0.025,
+      "meanBand": 0.9095,
+      "runs": 3,
+      "samples": [
+        0.025,
+        0.019,
+        0.019
+      ],
+      "meanSamples": [
+        0.9095,
+        0.9081,
+        0.9083
+      ]
+    },
+    "golden-mobile:street": {
+      "band": 0,
+      "meanBand": 1.4188,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.4188,
+        1.4188,
+        1.4188
+      ]
+    },
+    "golden-mobile:title": {
+      "band": 0,
+      "meanBand": 0,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        0,
+        0,
+        0
+      ]
+    },
+    "golden-rain:elm-row-hero": {
+      "band": 0.095,
+      "meanBand": 7.4181,
+      "runs": 3,
+      "samples": [
+        0.094,
+        0.087,
+        0.095
+      ],
+      "meanSamples": [
+        7.4175,
+        7.4153,
+        7.4181
+      ]
+    },
+    "golden-rain:fascia-close": {
+      "band": 0,
+      "meanBand": 7.4492,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        7.4492,
+        7.4492,
+        7.4492
+      ]
+    },
+    "golden-rain:foot-1500-far": {
+      "band": 0.052,
+      "meanBand": 7.2099,
+      "runs": 3,
+      "samples": [
+        0.052,
+        0.04,
+        0.05
+      ],
+      "meanSamples": [
+        7.2094,
+        7.2047,
+        7.2099
+      ]
+    },
+    "golden-rain:mid-550-close": {
+      "band": 0,
+      "meanBand": 7.7098,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        7.7098,
+        7.7098,
+        7.7098
+      ]
+    },
+    "golden-rain:mid-805-far": {
+      "band": 0.318,
+      "meanBand": 7.444,
+      "runs": 3,
+      "samples": [
+        0.298,
+        0.318,
+        0.302
+      ],
+      "meanSamples": [
+        7.4219,
+        7.444,
+        7.423
+      ]
+    },
+    "golden-rain:north-150-close": {
+      "band": 0,
+      "meanBand": 7.753,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        7.753,
+        7.753,
+        7.753
+      ]
+    },
+    "golden-rain:north-250-far": {
+      "band": 0.028,
+      "meanBand": 7.4294,
+      "runs": 3,
+      "samples": [
+        0.028,
+        0.028,
+        0.023
+      ],
+      "meanSamples": [
+        7.4293,
+        7.4294,
+        7.4271
+      ]
+    },
+    "golden-rain:skyline": {
+      "band": 0.057,
+      "meanBand": 7.0496,
+      "runs": 3,
+      "samples": [
+        0.048,
+        0.036,
+        0.057
+      ],
+      "meanSamples": [
+        7.0436,
+        7.0393,
+        7.0496
+      ]
+    },
+    "golden:elm-row-hero": {
+      "band": 0.108,
+      "meanBand": 1.2455,
+      "runs": 3,
+      "samples": [
+        0.1,
+        0.108,
+        0.09
+      ],
+      "meanSamples": [
+        1.24,
+        1.2455,
+        1.235
+      ]
+    },
+    "golden:fascia-close": {
+      "band": 0,
+      "meanBand": 1.2723,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.2723,
+        1.2723,
+        1.2723
+      ]
+    },
+    "golden:foot-1500-far": {
+      "band": 0.054,
+      "meanBand": 1.0456,
+      "runs": 3,
+      "samples": [
+        0.054,
+        0.053,
+        0.047
+      ],
+      "meanSamples": [
+        1.0443,
+        1.0456,
+        1.0408
+      ]
+    },
+    "golden:lamp-hero-night": {
+      "band": 0.052,
+      "meanBand": 0.252,
+      "runs": 3,
+      "samples": [
+        0.043,
+        0.051,
+        0.052
+      ],
+      "meanSamples": [
+        0.248,
+        0.252,
+        0.2512
+      ]
+    },
+    "golden:mid-550-close": {
+      "band": 0,
+      "meanBand": 1.3703,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.3703,
+        1.3703,
+        1.3703
+      ]
+    },
+    "golden:mid-805-far": {
+      "band": 0.154,
+      "meanBand": 1.2659,
+      "runs": 3,
+      "samples": [
+        0.091,
+        0.154,
+        0.135
+      ],
+      "meanSamples": [
+        1.2113,
+        1.2659,
+        1.2559
+      ]
+    },
+    "golden:north-150-close": {
+      "band": 0,
+      "meanBand": 1.4533,
+      "runs": 3,
+      "samples": [
+        0,
+        0,
+        0
+      ],
+      "meanSamples": [
+        1.4533,
+        1.4533,
+        1.4533
+      ]
+    },
+    "golden:north-250-far": {
+      "band": 0.033,
+      "meanBand": 1.2211,
+      "runs": 3,
+      "samples": [
+        0.03,
+        0.033,
+        0.027
+      ],
+      "meanSamples": [
+        1.2182,
+        1.2211,
+        1.2171
+      ]
+    },
+    "golden:skyline": {
+      "band": 0.065,
+      "meanBand": 1.1334,
+      "runs": 3,
+      "samples": [
+        0.065,
+        0.059,
+        0.053
+      ],
+      "meanSamples": [
+        1.1334,
+        1.1292,
+        1.1231
+      ]
+    }
+  }
+}

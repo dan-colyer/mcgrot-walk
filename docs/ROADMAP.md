@@ -118,7 +118,7 @@ exception left is E7a's mechanical hosting migration.
 | E9b visitor theatre | medium | interior-only; corpus gated by Central Bar test |
 | E6a.1 collision: buildings + props — **LANDED** | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
 | E6a.2 collision: characters — **LANDED** | medium | circles on existing groups; prompt-radius ordering gated |
-| E8 close — **3 of 4 landed** | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
+| E8 close — **LANDED** | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
 | E10a the Gullet | medium; **high (review)** on the enable+recapture | new scene geometry, flag-first |
 | E6b the tram | **high (review)** | camera parenting, update order, suspended clamps |
 | E7a hosting move | medium | mechanical migration |
@@ -2737,10 +2737,11 @@ justify. One unit — "E8 close" in the sequence.
 
 #### E8 close — what has landed (2026-08-08)
 
-Three of four units. `1/4` hardened preset `b` into shader constants and wrote
+All four units. `1/4` hardened preset `b` into shader constants and wrote
 `docs/STYLE.md` § 2; `2/4` added the two DOM levers (caption boxes, the title
-card as a comic cover); `3/4` shipped the grade and recaptured all 40 goldens.
-`4/4` (per-golden noise bands) is outstanding.
+card as a comic cover); `3/4` shipped the grade and recaptured all 40 goldens;
+`4/4` measured per-golden noise bands and took `goldens:audit` from 25 false
+positives to 0.
 
 **The finding of the phase, and it only appeared once the grade shipped.**
 Enabling it doubled the mean luminance of the darkest hour and turned three
@@ -2763,6 +2764,27 @@ The three gates were **re-pointed, not relaxed** — every threshold unchanged,
 each now measuring the scene with the grade off, because each asks whether the
 lamps or the torch light the street and that is a property of the scene rather
 than of the paper. The grade's own lift gets two new gates of its own.
+
+**E8 close's other finding, and it is open.** Fault-injecting the new audit
+floors turned up something bigger than the floors: raising `VIGNETTE` from
+0.28 to 0.40 — a 43% change in corner falloff that moves 43-47% of all
+channels — **moves no golden at all** (0.000% on `fascia-close`, 0.087% on
+`mid-805-far`). pixelmatch's threshold is a perceptual distance and a broad
+low-amplitude shift slips under it everywhere. Localised changes do show, which
+is why E5b.1 and E5b.2 were caught; global tone changes are the class E8 ships.
+
+Every golden now also reports mean absolute channel delta, which has no
+threshold — but measured, it does not close the gap on its own (the vignette
+signal is 1.39-1.88, the quiet-run bands are 1.27-7.75). The mechanism behind
+that noise IS understood and measured: two boots stepped identically are
+byte-identical, so the variation comes from the suite stepping a **variable
+number of frames** before a capture, which moves `uTime` and reseeds the grain
+and press artefacts. Pinning `post.setTime()` before each golden capture should
+collapse it and make the goldens sensitive to tone.
+
+**Not done.** It needs a fourth full recapture and would largely obsolete the
+noise bands just measured, so it is Dan's call — a candidate unit, not a
+loose end to tidy.
 
 ### Collision jumps the queue — E6a is next
 

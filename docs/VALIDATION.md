@@ -3777,6 +3777,79 @@ second time after the night taper (24.5% — it is the only pose whose subject
   both at the same end of the Walk.
 - **Nothing about the mobile night.** No mobile capture is taken after dark.
 
+## Per-golden noise bands, and a blind spot they exposed (E8 close, part 4)
+
+`goldens:audit` reported 23–25 of the 40 poses as "moved" on every run for any
+change — proved against a control worktree at E3g. A list that is
+three-quarters false positives is a list nobody reads.
+
+`npm run goldens:noise` runs N ≥ 3 full suites on a clean tree, records each
+pose's worst diff, and writes `docs/smoke/goldens/noise.json`. The audit's
+floor is `max(0.02%, 2 × band)`. **Result: 25 false positives → 0.** The audit
+now says "Nothing moved. No recapture needed." on a clean tree.
+
+The poses split cleanly in two. 15 are bit-stable at **0.000% across all three
+runs** — the close/interior-facing ones (`fascia-close`, `mid-550-close`,
+`north-150-close`, all three mobile). 25 are sky-visible and run from 0.022%
+(`golden-mobile:hud`) to 0.300% (`golden-rain:mid-805-far`).
+
+Guards on the measurement itself: it refuses to run on a dirty tree (every
+diff it records is by definition noise, so real work in the tree would be
+blessed as noise forever), and the audit compares the goldens' mtimes against
+the bands' and warns if a pose has been recaptured since — a recaptured pose's
+band belongs to pixels that are no longer there.
+
+**Two poses get a floor above the 0.5% gate tolerance** (`golden-rain:mid-805-far`
+0.600%, `golden-drizzle:mid-805-far` 0.502%). For those the gate is the tighter
+instrument and the audit is the looser one. The audit prints them by name
+rather than leaving it to be worked out.
+
+### The blind spot: pixelmatch cannot see a broad tone shift
+
+Found by fault-injecting the new floors, and much larger than the thing it was
+testing. **`VIGNETTE` 0.28 → 0.40 — a 43% change in corner falloff — moved no
+golden at all.** Measured directly on the same two poses:
+
+| | pixelmatch @0.1 | channels differing | max delta | mean corner delta |
+|---|---|---|---|---|
+| `fascia-close` | **0.000%** | 43.42% | 26 | 12.98 |
+| `mid-805-far` | **0.087%** | 46.84% | 153 | 9.85 |
+
+pixelmatch's threshold is a perceptual distance, so a broad low-amplitude
+shift slips under it on every pixel. Localised high-amplitude changes do show
+— that is why E5b.1's touch toggle (0.118%) and E5b.2's anchors (0.029%) were
+caught. Global tone changes are exactly the class E8 ships, and the goldens
+cannot see them.
+
+Every golden line now also reports **mean absolute channel delta**, which has
+no threshold to hide under, and `noise.json` carries a band for it too. It is
+**reported, not gated**: there is no measured tolerance for it yet, and
+inventing one here would be a threshold picked to pass.
+
+**It does not close the blind spot on its own, and the numbers say so.** The
+vignette change measures a whole-frame mean delta of 1.39 (`fascia-close`) and
+1.88 (`mid-805-far`), against measured quiet-run bands of 1.27–1.45 on the
+stable poses and up to 7.75 on the rain ones. Signal ≈ noise.
+
+### Why the mean-delta noise exists, and the fix that is NOT done
+
+Two consecutive `renderNow()` calls on one boot are **byte-identical**. Two
+separate boots stepped through an identical sequence are **also
+byte-identical** (mean delta 0.0000, measured both pinned and unpinned). So
+the cross-run noise is not the GPU and not the boot: it is that the suite's
+real path steps a **variable number of frames** before a capture — texture
+waits, settle loops — which moves `uTime`, which reseeds the 24 fps grain and
+the 6 Hz press artefacts across the whole frame.
+
+The fix follows: pin `post.setTime()` immediately before every golden capture.
+That should collapse most bands toward zero and make the goldens sensitive to
+the tone changes they are currently blind to.
+
+**It is not done, and it is not proven.** It would need a fourth full
+recapture and would largely obsolete the bands above, so it is Dan's call
+rather than something to fold in silently. Recorded here with its measurement
+so the next session does not re-derive it.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

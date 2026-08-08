@@ -12,6 +12,7 @@
     "probe": "node scripts/probe.mjs",
     "style": "node scripts/style-sheet.mjs",
     "goldens:audit": "node scripts/goldens-audit.mjs",
+    "goldens:noise": "node scripts/goldens-noise.mjs",
     "deploy": "node scripts/deploy.mjs"
   },
   "keywords": [],

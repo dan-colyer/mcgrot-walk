@@ -147,7 +147,8 @@ npm run smoke        # full validation rig, ~133s — see docs/VALIDATION.md
 npm run smoke:par    # the SAME full gate, two sharded processes, ~74s — the deploy gate
 npm run smoke -- --since        # only the regions the working diff reaches
 npm run smoke -- --dpr-timing   # adds the informational DPR table (60s, gates nothing)
-npm run goldens:audit # which goldens did my change move? sorted, with the exact rm to run
+npm run goldens:audit # which goldens did my change move? per-pose noise floors, with the exact rm to run
+npm run goldens:noise # re-measure those floors -- 3 full suites, clean tree only, after any recapture
 npm run deploy       # smoke:par -> build -> secret scan -> push gh-pages -> md5-verify live
 npm run probe -- -e "dbg.npcs.npcs.length"   # one-off measurement against a booted scene
 npm run style        # E8's judging round -> docs/smoke/captures/style/, 24s

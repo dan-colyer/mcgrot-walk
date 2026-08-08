@@ -734,10 +734,34 @@ function checkGolden(results, name, shot, goldenPath) {
   const diffPng = new PNG({ width: actual.width, height: actual.height });
   const diffPixels = pixelmatch(actual.data, expected.data, diffPng.data, actual.width, actual.height, { threshold: PIXEL_THRESHOLD });
   const diffPct = (diffPixels / (actual.width * actual.height)) * 100;
+
+  // E8 close: a SECOND number, because pixelmatch alone has a blind spot the
+  // size of this milestone. Its threshold is a perceptual distance, so a
+  // broad low-amplitude shift passes it entirely: raising VIGNETTE from 0.28
+  // to 0.40 — a 43% change in corner falloff, mean corner delta 13 channel
+  // levels, 43-47% of all channels moved — measured 0.000% on fascia-close
+  // and 0.087% on mid-805-far. Every one of the 40 goldens called it
+  // unchanged. Localised high-amplitude changes (E5b.1's touch toggle,
+  // E5b.2's anchors) do show; global tone changes do not, which is precisely
+  // the class E8 ships.
+  //
+  // Mean absolute channel delta has no threshold to hide under. It is
+  // REPORTED, not gated: it has no measured tolerance yet, and inventing one
+  // here would be a threshold picked to pass rather than derived. The audit
+  // gives it a per-pose band from the same quiet runs the pixel bands come
+  // from, and that is where it becomes an instrument.
+  let sum = 0;
+  for (let i = 0; i < actual.data.length; i += 4) {
+    sum += Math.abs(actual.data[i] - expected.data[i])
+      + Math.abs(actual.data[i + 1] - expected.data[i + 1])
+      + Math.abs(actual.data[i + 2] - expected.data[i + 2]);
+  }
+  const meanDelta = sum / (actual.width * actual.height * 3);
+
   results.push({
     name,
     pass: diffPct <= DIFF_PCT_TOLERANCE,
-    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%)`,
+    detail: `${diffPct.toFixed(3)}% pixels differ (tolerance ${DIFF_PCT_TOLERANCE}%), meanDelta ${meanDelta.toFixed(4)}`,
   });
   return actual;
 }
