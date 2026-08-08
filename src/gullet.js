@@ -37,10 +37,11 @@ import { assetUrl } from './assets.js';
 import { normalise } from './characters.js';
 import { hashDateKey, todayKey } from './day.js';
 
-// E10a.1 lands OFF, so the milestone is verified against unmoved goldens
-// before any pixel changes. The enable commit flips this, and that is the
-// commit that recaptures whichever poses frame chainage 740.
-const GULLET_ENABLED = false;
+// E10a.1-.3 landed OFF, so all three were verified against unmoved goldens
+// before any pixel changed. This is the enable commit: the flag stays as the
+// gate suite's lever (every opposed pair in the `gullet` region needs both
+// arms), but the shipped default is now ON.
+const GULLET_ENABLED = true;
 
 export const GULLET_CHAINAGE = 740;
 export const GULLET_SIDE = 1;
@@ -254,9 +255,26 @@ export function buildGullet(assets, world, scene) {
       .catch(() => {});
   };
 
-  if (mcgrotIn) stand(MCGROT_FILE, mcgrotLocal, MCGROT_HEIGHT, 'mcgrot', MCGROT_LIFT);
+  // THE ARTIFACT DELIBERATELY HAS NO PRINCIPALS, and these two guards are what
+  // make that a decision rather than a 404. Measured at the enable commit: the
+  // single-file build is 6.96MB against a 7.5MB ceiling and these two glbs are
+  // ~1.4MB as base64 — inlining even McGrot alone lands at 7.56MB. So
+  // build.mjs does not inline them, and rather than let the fetch fail (which
+  // is exactly what E3h's "the artifact fetches no character glb" gate exists
+  // to forbid) the figures are not built there at all. The stall stands
+  // unattended, a state the design already has a name for.
+  //
+  // `window.MCGROT_ASSETS` is the single-file build's own signal (src/assets.js).
+  // On the dev server and the published site `assets.models` is undefined, the
+  // fetch is a real relative URL, and both get the full cast.
+  const inlineOnly = typeof window !== 'undefined' && !!window.MCGROT_ASSETS;
+  const haveModel = (file) => !inlineOnly || !!(assets && assets.models && assets.models[file]);
+
+  if (mcgrotIn && haveModel(MCGROT_FILE)) stand(MCGROT_FILE, mcgrotLocal, MCGROT_HEIGHT, 'mcgrot', MCGROT_LIFT);
+  // The reading station follows the FIGURE, not the day: no mesh, nobody to
+  // walk up to. It hangs off figures.mcgrot, which only exists if stand() ran.
   const reader = mcgrotIn ? buildReader(assets, figures.mcgrot) : null;
-  stand(POMPLE_FILE, pompleLocal, POMPLE_HEIGHT, 'pomple');
+  if (haveModel(POMPLE_FILE)) stand(POMPLE_FILE, pompleLocal, POMPLE_HEIGHT, 'pomple');
 
   return {
     enabled: true,

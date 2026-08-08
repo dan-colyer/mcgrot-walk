@@ -143,13 +143,12 @@ const SINCE_RULES = [
   // same corner — measured claim: it does not appear there, and that is
   // exactly the kind of thing to keep checking.
   [/^src\/captions\.js$/, ['captions', 'mobile']],
-  // E10a.1: gullet.js builds one prop group at chainage 740 and registers two
-  // solids. It is behind __mcgrotForceGullet with the shipped default OFF, so
-  // on every other region's boot it builds nothing at all — 'gullet' is the
-  // only region that has ever seen it. When the enable commit flips the
-  // default this rule must grow 'render', 'weather' and 'mobile': the stall
-  // will then be in whatever poses frame it, and this comment is the reminder.
-  [/^src\/gullet\.js$/, ['gullet']],
+  // E10a: gullet.js builds the stall at chainage 740, the two principals and
+  // McGrot's reading station. SHIPPED ON since the enable commit, so it is now
+  // in whatever poses frame chainage 740 — 'render', 'weather' and 'mobile'
+  // joined this rule at that commit, exactly as the previous comment here said
+  // they must. 'onevoice' too: his station is in proximity-audio's list.
+  [/^src\/gullet\.js$/, ['gullet', 'render', 'weather', 'mobile', 'onevoice', 'collision']],
   // src/flags.js is read at build time by every flagged module — anchors,
   // characters, lamps, legs, leithers and the gullet — so it reaches every
   // region those flags gate. No narrowing is honest here.

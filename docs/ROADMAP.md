@@ -3716,10 +3716,27 @@ back on success), and the overlay showed the PAUSE icon over silence.
 `litter.js` builds its pool from that map, so a 96th key reshuffles the litter
 layout and moves goldens — a real cost for no gain while the flag is off.
 
-*Still to do in E10a:* the enable+recapture commit — flip `GULLET_ENABLED`,
-grow `SINCE_RULES` for `src/gullet.js` to `render`/`weather`/`mobile`, delete
-and recapture whichever poses frame chainage 740, then re-run
-`npm run goldens:noise`.
+**E10a ENABLE COMMIT LANDED 2026-08-08** — `GULLET_ENABLED = true`. The stall
+ships. 305 PASS / 0 FAIL. Three goldens recaptured (`skyline`,
+`skyline-clear`, `skyline-haar`); draw-call budget +10 at `skyline` and
+`lamp-hero-night`, accounted mesh by mesh. **E10a is closed.**
+
+*The stall is visible in exactly two golden poses* — skyline under clear and
+haar — measured inside ONE boot by toggling visibility with a null-toggle
+control. The first attempt compared two boots and was contaminated by its own
+glb-load timing; its "five poses in four weathers" numbers are wrong and are
+recorded as such in VALIDATION.md. Drawn is not visible: skyline is +10 draw
+calls under overcast and 0.0000% pixels.
+
+*The artifact ships without the principals, deliberately.* 6.96MB against a
+7.5MB ceiling; the two glbs are ~1.4MB as base64 and McGrot alone still
+breaches it. gullet.js declines to build them when the single-file build has
+not inlined them, rather than letting the fetch 404 — E3h's gate caught the
+404 version immediately. The published site is unaffected.
+
+*Known blind spot:* SMOKE_DATE is 2026-01-01, a day McGrot is OUT, so **no
+golden has ever seen him in**. The in-day tableau is covered by the `gullet`
+region's opposed pairs and picture gates instead.
 
 **E10a.2 LANDED 2026-08-08** — McGrot and Pomplé, date-seeded. He is at the
 Gullet 3 days in 8 (136/365 = 37.3% measured); on the other days the shut sign

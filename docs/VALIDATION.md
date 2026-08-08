@@ -1100,6 +1100,89 @@ Recorded because both were invisible while the gates were green.
   a unique `?boot=N`, forcing a real document load. **A gate that navigates
   between hashes of one URL is measuring nothing.**
 
+### The E10a enable commit
+
+`GULLET_ENABLED` flipped to true. The flag stays as the gate suite's lever —
+every opposed pair in this region needs both arms — but the shipped default is
+now ON. `SINCE_RULES` for `src/gullet.js` grew `render`, `weather`, `mobile`,
+`onevoice` and `collision`.
+
+#### Which goldens the stall actually reaches, and how that was measured
+
+The first attempt compared a flag-on boot against a flag-off boot at every
+bookmark, and reported the stall "visible" at five poses in all four weathers.
+**That measurement was contaminated and its numbers are wrong.** Two boots
+load a different number of glbs, so a different number of frames elapses
+before capture, which moves `uTime` and reseeds the grain and press artefacts
+— the exact mechanism written up under "Per-golden noise bands". What it was
+measuring was mostly its own boot-timing difference.
+
+The sound method is a single boot with the stall's objects toggled
+`visible = false` and back, plus a NULL toggle as the control (visible →
+visible, same frame advance) so the one frame each capture costs is
+subtracted rather than counted as signal:
+
+| Weather | Pose | Signal | Control | Verdict |
+|---|---|---|---|---|
+| clear | skyline | 0.0387% | 0.0000% | visible |
+| haar | skyline | 0.0430% | 0.0000% | visible |
+| overcast / rain / drizzle | every pose | 0.0000% | 0.0000% | not visible |
+| all | the other 7 bookmarks | 0.0000% | 0.0000% | not visible |
+
+A first pass of even this method read 0.0000% everywhere because toggling
+`visible` without advancing a frame screenshots the same buffer twice — and
+`dbg.renderOnce` does not exist, so the no-op went unnoticed. A row reading
+exactly 0.0000% for every case is a result to distrust.
+
+**Drawn is not visible.** The draw-call gate moved +10 at `skyline` under
+overcast, so the stall's objects are in that frustum and being rasterised —
+but pixelmatch registers nothing there, because the overcast fog swallows it
+at that distance. Both facts are true and neither implies the other.
+
+#### Why `golden:skyline` was recaptured anyway
+
+The audit flagged `golden:skyline` (overcast) at 0.163% beyond its band, and
+the visibility measurement says the stall contributes zero pixels there. Those
+are consistent: the movement is the two extra async glb loads shifting the
+frame count before capture, on a sky-heavy pose where FBM grain dominates. It
+was recaptured — the build genuinely changed and every band is stale — but it
+must not be recorded as "the stall moved it".
+
+Recaptured: `skyline.png`, `skyline-clear.png`, `skyline-haar.png`. Nothing
+else, and never `--update-goldens`.
+
+#### The draw-call budget, accounted exactly
+
+`skyline` 315 → 325 and `lamp-hero-night` 323 → 333, +10 each, hand-edited in
+`docs/smoke/budget.json` with the accounting recorded in its `note`:
+
+    9 stall meshes  body, trim, wheels, awning, counter, props,
+                    hoarding, price board, shut sign
+    1 figure        Pomplé
+
+McGrot is **out** on `SMOKE_DATE` 2026-01-01, so his mesh is not in that
+count and an in-day frame at the same pose would be +11. That is a real
+consequence of pinning the smoke date: **the golden set has never seen McGrot
+in.** The in-day tableau is protected by the `gullet` region's opposed pairs
+and its two picture gates, not by any golden.
+
+#### The artifact deliberately ships without the principals
+
+The single-file build is 6.96 MB against a 7.5 MB ceiling, and the two glbs
+are ~1.4 MB as base64. Inlining both lands at 8.35 MB; inlining **McGrot
+alone** still lands at 7.56 MB. Neither fits, and raising the ceiling is Dan's
+call, not a side effect of this unit.
+
+So `build.mjs` does not inline them — and `gullet.js` does not *build* them
+when `window.MCGROT_ASSETS` is present and the model is not in it. That
+distinction is load-bearing: the first cut simply let the fetch fail, and E3h's
+"the artifact fetches no character glb" gate caught it immediately (1 request,
+`pomple-form.glb`). A 404 the code did not expect and a figure the code
+declined to build are the same picture and completely different claims.
+
+The published site is unaffected — `build.mjs --site` copies the whole
+`characters` directory, so `dist-site/` serves both.
+
 ### What this region deliberately does not prove
 
 - That `replaceState` degrades correctly in a sandboxed iframe. The
@@ -4152,10 +4235,8 @@ off. Left for the enable commit to decide.
 
 ### What this region deliberately does not prove
 
-- **Nothing about the shipped page.** The flag is off, so no visitor sees any
-  of this. The enable commit is where goldens, draw-call budgets and the
-  mobile pass start carrying the stall, and `SINCE_RULES`' entry for
-  `src/gullet.js` must grow `render`, `weather` and `mobile` at that point.
+- ~~Nothing about the shipped page.~~ **Superseded: the flag now ships ON.**
+  See "The E10a enable commit" below for what moved and what did not.
 - **Nothing about how it looks.** The contrast floor rules out a blackout and
   nothing more. The judging captures under `docs/smoke/captures/gullet/` are
   the record that a human opened it — front and oblique at 13:00, both again

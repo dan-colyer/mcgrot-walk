@@ -23,10 +23,11 @@
       "drawCalls": 41
     },
     "skyline": {
-      "drawCalls": 315
+      "drawCalls": 325
     },
     "lamp-hero-night": {
-      "drawCalls": 323
+      "drawCalls": 333
     }
-  }
+  },
+  "note": "E10a enable commit: skyline 315->325 and lamp-hero-night 323->333, +10 each. Accounted exactly: 9 stall meshes (body, trim, wheels, awning, counter, props, hoarding, price board, shut sign) + Pomple. McGrot is OUT on SMOKE_DATE 2026-01-01, so his mesh is not in this count and an in-day would be +11."
 }

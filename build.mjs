@@ -57,6 +57,14 @@ for (const c of manifest.comics) {
 // filenames, is exactly the kind of thing that silently stops matching.
 const { ARCHETYPES } = await import('./src/characters.js');
 for (const a of ARCHETYPES) models[a.file] = dataUri(a.file);
+// E10a: McGrot's and Pomplé's glbs are deliberately NOT inlined. Measured at
+// the enable commit: the artifact was 6.96MB against a 7.5MB ceiling and the
+// two of them are ~1.4MB as base64 — inlining either one alone still breaches
+// it (McGrot's 451KB becomes ~601KB, landing at 7.56MB). So the single-file
+// artifact fetches them, they 404, and gullet.js's catch leaves the stall
+// standing unattended — a state the design already has a name for. The
+// PUBLISHED SITE is unaffected: the `characters` copy below takes the whole
+// directory, so dist-site/ serves both. Raising the ceiling is Dan's call.
 
 const prelude = `window.MCGROT_ASSETS=${JSON.stringify({ manifest, leith, readings, images, audio, models })};`;
 
