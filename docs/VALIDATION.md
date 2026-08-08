@@ -3591,6 +3591,102 @@ Suite after the hardening: 270 PASS / 0 FAIL, 92 s sharded, no golden moved.
   `npm run style`.
 - **Nothing about the frames a player sees**, since the grade is still off.
 
+## The two DOM levers (E8 close, part 2)
+
+The E8 survey's cheapest lever: a comic read is mostly sold by furniture, not
+by shading. Two pieces of furniture, both pure DOM/CSS, both authored against
+`docs/STYLE.md` § 1's measured palette — cream `#e4d5a1` stock, near-black
+`#212020` ink, mustard `#d3b05a` for the masthead, rust `#8b4e28` used once
+and thinly as § 1's accent rule says.
+
+- **`src/captions.js`** — a caption box naming the stretch of street the
+  player has just walked into.
+- **The title card as a comic cover** — masthead band, corner price flash,
+  strapline, publisher footer. The surround stays dark: the cover is a light
+  object on a dark ground, the same relationship the grade gives the street.
+
+### The band names are measured, not typed
+
+`assets/businesses.json` carries a real street per business; projecting those
+onto `world.streetLine` gives the chainage each name actually occupies — the
+same method `src/anchors.js` used for its twelve landmarks.
+
+| street | addresses | chainage |
+|---|---|---|
+| Duke Street / Great Junction Street | 8 | 0–12 (the Foot junction) |
+| Leith Walk | 159 | 13–1042, median 489 |
+| Crighton Place | 16 | 862–960 (side street, east) |
+| Croall / Brunswick Place | 11 | 1117–1185 (side streets, east) |
+| Brunswick Street | 7 | 1190–1239 (side street, east) |
+| Haddington Place | 25 | 1212–1469 (the top, east side) |
+| Elm Row | 50 | 1231–1581 (the top, west side) |
+
+Three bands from seven names: **The Foot of the Walk** (to 90), **Leith Walk**
+(to 1200), **Elm Row** (beyond). The side streets are side streets and
+captioning them at their junctions would name somewhere the player is not;
+Haddington Place and Elm Row are two sides of one stretch so the one with
+twice the addresses carries it. The 1042–1200 gap keeps the Leith Walk caption
+rather than inventing "Shrubhill" — a real name for that stretch, and not in
+the data.
+
+### A teleport is not a walk, and that is what protects 39 goldens
+
+Every golden, capture and moment shot poses the camera through the debug API.
+A caption that fired on those would be in all of them. `captions.js` raises
+one only when the band changes AND the frame's movement is under 2m — a player
+at `WALK_SPEED` covers 0.23m per frame, a `gotoBookmark` covers hundreds.
+
+The gate is an opposed pair over the same crossing (chainage 1188 → past
+1200), once walked and once teleported:
+
+| gate | what it holds |
+|---|---|
+| `E8: walking into a new stretch of the Walk raises a caption` | 1 raised, `display: block`, text "Elm Row" |
+| `E8: control — teleporting across the same boundary raises nothing` | 0 raised, band still tracked |
+| `E8: the caption bands are the three the address data names` | the three above |
+| `E8: a caption expires on its own` | gone 330 frames (5.5 s) after being raised |
+| `E8: no caption is on screen after a bookmark visit` | computed `display: none` at `elm-row-hero`, 150 m inside the band |
+
+**Fault-injected, and the injection proves more than the gate does.** Removing
+the 2m test reddens the control gate (1 caption where 0 is wanted) *and*
+`golden-mobile:street` at **1.969%** — a caption box in a golden, which is the
+whole failure the rule exists to prevent, demonstrated rather than argued.
+
+### One golden moved, deliberately
+
+`golden-mobile:title` at **25.307%** — it is a picture of the title card and
+the title card is now a cover. Deleted and recaptured, that one file only,
+never `--update-goldens`. Nothing else moved: `golden-mobile:hud` 0.028%,
+`golden-mobile:street` 0.001%, `golden-mobile:comic` 0.000%.
+
+Tap targets survive the restyle: `#title-enter` went 180×49 → 199×60, still
+over the 44×44 floor.
+
+Suite: 275 PASS / 0 FAIL, 91 s sharded, 18 regions.
+
+### Two things the captures caught that the numbers did not
+
+- **The first cover was letterboxed.** 560px wide with 30px of dead cream over
+  the masthead read as a poster. The masthead is now full-bleed at the top of
+  the sheet and the cover is 440px and roughly square.
+- **On a 390px viewport the corner flash ran straight through the K of WALK.**
+  Fixed with symmetric 48px masthead padding, so the title stays centred and
+  clears the flash at every width.
+
+Neither is visible in any assertion. This is the "numeric gates cannot see a
+bad picture" rule doing its job — both were found by opening the capture.
+
+### What this deliberately does not prove
+
+- **Nothing about whether the caption fires at the right moment in play.** It
+  fires on a band edge; whether three captions over a 1617 m walk is the right
+  pacing is a judgement nobody has made from playing it.
+- **The Foot of the Walk caption is almost unreachable.** The player spawns
+  inside that band, and a band you start in is a starting state rather than an
+  arrival, so it only ever appears if you walk south into Leith Walk and back.
+- **No mobile-viewport caption capture is gated.** The caption's own CSS has a
+  touch branch (tighter insets) that no golden covers.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

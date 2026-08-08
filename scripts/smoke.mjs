@@ -88,7 +88,7 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // is about what happens when nothing above the file is fetchable. Cheap —
 // build.mjs is 0.2s — and it is the only thing standing between the shareable
 // file and a divergence nobody notices until someone opens it.
-const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'captions', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -138,6 +138,11 @@ const SINCE_RULES = [
   // move a golden — but 'mobile' is in the list because hold-to-walk drives
   // the same integration path, and that is measured, not reasoned.
   [/^src\/collision\.js$/, ['collision', 'moments', 'mobile']],
+  // E8 close: captions.js writes DOM and nothing else. It reaches 'mobile'
+  // because the mobile pass captures the HUD, and the caption sits in the
+  // same corner — measured claim: it does not appear there, and that is
+  // exactly the kind of thing to keep checking.
+  [/^src\/captions\.js$/, ['captions', 'mobile']],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
   [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
   [/^src\/legs\.js$/, ['legs', 'ending']],
@@ -479,7 +484,7 @@ const ALIGN_MARGIN = 0.03; // shipped mean troughness must beat each control's b
 const EXPECTED_UPDATERS = [
   'controls', 'npcs', 'leithers', 'litter', 'shopfronts', 'sky', 'atmosphere',
   'rain', 'birds', 'vermin', 'scenery', 'lamps', 'legs', 'ending', 'interact', 'proximityAudio', 'torch',
-  'post', 'moments',
+  'post', 'moments', 'captions',
 ];
 
 function getFreePort() {
@@ -2489,6 +2494,118 @@ async function main() {
 
     endRegion();
     } // end region: artifact
+
+    if (region('captions')) {
+    // --- E8 close: the comic caption box ----------------------------------
+    //
+    // The load-bearing claim is the NEGATIVE one. A caption raised by a
+    // bookmark visit would appear in goldens, captures and moment shots, and
+    // src/captions.js's answer is that a teleport is not a walk — a jump of
+    // more than 2m announces nothing. That is what keeps 39 goldens free of a
+    // caption box by construction rather than by anyone remembering to hide
+    // it, so it is gated as an opposed pair: the SAME band crossing, once by
+    // walking and once by teleporting.
+    const { context: capCtx, page: capPage } = await bootPage(browser, port);
+
+    const capRun = await capPage.evaluate(() => {
+      const d = window.__mcgrotDebug;
+      const line = d.world.streetLine;
+      const at = (target) => {
+        let acc = 0;
+        for (let i = 1; i < line.length; i++) {
+          const [ax, az] = line[i - 1];
+          const [bx, bz] = line[i];
+          const seg = Math.hypot(bx - ax, bz - az);
+          if (acc + seg >= target) {
+            const t = (target - acc) / seg;
+            return [ax + (bx - ax) * t, az + (bz - az) * t];
+          }
+          acc += seg;
+        }
+        return line[line.length - 1];
+      };
+      const el = document.getElementById('caption');
+      // pauseAuto() suspends the ground-follow clamp and the Walk climbs 27m,
+      // so a teleport that sets only x/z buries the camera — the frame comes
+      // out garbage and looks like a rendering bug. Set Y too.
+      const place = (chain) => {
+        const [x, z] = at(chain);
+        d.camera.position.x = x;
+        d.camera.position.z = z;
+        d.camera.position.y = d.world.groundHeight(x, z) + 1.7;
+      };
+
+      const arm = (teleport) => {
+        place(1188);                       // Leith Walk, 12m short of Elm Row
+        d.controls.setEnabled(true);
+        d.stepFrames(2);                   // adopt the band without announcing
+        const before = d.captions.state().shown;
+        if (teleport) {
+          place(1400);                     // straight over the boundary
+          d.stepFrames(2);
+        } else {
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
+          d.stepFrames(90);
+          window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', bubbles: true }));
+        }
+        const st = d.captions.state();
+        return {
+          raised: st.shown - before,
+          band: st.band,
+          text: (document.getElementById('caption-text') || {}).textContent || '',
+          display: el ? el.style.display : 'missing',
+        };
+      };
+      const walked = arm(false);
+      const teleported = arm(true);
+      return { walked, teleported, bands: d.captions.bands };
+    });
+
+    results.push({
+      name: 'E8: walking into a new stretch of the Walk raises a caption',
+      pass: capRun.walked.raised === 1 && capRun.walked.display === 'block'
+        && capRun.walked.text === 'Elm Row',
+      detail: `walked chainage 1188 -> past 1200: ${capRun.walked.raised} caption raised, display=${capRun.walked.display}, text="${capRun.walked.text}"`,
+    });
+    results.push({
+      name: 'E8: control — teleporting across the same boundary raises nothing',
+      pass: capRun.teleported.raised === 0 && capRun.teleported.band === capRun.walked.band,
+      detail: `same crossing by debug pose: ${capRun.teleported.raised} captions (want 0), band still tracked (${capRun.teleported.band}) — this is what keeps every bookmark and golden free of a caption box`,
+    });
+    results.push({
+      name: 'E8: the caption bands are the three the address data names',
+      pass: capRun.bands.length === 3
+        && capRun.bands[0] === 'The Foot of the Walk'
+        && capRun.bands[2] === 'Elm Row',
+      detail: capRun.bands.join(' | '),
+    });
+
+    // ...and the belt-and-braces version of the same claim, read off the DOM
+    // after a bookmark visit rather than off the module's own counter.
+    const capAfterBookmark = await capPage.evaluate(async () => {
+      const d = window.__mcgrotDebug;
+      // Let the caption the walked arm raised expire first — 5.3s of hold
+      // plus fade at 1/60 is 318 frames. Asserting straight after the walk
+      // measured the previous arm's caption and failed for a fixture reason;
+      // clearing it also puts the expiry itself under test.
+      d.stepFrames(330);
+      const afterExpiry = getComputedStyle(document.getElementById('caption')).display;
+      await d.gotoBookmark('elm-row-hero');
+      return { afterExpiry, afterBookmark: getComputedStyle(document.getElementById('caption')).display };
+    });
+    results.push({
+      name: 'E8: a caption expires on its own',
+      pass: capAfterBookmark.afterExpiry === 'none',
+      detail: `#caption display=${capAfterBookmark.afterExpiry} 330 frames (5.5s) after being raised`,
+    });
+    results.push({
+      name: 'E8: no caption is on screen after a bookmark visit',
+      pass: capAfterBookmark.afterBookmark === 'none',
+      detail: `#caption computed display=${capAfterBookmark.afterBookmark} at elm-row-hero (a pose 150m inside the Elm Row band)`,
+    });
+
+    await capCtx.close();
+    }
 
     if (region('collision')) {
     // --- E6a.1: the world stops the player --------------------------------

@@ -31,6 +31,7 @@ import { createRain } from './rain.js';
 import { createAmbience } from './ambience.js';
 import { createTitleCard } from './title.js';
 import { readMoment, createMoments, createShareUi } from './moments.js';
+import { createCaptions } from './captions.js';
 import { todayKey, todaySeed, startHour, dayName } from './day.js';
 import { createPost } from './post.js';
 import { createJournal, countVendorsWithAudio } from './journal.js';
@@ -196,6 +197,9 @@ async function main() {
   // visitor has not yet acted on.
   let entered = false;
   const moments = createMoments({ camera, isEnabled: () => entered });
+  // E8 close: the caption box. Same `entered` gate as moments — nothing
+  // announces a place before the player is standing in it.
+  const captions = createCaptions({ camera, streetLine: world.streetLine, isEnabled: () => entered });
   const shareUi = createShareUi({ moments });
 
   // The name of this visit. startHour() is the date-derived ARRIVAL hour, not
@@ -304,6 +308,7 @@ async function main() {
     // stepFrame as well as rAF (see moments.js) — that is what makes the
     // write path measurable rather than only reachable by hand.
     { name: 'moments', update: (dt) => moments.update(dt) },
+    { name: 'captions', update: (dt) => captions.update(dt) },
   ];
   // Simulation only, no draw. Settling the world costs the same updater work
   // either way, but headless Chromium rasterises in SOFTWARE (SwiftShader —
@@ -359,7 +364,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
-      moments, shareUi, lamps, legs, ending, characters,
+      moments, shareUi, lamps, legs, ending, characters, captions,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,
