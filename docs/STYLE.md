@@ -136,7 +136,7 @@ and 2026-08-04), hardened into shader constants at E8 close. The authority is
 from that object so the two cannot drift. This section is the prose form and
 is the thing to read before changing one of them.
 
-### The one rule above the other five
+### The one rule above the other six
 
 **The print is a texture on this world, not a filter over it.** Both judging
 rounds rejected every candidate that made the printing more visible — coarser
@@ -146,11 +146,15 @@ trying to look at. `b` is the lightest touch in either set of four and it won
 twice. Any future change has to answer this, and "it reads as more printed" is
 an argument *against* it.
 
+Rule 3 below is the one thing the two judging rounds did not settle, because
+the sheets could not show it: the grade had to actually ship before anything
+measured what it did to the night.
+
 ### 1. Paper is the comics' cream, and it is a remap, not a tint
 
 Nothing on a printed page is pure black or pure white, so the whole range is
 remapped into an ink–paper pair: ink `(0.06, 0.05, 0.05)`, paper
-`(0.98, 0.96, 0.92)`, at 35% (`stock`). Per channel, which keeps hue instead of
+`(0.98, 0.96, 0.92)`, at 35% by day (`stockDay`; rule 3 thins it at night too). Per channel, which keeps hue instead of
 collapsing to a duotone — a duotone was round 1's `d`, and it ate the photo
 façades, which is exactly what it was included to make visible.
 
@@ -163,7 +167,7 @@ filter, which was round 2's `b1`.
 ### 2. One screen: 45 degrees, 2.6px cells, analytic dots
 
 A single dot screen, rotated 45°, cell 2.6 screen pixels, mixed 35% over the
-source (`halftone`). No second angle, no per-channel rosette: this is a
+source by day (`halftoneDay`; rule 3 thins it at night). No second angle, no per-channel rosette: this is a
 one-plate press, and the misregistration below is what carries the idea of
 plates rather than an actual four-colour screen.
 
@@ -178,7 +182,30 @@ no texture** — the same discipline as the grain.
 2.6px is a floor as much as a value. Round 2's `b2` took it to 3.6 and was
 rejected as visually distracting.
 
-### 3. The plate is re-exposed before it is screened, and the exposure follows the weather
+### 3. The screen thins at night, and so does the stock
+
+Both follow `renderer.toneMappingExposure` on the same interpolation press
+does: **halftone 0.35 by day, 0.10 at the darkest stop; stock 0.35 by day,
+0.12 at the darkest.** A comic's night panel is solid ink with little or no
+screen on it, which is what this is — the night is *differently* printed, not
+*less* printed.
+
+This was not in the judged rounds and was found by the gates when the grade
+shipped. Enabling it doubled the mean luminance of the darkest hour (3am,
+mid-805-far, lower two-thirds: 26.5 → 53.8) and turned three darkness gates
+red, including one whose lamps-off *control* went from 0% of the frame above
+the legibility floor to 68.3%. The cause is not press: it is the paper showing
+between the dots, which lifts the bottom of the range far more than the middle
+(×3.45 at display luminance 0.01, ×1.20 at 0.20) — and this game carries its
+night, its lamps and its torch entirely in that bottom range.
+
+Measured alternatives, same pose, both rejected: tapering the stock alone gives
+51.9 (3.5% of the problem), tapering the whole grade gives 37.5 (it makes the
+night less printed rather than differently printed). Screen plus stock gives
+33.9 — a 1.56× lift over the ungraded frame, against 2.47× untapered — and the
+daylight is untouched, because both tapers are ~0 by day.
+
+### 4. The plate is re-exposed before it is screened, and the exposure follows the weather
 
 A printed page is a *light* object — mostly paper, with ink where the picture
 is. This scene is a dark one: median display luminance **0.139 at noon
@@ -203,7 +230,7 @@ measured what happens when you argue otherwise — `a`, `c` and `d` all turned
 Measured mapping: 13:00 overcast exposure 1.378 → press 0.740; 08:00 clear
 1.150 → 0.794; 03:00 haar 0.592 → 0.928; 22:00 rain 0.520 → 0.945.
 
-### 4. Dots live in the shadows and mids; highlights stay clean paper
+### 5. Dots live in the shadows and mids; highlights stay clean paper
 
 The halftone is gated off above luminance 0.60 (`highCut`), with an 0.18-wide
 ramp below it. This gating is the whole difference between reading as
@@ -216,7 +243,7 @@ stock. That is a property of tone, not of object type, and deliberately so:
 there is no depth or normal buffer in this pipeline (E2d's design) and nothing
 here may acquire one.
 
-### 5. Palette pull, never posterise
+### 6. Palette pull, never posterise
 
 Saturation compresses to 0.85 and the tonal ends are pushed apart in
 temperature — shadows `(0.97, 0.99, 1.03)`, highlights `(1.04, 1.01, 0.96)`,

@@ -346,6 +346,9 @@ const LIT_NIGHT_MIN_LIFT = 3;         // x the lamps-off control
 // that prompted this milestone.
 const LAMP_DARKEST_HOUR = 3;
 const LEGIBLE_PIXEL_FLOOR = 12;
+// E8 close: how far the grade may lift the darkest hour, as a ratio against
+// the same frame with the grade off. Caught the untapered grade at 2.47x.
+const NIGHT_LIFT_MAX = 1.8;
 const LEGIBLE_MIN_PCT = 40;
 const LEGIBLE_CONTROL_MAX_PCT = 5;
 // One lamp per catenary station (POLE_SPACING 35 m over ~1617 m), alternating
@@ -402,6 +405,10 @@ const CLIP_PCT_MAX = 0.1; // % of pixels allowed at/above the threshold on all 3
 // darken) up to 99.9% (haar/skyline) of pixels, so 3 sits well clear of the
 // weakest real case and miles above the 0% a silently-disabled pass gives.
 const POST_LIVE_MIN_PCT = 3;
+// E8 close: the same floor for the grade's own axis. The grade is a halftone
+// over the whole frame, so it moves far more than 3% — this is a dead-gate
+// floor, not a measurement of the look.
+const STYLE_LIVE_MIN_PCT = 3;
 // >10s of stepped dt so a setWeather() transition is guaranteed complete
 // before a golden capture — see WEATHER_TRANSITION_SECONDS in atmosphere.js.
 const WEATHER_SETTLE_FRAMES = 700;
@@ -3353,6 +3360,10 @@ async function main() {
       dbg.torch.setToggle(false);
       await dbg.torchGroundPose(700);
       dbg.stepFrames(10);
+      // Grade off: this measures whether the LAMPS light the street, and the
+      // grade's ink floor would answer for them. See the lampsOffPage note.
+      const styleWas = dbg.getStyleStrength();
+      dbg.setStyleStrength(0);
       dbg.renderNow();
       const src = dbg.renderer.domElement;
       const c = document.createElement('canvas');
@@ -3369,6 +3380,7 @@ async function main() {
           if (l >= floor) lit++;
         }
       }
+      dbg.setStyleStrength(styleWas);
       const L = dbg.lamps;
       return {
         mean: +(sum / n).toFixed(2),
@@ -3394,6 +3406,83 @@ async function main() {
       pass: lit.pctLegible >= LEGIBLE_MIN_PCT && unlit.pctLegible <= LEGIBLE_CONTROL_MAX_PCT,
       detail: `${LAMP_DARKEST_HOUR}:00 torch off — lamps ON: ${lit.pctLegible}% of the lower two-thirds at/above luminance ${LEGIBLE_PIXEL_FLOOR} (mean ${lit.mean}; want >=${LEGIBLE_MIN_PCT}%); ` +
         `control lamps OFF: ${unlit.pctLegible}% (mean ${unlit.mean}; want <=${LEGIBLE_CONTROL_MAX_PCT}%)`,
+    });
+
+    // --- E8 close: what the GRADE does to the night ------------------------
+    //
+    // The three gates above were re-pointed at the scene because the grade's
+    // ink floor was answering for the lamps. That leaves the grade's own lift
+    // unmeasured, and it is the thing that actually went wrong when the grade
+    // shipped — the untapered grade doubled the darkest hour and only the
+    // three false rednesses revealed it. So it gets its own gate, on the same
+    // pose, as a ratio of the frame with the grade to the frame without.
+    //
+    // TWO claims, and they need two instruments — the first draft used a
+    // luminance floor for both and it did not work. Tapering the screen and
+    // the stock all the way to zero still measured 1.24x, because press and
+    // the palette pull lift a little on their own, so a floor loose enough to
+    // be honest could not catch an unprinted night. Fault injection found
+    // that; the floor would have been decoration.
+    //
+    //   the lift  — a ratio of the FRAME with the grade to the frame without.
+    //               1.8 ceiling. The untapered grade measured 2.47x here and
+    //               that is what turned three darkness gates red.
+    //   the print — the screen is still on at night AND is genuinely tapered,
+    //               read off the same mapping the shader uses. No magic
+    //               number: 0 < night < day is the whole assertion.
+    const nightLift = await lampsOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const mean = () => {
+        dbg.renderNow();
+        const src = dbg.renderer.domElement;
+        const c = document.createElement('canvas');
+        c.width = src.width; c.height = src.height;
+        c.getContext('2d').drawImage(src, 0, 0);
+        const { data, width, height } = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+        let sum = 0, n = 0;
+        for (let y = Math.floor(height / 3); y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+            sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+            n++;
+          }
+        }
+        return sum / n;
+      };
+      const was = dbg.getStyleStrength();
+      dbg.setStyleStrength(0);
+      const plain = mean();
+      dbg.setStyleStrength(1);
+      const graded = mean();
+      dbg.setStyleStrength(was);
+      return { plain: +plain.toFixed(2), graded: +graded.toFixed(2) };
+    });
+    const liftRatio = nightLift.plain > 0 ? nightLift.graded / nightLift.plain : Infinity;
+    results.push({
+      name: 'E8: the grade does not lift the night',
+      pass: liftRatio <= NIGHT_LIFT_MAX,
+      detail: `${LAMP_DARKEST_HOUR}:00 lamps on — mean luminance ${nightLift.plain} without the grade, ${nightLift.graded} with it ` +
+        `(${liftRatio.toFixed(2)}x; want <=${NIGHT_LIFT_MAX}x — the untapered grade read 2.47x and turned three darkness gates red)`,
+    });
+    // Read at the mapping's ENDPOINTS, not at 3am's live value. Fault
+    // injection again: setting the night endpoint to zero still measures
+    // 0.029 at 3am, because the exposure there is 0.58 and the interpolation
+    // is only ~8% of the way to its night end — so the live value cannot see
+    // an endpoint that has been switched off. Asking the product's own
+    // mapping what it would do at the darkest and brightest stops can.
+    const screen = await lampsOnPg.evaluate(() => {
+      const d = window.__mcgrotDebug;
+      return {
+        live: d.stylePress().halftone,
+        night: d.stylePress(0.50).halftone,   // PRESS_EXPOSURE_LO — the darkest stop
+        day: d.stylePress(1.46).halftone,     // PRESS_EXPOSURE_HI — the brightest
+      };
+    });
+    results.push({
+      name: 'E8: the night is still printed, just less screened',
+      pass: screen.night > 0 && screen.night < screen.day,
+      detail: `screen depth ${screen.night.toFixed(3)} at the darkest stop against ${screen.day.toFixed(3)} at the brightest ` +
+        `(want 0 < night < day; live at ${LAMP_DARKEST_HOUR}:00 is ${screen.live.toFixed(3)}) — a night tapered to zero measures 1.30x on the lift gate above and passes it`,
     });
 
     // The count alone is NOT enough, and that was found by fault injection
@@ -4037,6 +4126,21 @@ async function main() {
     // The lamps-on case is not thereby untested — it gets its own gate below,
     // with a tighter instrument.
     const { context: lampsOffCtx, page: lampsOffPage } = await bootPage(browser, port, { __mcgrotForceLamps: false });
+    // E8 close: MEASURE THE SCENE, NOT THE PAPER. This page and the three
+    // gates below ask whether the lamps and the torch light the street. That
+    // is a property of the scene; the grade is a post pass over the finished
+    // frame, and since E8 close it remaps the range into ink..paper — nothing
+    // is pure black any more, by design.
+    //
+    // Measured, and this is why the thresholds below are untouched rather
+    // than relaxed: at 3am with the lamps off the scene renders at mean
+    // luminance 0.00 and 0% of the lower two-thirds above the legibility
+    // floor. With the grade on the same frame reads 10.11 and 40%. The gates
+    // assert "black is 0"; the grade's first rule is that nothing is 0. Both
+    // are correct and they are about different things, so each is measured
+    // where it lives — the scene with the grade off here, and the grade's own
+    // lift by its own gate further down.
+    await lampsOffPage.evaluate(() => window.__mcgrotDebug.setStyleStrength(0));
     await lampsOffPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
     const dayShotOff = await lampsOffPage.screenshot();
     await lampsOffPage.evaluate(() => window.__mcgrotDebug.setTime(22));
@@ -4066,7 +4170,13 @@ async function main() {
     // The CONTROL is the same measurement on the lamps-off boot, which isolates
     // the lamps' own contribution — without it a build with no lamps at all
     // passes trivially at 2.4%.
-    const dayShot = shotsByBookmark['mid-805-far'];
+    // Its own shots rather than the golden ones, because the golden day shot
+    // carries the grade and this gate must not — see the note on lampsOffPage.
+    const styleWas = await page1.evaluate(() => window.__mcgrotDebug.getStyleStrength());
+    await page1.evaluate(() => window.__mcgrotDebug.setStyleStrength(0));
+    await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), SMOKE_HOUR);
+    await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
+    const dayShot = await page1.screenshot();
     if (dayShot) {
       await page1.evaluate(() => window.__mcgrotDebug.setTime(22));
       await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), 'mid-805-far');
@@ -4086,6 +4196,7 @@ async function main() {
     } else {
       results.push({ name: 'night stays night with the lamps lit (opposed pair)', pass: false, detail: `mid-805-far screenshot unavailable (its render check above failed)` });
     }
+    await page1.evaluate((v) => window.__mcgrotDebug.setStyleStrength(v), styleWas);
 
     beginPhase('render:torch');
     // --- E2b: the torch demonstrably lights a readable surface ---
@@ -4850,6 +4961,54 @@ async function main() {
         postLiveBad.push(`${label}: only ${authoredDiff.pct.toFixed(2)}% of pixels changed`);
       }
     }
+    // --- E8 close: the same opposed pair, one axis in ---------------------
+    //
+    // The containment plan said the style lands behind its own axis pinned to
+    // 0 and "turns on in one commit that recaptures everything deliberately",
+    // extending check 26's pair to the new uniform. This is that extension.
+    //
+    // 26a above already proves strength 0 is bit-identical WITH the grade
+    // shipped on — that is why the shader branches on uStyle * uStrength. What
+    // is left to prove is the other direction and the shipped value: the grade
+    // is actually reaching the frame at every state, and it ships at 1 rather
+    // than having been left at the prototype loop's 0.
+    const styleShipped = await page1.evaluate(() => window.__mcgrotDebug.getStyleStrength());
+    const styleBad = [];
+    for (const pc of POST_CASES) {
+      await page1.evaluate((w) => window.__mcgrotDebug.setWeather(w), pc.weather);
+      await page1.evaluate((h) => window.__mcgrotDebug.setTime(h), pc.hour);
+      await page1.evaluate((frames) => window.__mcgrotDebug.stepFrames(frames), WEATHER_SETTLE_FRAMES);
+      await page1.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), pc.bookmark);
+      const shotStyle = async (v) => {
+        await page1.evaluate((sv) => {
+          window.__mcgrotDebug.setStyleStrength(sv);
+          window.__mcgrotDebug.renderNow();
+        }, v);
+        return PNG.sync.read(await page1.screenshot());
+      };
+      // Same settled frame both times — renderNow steps no updaters — so the
+      // difference is the grade and nothing else.
+      const plain = await shotStyle(0);
+      const graded = await shotStyle(1);
+      const d = exactChannelDiff(plain, graded);
+      if (d.pct < STYLE_LIVE_MIN_PCT) {
+        styleBad.push(`${pc.weather}@${pc.hour}/${pc.bookmark}: only ${d.pct.toFixed(2)}%`);
+      }
+    }
+    await page1.evaluate((v) => window.__mcgrotDebug.setStyleStrength(v), styleShipped);
+    results.push({
+      name: 'E8: the grade ships on',
+      pass: styleShipped === 1,
+      detail: `uStyle ships at ${styleShipped} (want 1 — the prototype loop shipped it at 0)`,
+    });
+    results.push({
+      name: 'E8: the grade reaches the frame at every state',
+      pass: styleBad.length === 0,
+      detail: styleBad.length === 0
+        ? `all ${POST_CASES.length} states changed >=${STYLE_LIVE_MIN_PCT}% of pixels with the grade on vs off (5 weathers, 2 night hours)`
+        : styleBad.join('; '),
+    });
+
     // Leave the page as the rest of the run expects to find it.
     await page1.evaluate((s) => window.__mcgrotDebug.setPostStrength(s), shippedPostStrength);
     await page1.evaluate(() => window.__mcgrotDebug.setPostProcessing(true));

@@ -3687,6 +3687,96 @@ bad picture" rule doing its job — both were found by opening the capture.
 - **No mobile-viewport caption capture is gated.** The caption's own CSS has a
   touch branch (tighter insets) that no golden covers.
 
+## The grade ships, and what it did to the night (E8 close, part 3)
+
+`uStyle` ships at 1. All 40 goldens deleted and recaptured. The containment
+plan's opposed pair, extended to the new axis:
+
+| gate | what it holds |
+|---|---|
+| `post: neutral strength is bit-identical to a direct render` | 7/7 states exactly equal — **with the grade shipped on**, because the shader branches on `uStyle * uStrength` |
+| `post: authored strength reaches the frame` | all 7 states changed ≥3% |
+| `E8: the grade ships on` | `uStyle` is 1 |
+| `E8: the grade reaches the frame at every state` | grade-on vs grade-off ≥3% at all 7 states, same settled frame both times |
+
+### Enabling it turned three darkness gates red, and they were right
+
+`night stays night` (22:00 top strip 35.3% of 13:00's, want ≤30%), `torch
+lights a readable surface` (1.40× against 2.5×) and `the street is legible at
+the darkest hour`, whose lamps-off **control** read 68.3% of the frame above
+the legibility floor where it must read ≤5%.
+
+One cause. The grade remaps the range into ink–paper and nothing on a printed
+page is pure black, so it lifts the bottom of the tonal range far more than
+the middle — **×3.45 at display luminance 0.01, ×1.20 at 0.20**. This game
+carries its night, its lamps and its torch entirely in that bottom range. At
+3am with the lamps off the *scene* renders at **mean luminance 0.00**; with the
+grade on the same frame reads 10.11. The gates assert black is 0; the grade's
+first rule is that nothing is 0.
+
+Measured, 3am / mid-805-far / mean luminance of the lower two-thirds
+(ungraded 26.5):
+
+| | mean | vs ungraded |
+|---|---|---|
+| grade on, as judged | 53.8 | 2.03× |
+| stock follows the atmosphere (night 0.10) | 51.9 | 1.96× — **rejected**, 3.5% of the problem |
+| whole grade tapers at night (styleNight 0.35) | 37.5 | 1.42× — **rejected**, makes the night *less* printed rather than *differently* printed |
+| screen + stock taper (shipped) | 33.9 | 1.56× |
+
+Daylight is untouched by the taper: 13:00 mean 77.2 at full screen, 75.0 with
+the taper applied, because both tapers are ~0 by day.
+
+### The gates were re-pointed, not relaxed
+
+Every threshold in those three gates is **unchanged**. What changed is where
+they measure: each asks whether the lamps or the torch light the street, which
+is a property of the scene, and the grade is a post pass over the finished
+frame. They now measure with `setStyleStrength(0)`, and all three return to
+their original numbers — the darkest-hour control back to **0% / mean 0.00**,
+its lit arm to 63.9%.
+
+That would leave the grade's own lift unmeasured, which is the thing that
+actually went wrong, so it gets its own gate on the same pose.
+
+| gate | what it holds |
+|---|---|
+| `E8: the grade does not lift the night` | 21.75 ungraded → 33.88 graded = **1.56×**, ceiling 1.8× (the untapered grade measured 2.47×) |
+| `E8: the night is still printed, just less screened` | screen depth 0.100 at the darkest stop against 0.350 at the brightest; asserts `0 < night < day` |
+
+### Fault injection rewrote the second gate twice
+
+- **Remove the taper** (night endpoints back to 0.35): lift 2.21×, red. Good.
+- **Taper to zero** (night endpoint 0.0): lift 1.30× — *passes* a luminance
+  floor, because press and the palette pull lift a little on their own. A
+  floor loose enough to be honest could never catch an unprinted night, so the
+  floor was replaced by a direct reading of the screen depth.
+- **Taper to zero, second attempt**: reading the *live* 3am screen depth still
+  passed, at 0.029 — the exposure at 3am is 0.58 and the interpolation is only
+  ~8% of the way to its night end, so a live value cannot see an endpoint that
+  has been switched off. Reading the mapping at its endpoints
+  (`stylePress(0.50)` / `stylePress(1.46)`) catches it: 0.000 against 0.350.
+
+Both versions of that gate would have been decoration. Neither was caught by
+thinking about it.
+
+### Goldens
+
+All 40 recaptured against the enabled grade; `lamp-hero-night` recaptured a
+second time after the night taper (24.5% — it is the only pose whose subject
+*is* the night). Suite: 279 PASS / 0 FAIL, 95 s sharded.
+
+### What this deliberately does not prove
+
+- **Nothing about whether the tapered night is the right look.** It was chosen
+  from two pictures against a measurement; there has been no judging round on
+  it, and the two rounds that chose `b` never saw it.
+- **The 1.8× ceiling is a bound, not a target.** It was set to catch the
+  untapered grade with margin, not derived from what the night should be.
+- **Only one night pose is gated.** `lamp-hero-night` and this measurement are
+  both at the same end of the Walk.
+- **Nothing about the mobile night.** No mobile capture is taken after dark.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

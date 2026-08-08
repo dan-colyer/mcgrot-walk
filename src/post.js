@@ -53,10 +53,11 @@ const GRADE = 1.0;       // scales the S-curve + split-tone below
 const GRAIN_FPS = 24;    // grain resamples on a 24fps step, not every frame
 
 // E8: the McGrot grade — the street as a printed page rather than a photograph.
-// Every uniform below is inert while uStyle is 0, which is what it ships at
-// during the prototype loop: the whole stack lives behind a single branch, so
-// check 26's "strength 0 is BIT-identical to a direct render" invariant is
-// untouched and no golden can move until a keeper is chosen deliberately.
+// SHIPPED since E8 close; every golden was recaptured against it. The stack
+// still lives behind a single branch, now on uStyle * uStrength, so check 26's
+// "strength 0 is BIT-identical to a direct render" invariant survives the
+// grade being on — which is the whole reason the product is the gate rather
+// than uStyle alone.
 //
 // Deviation from the roadmap's stack, recorded because it was a decision and
 // not an oversight: the dot screen is ANALYTIC (fract/length/smoothstep over
@@ -86,6 +87,24 @@ const GRAIN_FPS = 24;    // grain resamples on a 24fps step, not every frame
 // The direction is deliberately the counter-intuitive one: DARKER moments get
 // a HIGHER press, meaning less lift. A night panel in a comic is mostly ink,
 // and round 1 measured what happens when you argue otherwise.
+//
+// E8 CLOSE EXTENDED THIS TO THE SCREEN. Enabling the grade doubled the mean
+// luminance of the darkest hour (3am, mid-805-far, lower two-thirds: 26.5 ->
+// 53.8) and reddened three gates that measure darkness — night-stays-night,
+// the torch ratio, and the darkest-hour legibility pair, whose lamps-OFF
+// CONTROL read 68.3% where it must read under 5%. The cause is not press: it
+// is the halftone's paper showing between the dots, which lifts the bottom of
+// the range far more than the middle (x3.45 at display luminance 0.01, x1.20
+// at 0.20) — and this game carries its night, its lamps and its torch in
+// exactly that bottom range.
+//
+// Measured alternatives, same pose: tapering the stock instead gives 51.9
+// (rejected — 3.5% of the problem); tapering the whole grade gives 37.5
+// (rejected — it makes the night less printed rather than differently
+// printed). Tapering the SCREEN is what a press actually does: a comic's
+// night panel is solid ink with little or no screen on it. Same driver as
+// press, one more axis, and the daylight is untouched (13:00 mean 77.2 with
+// a full screen, 75.0 with the taper applied — the taper is ~0 by day).
 const PRESS_EXPOSURE_LO = 0.50;  // the darkest palette stop (night, haar)
 const PRESS_EXPOSURE_HI = 1.46;  // the brightest (noon clear) — also the shipped default
 
@@ -112,13 +131,22 @@ const STYLE = {
   pressDay: 0.72,      // press at the brightest palette stop
   pressNight: 0.95,    // ...and at the darkest. Darker moment, LESS lift.
   cell: 2.6,           // dot-screen cell, screen pixels
-  halftone: 0.35,      // how far the printed two-tone replaces the source
+  // How far the printed two-tone replaces the source. FOLLOWS THE ATMOSPHERE,
+  // the same driver and the same reason as press — see the note above.
+  halftoneDay: 0.35,
+  halftoneNight: 0.10,
   highCut: 0.60,       // luminance above which the paper stays clean
   misreg: 0.7,         // plate offset at the frame edge, screen pixels
   sat: 0.85,           // 1 = untouched, below = pulled toward grey
   shadowTint: [0.97, 0.99, 1.03],
   highTint: [1.04, 1.01, 0.96],
-  stock: 0.35,         // how far the range is remapped into ink..paper
+  // How far the range is remapped into ink..paper. Also follows the
+  // atmosphere: the ink floor is the second lifter of the darkest hour (the
+  // halftone is the first), and on its own it was only 3.5% of the problem —
+  // but with the screen already tapered it is what remains between the grade
+  // and a night that is genuinely dark.
+  stockDay: 0.35,
+  stockNight: 0.12,
   ink: [0.06, 0.05, 0.05],
   paper: [0.98, 0.96, 0.92],
   artefact: 0.05,      // press speckle depth
@@ -126,9 +154,11 @@ const STYLE = {
 
 // What uStyle ships at. 0 through the whole prototype loop — the containment
 // discipline E2c.3a taught: the stack lands inert, every golden unmoved, and
-// turns on in ONE commit that recaptures everything deliberately. E8 close's
-// hardening commit is still on the 0 side of that line; the enable is its own.
-const STYLE_SHIPPED = 0;
+// turns on in ONE commit that recaptures everything deliberately.
+//
+// THIS IS THAT COMMIT. Every golden in docs/smoke/goldens was deleted and
+// recaptured against it; the street is printed from here on.
+const STYLE_SHIPPED = 1;
 
 // The same numbers again, as GLSL source. Generated from the object above so
 // the two cannot drift: there is one authority for the look and it is STYLE.
@@ -136,13 +166,11 @@ const f = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));
 const v3 = (a) => `vec3(${a.map(f).join(', ')})`;
 const STYLE_CONSTS = `
 const float S_CELL      = ${f(STYLE.cell)};
-const float S_HALFTONE  = ${f(STYLE.halftone)};
 const float S_HIGHCUT   = ${f(STYLE.highCut)};
 const float S_MISREG    = ${f(STYLE.misreg)};
 const float S_SAT       = ${f(STYLE.sat)};
 const vec3  S_SHADOW    = ${v3(STYLE.shadowTint)};
 const vec3  S_HIGH      = ${v3(STYLE.highTint)};
-const float S_STOCK     = ${f(STYLE.stock)};
 const vec3  S_INK       = ${v3(STYLE.ink)};
 const vec3  S_PAPER     = ${v3(STYLE.paper)};
 const float S_ARTEFACT  = ${f(STYLE.artefact)};
@@ -178,6 +206,8 @@ uniform float uTime;
 // from STYLE — see the note above it.
 uniform float uStyle;
 uniform float uPress;       // exposure for the plate — see the note beside it
+uniform float uHalftone;    // screen depth — derived per frame, like uPress
+uniform float uStock;       // ink..paper remap depth — ditto
 ${STYLE_CONSTS}
 
 varying vec2 vUv;
@@ -271,12 +301,12 @@ void main() {
     // an effect. Highlights stay clean paper.
     float gate = 1.0 - smoothstep(S_HIGHCUT - 0.18, S_HIGHCUT, tone);
     vec3 twoTone = mix(vec3(1.0), pulled * 0.35, dotMask);
-    vec3 printed = mix(pulled, twoTone, gate * S_HALFTONE);
+    vec3 printed = mix(pulled, twoTone, gate * uHalftone);
 
     // The stock. Nothing on a printed page is pure black or pure white, so
     // the whole range is remapped into ink..paper — per channel, which keeps
     // hue rather than collapsing to a duotone.
-    vec3 styled = mix(printed, mix(S_INK, S_PAPER, clamp(printed, 0.0, 1.0)), S_STOCK);
+    vec3 styled = mix(printed, mix(S_INK, S_PAPER, clamp(printed, 0.0, 1.0)), uStock);
 
     // Press artefacts: sparse specks on a slow reseed. Low-rate is the whole
     // point — resampled every frame it reads as video noise, not as a press.
@@ -318,13 +348,26 @@ export function createPost(renderer) {
     // axis, and the plate exposure, which is recomputed from the renderer's
     // live exposure every frame and so cannot be a constant.
     uStyle: { value: STYLE_SHIPPED },
-    uPress: { value: STYLE.pressDay },   // DERIVED per frame — see render()
+    uPress: { value: STYLE.pressDay },        // DERIVED per frame — see render()
+    uHalftone: { value: STYLE.halftoneDay },  // ...and so is this
+    uStock: { value: STYLE.stockDay },        // ...and this
   };
 
-  function pressForExposure(exposure) {
-    const k = Math.min(1, Math.max(0,
+  // 0 at the darkest palette stop, 1 at the brightest. The one number both
+  // atmosphere-driven axes are interpolated by, so they can never disagree
+  // about what time of day it is.
+  function dayness(exposure) {
+    return Math.min(1, Math.max(0,
       (exposure - PRESS_EXPOSURE_LO) / (PRESS_EXPOSURE_HI - PRESS_EXPOSURE_LO)));
-    return STYLE.pressNight + (STYLE.pressDay - STYLE.pressNight) * k;
+  }
+  function pressForExposure(exposure) {
+    return STYLE.pressNight + (STYLE.pressDay - STYLE.pressNight) * dayness(exposure);
+  }
+  function halftoneForExposure(exposure) {
+    return STYLE.halftoneNight + (STYLE.halftoneDay - STYLE.halftoneNight) * dayness(exposure);
+  }
+  function stockForExposure(exposure) {
+    return STYLE.stockNight + (STYLE.stockDay - STYLE.stockNight) * dayness(exposure);
   }
 
 
@@ -392,8 +435,9 @@ export function createPost(renderer) {
     // number rather than only as a picture.
     stylePress(exposure) {
       return exposure === undefined
-        ? { day: STYLE.pressDay, night: STYLE.pressNight, exposure: renderer.toneMappingExposure, press: uniforms.uPress.value }
-        : pressForExposure(exposure);
+        ? { day: STYLE.pressDay, night: STYLE.pressNight, exposure: renderer.toneMappingExposure,
+            press: uniforms.uPress.value, halftone: uniforms.uHalftone.value, stock: uniforms.uStock.value }
+        : { press: pressForExposure(exposure), halftone: halftoneForExposure(exposure), stock: stockForExposure(exposure) };
     },
 
     // Draws the scene to the canvas exactly as a post-off frame would, then
@@ -412,6 +456,8 @@ export function createPost(renderer) {
       // uses, so a post-off or style-off frame does no work for it at all.
       if (uniforms.uStyle.value > 0) {
         uniforms.uPress.value = pressForExposure(renderer.toneMappingExposure);
+        uniforms.uHalftone.value = halftoneForExposure(renderer.toneMappingExposure);
+        uniforms.uStock.value = stockForExposure(renderer.toneMappingExposure);
       }
       renderer.copyFramebufferToTexture(texture);
       renderer.render(quadScene, quadCamera);

@@ -118,7 +118,7 @@ exception left is E7a's mechanical hosting migration.
 | E9b visitor theatre | medium | interior-only; corpus gated by Central Bar test |
 | E6a.1 collision: buildings + props — **LANDED** | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
 | E6a.2 collision: characters — **LANDED** | medium | circles on existing groups; prompt-radius ordering gated |
-| E8 close | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
+| E8 close — **3 of 4 landed** | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
 | E10a the Gullet | medium; **high (review)** on the enable+recapture | new scene geometry, flag-first |
 | E6b the tram | **high (review)** | camera parenting, update order, suspended clamps |
 | E7a hosting move | medium | mechanical migration |
@@ -2734,6 +2734,35 @@ loop: harden preset `b` (`uStyle` enable + wholesale recapture, the
 containment landing as specified), write `docs/STYLE.md` § 2, and the two
 DOM levers (caption boxes, title card as a cover) at whatever size they
 justify. One unit — "E8 close" in the sequence.
+
+#### E8 close — what has landed (2026-08-08)
+
+Three of four units. `1/4` hardened preset `b` into shader constants and wrote
+`docs/STYLE.md` § 2; `2/4` added the two DOM levers (caption boxes, the title
+card as a comic cover); `3/4` shipped the grade and recaptured all 40 goldens.
+`4/4` (per-golden noise bands) is outstanding.
+
+**The finding of the phase, and it only appeared once the grade shipped.**
+Enabling it doubled the mean luminance of the darkest hour and turned three
+darkness gates red — including one whose lamps-off *control* went from 0% of
+the frame above the legibility floor to 68.3%. The cause is the halftone's
+paper showing between the dots, which lifts the bottom of the tonal range far
+more than the middle (×3.45 at display luminance 0.01, ×1.20 at 0.20), and
+this game carries its night, its lamps and its torch entirely in that bottom
+range. Two judging rounds could not have seen it: the sheets show a frame, not
+a ratio against the ungraded frame.
+
+The fix is a fifth rule in STYLE.md — **the screen and the stock thin at
+night**, on the same exposure driver press already follows. A comic's night
+panel is solid ink with little screen, so the night is differently printed
+rather than less printed. Dan's call, 2026-08-08. Rejected with numbers:
+tapering the stock alone (3.5% of the problem) and tapering the whole grade
+(makes the night less printed).
+
+The three gates were **re-pointed, not relaxed** — every threshold unchanged,
+each now measuring the scene with the grade off, because each asks whether the
+lamps or the torch light the street and that is a property of the scene rather
+than of the paper. The grade's own lift gets two new gates of its own.
 
 ### Collision jumps the queue — E6a is next
 
