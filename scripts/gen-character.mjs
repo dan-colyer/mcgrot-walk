@@ -113,6 +113,50 @@ const CHARACTERS = {
     + 'big for him: enormous jug ears, deep-set watery eyes, hollow toothless '
     + 'jaw working sideways, wispy white hair, flat cap, shabby overcoat far '
     + 'too long for him, trousers pooling over worn shoes.',
+
+  // E10a.2/3: the canon principals, from docs/CANON.md's established column.
+  // Role and temperament are canon; exact colours and garments are design
+  // freedom, so the wording below fixes them once for consistency rather than
+  // re-deriving them per generation. Deliberately NO props — no ladle, no
+  // spatula, no sign — because FRAMING says the mesh must not carry anything
+  // the scene will place itself, and both of these have props in their canon
+  // rows that gullet.js already builds.
+  mcgrot: 'A thickset, stooped Scottish street-food vendor in his late fifties, '
+    + 'work-worn and heavy through the shoulders: weathered pale skin, ruddy '
+    + 'nose and cheeks, small grey-green eyes with heavy bags and a suspicious '
+    + 'squint, jutting chin, heavy grey stubble, greasy iron-grey hair swept '
+    + 'back. Stained off-white vest under a battered dark apron, old work '
+    + 'trousers, scuffed black work boots. Hunched, broad, apron-shaped '
+    + 'silhouette.',
+  // Reworded after Black Forest Labs's OUTPUT moderation rejected the first
+  // attempt twice ("the generated content was flagged"). The trigger was never
+  // identified — the wording below drops "mongrel", "no collar/lead/hat" and
+  // the stacked "shaggy" repetitions, and it passed first time. Recorded so
+  // the next session does not reinstate the original wording as a tidy-up.
+  pomple: 'A small scruffy terrier-type pet dog with rough shaggy fur, compact '
+    + 'and sturdy, standing calmly on all four legs: dark charcoal-grey and '
+    + 'dirty-cream coat, heavy overhanging brow above large brown eyes, tired '
+    + 'patient expression, whiskered muzzle, large floppy ears, short sturdy '
+    + 'legs, low compact silhouette. Plain fur only, no accessories.',
+};
+
+// Per-character framing overrides. FRAMING above is written for a standing
+// human — "arms slightly away from the sides, feet apart" is nonsense for a
+// dog, and asking a text-to-image model for a front-on quadruped reliably
+// produces a foreshortened lump with no length information for the
+// reconstruction to work from.
+const FRAMING_OVERRIDES = {
+  pomple: 'Full body side-on three-quarter view of the whole animal, standing '
+    + 'squarely on all four legs, head turned toward the viewer, entire animal '
+    + 'within frame with clear margin on all sides. Plain flat single-colour '
+    + 'background #808080, no floor, no cast shadow, no ground plane, no '
+    + 'vignette, no text, no border, no frame.',
+};
+
+// Landscape for the dog: a quadruped in a 768x1024 portrait frame wastes the
+// pixels the reconstruction needs on empty background above and below it.
+const SIZE_OVERRIDES = {
+  pomple: { width: 1024, height: 768 },
 };
 
 const args = process.argv.slice(2);
@@ -122,14 +166,14 @@ const variants = variantArg ? [variantArg] : Object.keys(VARIANTS);
 
 mkdirSync(OUT, { recursive: true });
 
-async function generate(prompt, seed) {
+async function generate(prompt, seed, size) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const res = await fetch('https://api.together.xyz/v1/images/generations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${KEY}` },
         body: JSON.stringify({
-          model: MODEL, prompt, width: 768, height: 1024, n: 1,
+          model: MODEL, prompt, width: size.width, height: size.height, n: 1,
           response_format: 'b64_json', seed: seed + attempt,
         }),
         signal: AbortSignal.timeout(180_000),
@@ -152,9 +196,10 @@ for (const [name, subject] of Object.entries(CHARACTERS)) {
     if (!VARIANTS[v]) { console.error(`unknown variant: ${v}`); process.exit(1); }
     // Portrait 768x1024: a standing figure in a square frame wastes half the
     // pixels on background, and the mesh stage only sees what the figure occupies.
-    const prompt = `${VARIANTS[v]}${FRAMING} ${subject}`;
-    console.log(`[${name}/${v}] generating…`);
-    const img = await generate(prompt, 41);
+    const prompt = `${VARIANTS[v]}${FRAMING_OVERRIDES[name] || FRAMING} ${subject}`;
+    const size = SIZE_OVERRIDES[name] || { width: 768, height: 1024 };
+    console.log(`[${name}/${v}] generating… (${size.width}x${size.height})`);
+    const img = await generate(prompt, 41, size);
     if (!img) { console.error(`[${name}/${v}] FAILED`); process.exitCode = 1; continue; }
     const raw = join(OUT, `${name}-${v}-raw.png`);
     const jpg = join(OUT, `${name}-${v}.jpg`);

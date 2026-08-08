@@ -31,7 +31,11 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { flag } from './flags.js';
+import { assetUrl } from './assets.js';
+import { normalise } from './characters.js';
+import { hashDateKey, todayKey } from './day.js';
 
 // E10a.1 lands OFF, so the milestone is verified against unmoved goldens
 // before any pixel changes. The enable commit flips this, and that is the
@@ -45,11 +49,45 @@ export const GULLET_SIDE = 1;
 // toward the buildings rather than through them.
 export const GULLET_OFFSET = 7.6;
 
+// E10a.2. The two canon principals, generated through the E3a pipeline
+// (FLUX form variant -> Trellis at mesh_simplify 0.98, texture_size 512 —
+// settled at E3a, not re-swept) and re-materialled by characters.js's
+// normalise() so they carry the crowd's treatment rather than a second one.
+const MCGROT_FILE = 'characters/mcgrot-form.glb';
+const POMPLE_FILE = 'characters/pomple-form.glb';
+const MCGROT_HEIGHT = 1.72;   // metres. Canon: average height, thick, stooped.
+const POMPLE_HEIGHT = 0.42;   // metres at the shoulder — normalise() makes the
+                              // glb unit-TALL, and for a quadruped that axis is
+                              // shoulder height, not nose-to-tail length.
+const MCGROT_RADIUS = 0.45;   // collision, plan view
+const POMPLE_RADIUS = 0.30;
+
+// HOW OFTEN IS HE IN. 3 days in 8. "McGrot was in the day" has to be worth
+// saying, which rules out most days, and it has to be plausibly reachable,
+// which rules out one in a month. The fraction is a constant here rather than
+// a tuned feel so the determinism gate can assert the distribution over a
+// window of dates instead of one lucky pair.
+const MCGROT_IN_NUMERATOR = 3;
+const MCGROT_IN_DENOMINATOR = 8;
+
+// The board that goes up when he is not. Verbatim from ROADMAP § E10a — it is
+// McGrot's own wording, not a comic fragment, but it is quoted in the design
+// and stays exactly as written.
+const SHUT_SIGN = ['AWAY.', 'BACK NEVER.', '— McG'];
+
 const VAN_LENGTH = 4.4;   // along the street
 const VAN_DEPTH = 2.6;    // across it
 const VAN_BODY_H = 2.05;  // body box height, above the chassis
 const CHASSIS_H = 0.62;   // ground to underside of the body
 const WHEEL_R = 0.42;
+
+// The serving opening, in the group's local frame. Its sill is the one
+// dimension the whole tableau hangs off: it is chest height on a 1.72m McGrot
+// standing on the van floor, so his head and shoulders read through the hole.
+const OPENING_W = 2.2;
+const OPENING_CX = 0.35;
+const OPENING_SILL = CHASSIS_H + 0.52;
+const OPENING_TOP = CHASSIS_H + 1.80;
 
 // docs/CANON.md § McGrot: soot black, dirty cream, rust brown, congealed
 // mustard, dark red. Authored dark — ACES lifts everything, and STYLE.md § 2
@@ -75,9 +113,21 @@ export function gulletEnabled() {
   return flag('Gullet', GULLET_ENABLED);
 }
 
-export function buildGullet(world, scene) {
+// IS McGROT IN TODAY. Pure, date-keyed, and exported so a gate can sweep a
+// window of dates without booting a scene per day. Deliberately NOT drawn from
+// this module's `rand`: that sequence is layout, consumed before frame 1, and
+// mixing a per-day draw into it would make the stall's geometry depend on the
+// calendar. A separate hash of the date string keeps the two apart.
+export function mcgrotIsIn(dayKey) {
+  return (hashDateKey(`gullet:${dayKey}`) % MCGROT_IN_DENOMINATOR) < MCGROT_IN_NUMERATOR;
+}
+
+export function buildGullet(assets, world, scene) {
   const enabled = gulletEnabled();
-  const noop = { enabled: false, group: null, placement: null, solids: 0 };
+  const noop = {
+    enabled: false, group: null, placement: null, solids: 0,
+    dayKey: null, mcgrotIn: false, mcgrot: null, pomple: null, meshes: () => 0,
+  };
   if (!enabled || !world || !scene) return noop;
 
   const streetLine = world.streetLine || [];
@@ -108,6 +158,14 @@ export function buildGullet(world, scene) {
   buildHoarding(group);
   buildPriceBoard(group);
 
+  // E10a.2. Read the day ONCE, here, and hand the same answer to every
+  // consumer. Calling mcgrotIsIn() again downstream would be correct today and
+  // wrong the moment anything lets the clock roll past midnight mid-session —
+  // the stall would shut with McGrot still standing in it.
+  const dayKey = todayKey();
+  const mcgrotIn = mcgrotIsIn(dayKey);
+  if (!mcgrotIn) buildShutSign(group);
+
   // E6a: the player is resolved against this. Boxes come from the placement
   // above, never from a new rand() draw — the tram does the same thing in
   // scenery.js and for the same reason. Plan-view only, so the awning and the
@@ -125,10 +183,80 @@ export function buildGullet(world, scene) {
     solids++;
   }
 
+  // WHERE THE TWO OF THEM STAND. Local frame: +x along the street, +z toward
+  // the road. McGrot is BEHIND the counter, so he sits on the building side of
+  // the van's front face and is seen through the hatch. Pomplé is posted at
+  // the kerb end of the counter when McGrot is in, and drifts to the far side
+  // of the hoarding when he is not — canon gives the dog minimal motion, so
+  // "wanders" is a different fixed spot per day rather than a walk cycle.
+  const mcgrotLocal = [OPENING_CX, -0.15];
+  // He stands ON the van floor. Placing him on the road put his head below the
+  // sill; the floor is CHASSIS_H above it and that is what frames him.
+  const MCGROT_LIFT = CHASSIS_H;
+  const pompleLocal = mcgrotIn
+    ? [VAN_LENGTH * 0.5 + 0.9, VAN_DEPTH * 0.5 + 0.25]
+    : [
+      VAN_LENGTH * 0.5 + 1.4 + (hashDateKey(`pomple:${dayKey}`) % 100) / 100 * 1.6,
+      VAN_DEPTH * 0.5 - 0.4 - (hashDateKey(`pomple-z:${dayKey}`) % 100) / 100 * 1.2,
+    ];
+
+  const figures = { mcgrot: null, pomple: null };
+  let castSolids = 0;
+  let meshesLoaded = 0;
+  const loader = new GLTFLoader();
+  const stand = (file, local, height, key, lift = 0) => {
+    const [wx, wz] = localToWorld(cx, cz, yaw, local[0], local[1]);
+    const wy = groundHeight(wx, wz) + lift;
+    // The solid goes in NOW, not in the .then(). A glb landing asynchronously
+    // must not decide whether the player can walk through a body — that is the
+    // E6a.2 walker lesson (movers registered late spent the first frames at
+    // the world origin, which is the spawn point).
+    if (world.collision) {
+      // A SEPARATE TAG from the stall's boxes. The E3h lesson is that a whole
+      // class of thing can silently stop registering while every other gate
+      // stays green, so the fixed props and the date-varying cast are counted
+      // independently — 'gullet' is always 2, 'gullet-cast' is 1 or 2.
+      world.collision.addCircle(wx, wz, key === 'mcgrot' ? MCGROT_RADIUS : POMPLE_RADIUS, 'gullet-cast');
+      castSolids++;
+    }
+    const holder = new THREE.Group();
+    holder.name = `gullet-${key}`;
+    holder.position.set(wx, wy, wz);
+    // Face the road, same convention as the van and as npcs.js: the mesh is
+    // built facing +Z and theta maps +Z to (sin, cos).
+    holder.rotation.y = yaw;
+    scene.add(holder);
+    figures[key] = { holder, x: wx, y: wy, z: wz, height, loaded: false };
+
+    loader.loadAsync(assetUrl(assets, file))
+      .then((gltf) => {
+        const mesh = normalise(gltf.scene);
+        mesh.name = `${key}-mesh`;
+        mesh.scale.setScalar(height);
+        holder.add(mesh);
+        figures[key].loaded = true;
+        meshesLoaded++;
+      })
+      // Same fallback contract as characters.js: in the single-file artifact
+      // these glbs are not inlined and every fetch 404s. There is no paper
+      // doll for a canon principal, so the stall simply stands unattended —
+      // which is a state the design already has a name for.
+      .catch(() => {});
+  };
+
+  if (mcgrotIn) stand(MCGROT_FILE, mcgrotLocal, MCGROT_HEIGHT, 'mcgrot', MCGROT_LIFT);
+  stand(POMPLE_FILE, pompleLocal, POMPLE_HEIGHT, 'pomple');
+
   return {
     enabled: true,
     group,
     solids,
+    castSolids,
+    dayKey,
+    mcgrotIn,
+    mcgrot: figures.mcgrot,
+    pomple: figures.pomple,
+    meshes: () => meshesLoaded,
     placement: { chainage: GULLET_CHAINAGE, side: GULLET_SIDE, offset: GULLET_OFFSET, x: cx, y: cy, z: cz, yaw },
   };
 }
@@ -142,20 +270,75 @@ function buildVan(group) {
   const shell = [];
   const trim = [];
 
-  const body = new THREE.BoxGeometry(VAN_LENGTH, VAN_BODY_H, VAN_DEPTH);
-  body.translate(0, CHASSIS_H + VAN_BODY_H * 0.5, 0);
-  shell.push(body);
+  // A SHELL, NOT A BOX. E10a.1 built the body as one solid BoxGeometry with a
+  // black panel painted where the hatch goes, and when E10a.2 stood McGrot at
+  // his own counter he was entirely inside it — the capture showed his boots
+  // under the chassis and nothing else. The serving opening has to be a real
+  // hole, so the body is six panels with a gap, still one merged mesh and one
+  // draw call.
+  const T = 0.08; // panel thickness
+  const yFloor = CHASSIS_H;
+  const yRoof = CHASSIS_H + VAN_BODY_H;
+  const panel = (w, h, d, x, y, z) => {
+    const g = new THREE.BoxGeometry(w, h, d);
+    g.translate(x, y, z);
+    shell.push(g);
+  };
+  panel(VAN_LENGTH, VAN_BODY_H, T, 0, CHASSIS_H + VAN_BODY_H * 0.5, -VAN_DEPTH * 0.5 + T * 0.5); // back
+  panel(T, VAN_BODY_H, VAN_DEPTH, -VAN_LENGTH * 0.5 + T * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, 0); // ends
+  panel(T, VAN_BODY_H, VAN_DEPTH, VAN_LENGTH * 0.5 - T * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, 0);
+  panel(VAN_LENGTH, T, VAN_DEPTH, 0, yRoof - T * 0.5, 0);   // roof
+  panel(VAN_LENGTH, T, VAN_DEPTH, 0, yFloor + T * 0.5, 0);  // floor — he stands ON this
 
-  // Cab, lower and shorter, off the local -x end (down-street).
+  // The road-facing side, in four pieces around the opening. The sill sits at
+  // chest height on a 1.72m man standing on the floor above, which is what
+  // makes his head and shoulders read through the hole rather than one eye.
+  const openMinX = OPENING_CX - OPENING_W * 0.5;
+  const openMaxX = OPENING_CX + OPENING_W * 0.5;
+  const zFront = VAN_DEPTH * 0.5 - T * 0.5;
+  panel(openMinX + VAN_LENGTH * 0.5, VAN_BODY_H, T, (-VAN_LENGTH * 0.5 + openMinX) * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, zFront);
+  panel(VAN_LENGTH * 0.5 - openMaxX, VAN_BODY_H, T, (openMaxX + VAN_LENGTH * 0.5) * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, zFront);
+  panel(OPENING_W, OPENING_SILL - yFloor, T, OPENING_CX, (yFloor + OPENING_SILL) * 0.5, zFront);
+  panel(OPENING_W, yRoof - OPENING_TOP, T, OPENING_CX, (OPENING_TOP + yRoof) * 0.5, zFront);
+
+  // Interior liner. Without it the shell's inner faces are the same dirty
+  // cream as the outside, and the far end panel catches the sun and reads
+  // through the opening as a bright white slab — a hole to the sky rather than
+  // the inside of a van. One inset open-fronted box in soot, in the trim
+  // merge, kills every bright interior face at once.
+  const LI = 0.03;
+  const liner = (w, h, d, x, y, z) => {
+    const g = new THREE.BoxGeometry(w, h, d);
+    g.translate(x, y, z);
+    trim.push(g);
+  };
+  const inW = VAN_LENGTH - T * 2;
+  const inH = VAN_BODY_H - T * 2;
+  liner(inW, inH, LI, 0, CHASSIS_H + VAN_BODY_H * 0.5, -VAN_DEPTH * 0.5 + T + LI * 0.5);
+  liner(LI, inH, VAN_DEPTH - T * 2, -VAN_LENGTH * 0.5 + T + LI * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, 0);
+  liner(LI, inH, VAN_DEPTH - T * 2, VAN_LENGTH * 0.5 - T - LI * 0.5, CHASSIS_H + VAN_BODY_H * 0.5, 0);
+  liner(inW, LI, VAN_DEPTH - T * 2, 0, yRoof - T - LI * 0.5, 0);
+  liner(inW, LI, VAN_DEPTH - T * 2, 0, yFloor + T + LI * 0.5, 0);
+
+  // Cab, lower and shorter, off the local -x end (down-street). Solid: nothing
+  // stands in it and a hollow one would show its own back panel through the
+  // windscreen it has not got.
   const cab = new THREE.BoxGeometry(1.5, VAN_BODY_H * 0.72, VAN_DEPTH * 0.94);
   cab.translate(-VAN_LENGTH * 0.5 - 0.72, CHASSIS_H + VAN_BODY_H * 0.36, 0);
   shell.push(cab);
 
-  // Serving hatch — a recessed dark panel on the road-facing side, with the
-  // hatch flap propped up over it as an awning.
-  const hatch = new THREE.BoxGeometry(2.2, 1.05, 0.06);
-  hatch.translate(0.35, CHASSIS_H + 1.22, VAN_DEPTH * 0.5 + 0.02);
-  trim.push(hatch);
+  // The opening's reveal: a dark frame around the hole so the shell's cut edge
+  // reads as a lined hatch rather than as a modelling seam.
+  for (const [w, h, x, y] of [
+    [OPENING_W + 0.12, 0.07, OPENING_CX, OPENING_SILL],
+    [OPENING_W + 0.12, 0.07, OPENING_CX, OPENING_TOP],
+    [0.07, OPENING_TOP - OPENING_SILL, openMinX, (OPENING_SILL + OPENING_TOP) * 0.5],
+    [0.07, OPENING_TOP - OPENING_SILL, openMaxX, (OPENING_SILL + OPENING_TOP) * 0.5],
+  ]) {
+    const g = new THREE.BoxGeometry(w, h, 0.1);
+    g.translate(x, y, VAN_DEPTH * 0.5 - 0.02);
+    trim.push(g);
+  }
 
   const awning = new THREE.BoxGeometry(2.5, 0.05, 0.95);
   awning.rotateX(-0.34);
@@ -204,14 +387,14 @@ function buildCounter(group) {
 
   // The shelf under the hatch, where the sauce bottles live.
   const shelf = new THREE.BoxGeometry(2.5, 0.07, 0.42);
-  shelf.translate(0.15, CHASSIS_H + 0.66, VAN_DEPTH * 0.5 + 0.19);
+  shelf.translate(OPENING_CX, OPENING_SILL - 0.02, VAN_DEPTH * 0.5 + 0.19);
   parts.push(shelf);
 
   // Sauce bottles — canon props. Positions jittered from THIS module's seed.
   for (let i = 0; i < 5; i++) {
     const h = 0.2 + rand() * 0.09;
     const b = new THREE.CylinderGeometry(0.045, 0.055, h, 6);
-    b.translate(-0.9 + i * 0.5 + (rand() - 0.5) * 0.12, CHASSIS_H + 0.7 + h * 0.5, VAN_DEPTH * 0.5 + 0.17 + (rand() - 0.5) * 0.06);
+    b.translate(OPENING_CX - 1.05 + i * 0.5 + (rand() - 0.5) * 0.12, OPENING_SILL + 0.02 + h * 0.5, VAN_DEPTH * 0.5 + 0.17 + (rand() - 0.5) * 0.06);
     props.push(b);
   }
 
@@ -264,6 +447,45 @@ function buildPriceBoard(group) {
   // whole (docs/smoke/captures/gullet/price-board-canvas.png).
   mesh.position.set(-1.4, CHASSIS_H + 1.34, VAN_DEPTH * 0.5 + 0.13);
   mesh.rotation.y = 0.12;
+  group.add(mesh);
+}
+
+// The board that covers the hatch on the days he is not in. Hung over the
+// serving opening rather than beside it, so the difference between an open
+// stall and a shut one is legible from across the road and not only from
+// reading distance.
+function buildShutSign(group) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 384;
+  canvas.height = 192;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#2b2620';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#5e513c';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#bfa871';
+  ctx.font = 'bold 46px "Courier New", monospace';
+  ctx.fillText(SHUT_SIGN[0], canvas.width / 2, 66);
+  ctx.fillText(SHUT_SIGN[1], canvas.width / 2, 116);
+  ctx.font = 'italic 30px "Courier New", monospace';
+  ctx.fillStyle = '#8e7b52';
+  ctx.fillText(SHUT_SIGN[2], canvas.width / 2, 160);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.9, 0.95),
+    new THREE.MeshLambertMaterial({ map: tex }),
+  );
+  mesh.name = 'gullet-shut-sign';
+  // Proud of the hatch panel (which sits at VAN_DEPTH/2 + 0.02, 0.06 deep) by
+  // more than its own tilt sinks it — the price board's bug, not repeated.
+  mesh.position.set(OPENING_CX, (OPENING_SILL + OPENING_TOP) * 0.5, VAN_DEPTH * 0.5 + 0.16);
+  mesh.rotation.y = -0.05;
   group.add(mesh);
 }
 

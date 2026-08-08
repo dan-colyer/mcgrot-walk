@@ -480,7 +480,12 @@ function localSize(root, frame) {
 // docs/STYLE.md records for canvas bakes. Lambert with a dark tint multiply is
 // what every other prop in this scene uses, and it is what lets the street's
 // own light and preset `b` do the work.
-function normalise(root) {
+// Exported since E10a.2: gullet.js stands McGrot and Pomple on the same
+// treatment. Sharing this rather than copying it is what keeps a canon
+// principal from drifting off the crowd's material treatment — the 0.42
+// multiply below is load-bearing under ACES and would be easy to re-derive
+// wrong in a second module.
+export function normalise(root) {
   root.traverse((o) => {
     if (!o.isMesh || !o.material) return;
     const src = o.material;

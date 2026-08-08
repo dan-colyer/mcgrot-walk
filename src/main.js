@@ -144,7 +144,7 @@ async function main() {
 
   // E10a.1: McGrot's pitch at chainage 740, behind __mcgrotForceGullet.
   // Its own module and its own seed — it must never draw from scenery's.
-  const gullet = buildGullet(world, scene);
+  const gullet = buildGullet(assets, world, scene);
 
   // E2g: street lights, hung off scenery's catenary poles. Built after
   // scenery (it needs the pole positions) and handed to atmosphere, which

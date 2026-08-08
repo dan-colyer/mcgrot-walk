@@ -3295,6 +3295,216 @@ async function main() {
 
     await gulOffCtx.close();
     await gulOnCtx.close();
+
+    // --- E10a.2: McGrot and Pomplé ----------------------------------------
+    //
+    // Two dates, chosen because the presence function separates them, booted
+    // as a full opposed pair. The suite's own SMOKE_DATE is not usable here:
+    // it is one date, and "he is in" versus "he is out" is the entire axis.
+    const IN_DATE = '2026-01-03';
+    const OUT_DATE = '2026-01-01';
+    // FNV-1a over the date string, exactly src/day.js's hashDateKey. Node-side
+    // so the sweep below never asks the module what the module should be
+    // doing — and joined to the module at two points by the boots that follow.
+    const gulHash = (str) => {
+      let h = 0x811c9dc5;
+      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return h >>> 0;
+    };
+    const expectIn = (key) => (gulHash(`gullet:${key}`) % 8) < 3;
+
+    const bootCast = async (date) => {
+      const { context, page } = await bootPage(browser, port, {
+        __mcgrotForceGullet: true, __mcgrotForceDate: date,
+      });
+      // The glbs land asynchronously. Waiting on the count rather than on a
+      // timeout is what stops "the mesh is missing" and "the mesh is late"
+      // reading identically — the E3g lesson.
+      const want = await page.evaluate(() => (window.__mcgrotDebug.gullet.mcgrotIn ? 2 : 1));
+      await page.waitForFunction((n) => window.__mcgrotDebug.gullet.meshes() >= n, want, { timeout: 20000 })
+        .catch(() => {});
+      const state = await page.evaluate(() => {
+        const dbg = window.__mcgrotDebug;
+        const g = dbg.gullet;
+        const fig = (f) => (f ? {
+          loaded: !!f.loaded, x: f.x, y: f.y, z: f.z, height: f.height,
+          ground: dbg.world.groundHeight(f.x, f.z),
+        } : null);
+        return {
+          dayKey: g.dayKey,
+          mcgrotIn: g.mcgrotIn,
+          solids: (dbg.world.collision.stats().byTag.gullet || 0),
+          castSolids: (dbg.world.collision.stats().byTag['gullet-cast'] || 0),
+          meshes: g.meshes(),
+          shutSign: !!g.group.getObjectByName('gullet-shut-sign'),
+          mcgrot: fig(g.mcgrot),
+          pomple: fig(g.pomple),
+          placement: g.placement,
+        };
+      });
+      return { context, page, state };
+    };
+
+    const castIn = await bootCast(IN_DATE);
+    const castOut = await bootCast(OUT_DATE);
+
+    // The opposed pair. Both arms are the same build and the same flag; the
+    // only difference is the calendar.
+    results.push({
+      name: 'E10a.2: the date decides whether McGrot is in',
+      pass: castIn.state.mcgrotIn === true && castOut.state.mcgrotIn === false,
+      detail: `${IN_DATE}: in=${castIn.state.mcgrotIn}; ${OUT_DATE}: in=${castOut.state.mcgrotIn} ` +
+        '(want true then false — one arm alone proves nothing)',
+    });
+    // ...and the SCENE agrees with the flag, rather than the flag being a
+    // field nothing reads. This is the join between the pure presence function
+    // and the product: mesh present iff in, shut sign present iff out.
+    results.push({
+      name: 'E10a.2: presence reaches the scene, both ways',
+      pass: castIn.state.mcgrot !== null && castIn.state.mcgrot.loaded && !castIn.state.shutSign
+        && castOut.state.mcgrot === null && castOut.state.shutSign,
+      detail: `in-day: McGrot mesh loaded=${castIn.state.mcgrot && castIn.state.mcgrot.loaded}, ` +
+        `shut sign=${castIn.state.shutSign}; out-day: McGrot=${castOut.state.mcgrot}, ` +
+        `shut sign=${castOut.state.shutSign}`,
+    });
+    results.push({
+      name: 'E10a.2: the solid count follows the cast',
+      pass: castIn.state.castSolids === 2 && castOut.state.castSolids === 1
+        && castIn.state.solids === 2 && castOut.state.solids === 2,
+      detail: `in-day ${castIn.state.castSolids} gullet-cast solids (McGrot + Pomplé = 2), ` +
+        `out-day ${castOut.state.castSolids} (Pomplé alone = 1); the stall's own 'gullet' boxes ` +
+        `stay ${castIn.state.solids}/${castOut.state.solids} on both days`,
+    });
+
+    // Now the sweep, joined to the two boots above. A year of dates through
+    // the node-side hash, checked against what the module actually produced on
+    // the two days that were booted — so this cannot drift into testing a
+    // reimplementation of itself.
+    const sweep = [];
+    for (let d = 0; d < 365; d++) {
+      const dt = new Date(Date.UTC(2026, 0, 1 + d));
+      sweep.push(dt.toISOString().slice(0, 10));
+    }
+    const inDays = sweep.filter(expectIn).length;
+    const inPct = (inDays / sweep.length) * 100;
+    const agrees = expectIn(IN_DATE) === castIn.state.mcgrotIn && expectIn(OUT_DATE) === castOut.state.mcgrotIn;
+    results.push({
+      name: 'E10a.2: he is in often enough to be worth saying, rarely enough to mean it',
+      pass: agrees && inPct > 30 && inPct < 45,
+      detail: `${inDays}/365 days in (${inPct.toFixed(1)}%, want 30-45% — the design fraction is 3/8 = 37.5%); ` +
+        `node-side hash agrees with both booted scenes: ${agrees}`,
+    });
+
+    // Ground contact, measured rather than eyeballed. McGrot stands on the van
+    // FLOOR (CHASSIS_H above the road) and Pomplé on the road — get either
+    // wrong and the figure floats or sinks, which no other gate here notices.
+    const contact = (f, lift) => Math.abs((f.y - f.ground) - lift);
+    const mcgrotLift = contact(castIn.state.mcgrot, 0.62);
+    const pompleLift = contact(castIn.state.pomple, 0);
+    results.push({
+      name: 'E10a.2: both figures stand on something',
+      pass: mcgrotLift < 0.01 && pompleLift < 0.01,
+      detail: `McGrot ${mcgrotLift.toFixed(4)}m off the van floor (CHASSIS_H 0.62 above the road), ` +
+        `Pomplé ${pompleLift.toFixed(4)}m off the road (both want <0.01)`,
+    });
+
+    // Pomplé moves when McGrot is out. Canon gives the dog minimal motion, so
+    // "wanders" is a different spot per day rather than a walk cycle — but a
+    // different spot it must be, or the out-day stall is the in-day stall with
+    // a sign on it.
+    const pompleMoved = Math.hypot(
+      castIn.state.pomple.x - castOut.state.pomple.x,
+      castIn.state.pomple.z - castOut.state.pomple.z);
+    results.push({
+      name: 'E10a.2: Pomplé is posted when McGrot is in and wandered when he is not',
+      pass: pompleMoved > 1,
+      detail: `${pompleMoved.toFixed(2)}m between the two days' positions (want >1m)`,
+    });
+
+    // THE PICTURE. Two of them, because the two risks are different.
+    const castShot = async (pg, p, dist, eye, look, path) => {
+      await pg.evaluate(({ px, pz, py, yaw, d, e, l }) => {
+        const dbg = window.__mcgrotDebug;
+        const cx = px + Math.sin(yaw) * d;
+        const cz = pz + Math.cos(yaw) * d;
+        dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + e, cz);
+        dbg.camera.lookAt(px, py + l, pz);
+        dbg.stepFrames(30);
+      }, { px: p.x, pz: p.z, py: p.y, yaw: p.yaw, d: dist, e: eye, l: look });
+      const shot = await pg.screenshot();
+      writeFileSync(join(captureDir, path), shot);
+      return shot;
+    };
+
+    // 1. Is McGrot actually visible through the hatch. The first cut of this
+    // stood him inside a solid body and the capture showed his BOOTS under the
+    // chassis and nothing else — the van is a shell with a real opening
+    // because of that frame, not because of a design note.
+    const hatchIn = await castShot(castIn.page, castIn.state.placement, 2.6, 1.55, 1.35, 'gullet-hatch-in.png');
+    const hatchOut = await castShot(castOut.page, castOut.state.placement, 2.6, 1.55, 1.35, 'gullet-hatch-out.png');
+    const hatchInPng = PNG.sync.read(hatchIn);
+    const hatchOutPng = PNG.sync.read(hatchOut);
+    const hatchDiff = pixelmatch(hatchInPng.data, hatchOutPng.data, null, hatchInPng.width, hatchInPng.height, { threshold: 0.1 });
+    const hatchPct = (hatchDiff / (hatchInPng.width * hatchInPng.height)) * 100;
+    results.push({
+      name: 'E10a.2: the two days look different from the same spot',
+      pass: hatchPct >= 2,
+      detail: `${hatchPct.toFixed(2)}% of pixels differ between the in-day and out-day frames at the ` +
+        'same pose (want >=2%). Both in docs/smoke/captures/ (gullet-hatch-in.png, gullet-hatch-out.png)',
+    });
+
+    // 2. Pomplé's own capture. The roadmap names this risk explicitly: he is
+    // below every gate's camera line, so without a pose aimed at him he ships
+    // unlooked-at. This is that pose, and it is gated on him being IN it.
+    const pompleShot = async (pg, state, path) => {
+      await pg.evaluate(({ x, y, z, ox, oz }) => {
+        const dbg = window.__mcgrotDebug;
+        const cx = x + ox;
+        const cz = z + oz;
+        dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 0.55, cz);
+        dbg.camera.lookAt(x, y + 0.22, z);
+        dbg.stepFrames(30);
+      }, {
+        x: state.pomple.x, y: state.pomple.y, z: state.pomple.z,
+        ox: Math.sin(state.placement.yaw) * 0.8, oz: Math.cos(state.placement.yaw) * 0.8,
+      });
+      const shot = await pg.screenshot();
+      writeFileSync(join(captureDir, path), shot);
+      return shot;
+    };
+    const pompleFrame = await pompleShot(castIn.page, castIn.state, 'gullet-pomple.png');
+    // The control removes the dog and keeps everything else: the out-day boot
+    // posed at the IN-day dog's spot, where the out-day dog is not.
+    const pompleCtl = await castIn.page.evaluate(() => 0).then(async () => {
+      await castOut.page.evaluate(({ x, y, z, ox, oz }) => {
+        const dbg = window.__mcgrotDebug;
+        const cx = x + ox;
+        const cz = z + oz;
+        dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 0.55, cz);
+        dbg.camera.lookAt(x, y + 0.22, z);
+        dbg.stepFrames(30);
+      }, {
+        x: castIn.state.pomple.x, y: castIn.state.pomple.y, z: castIn.state.pomple.z,
+        ox: Math.sin(castIn.state.placement.yaw) * 0.8, oz: Math.cos(castIn.state.placement.yaw) * 0.8,
+      });
+      const shot = await castOut.page.screenshot();
+      writeFileSync(join(captureDir, 'gullet-pomple-control.png'), shot);
+      return shot;
+    });
+    const pomPng = PNG.sync.read(pompleFrame);
+    const pomCtlPng = PNG.sync.read(pompleCtl);
+    const pomDiff = pixelmatch(pomPng.data, pomCtlPng.data, null, pomPng.width, pomPng.height, { threshold: 0.1 });
+    const pomPct = (pomDiff / (pomPng.width * pomPng.height)) * 100;
+    results.push({
+      name: 'E10a.2: Pomplé is in a frame somebody looks at',
+      pass: pomPct >= 1,
+      detail: `${pomPct.toFixed(2)}% of pixels differ from the same pose on a day the dog is elsewhere ` +
+        '(want >=1%). docs/smoke/captures/gullet-pomple.png — open it; a dog at 0.42m is exactly the ' +
+        'thing that ships unlooked-at',
+    });
+
+    await castIn.context.close();
+    await castOut.context.close();
     }
 
     if (region('moments')) {
