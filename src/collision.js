@@ -129,6 +129,7 @@ function pushOut(solid, px, pz, r) {
 
 export function createCollision() {
   const solids = [];
+  const movers = [];   // E6a.2: solids that move — read live, never gridded
   const grid = new Map();
   let enabled = true;
 
@@ -179,10 +180,33 @@ export function createCollision() {
     });
   }
 
-  // Every solid whose cells the disc at (x,z) touches. Deduped — a footprint
-  // spans many cells.
-  function candidates(x, z, r) {
-    const out = new Set();
+  // E6a.2: a circle that follows something. The 30 walkers move every frame,
+  // so gridding them would mean re-indexing 30 solids per frame to save 30
+  // distance tests per query — the wrong trade at this population. They are
+  // read live through getters, which also means nothing here holds a
+  // reference into the scene graph.
+  //
+  // ONE-WAY, and this is the point: a walker is solid TO THE PLAYER, and
+  // leithers.js never consults collision, so the player is not solid to a
+  // walker. Their 1D paths do not path-find, and a walker who could be
+  // blocked by someone standing still would be pinned there forever.
+  function addMover(getX, getZ, r, tag = 'mover') {
+    if (typeof getX !== 'function' || typeof getZ !== 'function') return -1;
+    if (!Number.isFinite(r) || r <= 0) return -1;
+    movers.push({
+      type: 'circle', tag, r,
+      get x() { return getX(); },
+      get z() { return getZ(); },
+    });
+    return movers.length - 1;
+  }
+
+  // Every solid the disc at (x,z) could touch: gridded ones by cell, plus
+  // every mover (the whole list — 30 distance tests is cheaper than any
+  // structure that would avoid them). Deduped; a footprint spans many cells.
+  function nearby(x, z, r) {
+    const seen = new Set();
+    const out = [];
     const x0 = Math.floor((x - r) / CELL);
     const x1 = Math.floor((x + r) / CELL);
     const z0 = Math.floor((z - r) / CELL);
@@ -190,9 +214,16 @@ export function createCollision() {
     for (let ix = x0; ix <= x1; ix++) {
       for (let iz = z0; iz <= z1; iz++) {
         const cell = grid.get(key(ix, iz));
-        if (cell) for (const i of cell) out.add(i);
+        if (cell) {
+          for (const i of cell) {
+            if (seen.has(i)) continue;
+            seen.add(i);
+            out.push(solids[i]);
+          }
+        }
       }
     }
+    for (const m of movers) out.push(m);
     return out;
   }
 
@@ -203,8 +234,8 @@ export function createCollision() {
     let pz = z;
     for (let pass = 0; pass < MAX_PASSES; pass++) {
       let moved = false;
-      for (const i of candidates(px, pz, r)) {
-        const out = pushOut(solids[i], px, pz, r);
+      for (const solid of nearby(px, pz, r)) {
+        const out = pushOut(solid, px, pz, r);
         if (out) {
           px = out[0];
           pz = out[1];
@@ -218,8 +249,8 @@ export function createCollision() {
 
   function deepestContact(x, z, r) {
     let best = null;
-    for (const i of candidates(x, z, r)) {
-      const c = contact(solids[i], x, z, r);
+    for (const solid of nearby(x, z, r)) {
+      const c = contact(solid, x, z, r);
       if (c && (!best || c.depth > best.depth)) best = c;
     }
     return best;
@@ -239,7 +270,7 @@ export function createCollision() {
   // Leith Walk runs SSW, so an axis-decomposed fallback would have slid the
   // player sideways off a wall that is at 30 degrees to both axes.
   function resolveMove(fromX, fromZ, toX, toZ) {
-    if (!enabled || solids.length === 0) return [toX, toZ];
+    if (!enabled || (solids.length === 0 && movers.length === 0)) return [toX, toZ];
     const dx = toX - fromX;
     const dz = toZ - fromZ;
     const len = Math.hypot(dx, dz);
@@ -288,27 +319,38 @@ export function createCollision() {
   // returns its best effort. Runs at a slightly larger radius than movement so
   // an arrival never lands flush against a wall it would immediately re-resolve.
   function resolveFree(x, z, r = PLAYER_RADIUS * 1.5) {
-    if (solids.length === 0) return [x, z];
+    if (solids.length === 0 && movers.length === 0) return [x, z];
     const [px, pz] = settle(x, z, r);
     return [px, pz];
   }
 
   function isBlocked(x, z, r = PLAYER_RADIUS) {
-    for (const i of candidates(x, z, r)) if (pushOut(solids[i], x, z, r)) return true;
+    for (const solid of nearby(x, z, r)) if (pushOut(solid, x, z, r)) return true;
     return false;
   }
 
   function stats() {
     const byTag = {};
     for (const s of solids) byTag[s.tag] = (byTag[s.tag] || 0) + 1;
-    return { solids: solids.length, cells: grid.size, byTag, enabled };
+    for (const m of movers) byTag[m.tag] = (byTag[m.tag] || 0) + 1;
+    return { solids: solids.length, movers: movers.length, cells: grid.size, byTag, enabled };
+  }
+
+  // Every registered radius, by tag — the prompt-radius ordering gate reads
+  // this rather than re-deriving the figures it is meant to be checking.
+  function radii(tag) {
+    const out = [];
+    for (const s of solids) if (s.tag === tag && s.type === 'circle') out.push(s.r);
+    for (const m of movers) if (m.tag === tag) out.push(m.r);
+    return out;
   }
 
   return {
-    addPolygon, addBox, addCircle,
+    addPolygon, addBox, addCircle, addMover, radii,
+    playerRadius: PLAYER_RADIUS,
     resolveMove, resolveFree, isBlocked, stats,
     setEnabled: (v) => { enabled = !!v; },
     isEnabled: () => enabled,
-    get count() { return solids.length; },
+    get count() { return solids.length + movers.length; },
   };
 }

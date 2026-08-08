@@ -117,7 +117,7 @@ exception left is E7a's mechanical hosting migration.
 | E4 enable commits | **high (review)** | walker changes move leither-bearing goldens |
 | E9b visitor theatre | medium | interior-only; corpus gated by Central Bar test |
 | E6a.1 collision: buildings + props — **LANDED** | medium; **high (review)** on the zero-golden claim | movement-path only; bookmarks exempt by design |
-| E6a.2 collision: characters | medium | circles on existing groups; prompt-radius ordering gated |
+| E6a.2 collision: characters — **LANDED** | medium | circles on existing groups; prompt-radius ordering gated |
 | E8 close | **high (review)** | wholesale recapture + noise.json bands measured on the new set |
 | E10a the Gullet | medium; **high (review)** on the enable+recapture | new scene geometry, flag-first |
 | E6b the tram | **high (review)** | camera parenting, update order, suspended clamps |
@@ -3229,7 +3229,7 @@ NPC. Decomposed for Opus; the design rulings here are taken, not open.*
 | unit | scope | acceptance shape |
 |---|---|---|
 | **E6a.1** — LANDED | Buildings + static props: footprint/box data, chainage grid, slide resolution in `controls.update()`, moment/spawn free-point resolution | opposed pair: collision suspended → a scripted walk-at-a-façade run ends inside the footprint, enabled → it ends outside every footprint with forward progress along the wall (the slide, not a dead stop); **zero golden movement vs a control worktree**; moment-inside-a-wall resolves to a free point (fault-inject: disable resolution, gate must redden); determinism — grid build draws nothing from the shared PRNG, `geomHash` untouched |
-| **E6a.2** | Characters: per-figure circles for 124 vendors + 30 walkers, same resolution path | walk-at-a-vendor run stops at the circle and slides off it; the reading interaction still triggers (the prompt radius must exceed the collision radius — assert the ordering for all 124); walkers still pass through the player (opposed-pair on the asymmetry) |
+| **E6a.2** — LANDED | Characters: per-figure circles for 124 vendors + 30 walkers, same resolution path | walk-at-a-vendor run stops at the circle and slides off it; the reading interaction still triggers (the prompt radius must exceed the collision radius — assert the ordering for all 124); walkers still pass through the player (opposed-pair on the asymmetry) |
 
 **Named risks:** corner traps where a footprint meets the corridor clamp
 (two constraints resolving against each other can oscillate — resolve
@@ -3275,6 +3275,32 @@ the same candidate set.
 **Decided for E6a.2, not built:** a vendor's collision circle must be smaller
 than `interact.js`'s 8 m prompt range, asserted for all 124 — a vendor you
 cannot reach is a vendor you cannot hear.
+
+#### E6a.2 — what landed (2026-08-07)
+
+154 more solids: a gridded circle per vendor (124) and a **mover** per walker
+(30) — a circle read live through getters rather than indexed, because a
+walker moves every frame. Radius is half the silhouette's shoulder width in
+both cases (`bodyW / 2`), which is the archetype's scaled width by
+construction and needs neither the glb promise nor the scene graph. Vendors
+measure 0.130–0.416 m, so the closest the player can stand is 0.480–0.766 m
+against `interact.js`'s 8 m prompt range — 7.234 m of margin, asserted for
+all 124 and paired with one behavioural check that the prompt really is up at
+the closest approach the circle allows.
+
+**The asymmetry holds and is measured.** `leithers.js` never consults
+collision, so a walker is solid to the player and the player is not solid to
+a walker. Cross-boot join by walker index, player parked on walker 0's path
+for 300 frames: 0 of 30 moved.
+
+**Movers register at the end of the first update, not at build time.** A
+walker's group sits at the world origin until `update()` places it, and the
+origin is the Foot — registering early would put 30 solids on the spawn point
+and let the boot's free-point resolution shove the arriving player off it.
+
+Four fault injections, one per gate family. `geomHash c0751fc1` and
+`realtimeHash 6e5cd57b` unchanged from `8d6dd99`; `goldens:audit` names a
+subset of E6a.1's standing 25 with no new pose. Suite 270 PASS / 0 FAIL.
 
 ### E6b — The living tram
 

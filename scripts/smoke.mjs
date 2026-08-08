@@ -2684,6 +2684,183 @@ async function main() {
       await trapCtx.close();
     }
 
+    // --- E6a.2: the characters --------------------------------------------
+    //
+    // Walkers only exist where update() has put them, so everything below
+    // steps frames first. That also registers them: leithers.js holds the
+    // movers back until the first update, because a walker's group sits at
+    // the world origin — which is the Foot, where the player spawns — until
+    // then.
+    await colPage.evaluate(() => window.__mcgrotDebug.stepFrames(120));
+    const figures = await colPage.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const col = dbg.world.collision;
+      return {
+        stats: col.stats(),
+        playerRadius: col.playerRadius,
+        promptRange: dbg.interact.range,
+        vendorRadii: col.radii('vendor'),
+        walkerRadii: col.radii('walker'),
+        vendors: dbg.npcs.npcs.length,
+        walkers: dbg.leithers.walkers.length,
+      };
+    });
+    results.push({
+      name: 'E6a.2: every vendor and every walker is solid',
+      pass: figures.vendorRadii.length === figures.vendors
+        && figures.walkerRadii.length === figures.walkers
+        && figures.vendors > 0 && figures.walkers > 0,
+      detail: `${figures.vendorRadii.length}/${figures.vendors} vendors (gridded circles), ${figures.walkerRadii.length}/${figures.walkers} walkers (movers)`,
+    });
+
+    // The ordering that keeps a vendor readable: the closest the player can
+    // get is radius + PLAYER_RADIUS, and the prompt has to reach further than
+    // that or the street holds vendors you can walk up to and cannot hear.
+    // Asserted for ALL of them by the worst case, with the margin reported.
+    const worstReach = Math.max(...figures.vendorRadii) + figures.playerRadius;
+    results.push({
+      name: 'E6a.2: every vendor stays inside its own prompt range',
+      pass: worstReach < figures.promptRange
+        && figures.vendorRadii.length > 0
+        && figures.vendorRadii.every((r) => r + figures.playerRadius < figures.promptRange),
+      detail: `worst closest-approach ${worstReach.toFixed(3)}m (radii ${Math.min(...figures.vendorRadii).toFixed(3)}-${Math.max(...figures.vendorRadii).toFixed(3)} + player ${figures.playerRadius}) against interact RANGE ${figures.promptRange}m — margin ${(figures.promptRange - worstReach).toFixed(3)}m across all ${figures.vendorRadii.length}`,
+    });
+
+    // Walk at a vendor. The player cannot be turned without synthesising a
+    // drag, so the aim is done the other way round: measure the direction one
+    // held frame actually moves the camera, then stand the player upstream of
+    // a vendor along it. Real input, real integration, no debug pose.
+    const vendorRun = await colPage.evaluate(({ frames, lead }) => {
+      const dbg = window.__mcgrotDebug;
+      const col = dbg.world.collision;
+      const key = (code, down) => window.dispatchEvent(
+        new KeyboardEvent(down ? 'keydown' : 'keyup', { code, bubbles: true }));
+
+      dbg.controls.setEnabled(true);
+      const before = { x: dbg.camera.position.x, z: dbg.camera.position.z };
+      key('KeyW', true);
+      dbg.stepFrames(1);
+      key('KeyW', false);
+      const dirX = dbg.camera.position.x - before.x;
+      const dirZ = dbg.camera.position.z - before.z;
+      const dl = Math.hypot(dirX, dirZ) || 1;
+      const ux = dirX / dl;
+      const uz = dirZ / dl;
+
+      // First vendor whose approach line is clear of everything else.
+      let target = null;
+      for (const npc of dbg.npcs.npcs) {
+        const g = npc.group.position;
+        const sx = g.x - ux * lead;
+        const sz = g.z - uz * lead;
+        let clear = !col.isBlocked(sx, sz);
+        for (let t = 0.1; t < 0.85 && clear; t += 0.1) {
+          if (col.isBlocked(sx + ux * lead * t, sz + uz * lead * t, 0.36)) clear = false;
+        }
+        if (clear) { target = { npc, sx, sz, gx: g.x, gz: g.z, r: npc.collisionRadius }; break; }
+      }
+      if (!target) return null;
+
+      const arm = (on) => {
+        col.setEnabled(on);
+        dbg.camera.position.x = target.sx;
+        dbg.camera.position.z = target.sz;
+        key('KeyW', true);
+        const promptEl = document.getElementById('npc-prompt');
+        let minD = Infinity;
+        // Sampled AT the closest approach, not at the end of the run: the
+        // slide carries the player on past the vendor, so an end-of-run read
+        // measures a spot 10m down the street. It failed exactly that way
+        // first time round.
+        let promptAtClosest = 'never';
+        for (let i = 0; i < frames; i++) {
+          dbg.stepFrames(1);
+          const d = Math.hypot(
+            dbg.camera.position.x - target.gx, dbg.camera.position.z - target.gz);
+          if (d < minD) {
+            minD = d;
+            promptAtClosest = promptEl ? promptEl.style.display : 'missing';
+          }
+        }
+        key('KeyW', false);
+        const end = { x: dbg.camera.position.x, z: dbg.camera.position.z };
+        const res = {
+          minD,
+          travel: Math.hypot(end.x - target.sx, end.z - target.sz),
+          prompt: promptAtClosest,
+        };
+        col.setEnabled(true);
+        return res;
+      };
+      const off = arm(false);
+      const on = arm(true);
+      return { name: target.npc.comic.npc.name, r: target.r, off, on };
+    }, { frames: 90, lead: 9 });
+
+    if (!vendorRun) {
+      results.push({
+        name: 'E6a.2: the player is stopped by a vendor',
+        pass: false,
+        detail: 'no vendor had a clear approach line — the fixture, not the feature, is broken',
+      });
+    } else {
+      const keepOut = vendorRun.r + figures.playerRadius;
+      results.push({
+        name: 'E6a.2: control — with collision suspended the player walks through the vendor',
+        pass: vendorRun.off.minD < vendorRun.r,
+        detail: `closed to ${vendorRun.off.minD.toFixed(3)}m of ${vendorRun.name} (inside their ${vendorRun.r.toFixed(3)}m circle)`,
+      });
+      results.push({
+        name: 'E6a.2: the player is stopped by a vendor and slides off',
+        pass: vendorRun.on.minD >= keepOut - 1e-3 && vendorRun.on.travel > 1,
+        detail: `closest ${vendorRun.on.minD.toFixed(3)}m (keep-out ${keepOut.toFixed(3)}m), still travelled ${vendorRun.on.travel.toFixed(2)}m — a slide, not a pin (control arm closed to ${vendorRun.off.minD.toFixed(3)}m)`,
+      });
+      // The whole reason the ordering above matters, checked on the product
+      // rather than on the arithmetic: standing at the circle, can you read them?
+      results.push({
+        name: 'E6a.2: a vendor you are stopped by is a vendor you can still hear',
+        pass: vendorRun.on.prompt === 'block',
+        detail: `#npc-prompt display=${vendorRun.on.prompt} at ${vendorRun.on.minD.toFixed(3)}m, the closest the circle allows (control arm, walked through: ${vendorRun.off.prompt})`,
+      });
+    }
+
+    // Walkers pass through the player, deliberately. Two boots, joined by
+    // walker index: one with the player parked far up the Walk, one with the
+    // player standing exactly where walker 0 is about to be. If leithers.js
+    // ever started consulting collision, these two would diverge.
+    const walkerArm = async (onTop) => {
+      const ctx = await newContext(browser, { viewport: { width: 1280, height: 800 } });
+      await ctx.addInitScript(() => { window.__mcgrotFreezeAtBoot = true; });
+      const pg = await ctx.newPage();
+      await pg.goto(`http://localhost:${port}/?walkers=${onTop ? 1 : 0}`);
+      await pg.waitForFunction(() => !!(window.__mcgrotDebug && window.__mcgrotDebug.world));
+      await pg.click('#title-enter');
+      await pg.evaluate(() => window.__mcgrotDebug.pauseAuto());
+      const out = await pg.evaluate((stand) => {
+        const dbg = window.__mcgrotDebug;
+        dbg.stepFrames(60); // place the walkers
+        const w0 = dbg.leithers.walkers[0].group.position;
+        if (stand) { dbg.camera.position.x = w0.x; dbg.camera.position.z = w0.z; }
+        else { dbg.camera.position.x = w0.x + 400; dbg.camera.position.z = w0.z + 400; }
+        dbg.stepFrames(300);
+        return dbg.leithers.walkers.map((w) => [
+          +w.group.position.x.toFixed(5), +w.group.position.z.toFixed(5)]);
+      }, onTop);
+      await ctx.close();
+      return out;
+    };
+    const walkersClear = await walkerArm(false);
+    const walkersBlocked = await walkerArm(true);
+    const moved = walkersClear.filter((p, i) => {
+      const q = walkersBlocked[i];
+      return !q || Math.hypot(p[0] - q[0], p[1] - q[1]) > 1e-4;
+    }).length;
+    results.push({
+      name: 'E6a.2: walkers pass through the player (the asymmetry holds)',
+      pass: moved === 0 && walkersClear.length > 0 && walkersClear.length === walkersBlocked.length,
+      detail: `${walkersClear.length} walkers, ${moved} moved when the player stood on walker 0's path for 300 frames (want 0) — joined by index across two boots`,
+    });
+
     await colCtx.close();
     }
 

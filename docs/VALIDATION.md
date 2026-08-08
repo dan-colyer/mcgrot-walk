@@ -3431,6 +3431,93 @@ unchanged after the change.
   or disappears today; a moving tram (E6b) would need more than this.
 - **No vertical anything.** No steps, no ducking, no walking onto the tram.
 
+## Collision against the characters (E6a.2)
+
+154 more solids: a gridded circle per vendor (124) and a **mover** per walker
+(30). A mover is a circle whose position is read live through getters rather
+than indexed into the grid — a walker moves every frame, so gridding them
+would mean re-indexing 30 solids per frame to save 30 distance tests per
+query. The whole mover list is tested on every query; at this population that
+is the cheaper side of the trade.
+
+Radius is **half the silhouette's shoulder width** in both cases —
+`vendorDims().bodyW / 2` for a vendor, the walker's own `bodyW / 2` for a
+walker. That is the archetype's scaled width by construction (`bodyW` is the
+width `characters.js` scales the mesh to match), and it needs neither the glb
+promise nor a read of the scene graph. Measured range: vendors 0.130–0.416 m,
+so the closest the player can stand is 0.480–0.766 m.
+
+### The asymmetry is the design
+
+A walker is solid **to the player**. The player is not solid to a walker:
+`leithers.js` never consults collision. Their 1-D paths do not path-find, so a
+walker who could be blocked by someone standing still would be pinned there
+forever. The gate for this is a cross-boot join by walker index — one boot
+with the player parked 400 m away, one with the player standing exactly where
+walker 0 is about to be, both stepped 300 frames. 0 of 30 walkers moved.
+
+### Movers register after the first update, not at build
+
+A walker's group sits at the world origin until `update()` first places it,
+and the world origin is the Foot of the Walk — where the player spawns.
+Registering at build time would put 30 solids on the spawn point and let the
+boot's free-point resolution shove the arriving player off it. `leithers.js`
+holds them back until the end of the first update.
+
+| gate | what it holds |
+|---|---|
+| `E6a.2: every vendor and every walker is solid` | 124/124 gridded circles, 30/30 movers |
+| `E6a.2: every vendor stays inside its own prompt range` | worst closest-approach 0.766 m against `interact.js`'s 8 m `RANGE` — 7.234 m margin, checked for all 124 |
+| `E6a.2: control — with collision suspended the player walks through the vendor` | closes to 0.128 m, inside the 0.364 m circle |
+| `E6a.2: the player is stopped by a vendor and slides off` | closest 0.724 m against a 0.714 m keep-out, still travelled 19.67 m |
+| `E6a.2: a vendor you are stopped by is a vendor you can still hear` | `#npc-prompt` is `block` at the closest approach the circle allows |
+| `E6a.2: walkers pass through the player (the asymmetry holds)` | 0 of 30 moved, joined by index across two boots |
+
+The vendor run aims without a debug pose: the player cannot be turned without
+synthesising a drag, so the direction is taken from what one held frame
+actually moves the camera, and the start point is placed upstream of a vendor
+along it. Real key input, real integration.
+
+**The prompt is sampled at the closest approach, not at the end of the run.**
+The slide carries the player on past the vendor, so an end-of-run read
+measures a spot 10 m down the street — it failed exactly that way first time
+round and the fix was to sample where the claim is about.
+
+### Fault-injected
+
+| injection | what went red |
+|---|---|
+| vendor circles not registered | 0/124 solid; the stopped-by-a-vendor gate closed to 0.128 m |
+| walker movers not registered | 0/30 movers |
+| vendor radius + 8 m | worst closest-approach 8.766 m against RANGE 8 — margin −0.766 m |
+| a walker that refuses to step into the player | 1 of 30 walkers moved between the two boots |
+
+### Zero golden movement
+
+`geomHash c0751fc1` and `realtimeHash 6e5cd57b` — the same values measured at
+`8d6dd99` before any collision work. `realtimeHash` is the load-bearing one
+here: it hashes the live walker positions, and the movers are registered from
+inside `update()`. `goldens:audit` names 24 poses above its floor, a subset of
+E6a.1's 25 (`golden-mobile:hud` sat at 0.024%/0.025% in the two earlier runs
+and fell just under the 0.02% floor in this one). No new pose appeared.
+Suite: 270 PASS / 0 FAIL, 90 s sharded.
+
+### What E6a.2 deliberately does not prove
+
+- **Nothing about how a vendor's circle relates to its mesh.** The radius comes
+  from the silhouette `characters.js` scales to, not from the standing
+  instance's bounding box. If an archetype's scaling ever stopped matching
+  `bodyW`, the circle would keep the old width and no gate here would see it.
+- **A walker is one circle, not a moving obstacle.** There is no swept test on
+  the walker's own motion: a walker moving fast enough could still step over a
+  standing player in a single frame. At 0.55–1.05 m/s against a 0.22 m radius
+  that cannot happen, but it is an inequality, not a barrier.
+- **Nothing about the crowd off.** With `CHARACTERS_ENABLED` off the vendors
+  are paper dolls; their circles still register (they come from `npcs.js`, not
+  from the mesh), but no gate walks at a doll.
+- **The prompt ordering is arithmetic over all 124 plus one behavioural
+  check**, not 124 behavioural checks.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

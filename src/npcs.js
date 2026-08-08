@@ -303,6 +303,14 @@ export function buildNpcs(assets, world, scene, camera) {
     const npc = buildNpc(assets, comic, COAT_COLORS[placement.coatIndex], registerFace, placement.isAnchor);
     const py = world.groundHeight ? world.groundHeight(placement.px, placement.pz) : 0;
     npc.group.position.set(placement.px, py, placement.pz);
+    // E6a.2: the vendor is solid. Radius is HALF THE SILHOUETTE'S SHOULDER
+    // WIDTH — vendorDims().bodyW is the width characters.js scales the
+    // archetype mesh to match, so this is the archetype's scaled width
+    // without waiting on a glb promise or reading the scene graph. A vendor
+    // never moves, so it is a gridded circle, not a mover.
+    if (world.collision) {
+      world.collision.addCircle(placement.px, placement.pz, npc.collisionRadius, 'vendor');
+    }
     npc.group.rotation.y = placement.baseY;
     npc.baseY = placement.baseY;
     npc.phase = placement.index * 2.1;
@@ -403,6 +411,11 @@ function buildNpc(assets, comic, coatColor, registerFace, isAnchor) {
     comic,
     build,
     noteColor,
+    // E6a.2: half the silhouette's shoulder width — the plan radius the
+    // player is stopped at. Read by the prompt-radius ordering gate, which
+    // must be able to compare it against interact.js's RANGE without
+    // re-deriving it from the same expression the scene used.
+    collisionRadius: bodyW / 2,
     // The box figure, built on request and not before (E3g). Empty on the
     // shipped path: coat, boots, head, scarf and the two gripping hands are
     // 6 meshes and 8 materials per vendor that the generated mesh replaces,

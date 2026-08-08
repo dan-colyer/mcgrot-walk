@@ -15,7 +15,11 @@
 import { assetUrl } from './assets.js';
 import { isTypingTarget } from './keys.js';
 
-const RANGE = 8; // metres — NPCs stand ~6m off the centreline, so walking the road must still trigger
+// Exported since E6a.2: a vendor's collision circle must be smaller than the
+// distance at which they can be heard, or the street holds vendors you can
+// reach and cannot read. The gate asserts that ordering for all 124 and needs
+// the real number, not a copy of it.
+export const RANGE = 8; // metres — NPCs stand ~6m off the centreline, so walking the road must still trigger
 const HUSH_MS = 600; // the ritual's beat of attention between overlay-open and reading-start
 
 export function createInteract({ assets, npcs, camera, controls, proximityAudio, onReadingChange, litter, leithers, journal }) {
@@ -338,5 +342,5 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
     return !!(openNpc || openLitter);
   }
 
-  return { update, dispose, setReadAlong, isOpen };
+  return { update, dispose, setReadAlong, isOpen, range: RANGE };
 }

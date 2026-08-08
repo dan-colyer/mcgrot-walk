@@ -148,6 +148,27 @@ export function buildLeithers(assets, world, scene, readers) {
     walkers.push(w);
   }
 
+  // E6a.2: solid to the player, and only to the player. Movers rather than
+  // gridded circles because a walker's position changes every frame; the
+  // getters read w.group.position, which update() is the only writer of.
+  // Nothing here reads back — leithers.js never consults collision, and that
+  // asymmetry is the design, not an omission (see src/collision.js).
+  //
+  // Registered after the FIRST update, not here: a walker's group sits at the
+  // world origin until update() first places it, and the origin is the Foot
+  // of the Walk, where the player spawns. Registering at build time would put
+  // 30 solids on top of the spawn point and let the boot's free-point
+  // resolution shove the arriving player off it.
+  let moversRegistered = false;
+  function registerSolids() {
+    if (moversRegistered || !world.collision) return;
+    moversRegistered = true;
+    for (const w of walkers) {
+      world.collision.addMover(
+        () => w.group.position.x, () => w.group.position.z, w.collisionRadius, 'walker');
+    }
+  }
+
   // E3g's rule applied to the walkers: build the box figure, or the generated
   // one, but never both. With meshing off the doll goes up now; with it on
   // every walker waits for its archetype and falls back to a doll if that
@@ -319,6 +340,9 @@ export function buildLeithers(assets, world, scene, readers) {
       }
     }
 
+    // Every walker now stands where update() put it, so they can be solid.
+    registerSolids();
+
     // Stagger the (mildly pricey) reader-proximity scan: a few walkers per frame.
     for (let n = 0; n < 4; n++) {
       const w = walkers[scanIdx++ % walkers.length];
@@ -418,6 +442,8 @@ function buildLeither() {
     // default so the triple is still the shape vendorDims() and
     // selectArchetype() expect, and is multiplied by zero on the way in.
     build: { height: H, girth: G, headScale: 1.5 },
+    // E6a.2: half the walker's shoulder width, same rule as a vendor's.
+    collisionRadius: bodyW / 2,
     archetype: null,
     squash: 1,
     mesh: null,

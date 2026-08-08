@@ -216,7 +216,12 @@ and does not report success until every changed file md5-matches the live URL.
 - `src/collision.js` — plan-view (x/z) solids the PLAYER is resolved against;
   nothing pushes anything else. Buildings register their `leith.json`
   footprints; scenery/cars/roadworks register boxes and circles from
-  placements they already compute — **never a new `rand()` draw**. Consulted
+  placements they already compute — **never a new `rand()` draw**. Since E6a.2
+  npcs.js registers a circle per vendor and leithers.js a *mover* per walker
+  (position read live, registered at the end of the FIRST update — a walker's
+  group sits at the world origin, i.e. on the spawn point, until then).
+  Walkers are solid to the player and the player is not solid to them:
+  leithers.js never consults collision, deliberately. Consulted
   ONLY from `controls.update()`'s movement integration, before the corridor
   clamp; the debug API poses `camera.position` directly and stays exempt,
   which is what keeps every bookmark and golden unchanged. Movement
