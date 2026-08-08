@@ -3700,6 +3700,33 @@ the-keeper ruling and the cut list live in the Direction ruling above.*
 
 ### E10a — The Gullet (after E8 close)
 
+**E10a.1 LANDED 2026-08-08** — the stall alone, behind `__mcgrotForceGullet`
+with the shipped default OFF. Suite 289 PASS / 0 FAIL sharded (92s), every
+golden 0.000–0.012%. New `gullet` region, 10 gates; see `docs/VALIDATION.md` §
+"The `gullet` region". Parts 2 (McGrot) and 3 (Pomplé) are unstarted and both
+need generated meshes, which is real spend — ask before running the pipeline.
+
+*The pitch, and a correction to this section's own risk note.* "Pick an empty
+stretch" was not available as written: the widest gap along the combined
+vendor line is 17.9 m. But vendors alternate pavements, so a stall competes
+only with the 62 on its own side, and per pavement there are 30 m runs. Dan
+picked **chainage 740, side +1** (the west pavement) — the widest clear run on
+the street, 30.3 m, mid-Walk so it is passed daily, beside the Cupp anchor at
+725. Nearest vendor 13.92 m, comfortably outside `interact.js`'s 8 m `RANGE`.
+Full table in VALIDATION.md.
+
+*Also landed with it, on the E5 phase gate's ruling:* `src/flags.js`, one
+localhost-gated `flag(name, shippedDefault)` helper, with anchors, characters,
+tint, character-fail, lamps, legs and leither-mesh all migrated onto it in the
+same commit. Their existing opposed-pair gates verified the migration for
+free, exactly as that ruling predicted.
+
+*Rejected, measured:* using `geomHash` inequality as the flag's discriminator.
+It fails — `computeGeomHash` covers merged building geometry, InstancedMesh
+matrices and vendor positions, and the stall is none of those. Inverted into
+the better gate instead: `geomHash` must MATCH across the arms, which is what
+proves the stall's own PRNG reseeds nothing.
+
 McGrot's pitch, standing on the street every day; McGrot himself,
 date-seeded. One milestone, mostly on pipelines that already exist:
 

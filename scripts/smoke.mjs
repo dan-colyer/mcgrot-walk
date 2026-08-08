@@ -88,7 +88,7 @@ const ONLY_ARG = process.argv.find((a) => a.startsWith('--only='));
 // is about what happens when nothing above the file is fetchable. Cheap —
 // build.mjs is 0.2s — and it is the only thing standing between the shareable
 // file and a divergence nobody notices until someone opens it.
-const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'captions', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
+const REGIONS = ['alignment', 'journal', 'anchors', 'characters', 'artifact', 'collision', 'captions', 'gullet', 'moments', 'lamps', 'legs', 'ending', 'render', 'weather', 'determinism', 'dpr', 'onevoice', 'determinism-clock', 'mobile'];
 const regionsRun = [];
 
 // --- E0.3: --since — the router, not a new tier -------------------------
@@ -143,6 +143,17 @@ const SINCE_RULES = [
   // same corner — measured claim: it does not appear there, and that is
   // exactly the kind of thing to keep checking.
   [/^src\/captions\.js$/, ['captions', 'mobile']],
+  // E10a.1: gullet.js builds one prop group at chainage 740 and registers two
+  // solids. It is behind __mcgrotForceGullet with the shipped default OFF, so
+  // on every other region's boot it builds nothing at all — 'gullet' is the
+  // only region that has ever seen it. When the enable commit flips the
+  // default this rule must grow 'render', 'weather' and 'mobile': the stall
+  // will then be in whatever poses frame it, and this comment is the reminder.
+  [/^src\/gullet\.js$/, ['gullet']],
+  // src/flags.js is read at build time by every flagged module — anchors,
+  // characters, lamps, legs, leithers and the gullet — so it reaches every
+  // region those flags gate. No narrowing is honest here.
+  [/^src\/flags\.js$/, SINCE_ALL],
   [/^src\/day\.js$/, ['moments', 'determinism-clock', 'legs']],
   [/^src\/lamps\.js$/, ['lamps', 'render', 'weather']],
   [/^src\/legs\.js$/, ['legs', 'ending']],
@@ -3010,6 +3021,254 @@ async function main() {
     });
 
     await colCtx.close();
+    }
+
+    if (region('gullet')) {
+    // --- E10a.1: the Gullet ------------------------------------------------
+    //
+    // The stall lands behind __mcgrotForceGullet with GULLET_ENABLED = false,
+    // so on the shipped path this region's ON arm is the ONLY thing in the
+    // suite that has ever seen it. That is the point of a flag-first landing,
+    // and it is also this region's main hazard: nothing else would notice if
+    // the module quietly stopped building.
+    //
+    // THE JUDGE IS NOT THE MODULE. Chainage, side and offset are re-derived
+    // here in node from the stall's world position by walking streetLine, and
+    // "is it inside a building" is a point-in-polygon test over
+    // assets/leith.json — the same second implementation the collision region
+    // uses. src/gullet.js exports its placement, and reading that back would
+    // pass whether or not the group ever reached the scene.
+    const gulletLeith = JSON.parse(readFileSync(join(root, 'assets/leith.json'), 'utf8'));
+    const GULLET_FOOTPRINTS = gulletLeith.buildings.map((b) => b.footprint).filter((f) => f && f.length > 2);
+    const gulletInside = (x, z) => GULLET_FOOTPRINTS.some((pts) => {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const [xi, zi] = pts[i];
+        const [xj, zj] = pts[j];
+        if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+      }
+      return inside;
+    });
+
+    const { context: gulOffCtx, page: gulOffPg } = await bootPage(browser, port, { __mcgrotForceGullet: false });
+    const { context: gulOnCtx, page: gulOnPg } = await bootPage(browser, port, { __mcgrotForceGullet: true });
+
+    const readGullet = (pg) => pg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      const g = dbg.gullet;
+      const inScene = !!dbg.scene.getObjectByName('gullet');
+      const stats = dbg.world.collision.stats();
+      return {
+        enabled: !!g.enabled,
+        inScene,
+        solids: stats.byTag.gullet || 0,
+        geomHash: dbg.invariants().geomHash,
+        triangles: dbg.invariants().triangles,
+        placement: g.placement,
+        streetLine: dbg.world.streetLine,
+        promptRange: dbg.interact.range,
+        vendors: dbg.npcs.npcs.map((n) => [n.group.position.x, n.group.position.z]),
+      };
+    });
+    const gulOff = await readGullet(gulOffPg);
+    const gulOn = await readGullet(gulOnPg);
+
+    // The flag-first claim, both directions. OFF must be indistinguishable
+    // from the shipped build — that is what lets this milestone land against
+    // goldens nobody recaptured — and ON must actually change the scene, or
+    // the OFF arm proves nothing.
+    results.push({
+      name: 'E10a.1: control — with the flag off the stall does not exist',
+      pass: !gulOff.enabled && !gulOff.inScene && gulOff.solids === 0,
+      detail: `flag off: enabled=${gulOff.enabled}, in scene=${gulOff.inScene}, ${gulOff.solids} gullet solids (want false/false/0)`,
+    });
+    results.push({
+      name: 'E10a.1: with the flag on the stall is built and registered',
+      pass: gulOn.enabled && gulOn.inScene && gulOn.solids === 2,
+      detail: `flag on: enabled=${gulOn.enabled}, in scene=${gulOn.inScene}, ${gulOn.solids} gullet solids (want true/true/2; control arm: ${gulOff.solids})`,
+    });
+    results.push({
+      name: 'E10a.1: the flag is what separates the two scenes',
+      pass: gulOn.triangles > gulOff.triangles,
+      detail: `triangles on=${gulOn.triangles} off=${gulOff.triangles} (+${gulOn.triangles - gulOff.triangles}); ` +
+        'must differ, or the OFF arm above proves nothing',
+    });
+    // ...and the stall reseeds NOTHING. geomHash covers the merged building
+    // geometry, every InstancedMesh's matrices and all 124 vendor positions,
+    // so an unchanged hash with the stall in the scene is the measurement
+    // behind gullet.js's own-PRNG rule. E3f is why this is gated rather than
+    // asserted in a comment: one extra draw from a shared sequence moved the
+    // whole crowd, and the module that did it looked correct.
+    //
+    // Note what this deliberately does NOT prove: the stall itself is invisible
+    // to geomHash (it is a plain merged Mesh, not instanced, and not an npc),
+    // which is exactly why the triangle count above is a separate gate.
+    results.push({
+      name: 'E10a.1: the stall reseeds nothing — no building, prop or vendor moves',
+      pass: gulOn.geomHash === gulOff.geomHash,
+      detail: `geomHash on=${gulOn.geomHash} off=${gulOff.geomHash} (must MATCH — a different hash means ` +
+        'gullet.js drew from a PRNG something else was using)',
+    });
+
+    // Placement, re-derived. The stall is a fixed constant precisely so this
+    // can be an equality rather than a range: if chainage 740 ever drifts, the
+    // whole of E10a's "McGrot was in the day" story is pointing at a different
+    // piece of pavement.
+    const chainOf = (line, x, z) => {
+      let acc = 0;
+      let best = Infinity;
+      let chain = 0;
+      let side = 0;
+      let off = 0;
+      for (let i = 0; i < line.length - 1; i++) {
+        const [ax, az] = line[i];
+        const [bx, bz] = line[i + 1];
+        const dx = bx - ax;
+        const dz = bz - az;
+        const L2 = dx * dx + dz * dz;
+        let t = L2 ? ((x - ax) * dx + (z - az) * dz) / L2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const qx = ax + t * dx;
+        const qz = az + t * dz;
+        const d = Math.hypot(x - qx, z - qz);
+        if (d < best) {
+          best = d;
+          chain = acc + t * Math.sqrt(L2);
+          side = Math.sign(dx * (z - qz) - dz * (x - qx));
+          off = d;
+        }
+        acc += Math.sqrt(L2);
+      }
+      return { chain, side, off };
+    };
+    const derived = chainOf(gulOn.streetLine, gulOn.placement.x, gulOn.placement.z);
+    results.push({
+      name: 'E10a.1: the stall stands at chainage 740 on side +1',
+      pass: Math.abs(derived.chain - 740) < 0.5 && derived.side === 1 && Math.abs(derived.off - 7.6) < 0.05,
+      detail: `re-derived from the world position by walking streetLine: chainage ${derived.chain.toFixed(1)} ` +
+        `(want 740±0.5), side ${derived.side} (want +1), offset ${derived.off.toFixed(2)}m (want 7.60±0.05)`,
+    });
+
+    // Clear of the buildings, judged off leith.json. The van's plan corners
+    // are rebuilt here from its yaw and the module's declared extents rather
+    // than read out of the collision registry, so a box registered in the
+    // wrong frame cannot vouch for itself.
+    const gc = Math.cos(gulOn.placement.yaw);
+    const gs = Math.sin(gulOn.placement.yaw);
+    const VAN_HALF_L = 4.4 / 2;
+    const VAN_HALF_D = 2.6 / 2;
+    const vanCorners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => [
+      gulOn.placement.x + u * VAN_HALF_L * gc + v * VAN_HALF_D * gs,
+      gulOn.placement.z - u * VAN_HALF_L * gs + v * VAN_HALF_D * gc,
+    ]);
+    const buried = vanCorners.filter(([x, z]) => gulletInside(x, z)).length;
+    results.push({
+      name: 'E10a.1: the van is not inside a building',
+      pass: buried === 0,
+      detail: `${buried}/4 plan corners inside a leith.json footprint (want 0), judged node-side over ${GULLET_FOOTPRINTS.length} footprints`,
+    });
+
+    // The pitch was chosen so McGrot's station will never fight a neighbour's
+    // for the proximity overlay. interact.js exports RANGE and this reads it
+    // live, so shrinking or growing the prompt radius re-tests the choice
+    // instead of silently invalidating it.
+    const nearestVendor = Math.min(...gulOn.vendors.map(([x, z]) =>
+      Math.hypot(x - gulOn.placement.x, z - gulOn.placement.z)));
+    results.push({
+      name: 'E10a.1: no vendor stands inside the stall\'s prompt radius',
+      pass: nearestVendor > gulOn.promptRange + 2,
+      detail: `nearest vendor ${nearestVendor.toFixed(2)}m away; interact.js RANGE is ${gulOn.promptRange}m ` +
+        `(want > ${gulOn.promptRange + 2}m, i.e. clear with a margin)`,
+    });
+
+    // Solid to the player, and the control is the SAME walk with the flag off
+    // rather than with collision suspended. Suspending collision would prove
+    // the resolver runs; this proves the GULLET is what stopped you, because
+    // every other solid on the street is present in both arms.
+    const walkIntoStall = (pg, p) => pg.evaluate(({ px, pz, yaw, frames }) => {
+      const dbg = window.__mcgrotDebug;
+      // Stand 7m out into the carriageway, dead in front of the hatch, and
+      // walk straight at it.
+      const sx = px + Math.sin(yaw) * 7;
+      const sz = pz + Math.cos(yaw) * 7;
+      dbg.controls.setEnabled(true);
+      dbg.camera.position.x = sx;
+      dbg.camera.position.z = sz;
+      dbg.camera.position.y = dbg.world.groundHeight(sx, sz) + 1.7;
+      // Aim through controls, not camera.lookAt(): update() derives the
+      // forward vector from its own yaw and overwrites the camera rotation
+      // with it. Forward is (-sin yaw, -cos yaw), so facing the stall from
+      // out in the road means yaw = atan2(-(px-sx), -(pz-sz)).
+      dbg.controls.setYaw(Math.atan2(-(px - sx), -(pz - sz)));
+      const key = (code, down) => window.dispatchEvent(
+        new KeyboardEvent(down ? 'keydown' : 'keyup', { code, bubbles: true }));
+      key('KeyW', true);
+      const path = [];
+      for (let i = 0; i < frames; i++) {
+        dbg.stepFrames(1);
+        path.push([dbg.camera.position.x, dbg.camera.position.z]);
+      }
+      key('KeyW', false);
+      return { x: dbg.camera.position.x, z: dbg.camera.position.z, start: [sx, sz], path };
+    }, { px: p.x, pz: p.z, yaw: p.yaw, frames: 180 });
+
+    const inVan = (x, z) => {
+      const dx = x - gulOn.placement.x;
+      const dz = z - gulOn.placement.z;
+      const along = dx * gc - dz * gs;
+      const across = dx * gs + dz * gc;
+      return Math.abs(along) <= VAN_HALF_L && Math.abs(across) <= VAN_HALF_D;
+    };
+    const stallOn = await walkIntoStall(gulOnPg, gulOn.placement);
+    const stallOff = await walkIntoStall(gulOffPg, gulOn.placement);
+    // Frames INSIDE the footprint, not the end position. 180 frames carries
+    // the player clear through a 2.6m-deep van and out the far side, so an
+    // end-position test scores the control arm as "never got there" when what
+    // it actually did was walk straight through — the failure mode this gate
+    // exists to catch, reported as a broken fixture.
+    const framesInVan = (arm) => arm.path.filter(([x, z]) => inVan(x, z)).length;
+    const onIn = framesInVan(stallOn);
+    const offIn = framesInVan(stallOff);
+    const distOn = Math.hypot(stallOn.x - gulOn.placement.x, stallOn.z - gulOn.placement.z);
+    results.push({
+      name: 'E10a.1: control — with the flag off the same walk goes straight through the van',
+      pass: offIn > 0,
+      detail: `flag off: ${offIn}/180 frames inside the van's plan footprint ` +
+        '(must be >0, or the ON arm is measuring a walk that never arrived)',
+    });
+    results.push({
+      name: 'E10a.1: the van stops the player',
+      pass: onIn === 0,
+      detail: `flag on: ${onIn}/180 frames inside the van's footprint (want 0; control arm: ${offIn}), ` +
+        `stopped ${distOn.toFixed(2)}m from the van centre`,
+    });
+
+    // A numeric gate cannot see a bad picture (E5d). The stall is something a
+    // player walks up to and looks at, so the suite renders it and holds it to
+    // the same contrast floor the goldens use. This is NOT a golden: the flag
+    // is off on the shipped path, so there is nothing here for a golden to
+    // protect yet — the enable commit is where that changes.
+    if (!existsSync(captureDir)) mkdirSync(captureDir, { recursive: true });
+    await gulOnPg.evaluate(({ px, pz, py, yaw }) => {
+      const dbg = window.__mcgrotDebug;
+      const cx = px + Math.sin(yaw) * 8;
+      const cz = pz + Math.cos(yaw) * 8;
+      dbg.camera.position.set(cx, dbg.world.groundHeight(cx, cz) + 1.7, cz);
+      dbg.camera.lookAt(px, py + 1.4, pz);
+      dbg.stepFrames(30);
+    }, { px: gulOn.placement.x, pz: gulOn.placement.z, py: gulOn.placement.y, yaw: gulOn.placement.yaw });
+    const gulShot = await gulOnPg.screenshot();
+    writeFileSync(join(captureDir, 'gullet-front.png'), gulShot);
+    const gulLum = luminanceStats(PNG.sync.read(gulShot));
+    results.push({
+      name: 'E10a.1: the stall is a picture, not a silhouette',
+      pass: gulLum.stddev >= SUBSTRATE_MIN_STDDEV && gulLum.mean >= 18 && gulLum.mean <= 200,
+      detail: `mean luminance ${gulLum.mean.toFixed(1)} (want 18-200), stddev ${gulLum.stddev.toFixed(1)} ` +
+        `(want >=${SUBSTRATE_MIN_STDDEV}). Frame written to docs/smoke/captures/gullet-front.png`,
+    });
+
+    await gulOffCtx.close();
+    await gulOnCtx.close();
     }
 
     if (region('moments')) {

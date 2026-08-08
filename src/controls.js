@@ -205,7 +205,17 @@ export function createControls(camera, domElement, { nearestStreetPoint, spawn, 
     document.removeEventListener('pointerlockchange', onPointerLockChange);
   }
 
-  return { update, dispose, setEnabled, setForward, setYFollow: (v) => { yFollow = !!v; } };
+  // Aim the walk. The debug API can already put the camera anywhere, but
+  // camera.lookAt() does not survive the next update() — movement derives
+  // its forward vector from `yaw` here, and update() writes the camera
+  // rotation FROM that. A gate that posed the camera with face() and then
+  // held W walked off in the spawn direction (E10a.1), which looked like a
+  // collision failure and was a steering one.
+  function setYaw(y) {
+    if (Number.isFinite(y)) yaw = y;
+  }
+
+  return { update, dispose, setEnabled, setForward, setYaw, setYFollow: (v) => { yFollow = !!v; } };
 }
 
 function clamp(v, min, max) {

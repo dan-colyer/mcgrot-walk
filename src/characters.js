@@ -33,6 +33,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from './assets.js';
 import { vendorDims, DEFAULT_BUILD } from './npcs.js';
+import { flag } from './flags.js';
 
 export const CHARACTERS_ENABLED = true;
 
@@ -165,24 +166,19 @@ export function vendorTransform(build) {
 }
 
 export function buildCharacters(assets, world, scene, npcs) {
-  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
-  const enabled = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceCharacters != null)
-    ? !!window.__mcgrotForceCharacters
-    : CHARACTERS_ENABLED;
+  const enabled = flag('Characters', CHARACTERS_ENABLED);
   // The tint's own control, localhost-only like the flag above. It exists so
   // the gate can boot the SAME build both ways and attribute a draw-call or
   // material count to the tint rather than to a number recorded on another day.
   // Declared BEFORE the early return below, which reads it — putting it after
   // threw a temporal-dead-zone ReferenceError on the shipped path, i.e. every
   // boot, and the whole scene failed to come up.
-  const tinted = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceTint != null)
-    ? !!window.__mcgrotForceTint
-    : true;
+  const tinted = flag('Tint', true);
   // E3g — force every archetype fetch to fail, localhost only. The doll is now
   // built ONLY on that failure path (that is what keeps the single-file
   // artifact's street populated while its glbs 404), and a fallback nothing
   // exercises is decoration. This is how the suite exercises it.
-  const forceFail = isLocal && typeof window !== 'undefined' && !!window.__mcgrotForceCharacterFail;
+  const forceFail = flag('CharacterFail', false);
 
   const all = npcs && Array.isArray(npcs.npcs) ? npcs.npcs : [];
 

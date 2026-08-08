@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clothMat } from './npcs.js';
 import { selectArchetype } from './characters.js';
+import { flag } from './flags.js';
 
 // E3f — stand the walkers on the same five generated meshes the vendors use.
 //
@@ -125,10 +126,8 @@ export function buildLeithers(assets, world, scene, readers) {
   group.name = 'leithers';
   scene.add(group);
 
-  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
-  const meshed = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceLeitherMesh != null)
-    ? !!window.__mcgrotForceLeitherMesh
-    : LEITHERS_MESHED;
+  // __mcgrotForceLeitherMesh, localhost only — see src/flags.js.
+  const meshed = flag('LeitherMesh', LEITHERS_MESHED);
 
   const walkers = [];
   for (let i = 0; i < COUNT; i++) {

@@ -8,6 +8,7 @@ import { buildShopfronts } from './shopfronts.js';
 import { createProximityAudio } from './proximity-audio.js';
 import { createInteract } from './interact.js';
 import { buildScenery } from './scenery.js';
+import { buildGullet } from './gullet.js';
 import { buildLamps } from './lamps.js';
 import { createLegs } from './legs.js';
 import { createEnding } from './ending.js';
@@ -140,6 +141,10 @@ async function main() {
   leithers.useArchetypes(characters);
   const scenery = buildScenery(world, scene);
   scenery.onArcFlash = () => ambience.triggerCrackle();
+
+  // E10a.1: McGrot's pitch at chainage 740, behind __mcgrotForceGullet.
+  // Its own module and its own seed — it must never draw from scenery's.
+  const gullet = buildGullet(world, scene);
 
   // E2g: street lights, hung off scenery's catenary poles. Built after
   // scenery (it needs the pole positions) and handed to atmosphere, which
@@ -364,7 +369,7 @@ async function main() {
       camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
       sky, atmosphere, torch, DPR_CAP, ambience, post, journal, countVendorsWithAudio,
       vendorList: npcs.list, anchorsEnabled: npcs.anchorsEnabled, anchorSet: ANCHOR_SET, computeVendorLayout,
-      moments, shareUi, lamps, legs, ending, characters, captions,
+      moments, shareUi, lamps, legs, ending, characters, captions, gullet,
       stepFrame: runFrame,
       renderNow,
       setPostProcessing,

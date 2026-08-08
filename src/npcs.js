@@ -26,6 +26,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { assetUrl } from './assets.js';
 import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
 import { ANCHORS_ENABLED, anchorsById } from './anchors.js';
+import { flag } from './flags.js';
 
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
@@ -288,13 +289,8 @@ export function buildNpcs(assets, world, scene, camera) {
     });
   };
 
-  // localhost-only override (mirrors __mcgrotForceDaySeed etc — see debug.js)
-  // so scripts/smoke.mjs can drive both flag states from one boot without
-  // touching the shipped default.
-  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
-  const anchorsEnabled = (isLocal && typeof window !== 'undefined' && window.__mcgrotForceAnchors != null)
-    ? !!window.__mcgrotForceAnchors
-    : ANCHORS_ENABLED;
+  // __mcgrotForceAnchors, localhost only — see src/flags.js.
+  const anchorsEnabled = flag('Anchors', ANCHORS_ENABLED);
 
   const layout = computeVendorLayout(list, streetLine, anchorsEnabled);
 

@@ -240,7 +240,7 @@ export function createDebugApi(ctx) {
     renderer, scene, sky, atmosphere, torch, stepFrame, updateFrame, updaters, setAutoAnimate,
     DPR_CAP, ambience, post, renderNow, setPostProcessing, journal, countVendorsWithAudio,
     vendorList, anchorsEnabled, anchorSet, computeVendorLayout, moments, shareUi, lamps, legs, ending,
-    characters, captions,
+    characters, captions, gullet,
   } = ctx;
 
   const consoleErrors = [];
@@ -502,7 +502,7 @@ export function createDebugApi(ctx) {
   return {
     // --- back-compat: existing probe fields keep working unchanged ---
     camera, world, npcs, leithers, litter, shopfronts, controls, proximityAudio, interact, renderer, scene,
-    journal, countVendorsWithAudio, captions,
+    journal, countVendorsWithAudio, captions, gullet,
     stepFrame,
     stepFrames,
 

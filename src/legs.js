@@ -17,6 +17,7 @@
 // second one here is how the sky and the street end up disagreeing.
 
 import { chainageOfPoint } from './frontage.js';
+import { flag } from './flags.js';
 
 // E5d lands with this off, so the machinery can be verified against unmoved
 // goldens before any behaviour changes.
@@ -32,14 +33,8 @@ const END_RADIUS = 40;
 const TURNAROUND_HOURS = 5;
 
 export function legsEnabled() {
-  // localhost-only override, mirroring npcs.js's __mcgrotForceAnchors and
-  // lamps.js's __mcgrotForceLamps, so the suite can drive both flag states
-  // from one boot without touching the shipped default.
-  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
-  if (isLocal && typeof window !== 'undefined' && window.__mcgrotForceLegs != null) {
-    return !!window.__mcgrotForceLegs;
-  }
-  return LEGS_ENABLED;
+  // __mcgrotForceLegs, localhost only — see src/flags.js.
+  return flag('Legs', LEGS_ENABLED);
 }
 
 export function createLegs({ camera, world, atmosphere, seed = 0, onHinge = null }) {

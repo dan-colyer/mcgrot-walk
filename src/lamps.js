@@ -29,6 +29,7 @@
 
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { flag } from './flags.js';
 
 // E2g lands with this off, so the milestone can be verified against unmoved
 // goldens before the pixels change. The enable commit flips it, and that is
@@ -92,14 +93,8 @@ function lampOutput(windowGlow) {
 }
 
 export function lampsEnabled() {
-  // localhost-only override (mirrors npcs.js's __mcgrotForceAnchors) so the
-  // gate suite can drive both flag states from one boot without touching the
-  // shipped default.
-  const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
-  if (isLocal && typeof window !== 'undefined' && window.__mcgrotForceLamps != null) {
-    return !!window.__mcgrotForceLamps;
-  }
-  return LAMPS_ENABLED;
+  // __mcgrotForceLamps, localhost only — see src/flags.js.
+  return flag('Lamps', LAMPS_ENABLED);
 }
 
 // poles: scenery.js's wire-attachment points, pushed as (left, right) per

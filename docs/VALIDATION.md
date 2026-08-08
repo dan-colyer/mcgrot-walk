@@ -3850,6 +3850,107 @@ recapture and would largely obsolete the bands above, so it is Dan's call
 rather than something to fold in silently. Recorded here with its measurement
 so the next session does not re-derive it.
 
+## The `gullet` region (E10a.1)
+
+Ten gates, all of them on a flag whose shipped default is **off**. That makes
+this region the only place in the suite that has ever built the stall, and it
+is the reason the gates below are more paranoid than a prop of this size would
+normally earn: nothing else in the run would notice if `src/gullet.js` quietly
+stopped producing geometry.
+
+### The measurement that chose the pitch
+
+The roadmap's E10a risk note said to "pick an empty stretch — density pockets
+doctrine says a quiet stretch gains most". Measured, that stretch does not
+exist as written. The 124 vendors span chainage 40–1557 and the widest gap
+along the combined line is **17.9 m**.
+
+The note was reasoning about the wrong line. Vendors alternate pavements
+(`side = i % 2 === 0 ? 1 : -1` in `computeVendorLayout`), 62 a side, all at
+exactly 6 m off the centreline, so a stall competes only with the 62 on its
+own side. Per pavement the widest clear runs are:
+
+| Side | Clear run | Centre chainage | Between |
+|---|---|---|---|
+| +1 | 30.3 m | 740 | Rennie Dreghorn / Doreen Dunnett |
+| +1 | 30.2 m | 1406 | Ishbel Tarbolton / Hamish Tosh |
+| +1 | 29.4 m | 1041 | Malky Fyfe / Wullie Flett |
+| −1 | 29.7 m | 67 | Ina MacRimmel / Fergus MacRaith |
+| −1 | 29.3 m | 482 | Jock Borthwick / Gordie Blyth |
+
+Dan picked 740 (2026-08-08). Note that 740, 1041 and 1406 all sit beside
+anchor landmarks — the gaps are where the anchors nudged their neighbours
+apart when E5b.2 placed them.
+
+**Side +1 is the WEST pavement, not the east.** The first report of this table
+labelled it east from the (+x = east, north→south) convention without checking
+the tangent. At chainage 740 the tangent is (−0.516, +0.857) and side +1's
+perpendicular is (−0.857, −0.516), which points west-north-west. The chainage
+was unaffected; the compass label was wrong.
+
+### What each gate proves
+
+- **The flag-first pair.** OFF: `enabled` false, no scene object named
+  `gullet`, zero `gullet` collision solids. ON: all three the other way, and
+  exactly 2 solids. Neither arm is worth anything alone.
+- **Triangles differ (+545) between the arms.** This is the discriminator. It
+  replaced a `geomHash` inequality check that FAILED on the first run for a
+  good reason: `computeGeomHash` covers merged building geometry, every
+  `InstancedMesh`'s matrices and the 124 vendor positions, and the stall is
+  none of those. The stall is invisible to it.
+- **...and `geomHash` MATCHES between the arms.** Once the hash was understood
+  it became the better gate, pointed the other way: an unchanged hash with the
+  stall in the scene is the measurement behind gullet.js's own-PRNG rule. E3f
+  is why this is gated rather than asserted — one extra draw from a shared
+  sequence moved the whole crowd, and the module that did it looked correct.
+- **Chainage 740, side +1, offset 7.60 m, re-derived in node** by walking
+  `streetLine` from the stall's world position. `gullet.placement` is not
+  consulted for the verdict; reading it back would pass whether or not the
+  group ever reached the scene.
+- **Not inside a building**, judged by point-in-polygon over the 995
+  `leith.json` footprints — the same second implementation the `collision`
+  region uses, and the van's plan corners are rebuilt here from its yaw rather
+  than read out of the collision registry.
+- **No vendor inside the prompt radius.** Nearest is 13.92 m against
+  `interact.js`'s exported `RANGE` of 8 m, read live so that changing the
+  prompt radius re-tests the choice instead of silently invalidating it.
+- **The van stops the player**, control being the SAME walk with the flag
+  off — not with collision suspended. Suspending collision would prove the
+  resolver runs; this proves the *Gullet* is what stopped you, because every
+  other solid on the street is present in both arms.
+- **The frame is a picture** (mean 80.4, stddev 47.8), on the E5d rule that a
+  numeric gate cannot see a blackout.
+
+### Two fixture bugs the first run caught
+
+Worth recording because both looked like product failures and were not.
+
+**`dbg.face()` does not aim a walk.** The first cut posed the camera with
+`face(x, z)` and held W; the player walked 43 m in the spawn direction.
+`face()` calls `camera.lookAt`, and `controls.update()` overwrites the camera
+rotation from its own `yaw` on the very next frame. `controls.setYaw()` was
+added for this (src/controls.js) and the gate aims through it.
+
+**An end-position test scored the control arm as a broken fixture.** 180
+frames carries the player clean through a 2.6 m-deep van and out the far side,
+so "did it end inside the footprint" reported *false* for the arm that walked
+straight through — which is the exact behaviour the gate exists to
+demonstrate. It counts frames inside the footprint instead: 11/180 with the
+flag off, 0/180 with it on.
+
+### What this region deliberately does not prove
+
+- **Nothing about the shipped page.** The flag is off, so no visitor sees any
+  of this. The enable commit is where goldens, draw-call budgets and the
+  mobile pass start carrying the stall, and `SINCE_RULES`' entry for
+  `src/gullet.js` must grow `render`, `weather` and `mobile` at that point.
+- **Nothing about how it looks.** The contrast floor rules out a blackout and
+  nothing more. The judging captures under `docs/smoke/captures/gullet/` are
+  the record that a human opened it — front and oblique at 13:00, both again
+  at 22:00 under the shipped grade.
+- **Nothing about McGrot or Pomplé.** Neither exists yet. The stall is the
+  fixed point they vary around, and it is all E10a.1 contains.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in
