@@ -63,7 +63,13 @@ const BOOKMARKS = [
 ];
 
 // Column key. 'none' first so every row starts from the shipped frame.
-const PRESETS = ['none', ...(arg('presets', 'b').split(','))];
+// E8 close hardened the grade into shader constants: there is no preset table
+// left to iterate over, so the sheet's columns are now the only axis that
+// remains — the street without the grade, and the street with it. That still
+// does the job this harness exists for, which since E8 close is judging
+// CONTENT under a fixed grade (E10a's meshes, E3's crowd) rather than judging
+// grades against each other.
+const PRESETS = ['none', 'grade'];
 // Per-column border colour, so a cell lifted out of context is still
 // identifiable without text.
 const COL_COLOUR = ['0x808080', '0xff3333', '0x33ff66', '0x3399ff', '0xffcc00'];
@@ -147,13 +153,13 @@ async function capture() {
           // every preset in this row is the SAME frame graded differently —
           // the isolation the judgement depends on.
           await page.evaluate((name) => {
-            window.__mcgrotDebug.setStylePreset(name === 'none' ? null : name);
+            window.__mcgrotDebug.setStyleStrength(name === 'none' ? 0 : 1);
             window.__mcgrotDebug.renderNow();
           }, p);
           writeFileSync(join(dir, `${bm}-${p}.png`), await page.screenshot());
         }
       }
-      await page.evaluate(() => window.__mcgrotDebug.setStylePreset(null));
+      await page.evaluate(() => window.__mcgrotDebug.setStyleStrength(window.__mcgrotDebug.styleShipped));
       await context.close();
       console.log(`${cond.id}: ${BOOKMARKS.length * PRESETS.length} captures in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
       if (errors.length) console.error(`  console errors (${errors.length}):\n  ${errors.join('\n  ')}`);

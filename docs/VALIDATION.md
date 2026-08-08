@@ -3518,6 +3518,79 @@ Suite: 270 PASS / 0 FAIL, 90 s sharded.
 - **The prompt ordering is arithmetic over all 124 plus one behavioural
   check**, not 124 behavioural checks.
 
+## Hardening the grade into shader constants (E8 close, part 1)
+
+Preset `b` moved from twelve live uniforms into GLSL constants generated from
+a single JS object (`STYLE` in `src/post.js`). The live-tuning surface —
+`setStyle`, `setStylePreset`, the preset table — went with it; what is left is
+`uStyle` (on/off, which the opposed pair and the judging sheet both need) and
+`uPress`, which is derived from the renderer's live exposure every frame and
+therefore cannot be a constant.
+
+`uStyle` still ships at 0 in this commit. The enable is its own, per the
+containment discipline.
+
+### The gate change this forced
+
+Check 26a asserts that post strength 0 is BIT-identical to a direct render.
+The style block was gated on `uStyle` alone, which was harmless while `uStyle`
+was 0 — but once the grade ships at 1, a strength-0 frame would come out
+printed and 26a would go red for a reason unrelated to the invariant it
+guards. The block now branches on `uStyle * uStrength`, so neutral stays
+neutral by construction rather than by a `mix()` with a zero factor. Done in
+this commit rather than the enable commit, so the enable changes one number.
+
+### Hardening is NOT bit-identical, and here is the number
+
+The obvious control — capture the styled frame before and after and compare —
+does not work: consecutive runs of the *same* build differ by 0.05–0.18% of
+channels on these poses (the standing sky-FBM jitter, same as the goldens).
+So the measurement is the grade's **contribution**, which is noise-free within
+a run: style-off and style-on are `renderNow()` over the same settled frame,
+so `s1 − s0` is the grade alone.
+
+Five poses (mid-805-far/overcast/13, elm-row-hero/clear/13, skyline/haar/03,
+north-250-far/rain/22, foot-1500-far/drizzle/08), mean absolute channel effect
+of the grade:
+
+| pose | uniforms | hardened |
+|---|---|---|
+| elm-row-hero clear 13 | 34.8432 | 34.8448 |
+| foot-1500-far drizzle 08 | 30.4839 | 30.4839 |
+| mid-805-far overcast 13 | 36.6307 | 36.6295 |
+| north-250-far rain 22 | 29.7053 | 29.7054 |
+| skyline haar 03 | 29.5457 | 29.5463 |
+
+Pixel-level, 8,563 pixels across the five frames show any change in the
+grade's contribution. 8,064 are pixels the style-OFF frame also jittered
+between runs; 446 more have a jittered pixel within the 2px misregistration
+tap radius. **53 are unexplained by jitter** — median 1 channel level, one
+outlier at 24, spread evenly across all five frames.
+
+Those 53 are real. The control that proves it: running the *identical*
+hardened build twice gives the same jitter classes and **0 unexplained**.
+The mechanism is constant folding — `S_HIGHCUT - 0.18` and `1.5 / S_CELL` are
+now folded by the compiler in higher precision, where `uHighCut - 0.18` was a
+float32 subtraction at runtime, and a 1-ULP shift in a `smoothstep` edge flips
+whichever dot-mask pixels sat exactly on it.
+
+53 pixels in 5.12M is 0.001%, and no golden moved because `uStyle` is still 0.
+Recorded because "hardening a uniform into a constant is a no-op" is the kind
+of claim this project has been wrong about before, and because the enable
+commit's recapture will absorb these without anyone seeing them.
+
+Suite after the hardening: 270 PASS / 0 FAIL, 92 s sharded, no golden moved.
+
+### What this deliberately does not prove
+
+- **Nothing about the look being right.** That was decided by Dan over two
+  judging rounds, from pictures. This is only that the numbers survived the
+  move into the shader.
+- **The five poses are not the judging set.** They span the weather and hour
+  range the press mapping cares about; they are not a substitute for
+  `npm run style`.
+- **Nothing about the frames a player sees**, since the grade is still off.
+
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 
 The independent audit the phase's own Opus-run gate could not be. Rulings in

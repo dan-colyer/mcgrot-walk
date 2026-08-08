@@ -89,27 +89,64 @@ const GRAIN_FPS = 24;    // grain resamples on a 24fps step, not every frame
 const PRESS_EXPOSURE_LO = 0.50;  // the darkest palette stop (night, haar)
 const PRESS_EXPOSURE_HI = 1.46;  // the brightest (noon clear) — also the shipped default
 
-// `b` is the standing candidate after two rounds (Dan, 2026-08-03 and
-// 2026-08-04). Round 1's a/c/d and round 2's b1/b2/b3 are all rejected, with
-// their reasons in docs/ROADMAP.md; the table is kept down to the survivor
-// deliberately, so a later session reaches for the decided look rather than
-// re-proposing one that has already been judged.
+// `b` — "fine-litho" — IS THE GRADE. Two judging rounds chose it (Dan,
+// 2026-08-03 and 2026-08-04) and E8 close hardened it: the numbers below are
+// now compiled into the shader as constants, not pushed through uniforms, so
+// the renderer physically cannot be driven off-style. Round 1's a/c/d and
+// round 2's b1/b2/b3 are all rejected with their reasons in docs/ROADMAP.md;
+// the live-tuning surface (`setStyle`, `setStylePreset`, the preset table)
+// went with them. Re-opening the look means editing these constants and
+// recapturing every golden, which is the cost it should have.
 //
-// The single reason both rounds' losers lost is worth stating here, because it
-// is the constraint any future candidate has to satisfy: EVERY variant that
-// made the print more visible — coarser screen, heavier halftone, stronger
-// stock, more lift — read as visual distraction over a street the player is
-// trying to walk down and look at. The print is a texture on this world, not a
-// filter over it. `b` is the lightest touch in the set and it won twice.
+// The single reason both rounds' losers lost is the constraint any future
+// change has to satisfy: EVERY variant that made the print more visible —
+// coarser screen, heavier halftone, stronger stock, more lift — read as visual
+// distraction over a street the player is trying to walk down and look at. The
+// print is a texture on this world, not a filter over it. `b` is the lightest
+// touch in either set and it won twice.
 //
-// Still a candidate, not a keeper: uStyle ships at 0 and nothing is hardened
-// into shader constants until docs/STYLE.md exists.
-const STYLE_PRESETS = {
-  b: { label: 'fine-litho', pressDay: 0.72, pressNight: 0.95, cell: 2.6, halftone: 0.35,
-       highCut: 0.60, misreg: 0.7, sat: 0.85,
-       shadowTint: [0.97, 0.99, 1.03], highTint: [1.04, 1.01, 0.96],
-       stock: 0.35, ink: [0.06, 0.05, 0.05], paper: [0.98, 0.96, 0.92], artefact: 0.05 },
+// docs/STYLE.md § 2 is the prose form of these numbers and is the thing to
+// read before touching one.
+const STYLE = {
+  label: 'fine-litho',
+  pressDay: 0.72,      // press at the brightest palette stop
+  pressNight: 0.95,    // ...and at the darkest. Darker moment, LESS lift.
+  cell: 2.6,           // dot-screen cell, screen pixels
+  halftone: 0.35,      // how far the printed two-tone replaces the source
+  highCut: 0.60,       // luminance above which the paper stays clean
+  misreg: 0.7,         // plate offset at the frame edge, screen pixels
+  sat: 0.85,           // 1 = untouched, below = pulled toward grey
+  shadowTint: [0.97, 0.99, 1.03],
+  highTint: [1.04, 1.01, 0.96],
+  stock: 0.35,         // how far the range is remapped into ink..paper
+  ink: [0.06, 0.05, 0.05],
+  paper: [0.98, 0.96, 0.92],
+  artefact: 0.05,      // press speckle depth
 };
+
+// What uStyle ships at. 0 through the whole prototype loop — the containment
+// discipline E2c.3a taught: the stack lands inert, every golden unmoved, and
+// turns on in ONE commit that recaptures everything deliberately. E8 close's
+// hardening commit is still on the 0 side of that line; the enable is its own.
+const STYLE_SHIPPED = 0;
+
+// The same numbers again, as GLSL source. Generated from the object above so
+// the two cannot drift: there is one authority for the look and it is STYLE.
+const f = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));
+const v3 = (a) => `vec3(${a.map(f).join(', ')})`;
+const STYLE_CONSTS = `
+const float S_CELL      = ${f(STYLE.cell)};
+const float S_HALFTONE  = ${f(STYLE.halftone)};
+const float S_HIGHCUT   = ${f(STYLE.highCut)};
+const float S_MISREG    = ${f(STYLE.misreg)};
+const float S_SAT       = ${f(STYLE.sat)};
+const vec3  S_SHADOW    = ${v3(STYLE.shadowTint)};
+const vec3  S_HIGH      = ${v3(STYLE.highTint)};
+const float S_STOCK     = ${f(STYLE.stock)};
+const vec3  S_INK       = ${v3(STYLE.ink)};
+const vec3  S_PAPER     = ${v3(STYLE.paper)};
+const float S_ARTEFACT  = ${f(STYLE.artefact)};
+`;
 
 const VERT = `
 attribute vec3 position;
@@ -134,22 +171,14 @@ uniform float uGrain;
 uniform float uGrade;
 uniform float uTime;
 
-// E8 style axis. uStyle 0 skips the whole block below — see the note above
-// STYLE_PRESETS for why the branch, and not a multiply by zero, is the thing
-// that keeps the neutral frame bit-identical.
+// E8 style axis. TWO uniforms survive the hardening: uStyle, so the grade can
+// be switched off for the opposed-pair gate and for a bit-identical neutral
+// frame, and uPress, which is DERIVED from the renderer's live exposure every
+// frame and therefore cannot be a constant. Every other axis is compiled in
+// from STYLE — see the note above it.
 uniform float uStyle;
 uniform float uPress;       // exposure for the plate — see the note beside it
-uniform float uCell;        // dot-screen cell size, screen pixels
-uniform float uHalftone;    // how far the printed two-tone replaces the source
-uniform float uHighCut;     // luminance above which the paper stays clean
-uniform float uMisreg;      // plate offset at the frame edge, screen pixels
-uniform float uSat;         // 1 = untouched, below = pulled toward grey
-uniform vec3  uShadowTint;
-uniform vec3  uHighTint;
-uniform float uStock;       // how far the range is remapped into ink..paper
-uniform vec3  uInk;
-uniform vec3  uPaper;
-uniform float uArtefact;    // press speckle depth
+${STYLE_CONSTS}
 
 varying vec2 vUv;
 
@@ -174,8 +203,18 @@ void main() {
 
   // ---- E8: the printed page. Sits between the grade and the lens, because
   // the ink is a property of the image and the vignette and grain are
-  // properties of the thing looking at it. Inert at uStyle 0.
-  if (uStyle > 0.0) {
+  // properties of the thing looking at it.
+  //
+  // Gated on uStyle * uStrength, not on uStyle alone, and that product is
+  // what E8 close changed. Check 26a asserts that strength 0 is BIT-identical
+  // to a direct render; before the grade shipped, uStyle was 0 anyway and the
+  // question never arose. Now that it ships at 1, a strength-0 frame would
+  // have come out printed and 26a would have gone red for a reason that has
+  // nothing to do with the invariant it guards. Branching on the product
+  // keeps neutral neutral by construction rather than by a mix() with a zero
+  // factor, which is the same argument the block was written under.
+  float styleAmt = uStyle * uStrength;
+  if (styleAmt > 0.0) {
     vec2 texel = 1.0 / uResolution;
     vec2 fromCentre = vUv - 0.5;
 
@@ -184,7 +223,7 @@ void main() {
     // between a shifted and an unshifted tap, so the authored grade above
     // survives underneath it rather than being resampled away.
     vec2 dir = fromCentre / (length(fromCentre) + 0.0001);
-    vec2 mis = dir * uMisreg * smoothstep(0.05, 0.62, length(fromCentre)) * texel;
+    vec2 mis = dir * S_MISREG * smoothstep(0.05, 0.62, length(fromCentre)) * texel;
     vec3 raw = texture2D(tDiffuse, vUv).rgb;
     vec3 shifted = vec3(
       texture2D(tDiffuse, vUv + mis).r,
@@ -209,14 +248,14 @@ void main() {
     // Palette pull, not posterise: compress saturation, then push the shadows
     // and the highlights apart in temperature. The photographs keep their
     // tonality — hard quantisation is what turns brick to mush.
-    vec3 pulled = mix(vec3(tone), lifted, uSat)
-      * mix(uShadowTint, uHighTint, smoothstep(0.1, 0.9, tone));
+    vec3 pulled = mix(vec3(tone), lifted, S_SAT)
+      * mix(S_SHADOW, S_HIGH, smoothstep(0.1, 0.9, tone));
 
     // Dot screen at 45 degrees. Analytic, so the dot edge can be
     // fwidth-antialiased — a hard threshold crawls as the camera moves, which
     // is the single artefact that reads as "filter" rather than "printing".
     vec2 p = vUv * uResolution;
-    vec2 rot = vec2(p.x - p.y, p.x + p.y) * 0.70710678 / max(uCell, 1.0);
+    vec2 rot = vec2(p.x - p.y, p.x + p.y) * 0.70710678 / max(S_CELL, 1.0);
     float dist = length(fract(rot) - 0.5) * 2.0;
     float radius = sqrt(clamp(1.0 - tone, 0.0, 1.0));
     // The AA band is derived, not sampled: the rotation preserves length, so
@@ -224,27 +263,27 @@ void main() {
     // the same number out of the hardware at the cost of a derivative — and a
     // derivative is a driver-dependent quantity in a project whose goldens are
     // already pinned to one GPU. This is the anti-swim edge with none of that.
-    float aa = 1.5 / max(uCell, 1.0);
+    float aa = 1.5 / max(S_CELL, 1.0);
     float dotMask = 1.0 - smoothstep(radius - aa, radius + aa, dist);
 
     // Shadow/mid gating. This is the part that makes it read as printing:
     // ungated, every highlight gets dots too and the whole frame turns into
     // an effect. Highlights stay clean paper.
-    float gate = 1.0 - smoothstep(uHighCut - 0.18, uHighCut, tone);
+    float gate = 1.0 - smoothstep(S_HIGHCUT - 0.18, S_HIGHCUT, tone);
     vec3 twoTone = mix(vec3(1.0), pulled * 0.35, dotMask);
-    vec3 printed = mix(pulled, twoTone, gate * uHalftone);
+    vec3 printed = mix(pulled, twoTone, gate * S_HALFTONE);
 
     // The stock. Nothing on a printed page is pure black or pure white, so
     // the whole range is remapped into ink..paper — per channel, which keeps
     // hue rather than collapsing to a duotone.
-    vec3 styled = mix(printed, mix(uInk, uPaper, clamp(printed, 0.0, 1.0)), uStock);
+    vec3 styled = mix(printed, mix(S_INK, S_PAPER, clamp(printed, 0.0, 1.0)), S_STOCK);
 
     // Press artefacts: sparse specks on a slow reseed. Low-rate is the whole
     // point — resampled every frame it reads as video noise, not as a press.
     float sp = hash21(floor(vUv * uResolution / 3.0) + vec2(floor(uTime * 6.0) * 37.0, 0.0));
-    styled -= smoothstep(0.985, 1.0, sp) * uArtefact;
+    styled -= smoothstep(0.985, 1.0, sp) * S_ARTEFACT;
 
-    c = mix(c, styled, uStyle);
+    c = mix(c, styled, styleAmt);
   }
 
   // Vignette.
@@ -275,48 +314,19 @@ export function createPost(renderer) {
     uGrain: { value: GRAIN },
     uGrade: { value: GRADE },
     uTime: { value: 0 },
-    // E8, all inert until uStyle rises above 0. The defaults are preset 'b''s
-    // so a bare setStyleStrength(1) shows the round-1 survivor rather than a
-    // black frame, but nothing reads them while the style is off.
-    uStyle: { value: 0 },
-    uPress: { value: 0.72 },   // DERIVED per frame — see pressPair below
-    uCell: { value: 2.6 },
-    uHalftone: { value: 0.35 },
-    uHighCut: { value: 0.60 },
-    uMisreg: { value: 0.7 },
-    uSat: { value: 0.85 },
-    uShadowTint: { value: new THREE.Vector3(0.97, 0.99, 1.03) },
-    uHighTint: { value: new THREE.Vector3(1.04, 1.01, 0.96) },
-    uStock: { value: 0.35 },
-    uInk: { value: new THREE.Vector3(0.06, 0.05, 0.05) },
-    uPaper: { value: new THREE.Vector3(0.98, 0.96, 0.92) },
-    uArtefact: { value: 0.05 },
+    // E8. The only two style uniforms left after the hardening: the strength
+    // axis, and the plate exposure, which is recomputed from the renderer's
+    // live exposure every frame and so cannot be a constant.
+    uStyle: { value: STYLE_SHIPPED },
+    uPress: { value: STYLE.pressDay },   // DERIVED per frame — see render()
   };
-
-  // Not a uniform: uPress is computed from these and the renderer's live
-  // exposure every frame (see render()). Kept in JS so `dbg.stylePress()` can
-  // report the mapping without a screenshot.
-  const pressPair = { day: 0.72, night: 0.95 };
 
   function pressForExposure(exposure) {
     const k = Math.min(1, Math.max(0,
       (exposure - PRESS_EXPOSURE_LO) / (PRESS_EXPOSURE_HI - PRESS_EXPOSURE_LO)));
-    return pressPair.night + (pressPair.day - pressPair.night) * k;
+    return STYLE.pressNight + (STYLE.pressDay - STYLE.pressNight) * k;
   }
 
-  function applyStyle(params) {
-    for (const [k, v] of Object.entries(params || {})) {
-      // pressDay/pressNight are not uniforms — they are the endpoints uPress
-      // is interpolated between, so they live in JS. Anything else maps to its
-      // `u`-prefixed uniform by name; `label` matches nothing and falls through.
-      if (k === 'pressDay') { pressPair.day = v; continue; }
-      if (k === 'pressNight') { pressPair.night = v; continue; }
-      const u = uniforms['u' + k[0].toUpperCase() + k.slice(1)];
-      if (!u) continue;
-      if (Array.isArray(v)) u.value.set(v[0], v[1], v[2]);
-      else u.value = v;
-    }
-  }
 
   const material = new THREE.RawShaderMaterial({
     name: 'McGrotPost',
@@ -367,28 +377,22 @@ export function createPost(renderer) {
     setStrength(v) { uniforms.uStrength.value = v; },
     getStrength() { return uniforms.uStrength.value; },
 
-    // --- E8 prototype loop ---------------------------------------------
-    // Live-tunable, because the loop is judged from pictures and a rebuild
-    // per tweak is the thing that makes a style round die of friction.
-    // `setStylePreset(null)` / `'none'` returns the frame to the shipped look.
-    stylePresets: STYLE_PRESETS,
-    setStyle: applyStyle,
+    // --- E8: the grade -------------------------------------------------
+    // The prototype loop's live-tuning surface (setStyle, setStylePreset, the
+    // preset table) is GONE. The look is compiled in; the only thing left to
+    // move is whether it is applied at all, which the opposed-pair gate and
+    // the judging sheet both need. Anything that wants to change the look
+    // edits STYLE above and recaptures every golden.
+    styleName: STYLE.label,
+    styleShipped: STYLE_SHIPPED,
     setStyleStrength(v) { uniforms.uStyle.value = v; },
     getStyleStrength() { return uniforms.uStyle.value; },
-    setStylePreset(name, strength = 1) {
-      if (!name || name === 'none') { uniforms.uStyle.value = 0; return null; }
-      const preset = STYLE_PRESETS[name];
-      if (!preset) throw new Error(`[post] unknown style preset: ${name}`);
-      applyStyle(preset);
-      uniforms.uStyle.value = strength;
-      return preset;
-    },
     // What press the grade would use at a given exposure, and what it is using
     // now. The mapping is the load-bearing part of E8b, so it is readable as a
     // number rather than only as a picture.
     stylePress(exposure) {
       return exposure === undefined
-        ? { day: pressPair.day, night: pressPair.night, exposure: renderer.toneMappingExposure, press: uniforms.uPress.value }
+        ? { day: STYLE.pressDay, night: STYLE.pressNight, exposure: renderer.toneMappingExposure, press: uniforms.uPress.value }
         : pressForExposure(exposure);
     },
 
