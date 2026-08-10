@@ -151,7 +151,11 @@ Decisions taken:
 - **TTS:** `set -a; source .env.local; set +a; node scripts/generate-tts.mjs`
   (~14/day measured before free-tier 429s; resumable; completed clips skip; the
   run now stops on the first quota error rather than grinding the remainder).
-  **123/418 voiced, 124/418 transcribed** (2026-08-01). Runs unattended at 09:30
+  **125/418 voiced, 125/418 transcribed, and ZERO transcribed-but-unvoiced**
+  (recounted 2026-08-08). The trickle's queue is EMPTY and the daily job has
+  been rendering 0 clips: the free Gemini allowance is not the constraint and
+  is going unused. 30 distinct prebuilt voices are assigned across the 124
+  vendors, rotating by assignment index and wrapping at 30. Runs unattended at 09:30
   via `scripts/daily-tts.sh` + `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`.
   Transcription, not the API, is the bottleneck: 294 comics still have no script,
   and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`;
