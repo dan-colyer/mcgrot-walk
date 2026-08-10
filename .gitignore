@@ -2,6 +2,7 @@
 node_modules/
 dist/
 src/dev-bundle.js
+src/mcgrots-bundle.js
 .DS_Store
 
 # Cached full-size Commons downloads — intermediate only; the runtime uses
