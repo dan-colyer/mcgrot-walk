@@ -19,6 +19,19 @@ import { LIGHT, PITCH, PITCH_YAW, toWorld } from './site.js';
 import { loadFoot, buildFoot } from './foot.js';
 import { ANCHORS, anchorById, nearestAnchor } from './anchors.js';
 import { makeActor } from './actor.js';
+import { makeCapsuleBody } from './actors/capsule.js';
+import { makeSegmentedBody } from './actors/segmented.js';
+
+// G1's bake-off lever. `?body=segmented` swaps the candidate without touching
+// anything else, which is what keeps the comparison to the body alone —
+// locomotion, cameras, lighting and anchors are identical across all arms.
+const BODIES = {
+  capsule: () => makeCapsuleBody({}),
+  segmented: (assets) => makeSegmentedBody({ assets, archetype: BODY_ARCHETYPE }),
+};
+const params = new URLSearchParams(location.search);
+const BODY_KIND = params.get('body') || 'capsule';
+const BODY_ARCHETYPE = params.get('archetype') || 'rab';
 
 const FIXED_DT = 1 / 60;
 
@@ -71,8 +84,9 @@ const vanPlaceholder = (() => {
 })();
 scene.add(vanPlaceholder);
 
-const actor = makeActor({});
-scene.add(actor.group);
+// Built in boot(), once the assets object exists — a segmented body needs the
+// glb and its sidecar, and assetUrl is the only sanctioned way to reach them.
+let actor = null;
 
 // Ground-plane raycast target for click-to-walk, and the anchor markers.
 const raycaster = new THREE.Raycaster();
@@ -94,6 +108,7 @@ scene.add(markers);
 let footData = null;
 let current = null;          // the anchor the actor is parked at or heading to
 let clock = 0;               // seconds of game time; wall-clock in G4
+let bodyError = null;        // a candidate that failed to load — reported, not thrown
 
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
@@ -108,10 +123,30 @@ function goTo(id, { snap = false } = {}) {
   return true;
 }
 
+// G1's review camera: a fixed offset from the actor rather than a fixed point
+// in the world, so a walking figure stays centred and the same size in every
+// frame of a strip. This is an ANIMATION-REVIEW view, not a shot — the whole
+// point of the staging model is that the game has no free camera. It exists
+// because comparing three candidates' walks from an anchor shot would compare
+// their distance from the lens as much as their motion.
+let reviewMode = null;   // null | 'side' | 'front' | 'threequarter'
+const REVIEW = {
+  side: { off: [2.6, 0.95, 0], look: [0, 0.85, 0] },
+  front: { off: [0, 0.95, 2.6], look: [0, 0.85, 0] },
+  threequarter: { off: [1.9, 1.15, 1.9], look: [0, 0.85, 0] },
+};
+
 // The camera cuts rather than flies. A fixed shot per anchor is the whole
 // staging model (anchors.js) — interpolating between them would reintroduce
 // the arbitrary angles the model exists to avoid.
 function placeCamera() {
+  if (reviewMode && actor) {
+    const r = REVIEW[reviewMode] || REVIEW.side;
+    const p = actor.group.position;
+    camera.position.set(p.x + r.off[0], r.off[1], p.z + r.off[2]);
+    camera.lookAt(p.x + r.look[0], r.look[1], p.z + r.look[2]);
+    return;
+  }
   if (!current) return;
   const c = current.camera;
   camera.position.set(c.eye.x, c.eye.y, c.eye.z);
@@ -170,6 +205,22 @@ window.addEventListener('keydown', (e) => {
   footData = buildFoot(leith);
   scene.add(footData.group);
 
+  // The bake-off body. An unknown ?body= falls back to the control rather than
+  // failing to boot — a typo in a capture script should produce a comparable
+  // frame with an obvious identity, not a blank page.
+  const makeBody = BODIES[BODY_KIND] || BODIES.capsule;
+  const body = makeBody(null);
+  actor = makeActor({ body });
+  scene.add(actor.group);
+  try {
+    await actor.ready;
+  } catch (err) {
+    // A candidate that cannot load is a RESULT, not a crash. G1 has to be able
+    // to report "A1 failed" with a frame beside it.
+    console.warn(`[mcgrots] body '${BODY_KIND}' failed to load:`, err.message);
+    bodyError = err.message;
+  }
+
   goTo('back', { snap: true });
   resize();
   placeCamera();
@@ -192,6 +243,20 @@ window.addEventListener('keydown', (e) => {
         if (exposure !== undefined) renderer.toneMappingExposure = exposure;
         if (groundColor !== undefined) footData.ground.material.color.setHex(groundColor);
       },
+      // G1's bake-off handles. `body` names which candidate is loaded and
+      // `bodyError` is non-null when it failed — a failed candidate must be
+      // reportable rather than an unexplained blank frame.
+      body: BODY_KIND,
+      archetype: BODY_ARCHETYPE,
+      get bodyError() { return bodyError; },
+      bodyStats: () => actor.stats(),
+      setActorState: (s) => actor.setState(s),
+      lookAt: (yaw) => actor.lookAt(yaw),
+      get phase() { return actor.phase; },
+      // Walk to a raw point rather than an anchor, so a strip can capture a
+      // long straight walk instead of a five-metre hop between two spots.
+      walkTo: (x, z, yaw) => actor.walkTo(x, z, yaw),
+      setReviewCamera(mode) { reviewMode = mode; placeCamera(); },
       anchorIds: () => ANCHORS.map((a) => a.id),
       goTo: (id) => goTo(id),
       snapTo: (id) => goTo(id, { snap: true }),

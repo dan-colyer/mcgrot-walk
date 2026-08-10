@@ -1,81 +1,63 @@
-// The actor interface, and G0's placeholder implementation. Deliverable 4.
+// The actor: locomotion, shared. G0, refactored for G1.
 //
-// THIS FILE IS THE CONTRACT G1 COMPETES AGAINST. The animation bake-off runs
-// three candidates — skinned, segmented, hinged flats — and the only way to
-// compare them fairly is for the harness to swap one for another without
-// knowing which it has. So the shape below is fixed and the capsule is
-// disposable:
+// THE SPLIT MATTERS FOR THE BAKE-OFF. G1 compares three ways of drawing and
+// posing a body — skinned, segmented, hinged flats. If each candidate also
+// brought its own walking code, the comparison would be measuring pathfinding
+// and turn rates as much as animation. So everything about WHERE the actor is
+// lives here and is identical for all three; a candidate supplies only a BODY:
 //
-//   makeActor(opts) -> {
-//     group,                  THREE.Object3D, feet at y=0
-//     height,                 metres, for camera framing
-//     setState(name),         'idle' | 'walk' | 'sit' | 'listen'
-//     update(dt, clock),      advance; clock is wall-clock seconds
-//     stats(),                { drawCalls, triangles, bytes }
+//   makeBody() -> {
+//     group,                        THREE.Object3D, feet at y=0, 1 unit tall
+//     pose(state, phase, dt),       state: 'idle'|'walk'|'sit'|'listen'
+//                                   phase: metres walked, for foot-synced gait
+//     lookAt(yaw),                  head turn, radians relative to body
+//     stats(),                      { drawCalls, triangles, bytes }
+//     ready,                        Promise, or null if synchronous
 //   }
 //
-// Why the placeholder is a capsule and not something nicer: G1 judges the
-// candidates against each other, and a flattering stand-in would bias that. It
-// exists to prove the walk, the anchor transitions and the camera framing work
-// before anything is animated at all.
-//
-// WHAT G0 DELIBERATELY DOES NOT PROVE. There is no rig anywhere in this
-// project and none of the character meshes carry one — all seven glbs are
-// static Trellis output, no skins, no joints, no animations. A capsule that
-// slides between anchors says nothing about whether a body can be made to walk
-// convincingly. That is exactly the question G1 exists to answer, and nothing
-// here should be read as evidence about it.
+// `phase` is DISTANCE, not time. A gait driven by the clock slides its feet
+// whenever speed changes; driven by distance it cannot, and every candidate
+// gets that for free rather than each having to remember it.
 
 import * as THREE from 'three';
 
-const WALK_SPEED = 1.35;      // m/s. Ordinary walking pace; the walk is the
-                              // thing being watched, so it must not be brisk.
+const WALK_SPEED = 1.35;      // m/s. Ordinary pace; the walk is the thing being
+                              // watched, so it must not be brisk.
 const TURN_RATE = 4.2;        // rad/s toward the direction of travel
 const ARRIVE_EPS = 0.05;      // m — close enough to be parked
 
-export function makeActor({ height = 1.72, color = 0xb2a68a } = {}) {
+export function makeActor({ body, height = 1.72 }) {
   const group = new THREE.Group();
   group.name = 'actor';
 
-  const radius = 0.28;
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(radius, Math.max(0.1, height - radius * 2), 4, 8),
-    new THREE.MeshLambertMaterial({ color, flatShading: true }),
-  );
-  body.position.y = height / 2;
-  group.add(body);
-
-  // A nose, so facing is legible in a capture. Without it a capsule's yaw is
-  // unreadable and "did the actor turn to the speaker" is unfalsifiable by eye.
-  const nose = new THREE.Mesh(
-    new THREE.ConeGeometry(0.09, 0.22, 6),
-    new THREE.MeshLambertMaterial({ color: 0xd8c9a4, flatShading: true }),
-  );
-  nose.rotation.x = Math.PI / 2;
-  nose.position.set(0, height * 0.86, radius + 0.06);
-  group.add(nose);
+  const bodyGroup = body.group;
+  bodyGroup.scale.setScalar(height);
+  group.add(bodyGroup);
 
   let state = 'idle';
-  let target = null;          // {x, z} being walked to, or null
+  let target = null;
   let targetYaw = 0;
-  let sitOffset = 0;
+  let phase = 0;              // metres walked, monotonic
+  let headYaw = 0;
 
   const api = {
     group,
     height,
+    body,
+    ready: body.ready || Promise.resolve(),
 
     get state() { return state; },
     get walking() { return target !== null; },
+    get phase() { return phase; },
 
-    setState(name) {
-      state = name;
-      // Sitting is a 0.42 m drop in G0. A real implementation animates it;
-      // the placeholder only needs the camera's look target to land right.
-      sitOffset = name === 'sit' ? 0.42 : 0;
-    },
+    setState(name) { state = name; },
 
-    // Teleport. Used by the gate suite so a capture is deterministic without
-    // waiting out a walk, and by the debug API.
+    // Where the head points, relative to the body's own facing. G6 drives this
+    // from whoever is reading; G1 uses it to make "turn to the speaker"
+    // comparable across candidates, since a head-turn is the one motion a
+    // hinged flat may not be able to do at all.
+    lookAt(yaw) { headYaw = yaw; },
+
     snapTo(x, z, yaw) {
       group.position.set(x, 0, z);
       if (yaw !== undefined) { group.rotation.y = yaw; targetYaw = yaw; }
@@ -85,7 +67,6 @@ export function makeActor({ height = 1.72, color = 0xb2a68a } = {}) {
     walkTo(x, z, yaw) {
       target = { x, z, yaw };
       state = 'walk';
-      sitOffset = 0;
     },
 
     update(dt) {
@@ -104,33 +85,36 @@ export function makeActor({ height = 1.72, color = 0xb2a68a } = {}) {
           const step = Math.min(dist, WALK_SPEED * dt);
           group.position.x += (dx / dist) * step;
           group.position.z += (dz / dist) * step;
+          phase += step;
           targetYaw = Math.atan2(dx, dz);
         }
       }
 
-      // Shortest-arc turn toward the target yaw.
       let d = targetYaw - group.rotation.y;
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
-      const turn = Math.min(Math.abs(d), TURN_RATE * dt) * Math.sign(d);
-      group.rotation.y += turn;
+      group.rotation.y += Math.min(Math.abs(d), TURN_RATE * dt) * Math.sign(d);
 
-      body.position.y = height / 2 - sitOffset;
-      nose.position.y = height * 0.86 - sitOffset;
+      body.pose(state, phase, dt);
+      body.lookAt(headYaw);
     },
 
-    stats() {
-      let drawCalls = 0, triangles = 0;
-      group.traverse((o) => {
-        if (!o.isMesh) return;
-        drawCalls++;
-        const g = o.geometry;
-        if (g?.index) triangles += g.index.count / 3;
-        else if (g?.attributes?.position) triangles += g.attributes.position.count / 3;
-      });
-      return { drawCalls, triangles, bytes: 0 };
-    },
+    stats: () => body.stats(),
   };
 
   return api;
+}
+
+// Draw calls and triangles for any body, counted the same way for all three
+// candidates. Counting them per-candidate invites each to count differently.
+export function countStats(object3d, bytes = 0) {
+  let drawCalls = 0, triangles = 0;
+  object3d.traverse((o) => {
+    if (!o.isMesh || !o.visible) return;
+    drawCalls++;
+    const g = o.geometry;
+    if (g?.index) triangles += g.index.count / 3;
+    else if (g?.attributes?.position) triangles += g.attributes.position.count / 3;
+  });
+  return { drawCalls, triangles, bytes };
 }
