@@ -307,9 +307,22 @@ export function createInteract({ assets, npcs, camera, controls, proximityAudio,
       }
     }
 
-    // A vendor always outranks a page on the ground; litter only prompts when
-    // no reader is in range.
-    const litterBest = (!best && litter) ? litter.nearestItem(px, pz, 3.2) : null;
+    // NEAREST WINS, and it did not used to. The rule was "a vendor always
+    // outranks a page on the ground", with litter only consulted when no
+    // reader was in range at all — so a vendor 7.9m away beat a comic under
+    // your feet. That was survivable at 124 vendors and stopped being so at
+    // 156: with the spacing at 9.7m, 19 of the 24 litter comics had a vendor
+    // inside RANGE and could no longer be picked up. The suite caught it as
+    // E5b.1's found-credit gate going red, which is the gate doing its job.
+    //
+    // Litter's own radius is 3.2m against the vendor's 8m, so this only ever
+    // hands the prompt to litter when the player is genuinely closer to the
+    // ground than to a reader. A tie goes to the vendor.
+    const litterCandidate = litter ? litter.nearestItem(px, pz, 3.2) : null;
+    const litterDist = litterCandidate
+      ? Math.hypot(px - litterCandidate.x, pz - litterCandidate.z) : Infinity;
+    const litterBest = (litterCandidate && litterDist < bestDist) ? litterCandidate : null;
+    if (litterBest) best = null;
 
     if (best !== nearest || litterBest !== nearLitter) {
       nearest = best;

@@ -5,10 +5,10 @@
       "drawCalls": 31
     },
     "north-250-far": {
-      "drawCalls": 40
+      "drawCalls": 49
     },
     "elm-row-hero": {
-      "drawCalls": 41
+      "drawCalls": 44
     },
     "mid-550-close": {
       "drawCalls": 31
@@ -20,14 +20,14 @@
       "drawCalls": 30
     },
     "foot-1500-far": {
-      "drawCalls": 41
+      "drawCalls": 42
     },
     "skyline": {
-      "drawCalls": 325
+      "drawCalls": 379
     },
     "lamp-hero-night": {
-      "drawCalls": 333
+      "drawCalls": 390
     }
   },
-  "note": "E10a enable commit: skyline 315->325 and lamp-hero-night 323->333, +10 each. Accounted exactly: 9 stall meshes (body, trim, wheels, awning, counter, props, hoarding, price board, shut sign) + Pomple. McGrot is OUT on SMOKE_DATE 2026-01-01, so his mesh is not in this count and an in-day would be +11."
+  "note": "Census landing 124 -> 156 (batches 5, 7, 8), plus the reserved-band re-spacing in npcs.js. Attributed by measuring the SAME code at both censuses rather than by arithmetic: skyline 317 -> 377 and lamp-hero-night 328 -> 388, +60 each for 32 new vendors, i.e. 1.9 draw calls per vendor - a vendor-mesh and a nameplate, with comics still loading lazily by range. north-250-far +7, elm-row-hero +3, foot-1500-far +1; the three close poses and mid-805-far are unchanged because the band moved vendors out of those frusta as fast as the census put them in. Those figures are probe-condition and read 2 low against the suite's; the baselines here are the suite's own. Previous note, still standing underneath: E10a enable commit took skyline 315->325 and lamp-hero-night 323->333, +10 each - 9 stall meshes plus Pomple, with McGrot OUT on SMOKE_DATE 2026-01-01."
 }

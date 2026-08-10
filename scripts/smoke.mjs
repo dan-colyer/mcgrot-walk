@@ -127,7 +127,10 @@ const SINCE_RULES = [
   [/^build\.mjs$/, ['artifact']],
   // Leaf modules, narrowest first.
   [/^src\/journal\.js$/, ['journal', 'mobile']],
-  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'characters', 'onevoice', 'render', 'weather', 'determinism']],
+  // 'gullet' joined this rule when npcs.js started reserving a chainage band
+  // around the stall: vendor placement is now what keeps E10a.1's clearance
+  // gate green, so a spacing change reaches it.
+  [/^src\/(anchors|npcs)\.js$/, ['anchors', 'characters', 'onevoice', 'render', 'weather', 'determinism', 'gullet']],
   // characters.js ships the vendor crowd (E3e) and publishes the archetype
   // prototypes the walkers stand on (E3f), so it reaches every region that
   // renders a figure.
@@ -156,7 +159,10 @@ const SINCE_RULES = [
   // in whatever poses frame chainage 740 — 'render', 'weather' and 'mobile'
   // joined this rule at that commit, exactly as the previous comment here said
   // they must. 'onevoice' too: his station is in proximity-audio's list.
-  [/^src\/gullet\.js$/, ['gullet', 'render', 'weather', 'mobile', 'onevoice', 'collision']],
+  // 'anchors', 'characters' and 'determinism' joined when npcs.js began
+  // reserving a band around GULLET_CHAINAGE: moving the stall now re-spaces
+  // every vendor, flag or no flag.
+  [/^src\/gullet\.js$/, ['gullet', 'render', 'weather', 'mobile', 'onevoice', 'collision', 'anchors', 'characters', 'determinism']],
   // src/flags.js is read at build time by every flagged module — anchors,
   // characters, lamps, legs, leithers and the gullet — so it reaches every
   // region those flags gate. No narrowing is honest here.
@@ -339,6 +345,18 @@ function region(name) {
 // the assertion vacuous (measured: heard-at-open went 0 -> 1). The entire
 // saving was ~2s of a 400s run — not worth racing an assertion for.
 const HUSH_WAIT_MS = 700;
+// The vendor census, typed once. Nine gates used to carry their own `124`,
+// which is why landing a transcription batch was nine separate edits and why
+// an unattended merge could take the street to 135 with the failure looking
+// like nine unrelated bugs.
+//
+// It stays a TYPED NUMBER, not a count read off catalog.json. Derived from the
+// catalog it would track any change silently, including one nobody meant — and
+// the whole point of the 2026-08-10 cron incident is that a census change must
+// be loud. `census matches the catalog` below is the one gate that joins the
+// two, so an unintended merge fails exactly one assertion with the right name
+// on it. Landing a batch is now: run the merge, change this line, recapture.
+const CENSUS = 156;
 const DRAW_CALL_TOLERANCE_PCT = 10;
 const PIXEL_THRESHOLD = 0.1;       // pixelmatch per-pixel colour-diff sensitivity (0-1)
 const DIFF_PCT_TOLERANCE = 0.5;    // max % of pixels allowed to differ before a golden fails
@@ -1234,7 +1252,7 @@ async function main() {
       const runtimeCounts = await jPage.evaluate(() => window.__mcgrotDebug.journal.counts());
       // The opposed half. Asserting runtime === catalog-count proves nothing
       // on its own: every built vendor currently has audio, so the derived
-      // value collides with npcs.length AND with a hardcoded 124 — all three
+      // value collides with npcs.length AND with the typed CENSUS — all three
       // pass (measured). `!== 418` only rules out a number no plausible
       // implementation produces. So run the module's own counter over a
       // deliberately truncated cast and require it to track: a literal cannot.
@@ -1673,20 +1691,129 @@ async function main() {
 
       const anchorBookmarks = await onPage.evaluate(() => window.__mcgrotDebug.bookmarks);
       const drawCallDiffs = [];
+      const drawCallDeltas = [];
       for (const bm of anchorBookmarks) {
         await onPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
         const onInv = await getInvariants(onPage);
         await offPage.evaluate((id) => window.__mcgrotDebug.gotoBookmark(id), bm.id);
         const offInv = await getInvariants(offPage);
+        const pct = offInv.drawCalls
+          ? Math.abs(onInv.drawCalls - offInv.drawCalls) / offInv.drawCalls * 100 : 0;
+        drawCallDeltas.push({ id: bm.id, pct });
         if (onInv.drawCalls !== offInv.drawCalls) {
           drawCallDiffs.push(`${bm.id}: on=${onInv.drawCalls} off=${offInv.drawCalls}`);
         }
       }
-      results.push({
-        name: 'E5b.2: draw calls exactly +/-0 at every bookmark, anchors flag on vs off',
-        pass: drawCallDiffs.length === 0,
-        detail: drawCallDiffs.length === 0 ? `all ${anchorBookmarks.length} bookmarks match exactly` : drawCallDiffs.join('; '),
+      // WHAT THIS ASSERTS CHANGED AT CENSUS 156, and the reason is worth
+      // keeping. It used to demand draw calls be exactly equal at every
+      // bookmark. That passed at 124 by luck: the flag MOVES twelve vendors
+      // and draw calls are counted after frustum culling, so equality was a
+      // coincidence about which relocated vendor happened to be off-screen.
+      // At 9.7m spacing the coincidence ran out (mid-805-far on=42 off=45).
+      //
+      // The claim the gate was reaching for — the flag costs nothing — is now
+      // asserted where it is structurally true: the whole-scene renderable
+      // census and triangle total, walked by traversal so frustum culling
+      // cannot hide anything. Moving an object leaves both untouched; adding
+      // one cannot. Measured identical on both arms: 1495 objects, 523
+      // meshes, 1,052,097 triangles. Fault-injected — see docs/VALIDATION.md.
+      //
+      // Per-bookmark draw calls are still gated, but against the same 10%
+      // budget the rest of the suite uses rather than against zero. That is a
+      // deliberate loosening of an assertion that went red, so it is written
+      // down rather than quietly re-tuned.
+      // Meshes, lights and triangles — not raw Object3D count. The on arm has
+      // played voices by this point in the region and a THREE.PositionalAudio
+      // is an Object3D parented to the vendor's group, so a plain object
+      // count read 1515 vs 1512 for three audio nodes and nothing renderable
+      // (measured). Lights are counted because a light is the one non-mesh
+      // addition that would cost a frame.
+      const sceneCensus = (pg) => pg.evaluate(() => {
+        let objects = 0; let meshes = 0; let lights = 0; let tris = 0;
+        window.__mcgrotDebug.scene.traverse((o) => {
+          objects += 1;
+          if (o.isLight) lights += 1;
+          if (!o.isMesh) return;
+          meshes += 1;
+          const g = o.geometry;
+          tris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.count || 1);
+        });
+        return { objects, meshes, lights, tris };
       });
+      const censusOn = await sceneCensus(onPage);
+      const censusOff = await sceneCensus(offPage);
+      const censusSame = censusOn.meshes === censusOff.meshes
+        && censusOn.lights === censusOff.lights && censusOn.tris === censusOff.tris;
+      results.push({
+        name: 'E5b.2: the anchors flag moves vendors and adds nothing, anchors on vs off',
+        pass: censusSame,
+        detail: `on ${censusOn.meshes} meshes / ${censusOn.lights} lights / ${censusOn.tris} tris; `
+          + `off ${censusOff.meshes} / ${censusOff.lights} / ${censusOff.tris} (must match exactly; `
+          + `whole-scene traversal, so a frustum-culled addition still counts. Object3D totals `
+          + `${censusOn.objects} vs ${censusOff.objects}, reported not gated — audio nodes)`,
+      });
+      const worstDrawDelta = drawCallDeltas.length ? Math.max(...drawCallDeltas.map((d) => d.pct)) : 0;
+      results.push({
+        name: 'E5b.2: relocating the twelve stays inside the draw-call budget, anchors on vs off',
+        pass: worstDrawDelta <= DRAW_CALL_TOLERANCE_PCT,
+        detail: `worst bookmark ${worstDrawDelta.toFixed(1)}% (tolerance ${DRAW_CALL_TOLERANCE_PCT}%) over `
+          + `${anchorBookmarks.length} bookmarks; ${drawCallDiffs.length ? drawCallDiffs.join('; ') : 'all match exactly'}`,
+      });
+
+      // No two vendors stand on each other — the gate that did not exist.
+      //
+      // Written because landing census 156 put the GAIA anchor 1.41m from
+      // vendor 83 and every existing gate stayed green: they all counted
+      // vendors, and none measured the distance between two of them. The
+      // picture was two grotesques shoulder to shoulder with their nameplates
+      // overlapping into one unreadable smear, which is precisely the class
+      // of defect a numeric gate cannot see unless somebody writes the number
+      // down. Read off the LIVE scene positions on the anchors-on arm, which
+      // is the arm the defect lived on — the off arm never had it.
+      //
+      // 4m, not the 6m ANCHOR_CLEARANCE reserves. The floor is what a plate
+      // needs to stay readable (measured at 6.91m: both plates legible in
+      // full — docs/smoke/captures/anchors-tightest-pair.png); the reservation
+      // carries margin above it so ordinary spacing drift does not redden a
+      // gate that should only fire on a real overlap.
+      const MIN_VENDOR_GAP_M = 4;
+      const tightest = await onPage.evaluate(() => {
+        const ns = window.__mcgrotDebug.npcs.npcs;
+        let best = { gap: Infinity, a: null, b: null };
+        for (let i = 0; i < ns.length; i += 1) {
+          for (let j = i + 1; j < ns.length; j += 1) {
+            const p = ns[i].group.position; const q = ns[j].group.position;
+            const gap = Math.hypot(p.x - q.x, p.z - q.z);
+            if (gap < best.gap) {
+              best = { gap, a: ns[i].comic.npc.name, b: ns[j].comic.npc.name };
+            }
+          }
+        }
+        return { ...best, n: ns.length };
+      });
+      results.push({
+        name: 'E5b.2: no two vendors stand within a nameplate of each other',
+        pass: tightest.gap >= MIN_VENDOR_GAP_M,
+        detail: `tightest pair ${tightest.gap.toFixed(2)}m — "${tightest.a}" and "${tightest.b}" `
+          + `(floor ${MIN_VENDOR_GAP_M}m, over ${tightest.n} vendors, anchors on)`,
+      });
+      await onPage.evaluate(() => {
+        const ns = window.__mcgrotDebug.npcs.npcs;
+        let bi = 0; let bj = 1; let best = Infinity;
+        for (let i = 0; i < ns.length; i += 1) {
+          for (let j = i + 1; j < ns.length; j += 1) {
+            const p = ns[i].group.position; const q = ns[j].group.position;
+            const g = Math.hypot(p.x - q.x, p.z - q.z);
+            if (g < best) { best = g; bi = i; bj = j; }
+          }
+        }
+        const a = ns[bi].group.position; const b = ns[bj].group.position;
+        const mx = (a.x + b.x) / 2; const my = (a.y + b.y) / 2; const mz = (a.z + b.z) / 2;
+        window.__mcgrotDebug.camera.position.set(mx + 6, my + 1.7, mz + 6);
+        window.__mcgrotDebug.camera.lookAt(mx, my + 1.2, mz);
+        window.__mcgrotDebug.stepFrames(20);
+      });
+      writeFileSync(join(captureDir, 'anchors-tightest-pair.png'), await onPage.screenshot());
 
       await onCtx.close();
       await offCtx.close();
@@ -1696,7 +1823,7 @@ async function main() {
     } // end region: anchors
 
     if (region('characters')) {
-    // --- E3b: five generated meshes across 124 vendors --------------------
+    // --- E3b: five generated meshes across the whole census ---------------
     //
     // What this region is for: E3b answers whether 24.8x mesh reuse survives
     // being scaled per vendor, and the ANSWER is a picture (see
@@ -1739,7 +1866,7 @@ async function main() {
       // the crowd is actually standing in it.
       //
       // Not "characters.enabled is true" — that only proves the flag reads
-      // true. 124 vendors tagged with an archetype, each with a `vendor-mesh`
+      // true. Every vendor tagged with an archetype, each with a `vendor-mesh`
       // actually parented to it, is what proves the swap ran on the scene the
       // player gets rather than only on the one the override builds.
       //
@@ -1787,12 +1914,35 @@ async function main() {
         null, { timeout: 60000 }
       );
       const shipped = await defPage.evaluate(censusOf);
+
+      // The one place the typed CENSUS is joined to the catalog, so an
+      // unintended merge fails exactly one assertion with the right name on
+      // it instead of nine that read like nine unrelated bugs. That is what
+      // happened on 2026-08-10: the daily cron merged a batch, the census went
+      // 124 -> 135, and the failure surfaced as five draw-call baselines and
+      // nine count gates with no line saying "the catalog changed".
+      //
+      // Counted node-side off catalog.json, not from the runtime — asking the
+      // scene how many vendors it built and comparing that to the scene's own
+      // count is the calculator testing itself.
+      const censusCatalogPath = join(root, 'assets/catalog.json');
+      const censusCatalog = existsSync(censusCatalogPath)
+        ? JSON.parse(readFileSync(censusCatalogPath, 'utf8')) : { comics: [] };
+      const catalogVendors = (censusCatalog.comics || []).filter((c) => c.npc).length;
+      results.push({
+        name: 'E3e: the census the suite is written against matches the catalog',
+        pass: catalogVendors === CENSUS,
+        detail: `assets/catalog.json carries ${catalogVendors} comics with an npc block; the suite is `
+          + `written against CENSUS=${CENSUS}. Landing a batch means running the merge, changing that `
+          + 'one line and recapturing deliberately — see scripts/catalog-batches/BRIEF.md',
+      });
+
       results.push({
         name: 'E3e: the shipped default stands the generated crowd in the street',
-        pass: shipped.enabled === true && shipped.tagged === 124 && shipped.meshed === 124
-          && shipped.vendors === 124,
+        pass: shipped.enabled === true && shipped.tagged === CENSUS && shipped.meshed === CENSUS
+          && shipped.vendors === CENSUS,
         detail: `enabled=${shipped.enabled}, vendors=${shipped.vendors}, tagged=${shipped.tagged}, `
-          + `with a vendor-mesh parented=${shipped.meshed} (all three must be 124)`,
+          + `with a vendor-mesh parented=${shipped.meshed} (all three must be ${CENSUS})`,
       });
 
       // The OFF override, which is now the one carrying the weight: every
@@ -1813,10 +1963,11 @@ async function main() {
       results.push({
         name: 'E3e: the off override genuinely puts the paper dolls back',
         pass: forcedOff.enabled === false && forcedOff.tagged === 0 && forcedOff.meshed === 0
-          && forcedOff.dolls === 124 && forcedOff.dollPartsInScene === 744,
+          && forcedOff.dolls === CENSUS && forcedOff.dollPartsInScene === 6 * CENSUS,
         detail: `enabled=${forcedOff.enabled}, tagged=${forcedOff.tagged} / meshed=${forcedOff.meshed} `
-          + `(both must be 0), dolls built=${forcedOff.dolls} (must be 124), `
-          + `doll parts in the scene=${forcedOff.dollPartsInScene} (must be 744 = 620 boxes + 124 scarves)`,
+          + `(both must be 0), dolls built=${forcedOff.dolls} (must be ${CENSUS}), `
+          + `doll parts in the scene=${forcedOff.dollPartsInScene} `
+          + `(must be ${6 * CENSUS} = ${5 * CENSUS} boxes + ${CENSUS} scarves)`,
       });
 
       // --- E3g: the doll is not built at all on the shipped path -----------
@@ -1864,8 +2015,8 @@ async function main() {
       const archetypes = Object.keys(meshed.counts);
       results.push({
         name: 'E3b: every vendor is meshed, and all five archetypes are used',
-        pass: meshed.n === 124 && archetypes.length === 5 && meshed.dollPartsInScene === 0
-          && Object.values(meshed.counts).reduce((a, b) => a + b, 0) === 124,
+        pass: meshed.n === CENSUS && archetypes.length === 5 && meshed.dollPartsInScene === 0
+          && Object.values(meshed.counts).reduce((a, b) => a + b, 0) === CENSUS,
         detail: `${meshed.n} meshes over ${archetypes.length} archetypes `
           + `(${archetypes.map((k) => `${k}:${meshed.counts[k]}`).join(' ')}), `
           + `${meshed.dollPartsInScene} doll parts in the scene (must be 0 since E3g)`,
@@ -1918,7 +2069,7 @@ async function main() {
       const worstHeight = Math.max(...heightErr);
       results.push({
         name: 'E3b: every mesh stands at exactly the height of the doll it replaces',
-        pass: unmatched === 0 && joined.length === 124 && worstHeight * 100 <= 0.5,
+        pass: unmatched === 0 && joined.length === CENSUS && worstHeight * 100 <= 0.5,
         detail: unmatched
           ? `${unmatched} of ${joined.length} meshed vendors have no same-named doll on the off arm — the join is broken`
           : `worst ${(worstHeight * 100).toFixed(3)}% (${joined[heightErr.indexOf(worstHeight)].name}) `
@@ -2095,7 +2246,7 @@ async function main() {
         name: 'E3c: the body tell moves the face at the speed the retired head tell did',
         pass: !dollTell.noDoll && dollTell.speedRatioMedian >= 0.8 && dollTell.speedRatioMedian <= 1.3,
         detail: dollTell.noDoll ? 'the off arm built no paper doll — the retired head tell cannot be reproduced' :
-          `face peak speed, new/old across 124 vendors: median `
+          `face peak speed, new/old across ${CENSUS} vendors: median `
           + `${dollTell.speedRatioMedian.toFixed(3)} (allowed 0.80-1.30), `
           + `range ${dollTell.speedRatioMin.toFixed(2)}-${dollTell.speedRatioMax.toFixed(2)}`,
       });
@@ -2149,7 +2300,7 @@ async function main() {
       const strengthMax = Math.max(...strength);
       results.push({
         name: 'E3c: every meshed vendor wears its own scarf\'s note, at one strength',
-        pass: unmatched === 0 && notes.materials === 124 && notes.distinctNotes === 6
+        pass: unmatched === 0 && notes.materials === CENSUS && notes.distinctNotes === 6
           && cosMin > 0.999 && (strengthMax - strengthMin) < 1e-6,
         detail: `${notes.materials} materials / ${notes.distinctNotes} notes, `
           + `worst mesh-vs-scarf hue agreement ${cosMin.toFixed(4)} (need >0.999, `
@@ -2158,8 +2309,8 @@ async function main() {
       });
 
       // What the note COST. E3b bought its draw-call refund partly by sharing
-      // one material per archetype, and E3c spends that: 124 materials where
-      // there were 5. The control is the same build booted with the tint
+      // one material per archetype, and E3c spends that: one material per
+      // vendor where there were 5. The control is the same build booted with the tint
       // forced off, not a number recorded on another day — the tint is the
       // only difference between the two pages.
       const { ctx: flatCtx, page: flatPage } = await bootForced(true, false);
@@ -2333,7 +2484,7 @@ async function main() {
       // archetype fetch 404s there. Before E3g that was harmless: the doll was
       // already standing and the hide loop simply never ran. Now the doll is
       // built BY the catch handler, and if that handler is wrong the artifact
-      // is 124 floating comics over an empty pavement — a failure no other gate
+      // is a street of floating comics over empty pavement — a failure no other gate
       // in this suite can see, because the suite never loads the artifact.
       //
       // `__mcgrotForceCharacterFail` makes every fetch reject on the same
@@ -2347,7 +2498,7 @@ async function main() {
         const c = window.__mcgrotDebug.characters;
         return c.loaded() + c.fellBack() === c.assigned;
       }, null, { timeout: 60000 });
-      // Only 103 of the 124 carry a face path in the catalog; the other 21
+      // Only 103 of the vendors carry a face path in the catalog; the rest
       // wear the bare flat head colour and always did. So the claim is "every
       // vendor that HAS a face got it", with the 103 spelled out — a catalog
       // that lost its face assignments would drop both numbers together and
@@ -2370,12 +2521,12 @@ async function main() {
       await failCtx.close();
       results.push({
         name: 'E3g: an archetype that fails to load puts that vendor\'s paper doll back',
-        pass: fellBack.loaded === 0 && fellBack.fellBack === 124 && fellBack.bodies === 124
+        pass: fellBack.loaded === 0 && fellBack.fellBack === CENSUS && fellBack.bodies === CENSUS
           && fellBack.wantFace === 103 && fellBack.faced === 103,
         detail: `all five glbs forced to 404: ${fellBack.loaded} meshed / ${fellBack.fellBack} fell back `
-          + `(must be 0 / 124), ${fellBack.bodies} of 124 vendors have a body, `
+          + `(must be 0 / ${CENSUS}), ${fellBack.bodies} of ${CENSUS} vendors have a body, `
           + `${fellBack.faced} of the ${fellBack.wantFace} with a face path got their texture `
-          + `(both must be 103; the other 21 vendors carry no face in the catalog)`,
+          + `(both must be 103; the other ${CENSUS - 103} vendors carry no face in the catalog)`,
       });
 
       // E3f rides the same fallback. A walker whose archetype never arrives
@@ -2514,7 +2665,7 @@ async function main() {
 
           // THE BUG THIS GATE EXISTS FOR, and it is not the one E3h set out to
           // fix. characters.js used to load only the archetypes VENDORS asked
-          // for. The site has 124 vendors and wants all five, so the two sets
+          // for. The site has the whole census and wants all five, so the two sets
           // were identical and nothing could go wrong; the artifact runs off
           // the 3-comic manifest, wanted one, and the 29 walkers assigned to
           // the other four were never loaded, never failed, and never told —
@@ -3102,7 +3253,7 @@ async function main() {
         'must differ, or the OFF arm above proves nothing',
     });
     // ...and the stall reseeds NOTHING. geomHash covers the merged building
-    // geometry, every InstancedMesh's matrices and all 124 vendor positions,
+    // geometry, every InstancedMesh's matrices and every vendor position,
     // so an unchanged hash with the stall in the scene is the measurement
     // behind gullet.js's own-PRNG rule. E3f is why this is gated rather than
     // asserted in a comment: one extra draw from a shared sequence moved the
@@ -3517,18 +3668,30 @@ async function main() {
     // --- E10a.3: McGrot is the 125th reading station ----------------------
     //
     // He satisfies interact.js's and proximity-audio.js's vendor contract
-    // without being one of the 124. The three counts that must NOT move are
+    // The journal denominator is NOT the census and must not be typed as a
+    // literal: journal.js counts vendors BUILT WITH AUDIO, and the daily TTS
+    // trickle raises that most days. Counted here off catalog.json node-side,
+    // which reaches the same number by a different route than journal.js's
+    // walk of the built cast — that difference is what makes it a check.
+    const gulletCatalogPath = join(root, 'assets/catalog.json');
+    const gulletCatalog = existsSync(gulletCatalogPath)
+      ? JSON.parse(readFileSync(gulletCatalogPath, 'utf8')) : { comics: [] };
+    const gulletWithAudio = (gulletCatalog.comics || []).filter((c) => c.npc && c.audio).length;
+
+    // without being one of the census. The three counts that must NOT move are
     // asserted first, because "he works" is worth nothing if it cost the
     // vendor census, the journal denominator or geomHash.
     results.push({
       name: 'E10a.3: McGrot is a reader without becoming vendor 125',
-      pass: castIn.state.readers === 125 && castIn.state.vendors === 124
-        && castOut.state.readers === 124 && castOut.state.vendors === 124
-        && castIn.state.journalDenominator === 124 && castOut.state.journalDenominator === 124,
+      pass: castIn.state.readers === CENSUS + 1 && castIn.state.vendors === CENSUS
+        && castOut.state.readers === CENSUS && castOut.state.vendors === CENSUS
+        && castIn.state.journalDenominator === gulletWithAudio
+        && castOut.state.journalDenominator === gulletWithAudio,
       detail: `in-day: ${castIn.state.readers} readers / ${castIn.state.vendors} vendors / ` +
         `journal denominator ${castIn.state.journalDenominator}; out-day: ${castOut.state.readers} / ` +
-        `${castOut.state.vendors} / ${castOut.state.journalDenominator} (vendors and denominator must ` +
-        'be 124 on both days — his comic deliberately has no `npc` block)',
+        `${castOut.state.vendors} / ${castOut.state.journalDenominator} (vendors must be ${CENSUS} on ` +
+        `both days and the denominator must equal the catalog's ${gulletWithAudio} npc entries ` +
+        'with an mp3 — his comic deliberately has no `npc` block)',
     });
 
     // The prompt. Standing 3m out in the road in front of him, which is inside
@@ -3573,7 +3736,7 @@ async function main() {
 
     // Opening it. The overlay must carry HIS comic and HIS name, the image
     // must actually decode, and the journal must NOT move: he is a station,
-    // not part of the 124-comic collection it counts against a fixed
+    // not part of the vendor collection it counts against a fixed
     // denominator.
     const opened = await castIn.page.evaluate(async () => {
       const dbg = window.__mcgrotDebug;
@@ -3600,7 +3763,7 @@ async function main() {
         `image decoded=${opened.imgDecoded}`,
     });
     results.push({
-      name: 'E10a.3: hearing him does not credit the 124-comic journal',
+      name: 'E10a.3: hearing him does not credit the vendor journal',
       // Guarded on the overlay having opened. Both this and the play-icon gate
       // below passed VACUOUSLY under fault injection when the station was
       // unwired: no overlay means the journal cannot move and the icon is
@@ -3612,7 +3775,7 @@ async function main() {
     });
     // The play icon must follow whether the comic HAS a clip, not be pinned on.
     // McGrot was the first station to reach the unvoiced path at all — every
-    // one of the 124 has a rendered clip — and the overlay showed PAUSE ("now
+    // one of the vendors has a rendered clip — and the overlay showed PAUSE ("now
     // playing") over silence. His own clip has since been rendered through the
     // hero lane, so the assertion is written against the audio field rather
     // than against him: it stays correct for the 294 comics still unvoiced.
@@ -6234,10 +6397,14 @@ async function main() {
 
     if (region('onevoice')) {
     // --- E5a gate 5b: one voice, opposed pair ---
-    // Every catalog vendor with an npc identity also has audio (124/124, per
-    // scripts/build-readings.mjs), and the ~1600m street divided by 124
-    // vendors puts several neighbours within PLAY_RANGE of npcs[0] — a
-    // natural cluster, no special placement needed.
+    // The ~1600m street divided by the census puts several neighbours within
+    // PLAY_RANGE of npcs[0] — a natural cluster, no special placement needed.
+    //
+    // Not every vendor has audio any more. It was 124/124 when this was
+    // written; transcription now lands ahead of the TTS trickle, so the
+    // neighbour set is filtered to those with a clip below. A vendor with no
+    // mp3 can never reach isPlaying, and waiting on one would hang the gate
+    // for 8s and then fail for a reason that has nothing to do with voices.
     console.log('[smoke] E5a one-voice gate (5b)...');
     {
       const { context, page } = await bootPage(browser, port);
@@ -6252,6 +6419,7 @@ async function main() {
         const PLAY_RANGE = 18;
         return dbg.npcs.npcs
           .filter((n) => Math.hypot(n.group.position.x - p.x, n.group.position.z - p.z) < PLAY_RANGE)
+          .filter((n) => !!n.comic.audio)
           .map((n) => n.comic.id);
       });
       await page.evaluate(() => window.__mcgrotDebug.stepFrames(10));

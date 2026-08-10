@@ -25,12 +25,66 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { assetUrl } from './assets.js';
 import { LIT_ALBEDO_GAIN } from './lighting-constants.js';
-import { ANCHORS_ENABLED, anchorsById } from './anchors.js';
+import { ANCHORS_ENABLED, ANCHOR_SET, anchorsById } from './anchors.js';
+import { GULLET_CHAINAGE } from './gullet.js';
 import { flag } from './flags.js';
 
 const STREET_OFFSET = 6;      // metres perpendicular from the centreline
 const START_DIST = 40;        // first vendor this far down the Walk
 const END_MARGIN = 60;        // leave this much clear at the south end
+// A chainage band the even spacing steps OVER, so McGrot's pitch never has a
+// vendor's prompt overlapping its own. It is UNCONDITIONAL — not behind the
+// gullet flag — for two reasons. The `gullet` region requires geomHash to
+// MATCH across the flag's two arms, which a flag-conditional layout would
+// break; and the reservation has to survive the flag being off, since the
+// stall's chainage is fixed canon either way.
+//
+// It exists because the clearance stopped being free. At 124 vendors the
+// spacing was 12.2m and the nearest vendor happened to fall 14.4m from the
+// stall, so E10a.1's "> RANGE + 2" passed on luck. Landing 156 took the
+// spacing to 9.7m and put one vendor 4.89m away, inside interact.js's 8m
+// RANGE. The census only grows — 261 comics are still untranscribed, and at
+// 418 the spacing is 3.6m — so a reserved hole is the only form of this
+// guarantee that keeps holding.
+//
+// 12m half-width, not 10: the stall sits at offset 7.6 and a vendor at
+// STREET_OFFSET 6 on the same side is 1.6m across from it, so the band edge
+// is hypot(12, 1.6) = 12.1m out — clear of RANGE + 2 with room for the
+// spacing to keep shrinking.
+const GULLET_CLEARANCE = 12;
+// Every anchor gets one too, and for a defect the same spacing shrink
+// exposed. An anchor is moved to its landmark's chainage with no regard for
+// the evenly-spaced vendor already standing there. At 124 the nearest such
+// pair was 9.0m apart and nobody noticed; at 156 the GAIA anchor landed
+// 1.41m from vendor 83 — bodies side by side and the two nameplates
+// overlapping into one unreadable smear. No gate saw it, because every gate
+// counted vendors and none measured the gap between two of them.
+//
+// 6m rather than 5: measured off the rendered plate, not guessed — see
+// docs/VALIDATION.md § "Vendors no longer stand on each other".
+const ANCHOR_CLEARANCE = 6;
+
+// The reserved chainage bands, merged. Sorted and coalesced because the Cupp
+// anchor (725) and the stall (740) overlap at these widths, and two bands
+// counted twice would take the reserved total — and so the spacing — wrong.
+//
+// UNCONDITIONAL, including the anchor bands, even though the anchors flag may
+// be off. The flag's contract is that it moves the TWELVE anchored vendors and
+// nothing else; both arms get the same bands, so the on-vs-off comparison
+// still shows exactly twelve vendors moving. Making the bands conditional
+// would instead have the flag re-space all 156.
+function reservedBands() {
+  const raw = [[GULLET_CHAINAGE - GULLET_CLEARANCE, GULLET_CHAINAGE + GULLET_CLEARANCE]];
+  for (const a of ANCHOR_SET) raw.push([a.chainage - ANCHOR_CLEARANCE, a.chainage + ANCHOR_CLEARANCE]);
+  raw.sort((p, q) => p[0] - q[0]);
+  const merged = [];
+  for (const [lo, hi] of raw) {
+    const last = merged[merged.length - 1];
+    if (last && lo <= last[1]) last[1] = Math.max(last[1], hi);
+    else merged.push([lo, hi]);
+  }
+  return merged;
+}
 // E5b.2: no NPC spotlights exist (the render-path/draw-call budget forbids
 // adding twelve) — an anchor reads brighter through its own unlit
 // materials instead. Applied to the comic and face MeshLambertMaterials,
@@ -214,11 +268,30 @@ export function computeVendorLayout(list, streetLine, anchorsEnabled) {
   const anchorMap = anchorsById();
   const streetLen = streetLength(streetLine);
   const usable = Math.max(1, streetLen - START_DIST - END_MARGIN);
-  const spacing = list.length > 1 ? usable / (list.length - 1) : 0;
+  // Spacing is computed over the street MINUS the reserved bands, and a
+  // position at or past a band's near edge is pushed that band's full width
+  // south. Ordering and even spacing survive; the holes are the only
+  // artefact, and each one has either the stall or an anchor standing in it.
+  // Snapping only the offending vendors to a band edge instead would have
+  // moved far fewer of them and parked pairs 2.4m apart.
+  const bands = reservedBands();
+  const reserved = bands.reduce((s, [lo, hi]) => s + (hi - lo), 0);
+  const spread = Math.max(1, usable - reserved);
+  const spacing = list.length > 1 ? spread / (list.length - 1) : 0;
+  // Bands are sorted, and `d` only ever grows, so each comparison is against
+  // the position as it stands after the earlier bands have pushed it.
+  const stepOver = (even) => {
+    let d = even;
+    for (const [lo, hi] of bands) {
+      if (d < lo) break;
+      d += hi - lo;
+    }
+    return d;
+  };
 
   const out = [];
   list.forEach((comic, i) => {
-    const baseDist = START_DIST + i * spacing;
+    const baseDist = stepOver(START_DIST + i * spacing);
     const anchor = anchorsEnabled ? anchorMap.get(comic.id) : null;
     const dist = anchor ? anchor.chainage : baseDist;
     const side = i % 2 === 0 ? 1 : -1;
