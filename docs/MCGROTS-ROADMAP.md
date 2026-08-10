@@ -4,7 +4,11 @@ A second, small game in this repo. One pitch, McGrot's van, a handful of canon
 characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
-**Status: nothing built. G0 is the next unit of work.**
+**Status: G0 landed 2026-08-10. G1 — the animation bake-off — is next.**
+
+Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
+`npm run smoke:mcgrots` (13 checks, 1.3s); boot the game with
+`npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
 memory of the conversation that produced it (Dan and Opus, 2026-08-10). Read
@@ -191,11 +195,27 @@ the existing esbuild + `stamp-bundle.mjs` pair. Do not touch the existing
 Deep on G0 and G1 only. Everything past G2 is deliberately sketched — re-plan
 from the actual state of the code after each one lands, per `CLAUDE.md`.
 
-### G0 — Scaffold and the empty stage
+### G0 — Scaffold and the empty stage ✅ landed 2026-08-10
 
-The harness G1 needs in order to compare anything.
+The harness G1 needs in order to compare anything. Commit `6d76399`.
 
-Deliverables:
+What landed: `src/mcgrots/` (site, foot, anchors, actor, main),
+`src/mcgrots.html`, `scripts/smoke-mcgrots.mjs` (13 checks, 1.3s),
+`scripts/mcgrots-grade.mjs`, `scripts/stamp-mcgrots.mjs`, and the
+`bundle:mcgrots` / `dev:mcgrots` / `smoke:mcgrots` npm scripts.
+
+Three faults the captures caught that the numbers had passed — the ground
+rendering at RGB (13,9,4) under legacy-scale light intensities, an
+overcorrection to a mean of 137, and every camera sitting on the axis the
+statue stands on. All three are written up in `docs/MCGROTS-VALIDATION.md`
+with the measurements and the rejected approaches.
+
+The anchor set is `counter`, `wall`, `kerb`, `far`, `back`. Note `far` was
+called `statue` until the pitch was turned a quarter turn, after which it stood
+17.9 m from the statue — the furthest of the five. Renamed rather than
+re-sited; framing a real shot on the landmark is G3's work.
+
+Deliverables as specified:
 
 1. `src/mcgrots.html` + `src/mcgrots/main.js` booting a `THREE.Scene` with
    flat ground, one directional key light and ambient. No street modules
