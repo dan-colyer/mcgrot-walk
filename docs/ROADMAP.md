@@ -157,32 +157,45 @@ Decisions taken:
 - **TTS:** `set -a; source .env.local; set +a; node scripts/generate-tts.mjs`
   (~14/day measured before free-tier 429s; resumable; completed clips skip; the
   run now stops on the first quota error rather than grinding the remainder).
-  **125/418 voiced, 125/418 transcribed, and ZERO transcribed-but-unvoiced**
-  (recounted 2026-08-08). The trickle's queue is EMPTY and the daily job has
-  been rendering 0 clips: the free Gemini allowance is not the constraint and
-  is going unused. 30 distinct prebuilt voices are assigned across the 124
-  vendors, rotating by assignment index and wrapping at 30. Runs unattended at 09:30
-  via `scripts/daily-tts.sh` + `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`.
-  Transcription, not the API, is the bottleneck: 294 comics still have no script,
-  and that work is a parallel-subagent factory (`scripts/catalog-batches/BRIEF.md`;
-  **read `scripts/catalog-batches/RESUME.md` first** — batches 5/7/8 hold partial
-  JSONs that must be extended, never overwritten; the last wave died on a monthly
-  spend limit).
+  **Recounted 2026-08-10, after a three-agent wave: 157 comics transcribed,
+  125 of them in the catalog, and 32 sitting in finished batch JSONs waiting to
+  be LANDED.** 11 of those 32 are already voiced. Batches 5, 7 and 8 are
+  complete and `RESUME.md` is deleted; batch 6 and 9–20 are ordinary unstarted
+  batches. **261 of the 418 still have no script**, of which six are confirmed
+  non-comics and never will (see `BRIEF.md`). 30 distinct prebuilt voices,
+  rotating by assignment index and wrapping at 30 — **verified against the live
+  Gemini docs at the 2026-08-10 gate: 30 is still the complete prebuilt set**,
+  so there is nothing to raise and the wrap is correct. Runs unattended at
+  09:30 via `scripts/daily-tts.sh` +
+  `~/Library/LaunchAgents/com.mcgrot.daily-tts.plist`. The factory brief is
+  `scripts/catalog-batches/BRIEF.md`, and its § "What happens to your batch
+  afterwards" is the landing procedure.
 
   ⚠ **Promoted at the E2 phase gate: transcription is the project's content
   critical path, not a background nicety.** E5's journal denominator, reader
   nameplates, litter readability and the Leither comment corpus all scale with
-  it directly. Resume the batch factory as spend allows — it is the cheapest
-  way to make the shipped street bigger, and every batch that lands wants an
-  `npm run smoke` after it (see the golden warning below).
+  it directly. **The affordable shape is three background Sonnet agents per
+  wave** — one per batch, launched together, ~32 comics a wave. The first
+  attempt died on a monthly Claude spend limit because it launched a full
+  factory at once; the shape was the cost, not the task.
 
-  ⚠ **The trickle moves the goldens.** Newly transcribed entries are not inert
-  data — each gives its NPC a name, a blurb and a readable comic, so more NPCs
-  render a nameplate and a subtitle. Going from 103 to 124 transcribed moved 23
-  goldens by 0.8–5.6% and `skyline` from 954 to 1109 draw calls, and nobody
-  noticed because smoke had not been run since. Recaptured at `7f6a3de`. Run
-  `npm run smoke` after a batch of transcriptions lands, not only after engine
-  work.
+  ⚠ **Landing a batch is a MILESTONE, not a merge, and the daily job no longer
+  does it.** `npcs.js` builds one vendor per comic with an `npc` block, so
+  folding a batch in puts people on the street. 103 → 124 moved 23 goldens by
+  0.8–5.6% and `skyline` by 155 draw calls, "and nobody noticed because smoke
+  had not been run since". That warning was written at the E2 gate and told
+  humans to run smoke while leaving the cron free to keep causing it — so on
+  2026-08-10 it happened again unattended: a merge of 11 took the census
+  124 → 135, moved 29 goldens by up to 5.6%, broke five draw-call baselines and
+  nine gates that name 124, and **committed the lot to `main`**. Reverted at the
+  phase gate, and fixed at the cause: `daily-tts.sh` now undoes any merge that
+  changes the vendor census and logs what to run instead. Render is the trickle;
+  landing is a human act with a suite run and a deliberate recapture.
+
+  **The next landing is sized and measured: census 124 → 156, 32 new comics.**
+  Merging is clean — `merge-batches.mjs` no longer claims mp3s that are not on
+  disk, so the landing can be green before the audio exists and the trickle
+  fills it in over the following days.
 - **Handmade shopfronts:** Dan feeds real-shop reference photos to ChatGPT,
   drops results in `assets/shopfronts/handmade/`, ingest script does the rest.
   Wishlist: `docs/shopfront-wishlist.md`.
@@ -3758,6 +3771,59 @@ glazing is a constant pale light box at every hour, and there is no ambience
 ducking indoors — the moment the door works, the two sides have to agree about
 the time and about what you can hear.
 
+#### E9a.2 — the brief (written at the E9/E10 phase gate, 2026-08-10)
+
+*Effort: **high** on the review pass. It is a boot-path change with a new
+prompt on a frontage that already has one, and it decides the pose the first
+interior golden will lock.*
+
+**The unit, in order of what breaks if it is skipped.**
+
+1. **The door, and the priority rule.** A prompt on the façade at chainage
+   1486 that opens the room. The named risk is real and now has a number:
+   the frontage is 12.78 m and `interact.js`'s `RANGE` is 8 m, so a vendor
+   prompt and a door prompt can both be live in the same frame and
+   `interact.js` has no rule for which wins. Decide it once, in `interact.js`,
+   and gate the collision case explicitly — stand where both are in range and
+   assert which one is offered, with the control standing where only one is.
+2. **The wipe, both ways.** The roadmap's own acceptance shape stands: an
+   opposed pair where **strength 0 is bit-identical to no wipe** — check 26's
+   shape, reused for a fourth axis. The wipe must not become the thing that
+   decides whether you are indoors; `interior.enter()/exit()` already keep
+   that split deliberately, so the wipe wraps `main.js`'s swap and nothing
+   more.
+3. **The two sides agree about the time.** The glazing is a constant pale box
+   at 3am. Drive `GLASS`'s tone from the street clock — it is the one value
+   in the room atmosphere legitimately reaches, and it is a colour on an
+   unlit material, not a second hand-off. No token needed.
+4. **Duck the bed.** `ambience.setDucked(true)` on enter, `false` on exit.
+   One line each, and it closes the gap between the shipped build and the
+   design line that says the bed muffles indoors.
+5. **Dress the keeper's wall** — finding 3 of the phase gate. `interior-keeper`
+   is the pose E9a.3 boots into and the one that gets the first interior
+   golden, and today it is the emptiest wall in the room. A back-fitting
+   behind the counter, the till from the keeper's side, something on the wall
+   he looks at all day. Do it before .3, not after.
+
+**Two gates this unit carries that are not about the door**, both banked at
+the phase gate:
+
+- **The flag registry.** `flag()` records `{name, shippedDefault}`; one gate
+  boots with NO overrides and asserts the whole table against a snapshot in
+  `smoke.mjs`. Measured at the gate: reverting either enable today leaves its
+  region entirely green. E9a.2's door is the ninth flag, which is why it is
+  this unit's to build.
+- **The ending cannot begin from indoors, measured.** Reuse the `ending`
+  region's `walkToTheFoot` fixture to reach leg ≥ 1 + north, enter the shop,
+  press Enter, and assert **both** `begin() === false` **and**
+  `atmosphere.suspendOwner() === 'interior'`. The second assert is not
+  optional — without it the gate is green on any build where `canOffer()` was
+  false anyway, which is the E10a.3 precondition lesson.
+
+**Still deliberately deferred to E9a.3:** the interior golden. It belongs to
+the boot that lands a player in the room, and capturing it here would lock a
+pose before the keeper's side of the counter is dressed.
+
 ### E9b — Open for Business (the visitor theatre) — after E4
 
 The interaction engine, using E4's machinery end to end:
@@ -4173,21 +4239,55 @@ another printing *pefform* and *perform* in the same repeated sentence, all
 preserved exactly. What a smaller model got wrong was not the reading, it was
 **deciding what counts as source**. Check the judgement calls, not the glyphs.
 
-**And the daily cron will commit a wave out from under you — FIXED here.** The
-09:30 launchd job fired mid-audit, merged the batch that had just landed,
-rendered its eleven clips, and swept a reviewer's uncommitted correction to
-`batch-8.json` plus a new rule in `BRIEF.md` into `c9b7b1b`, "Render 11 NPC
-comic reading(s) via Gemini TTS". `daily-tts.sh`'s own comment claimed work in
-progress could never be swept in; that is true of `src/` and false of
-`scripts/catalog-batches` and `scripts/tts-prompts`, which are where a wave is
-**authored**, not merely where the job's inputs sit. The pathspecs stay — an
-mp3 committed without the prompt it was rendered from is worse — and two
-guards go in instead: **the job does not commit at all if a human has already
-staged anything** (fault-injected both ways: fires with a staged file, passes
-on a clean index), and the commit message now **names every batch file it
-sweeps** so nothing hides behind the subject line. The practical rule for a
-session running a wave: commit your own work before 09:30, or expect the cron
-to do it for you under the wrong title.
+### 7. An unattended cron turned the suite red and committed it — MEASURED, FIXED
+
+The most serious finding of the pass, and it was found by accident: the 09:30
+launchd job fired mid-audit, on a day a wave happened to be landing.
+
+It merged the batch that had just been written, rendered eleven clips, and
+committed everything as `c9b7b1b`, "Render 11 NPC comic reading(s) via Gemini
+TTS". `npcs.js` builds one vendor per comic with an `npc` block, so that merge
+was not a data update — it put eleven people on the street. **Census 124 → 135.
+Measured immediately after: 29 goldens moved by up to 5.6%, five draw-call
+baselines broke, and nine gates that name 124 went red.** `main` was red, from
+an automated commit, with nothing between the merge and the commit.
+
+The roadmap had already recorded this exact event once — "103 → 124 moved 23
+goldens ... and nobody noticed because smoke had not been run since". The E2
+gate's response was a warning telling *humans* to run smoke, which left the job
+that causes it entirely free to keep causing it. A warning is not a fix.
+
+**Reverted** (`assets/catalog.json` back to census 124, suite green again at
+318 PASS / 0 FAIL, 108s — the eleven mp3s stay on disk and are picked up by the
+next merge, since `generate-tts.mjs` skips by file existence). **Fixed at the
+cause**, three ways, each fault-injected:
+
+- **`daily-tts.sh` will not land vendors.** It reads the census either side of
+  the merge and, if it changed, undoes the merge and logs the landing command
+  instead. Tested against the real 21 unmerged entries: caught 124 → 156 and
+  restored to 124. Render is a trickle; landing is a milestone.
+- **`merge-batches.mjs` no longer claims an mp3 that is not on disk.** Line 48
+  set `audio` unconditionally. E10a.3 fixed exactly this defect in
+  `generate-tts.mjs` and missed the merger, and it never fired only because
+  `DAILY_TTS_LIMIT` (20) had always been ≥ the number a wave merged. **This
+  wave is 32**, so the next unattended run would have dangled entries and
+  committed them — a 404 and a console error on every overlay open. Measured
+  after the fix: merging all 32 leaves **0** dangling paths, where it would
+  have left 21. It also decouples the two steps properly, so a landing can be
+  green before its audio exists.
+- **The job no longer commits over a human.** Its pathspecs include
+  `scripts/catalog-batches` and `scripts/tts-prompts` — where a wave is
+  *authored*, not merely where the job's inputs sit — so it swept a reviewer's
+  correction to `batch-8.json` and a new `BRIEF.md` rule into that same audio
+  commit. The pathspecs stay (an mp3 committed without its prompt is worse);
+  instead the job reads the index first and **refuses to commit at all if a
+  human has staged anything**, and its message now names every batch file it
+  sweeps.
+
+The general lesson, and it is the same one as finding 1 in different clothes:
+**this project keeps writing the warning and leaving the mechanism.** A
+docs-level "remember to run smoke" and a docs-level "remember to gate the
+shipped default" both survived a phase gate; neither survived being tested.
 
 ## E∞ — The Delight Ledger (continuous)
 

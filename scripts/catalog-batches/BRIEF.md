@@ -56,9 +56,24 @@ sensible word. This rule overrides every instinct you have to be helpful.
    in the street. Two reasons this is a rule and not a judgement call: these
    images carry real people's names and private chat logs, which must not be
    voiced into a published game; and an invented performance ships as canon.
-   *(Confirmed non-comics, both checked at the 2026-08-10 phase gate and
-   permanently excluded: `59063b8b`, a ChatGPT app screenshot; `5944d960`, a
-   social-media post by a named individual.)*
+   **The distinction is the ARTWORK, not the window it is in.** A phone
+   screenshot whose contents are a real McGrot comic — title bar, panels,
+   bubbles, even half-rendered — IS your item: transcribe what is legible and
+   let the NPC trail off. A screenshot of a chat *about* McGrot is not.
+   *(Six confirmed non-comics, each opened and checked at the 2026-08-10 phase
+   gate, all permanently excluded: `59063b8b` and `657ebc34`, ChatGPT
+   "your year" recap cards written about the project's author; `5944d960`, a
+   social post by a named individual; `6261442b`, a promotional photograph of
+   two franchises' costumed characters with an identifiable actor; `3c52a22c`,
+   a fan meme pairing two named real athletes with dialogue lifted from a 2005
+   film; `3eb4be43`, a photograph of a carved wooden face on a TV set with no
+   McGrot content at all.)*
+
+   Borderline cases that ARE yours, for calibration: a McGrot splash
+   illustration with signage but no speech bubbles (`3d68e45a` — the Gullet van
+   on the Walk) and a photo of a framed McGrot print (`417cec3d`). Both are
+   McGrot artwork carrying no third party's likeness, so both are legitimate
+   `sparse` entries.
 
 ## House format — copy this structure exactly
 
@@ -135,5 +150,47 @@ Vindemiatrix, Sadachbia, Sadaltager, Sulafat.
 ```
 
 Write the `.txt` files as you go, then write the batch JSON at the end. Your final
-message should just report: how many done, any `sparse`/problem ids, and confirm the
-batch JSON path. Do not paste the scripts back — they're on disk.
+message should just report: how many done, any `sparse`/problem ids, any id you
+SKIPPED as a non-comic and what the image actually was, and confirm the batch JSON
+path. Do not paste the scripts back — they're on disk.
+
+## What happens to your batch afterwards — for whoever LANDS it
+
+*(Folded in from `RESUME.md`, deleted 2026-08-10 once batches 5, 7 and 8 were
+finished. Batches 6 and 9–20 are ordinary unstarted batches — write their JSON
+from scratch.)*
+
+**Landing a batch is a milestone, not a merge.** `npcs.js` builds one vendor per
+comic with an `npc` block, so folding a batch in puts people on the street:
+nameplates, subtitles, meshes, draw calls. Going 103 → 124 moved 23 goldens and
+`skyline` by 155 draw calls; the 2026-08-10 wave takes the census **124 → 156**.
+Expect a large deliberate recapture and a sweep of the gates that name the count.
+
+```bash
+node scripts/merge-batches.mjs   # idempotent; audio stays null until the clip exists
+npm run smoke                    # expect goldens RED — that is the point
+# recapture the specific goldens deliberately. NEVER --update-goldens.
+npm run goldens:noise            # re-measure the bands after any recapture, clean tree
+```
+
+The daily job (`scripts/daily-tts.sh`) deliberately will **not** do this for you:
+since 2026-08-10 it undoes any merge that changes the vendor census and says so
+in its log. It renders audio for what is already merged and nothing more. An
+unattended merge did land one unreviewed and turned the suite red on `main`.
+
+Count what is left at any time with:
+
+```bash
+node -e "
+const a=require('./scripts/catalog-batches/assignments.json');
+const c=require('./assets/catalog.json');
+const done=new Set(c.comics.filter(x=>x.promptFile).map(x=>x.id));
+for(const b of a.batches){const l=b.items.filter(i=>!done.has(i.id)).length;
+if(l)console.log(b.batchId,(b.items.length-l)+'/'+b.items.length,'done,',l,'remaining');}"
+```
+
+**On cost.** The first wave died on a monthly Claude spend limit, and the shape
+was why: a factory of parallel subagents all launched at once. Three background
+agents per wave is the affordable pattern and is what ran on 2026-08-10 — 32
+comics for one wave. Transcription, not the Gemini allowance, is the bottleneck:
+the free TTS quota goes unused whenever the queue is empty.

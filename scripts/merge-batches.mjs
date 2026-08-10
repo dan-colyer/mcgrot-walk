@@ -45,7 +45,22 @@ for (const bf of batchFiles) {
     }
     c.title = e.title;
     c.promptFile = e.promptFile;
-    c.audio = `audio/${c.id}.mp3`;
+    // ONLY claim an mp3 that is on disk. E10a.3 fixed this in generate-tts.mjs
+    // (which writes the path back on success) and missed it here, where the
+    // path was set unconditionally — a catalog entry claiming a file that does
+    // not exist 404s on every overlay open and logs a console error, and the
+    // `gullet` region gates exactly that over all 418 entries.
+    //
+    // It never fired because of an arithmetic coincidence: the daily job merges
+    // and then renders in the same run, and DAILY_TTS_LIMIT (20) had always
+    // been >= the number a wave merged. The 2026-08-10 wave was 32, so the next
+    // unattended run would have left entries dangling and committed them.
+    //
+    // Null until the clip exists is also what decouples merging from
+    // rendering: a landing can merge 30 comics, be green, and let the trickle
+    // fill in the audio over the following days.
+    const audioRel = `audio/${c.id}.mp3`;
+    c.audio = existsSync(join(root, 'assets', audioRel)) ? audioRel : null;
     c.sparse = !!e.sparse;
     // MERGE into the existing npc, never replace it. Fields assigned by later
     // pipeline stages — `face` above all (scripts/gen-faces.mjs, and the head

@@ -4503,6 +4503,53 @@ press Enter, and assert **both** `begin() === false` **and**
 vacuously on any build where `canOffer()` was false — the E10a.3 precondition
 lesson, applying to a gate before it is written for once.
 
+### The daily cron can turn the suite red and commit it — measured, then fixed
+
+Found by accident, which is the only way it was ever going to be found: the
+09:30 launchd job fired during this audit, on a day a transcription wave was
+landing.
+
+`daily-tts.sh` ran `merge-batches.mjs`, which folded eleven newly transcribed
+comics into the catalog. `npcs.js` builds one vendor per comic with an `npc`
+block, so that is not a data update — it is eleven more people on the street.
+The job then rendered their clips and committed everything as `c9b7b1b`,
+"Render 11 NPC comic reading(s) via Gemini TTS".
+
+Measured immediately afterwards, against the committed state:
+
+| | before | after |
+|---|---|---|
+| comics with an `npc` block | 124 | 135 |
+| goldens outside tolerance | 0 | **29** (up to 5.600% at `golden-haar:mid-805-far`) |
+| draw-call baselines broken | 0 | 5 (`north-250-far` 46 vs 40, `foot-1500-far` 36 vs 41, `skyline` 346 vs 325, `lamp-hero-night` 354 vs 333, `mid-805-far` 42 vs 45) |
+| census gates naming 124 | pass | 9 red |
+
+The E2 phase gate had already recorded this event once — "103 → 124 moved 23
+goldens ... and nobody noticed because smoke had not been run since" — and
+responded with a warning addressed to humans. The job kept its ability to do it
+unattended, and did.
+
+**Reverted** to census 124; suite back to 318 PASS / 0 FAIL in 108s. The eleven
+mp3s stay on disk: `generate-tts.mjs` skips by file existence and
+`merge-batches.mjs` is idempotent, so the next merge re-links them for free.
+
+Three fixes, each fault-injected:
+
+| Fix | Injection | Result |
+|---|---|---|
+| `daily-tts.sh` compares the census either side of the merge and undoes a merge that changes it | ran the real merge of the 21 pending entries | caught 124 → 156, restored to 124 |
+| `merge-batches.mjs` sets `audio` only when the mp3 exists | merged all 32 with 21 unrendered | **0** dangling paths (21 before the fix) |
+| `daily-tts.sh` refuses to commit if the index has staged changes | staged a file, ran the guard | fired and named it; passed on a clean index |
+
+**Why the dangling-audio one had never fired** is worth its own line, because
+it is a coincidence rather than a defence. E10a.3 fixed "a catalog entry must
+not claim an mp3 that is not on disk" in `generate-tts.mjs` and gated it over
+all 418 entries — but `merge-batches.mjs` set the path unconditionally, and
+runs *first* in the same job. The gate stayed green only because
+`DAILY_TTS_LIMIT` (20) had always been at least the number a wave merged, so
+every merged entry was rendered before anything looked. This wave is 32. The
+next unattended run would have merged 21 and rendered 20.
+
 ### Also corrected here: the ambience note in the `interior` region
 
 That section says audio indoors is unproven because "the street's busking simply

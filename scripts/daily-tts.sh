@@ -55,7 +55,31 @@ set +a
 
 # Fold any newly transcribed batches into the catalog first — otherwise their
 # promptFile entries are invisible to the generator. Idempotent by design.
+#
+# BUT THIS JOB DOES NOT LAND NEW VENDORS. npcs.js builds one vendor per comic
+# with an `npc` block, so a merge that adds entries adds people to the street:
+# nameplates, subtitles, meshes, draw calls. On 2026-08-10 an unattended merge
+# of 11 took the census 124 -> 135, moved 29 goldens by up to 5.6%, broke five
+# draw-call baselines and nine gates that name 124 — and committed all of it to
+# main unreviewed. The roadmap had already recorded this exact event once
+# ("103 -> 124 ... nobody noticed because smoke had not been run since"); the
+# warning told humans to run smoke and left the job free to keep causing it.
+#
+# So: render is a trickle, landing is a milestone. If the merge changes the
+# census, it is undone here and the batch waits for a human to land it with a
+# suite run and a deliberate recapture.
+census() { node -e "console.log(require('./assets/catalog.json').comics.filter(c=>c.npc).length)" 2>/dev/null || echo "?"; }
+before_census="$(census)"
 node scripts/merge-batches.mjs || echo "merge-batches failed — continuing with the catalog as-is"
+after_census="$(census)"
+
+if [ "$before_census" != "$after_census" ]; then
+  echo "MERGE ADDS VENDORS: census $before_census -> $after_census. That moves goldens."
+  echo "Undoing the merge — landing new comics is a human step:"
+  echo "  node scripts/merge-batches.mjs && npm run smoke   # then recapture deliberately"
+  git checkout -- assets/catalog.json
+  echo "catalog restored to census $(census); rendering only what was already merged."
+fi
 
 node scripts/generate-tts.mjs --limit "$DAILY_TTS_LIMIT"
 status=$?
