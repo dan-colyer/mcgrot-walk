@@ -975,13 +975,65 @@ block:
   `interact.js`'s `beginReading`, the same call that credits `'heard'`, via
   `npc.isAnchor` (set at placement time) — so it can never fire when the
   flag is off, since every `isAnchor` is `false` in that case.
-- **Draw calls exactly +/-0 at every bookmark, flag on vs off.** Two
+- **The flag moves vendors and adds nothing, flag on vs off.** Two
   independently forced, freshly-booted pages (not the live default, which
-  points a different way before vs after the enable commit) visit all 8
-  bookmarks; anchors move geometry that already exists (no new lights, no
-  new meshes — the "brighter reading" is an unlit material-colour bump on
-  each vendor's already-per-vendor-unique face/comic materials, never the
-  shared `clothMat` cache), so this is expected to hold trivially and does.
+  points a different way before vs after the enable commit). Whole-scene
+  traversal: meshes, lights and triangle total must match exactly. Measured
+  525 meshes / 11 lights / 1,052,655 triangles on both arms. Anchors move
+  geometry that already exists — the "brighter reading" is an unlit
+  material-colour bump on each vendor's already-per-vendor-unique
+  face/comic materials, never the shared `clothMat` cache.
+
+  Object3D count is REPORTED, not gated. The on arm has played voices by the
+  time this runs and a `THREE.PositionalAudio` is an Object3D parented to the
+  vendor's group, so a raw count reads 1515 vs 1512 for three audio nodes and
+  nothing renderable. Lights are counted because a light is the one non-mesh
+  addition that would cost a frame.
+
+  Fault-injected: one 0.1m box added under the flag and parked at y = -9999,
+  frustum-culled at every bookmark, turned it red (526 vs 525 meshes). That
+  is the property the traversal buys and `renderer.info` cannot.
+
+- **Relocating the twelve stays inside the draw-call budget, flag on vs
+  off.** Same two pages, all 8 bookmarks, worst delta 6.3% against the 10%
+  the rest of the suite uses.
+
+  **This assertion was deliberately loosened at census 156, and the reason
+  matters more than the change.** It used to demand draw calls be exactly
+  equal at every bookmark, and that is written up below as holding
+  "trivially". It did not hold trivially — it held by luck. The flag MOVES
+  twelve vendors and draw calls are counted *after* frustum culling, so
+  equality was a coincidence about which relocated vendor happened to be
+  off-screen at each pose. At 124 vendors the coincidence held; at 156, with
+  the spacing down to 9.7m, `mid-805-far` read on=45 off=48 and the gate went
+  red for a scene that was behaving correctly.
+
+  The claim the gate was reaching for — the flag costs nothing — now sits
+  where it is structurally true, in the traversal above. Moving an object
+  leaves meshes and triangles untouched; adding one cannot. Recording this
+  rather than re-tuning it quietly, because a gate that goes red on a correct
+  scene is a gate that will be relaxed again, and the next person needs to
+  know which of the two assertions carries the weight.
+
+- **No two vendors stand within a nameplate of each other.** Every pair on
+  the anchors-on arm, read off live scene positions; floor 4m; tightest
+  6.91m. Written because the gate did not exist. Landing census 156 put the
+  GAIA anchor 1.41m from vendor 83 and every gate stayed green — they all
+  counted vendors, none measured the distance between two of them. The
+  picture was two grotesques shoulder to shoulder with their plates
+  overlapping into one unreadable smear.
+
+  The floor is 4m and the reservation in `npcs.js` is 6m, deliberately. 4m is
+  what a plate needs to stay readable; the extra 2m is margin so ordinary
+  spacing drift cannot redden a gate that should only fire on a real overlap.
+  Both figures are measured off the rendered plate, not guessed —
+  `docs/smoke/captures/anchors-tightest-pair.png` is written every run and
+  shows the tightest pair in the build that just ran. Fault-injected:
+  `ANCHOR_CLEARANCE = 0` reproduced 1.41m and turned it red.
+
+  **What it does not prove:** it measures centre-to-centre distance on the
+  plan, so it cannot see a plate made wider, a vendor made taller, or two
+  vendors legibly spaced but both facing a wall.
 
 **The skyline goldens are in this milestone's blast radius.** Seven anchors
 sit inside `skyline`'s view frustum (nearest 25.1m) — measured, not assumed —
@@ -4571,6 +4623,125 @@ driven from `atmosphere.update()` (`ambience.setRain(p.rain)`) which keeps
 running indoors by design. Nothing calls `setDucked` on entry, so **the full
 street bed plays at street level inside the shop, rain included** — against a
 design line (ROADMAP § E9) that says the bed ducks to muffled indoors.
+
+## Vendors no longer stand on each other (census landing, 2026-08-10)
+
+Landing transcription batches 5, 7 and 8 took the vendor census from 124 to
+156. The merge itself is one command. What made it a milestone is that three
+defects surfaced at once, and all three were things the street had been
+getting away with because there were fewer people on it.
+
+The common cause is arithmetic. `computeVendorLayout` spreads the census
+evenly over the usable street, so **spacing is a function of the census and
+shrinks as transcription lands**: 12.2m at 124, 9.7m at 156, and 3.6m if the
+full 418-comic corpus is ever transcribed. Every guarantee that was phrased
+as a distance had therefore been quietly depending on a number nobody was
+watching.
+
+### The three defects, and why no gate saw two of them
+
+| | What broke at 156 | What caught it |
+|---|---|---|
+| Stall clearance | a vendor 4.89m from McGrot's pitch, inside `interact.js`'s 8m `RANGE` | E10a.1 — the one gate that had been written as a distance |
+| Vendor separation | the GAIA anchor 1.41m from vendor 83, nameplates overlapping into one unreadable smear | nothing |
+| Litter reachability | 19 of 24 litter comics unreadable | E5b.1's found-credit gate, by accident |
+
+E10a.1 was already correct and did its job. It is worth noticing that it had
+been *passing on luck*: at 124 the nearest vendor happened to land 14.4m from
+the stall. The gate was right and the scene was lucky, which is the good way
+round.
+
+The separation defect had no gate at all, and the reason is a pattern worth
+naming: **every gate about the crowd counted vendors, and none measured the
+distance between two of them.** A count cannot see two figures standing
+inside each other. The picture could — see
+`docs/smoke/captures/anchors-tightest-pair.png`, written every run.
+
+The litter defect was caught sideways. `interact.js` consulted litter only
+when NO vendor was in range, so a vendor 7.9m away beat a comic under the
+player's feet. E5b.1 stands the camera on litter item 0 and presses E; at 156
+a vendor was 3.18m from that item and took the prompt. The gate went red for
+what looked like a journal bug and was really a priority bug. **This is the
+same collision E9a.2 has to solve for the shop door**, arriving early — one
+frontage, two things in range, and no rule. The rule is now written once, in
+`interact.js`: nearest wins, ties to the vendor.
+
+### The mechanism: reserved chainage bands
+
+`npcs.js` computes the even spacing over the street MINUS a set of reserved
+bands, then pushes any position at or past a band's near edge south by that
+band's full width. Ordering and even spacing survive; the holes are the only
+artefact, and each has either the stall or an anchor standing in it.
+
+- Stall: ±12m at `GULLET_CHAINAGE`. Not ±10 — the stall sits at offset 7.6
+  and a vendor at `STREET_OFFSET` 6 on the same side is 1.6m across from it,
+  so the band edge is hypot(12, 1.6) = 12.1m, clear of `RANGE + 2` with room
+  for the spacing to keep shrinking. Measured after: nearest vendor 14.49m.
+- Anchors: ±6m at each of the twelve landmark chainages. Measured after:
+  tightest pair 6.91m, both plates legible in full.
+- Bands are sorted and coalesced, because Cupp (725) and the stall (740)
+  overlap at these widths and a band counted twice takes the spacing wrong.
+
+**The bands are unconditional, including the anchor bands, and that is the
+load-bearing decision.** Two reasons, both about not letting a flag leak:
+
+- The `gullet` region requires `geomHash` to MATCH across the gullet flag's
+  two arms. A layout that reserved the stall's band only when the flag was on
+  would break that outright.
+- The anchors flag's contract is that it moves the TWELVE anchored vendors
+  and nothing else. Both arms get the same bands, so the on-vs-off comparison
+  still shows exactly twelve moving. Conditional anchor bands would have the
+  flag re-space all 156, and E5b.1's "non-anchor vendors did not move" gate
+  would have been the thing that noticed.
+
+Cost: with the flag off there are thirteen unexplained gaps in the row. Judged
+acceptable — a gap reads as a gap, and the alternative is a flag that
+re-spaces the street.
+
+**Rejected: snapping only the offending vendors to a band edge.** It moves far
+fewer vendors, which is attractive when a recapture is the price. Measured:
+at 9.7m spacing it parks the snapped vendor 2.4m from its new neighbour, i.e.
+it converts one overlap into another. Redistributing is the only version that
+does not need a second fix.
+
+### CENSUS is typed, not derived
+
+`smoke.mjs` now carries `const CENSUS = 156` once; nine gates used to hold
+their own `124`. One new gate, `E3e: the census the suite is written against
+matches the catalog`, counts `npc` blocks in `assets/catalog.json` node-side
+and compares.
+
+**It is deliberately a typed literal rather than a count read off the
+catalog.** Derived, it would track any change silently, including one nobody
+meant — and the entire lesson of the 2026-08-10 cron incident is that a census
+change must be loud. Typed, an unattended merge fails exactly one assertion
+with the right name on it, instead of five draw-call baselines and nine count
+gates that read like nine unrelated bugs. Landing a batch is now: run the
+merge, change that one line, recapture.
+
+Two gates stopped typing a count for the opposite reason, because the number
+they name is legitimately dynamic:
+
+- **The journal denominator.** `journal.js` counts vendors BUILT WITH AUDIO,
+  which the daily TTS trickle raises most days — 135 of 156 today. E10a.3
+  compares it against a node-side count off `catalog.json` instead: the same
+  number reached by a different route than journal.js's walk of the built
+  cast, which is what makes it a check rather than a restatement.
+- **E5a's one-voice neighbour set**, now filtered to vendors that have a
+  clip. It was 124/124 when written. A vendor with no mp3 can never reach
+  `isPlaying`, so waiting on one would hang the gate for 8s and then fail for
+  a reason that has nothing to do with voices.
+
+### What this landing does not prove
+
+- The separation gate measures plan distance between vendor origins. It
+  cannot see a nameplate made wider, a vendor made taller, or two vendors
+  legibly spaced and both facing a wall.
+- The reserved bands guarantee a hole at thirteen fixed chainages. They say
+  nothing about a vendor standing in a doorway, in a puddle, or inside
+  roadworks — nothing has ever checked that.
+- `interact.js`'s nearest-wins rule is gated only where litter and a vendor
+  compete. The shop door is not in that comparison yet; E9a.2 adds it.
 
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 

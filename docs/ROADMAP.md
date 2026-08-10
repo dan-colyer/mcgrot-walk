@@ -157,12 +157,14 @@ Decisions taken:
 - **TTS:** `set -a; source .env.local; set +a; node scripts/generate-tts.mjs`
   (~14/day measured before free-tier 429s; resumable; completed clips skip; the
   run now stops on the first quota error rather than grinding the remainder).
-  **Recounted 2026-08-10, after a three-agent wave: 157 comics transcribed,
-  125 of them in the catalog, and 32 sitting in finished batch JSONs waiting to
-  be LANDED.** 11 of those 32 are already voiced. Batches 5, 7 and 8 are
-  complete and `RESUME.md` is deleted; batch 6 and 9–20 are ordinary unstarted
-  batches. **261 of the 418 still have no script**, of which six are confirmed
-  non-comics and never will (see `BRIEF.md`). 30 distinct prebuilt voices,
+  **Recounted 2026-08-10, after the three-agent wave LANDED: 157 comics
+  transcribed and all of them in the catalog, standing 156 vendors on the
+  street** (the 157th is McGrot's own comic, which deliberately carries no
+  `npc` block). 136 of the 157 are voiced; the trickle fills the rest.
+  Batches 5, 7 and 8 are complete and `RESUME.md` is deleted; batch 6 and
+  9–20 are ordinary unstarted batches. **261 of the 418 still have no
+  script**, of which six are confirmed non-comics and never will (see
+  `BRIEF.md`). 30 distinct prebuilt voices,
   rotating by assignment index and wrapping at 30 — **verified against the live
   Gemini docs at the 2026-08-10 gate: 30 is still the complete prebuilt set**,
   so there is nothing to raise and the wrap is correct. Runs unattended at
@@ -192,11 +194,13 @@ Decisions taken:
   changes the vendor census and logs what to run instead. Render is the trickle;
   landing is a human act with a suite run and a deliberate recapture.
 
-  **The next landing is sized and measured: census 124 → 156, 32 new comics,
-27 goldens and 3 draw-call budget gates to recapture, worst move 5.442%.**
-  Merging is clean — `merge-batches.mjs` no longer claims mp3s that are not on
-  disk, so the landing can be green before the audio exists and the trickle
-  fills it in over the following days.
+  **That landing is DONE (2026-08-10): census 124 → 156, 25 goldens and 6
+  draw-call baselines recaptured.** It cost more than the pre-measured 27/3
+  because it also had to fix three distance defects the census exposed — see
+  § "Census landing 124 → 156". The next one is cheaper in one specific way:
+  `CENSUS` is typed once in `smoke.mjs` instead of nine times, so the sweep is
+  one line. It is not cheaper on goldens, and it will expose the same class of
+  defect again — spacing is 9.7m now and shrinks with every batch.
 - **Handmade shopfronts:** Dan feeds real-shop reference photos to ChatGPT,
   drops results in `assets/shopfronts/handmade/`, ingest script does the rest.
   Wishlist: `docs/shopfront-wishlist.md`.
@@ -3784,9 +3788,19 @@ interior golden will lock.*
    1486 that opens the room. The named risk is real and now has a number:
    the frontage is 12.78 m and `interact.js`'s `RANGE` is 8 m, so a vendor
    prompt and a door prompt can both be live in the same frame and
-   `interact.js` has no rule for which wins. Decide it once, in `interact.js`,
-   and gate the collision case explicitly — stand where both are in range and
-   assert which one is offered, with the control standing where only one is.
+   `interact.js` has no rule for which wins. Gate the collision case
+   explicitly — stand where both are in range and assert which one is
+   offered, with the control standing where only one is.
+
+   **Half of this is already done, and not by choice.** The 124 → 156 census
+   landing hit the same collision between vendors and litter — a vendor 7.9m
+   away was beating a comic under the player's feet, and 19 of 24 litter
+   comics had become unreachable. `interact.js` now decides it once: **nearest
+   wins, ties to the vendor.** Extend that comparison to the door rather than
+   inventing a second rule beside it. Note the door is not a point like a
+   vendor or a litter item — it is a 12.78 m frontage — so "nearest" needs a
+   definition (distance to the door's own anchor, not to the façade) and that
+   definition is the thing to write down.
 2. **The wipe, both ways.** The roadmap's own acceptance shape stands: an
    opposed pair where **strength 0 is bit-identical to no wipe** — check 26's
    shape, reused for a fourth axis. The wipe must not become the thing that
@@ -4293,6 +4307,52 @@ The general lesson, and it is the same one as finding 1 in different clothes:
 **this project keeps writing the warning and leaving the mechanism.** A
 docs-level "remember to run smoke" and a docs-level "remember to gate the
 shipped default" both survived a phase gate; neither survived being tested.
+
+## Census landing 124 → 156 — LANDED 2026-08-10
+
+Batches 5, 7 and 8 folded in. Suite green, 157s, chromium/metal, 0 FAIL.
+
+The merge is one command. What made it a milestone is that the census change
+broke three things at once, all of them distances that had been depending on
+a spacing nobody was watching. `computeVendorLayout` spreads the census evenly
+over the street, so spacing is a function of the census: **12.2m at 124, 9.7m
+at 156, 3.6m if all 418 are ever transcribed.**
+
+| Defect at 156 | Caught by | Fix |
+|---|---|---|
+| a vendor 4.89m from McGrot's stall, inside the 8m prompt radius | E10a.1 | reserved ±12m chainage band; nearest now 14.49m |
+| the GAIA anchor 1.41m from vendor 83, nameplates overlapping | **nothing** | reserved ±6m band per anchor; tightest pair now 6.91m |
+| 19 of 24 litter comics unreadable | E5b.1, sideways | `interact.js`: nearest wins, ties to the vendor |
+
+Full method, the unconditional-bands decision and the rejected snap-to-edge
+alternative: `docs/VALIDATION.md` § "Vendors no longer stand on each other".
+
+**Three things this cost that a future landing will also cost.** 25 goldens
+recaptured (chosen by `goldens:audit` against per-pose noise floors, never
+`--update-goldens`; the list included `golden-mobile:hud` at 0.088%, under the
+0.5% tolerance and therefore exactly the case the contract says must not
+ride). Six draw-call baselines moved, attributed by measuring the same code at
+both censuses rather than by arithmetic — skyline 317 → 377, +60 for 32
+vendors, 1.9 calls each. And a full `goldens:noise` re-measure, because a
+recapture invalidates the bands.
+
+**Three things it bought that the next landing will not have to pay for.**
+`CENSUS` is typed once in `smoke.mjs` instead of nine times, with one gate
+joining it to the catalog — so an unattended merge now reddens one assertion
+with the right name on it rather than fourteen that read like unrelated bugs.
+A separation gate exists. And the litter/vendor priority rule is decided, which
+is half of E9a.2's first item already done.
+
+**Landing a batch is now: run the merge, change `CENSUS`, recapture.**
+
+**The gate that was loosened, on purpose.** E5b.2's "draw calls exactly ±0,
+anchors on vs off" had been passing by coincidence — the flag moves twelve
+vendors, draw calls are counted after frustum culling, so equality was luck
+about which relocated vendor was off-screen. It now asserts the whole-scene
+mesh/light/triangle census by traversal (structurally true, and fault-injected
+with a mesh parked at y = -9999 that `renderer.info` could never have seen),
+with per-bookmark draw calls held to the same 10% budget as the rest of the
+suite. Written up rather than quietly re-tuned.
 
 ## E∞ — The Delight Ledger (continuous)
 

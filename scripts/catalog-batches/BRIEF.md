@@ -168,10 +168,26 @@ Expect a large deliberate recapture and a sweep of the gates that name the count
 
 ```bash
 node scripts/merge-batches.mjs   # idempotent; audio stays null until the clip exists
+# then change the ONE line: const CENSUS = <new count> at the top of scripts/smoke.mjs
 npm run smoke                    # expect goldens RED — that is the point
+npm run goldens:audit            # which goldens moved, and the exact rm to run
 # recapture the specific goldens deliberately. NEVER --update-goldens.
 npm run goldens:noise            # re-measure the bands after any recapture, clean tree
 ```
+
+`CENSUS` is typed on purpose. Derived from the catalog it would absorb a
+merge nobody meant; typed, an unattended one fails a single gate that says so
+by name. Since the 2026-08-10 landing that is the only count in the suite you
+have to change — nine gates used to carry their own.
+
+**Expect the census change to break distances, not just counts.** Vendors are
+spread evenly over the street, so the spacing shrinks every time a batch
+lands: 12.2m at 124, 9.7m at 156. The 124 → 156 landing put a vendor inside
+McGrot's prompt radius, stood an anchor 1.41m from its neighbour with the two
+nameplates overlapping, and made 19 of the 24 litter comics unreachable. Two
+of those three had no gate. Read `docs/VALIDATION.md` § "Vendors no longer
+stand on each other" before assuming a green suite means the street is fine,
+and **open `docs/smoke/captures/anchors-tightest-pair.png`**.
 
 The daily job (`scripts/daily-tts.sh`) deliberately will **not** do this for you:
 since 2026-08-10 it undoes any merge that changes the vendor census and says so
