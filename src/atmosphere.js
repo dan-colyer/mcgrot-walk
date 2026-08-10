@@ -960,6 +960,9 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
   }
 
   let sunAltitude = 0;
+  // Scratch for the suspended branch of update(), so deriving the sun angle
+  // while somebody else owns the palette allocates nothing per frame.
+  const sSuspendProbe = makePalette();
   let lastExposure = renderer.toneMappingExposure;
 
   const tint = new THREE.Color(1, 1, 1); // consumed by applyTint(), below
@@ -1073,6 +1076,19 @@ export function createAtmosphere({ scene, renderer, world, sky, torch, windows, 
     // resuming lands on the time it would have been.
     if (suspendToken) {
       if (rate !== 0) hours = (((hours + rate * (dt / 60)) % 24) + 24) % 24;
+      // The token suspends PAINTING, not DERIVING, and the difference has
+      // teeth. sunAltitude used to be set only inside applyPalette, so while
+      // a suspender held the token state().sunAltitude froze at whatever hour
+      // the token was taken — the clock advanced and the derived reading did
+      // not. E9a.2's glazing reads it from inside the shop, where the token
+      // is ALWAYS held, so it would have shown the hour the player walked in
+      // at and never changed again. Resolving the palette into a scratch
+      // struct touches no scene object and no renderer state, which is the
+      // whole of what the token protects.
+      resolvePalette(hours, transition ? transition.toWeather : settledWeather, sSuspendProbe);
+      const sp = sSuspendProbe.sun.pos;
+      const spLen = sp.length() || 1;
+      sunAltitude = Math.asin(THREE.MathUtils.clamp(sp.y / spLen, -1, 1)) * THREE.MathUtils.RAD2DEG;
       return;
     }
     if (rate !== 0) {

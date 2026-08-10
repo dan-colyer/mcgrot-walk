@@ -4221,6 +4221,95 @@ async function main() {
     });
     await intDateCtx.close();
 
+    // --- E9a.2: the glazing consults the clock -----------------------------
+    //
+    // The pane was a constant pale box at every hour. The claim is that it
+    // now follows the street clock, and the opposed pair is two hours in the
+    // same booted page rather than two builds — the clock is the only thing
+    // that differs, which is what isolates it.
+    //
+    // MEASURED OFF THE RENDERED FRAME, not off state(). state().glassHex
+    // would prove setDaylight assigned a colour; it would pass on a build
+    // where the pane was behind a wall, culled, or drawn with the wrong side
+    // facing in — which is exactly how this window shipped BLACK once before
+    // (see the DoubleSide note in interior.js). So the assertion is the
+    // pane's luminance against the lit wall beside it, in pixels.
+    const glassRegions = { glass: [630, 895, 325, 450], wall: [300, 480, 330, 440] };
+    const paneAt = async (hour) => {
+      await intOnPg.evaluate((h) => {
+        const dbg = window.__mcgrotDebug;
+        if (!dbg.interior.isInside()) dbg.enterInterior();
+        dbg.setTime(h);
+        dbg.stepFrames(5);
+        // A fixed pose looking at the shopfront from behind the counter, so
+        // the two hours frame the same pixels.
+        dbg.camera.position.set(-0.9, 1.7, -3.2);
+        dbg.camera.lookAt(0.2, 1.6, 4.5);
+        dbg.stepFrames(20);
+      }, hour);
+      const png = PNG.sync.read(await intOnPg.screenshot());
+      const mean = ([x0, x1, y0, y1]) => {
+        let s = 0; let n = 0;
+        for (let y = y0; y < y1; y += 1) {
+          for (let x = x0; x < x1; x += 1) {
+            const i = (y * png.width + x) << 2;
+            s += 0.2126 * png.data[i] + 0.7152 * png.data[i + 1] + 0.0722 * png.data[i + 2];
+            n += 1;
+          }
+        }
+        return s / n;
+      };
+      const st = await intOnPg.evaluate(() => window.__mcgrotDebug.interior.state());
+      return { png, glass: mean(glassRegions.glass), wall: mean(glassRegions.wall), daylight: st.daylight };
+    };
+    const paneNight = await paneAt(0);
+    writeFileSync(join(captureDir, 'interior-glazing-night.png'), await intOnPg.screenshot());
+    const paneDay = await paneAt(13);
+    writeFileSync(join(captureDir, 'interior-glazing-day.png'), await intOnPg.screenshot());
+    // Three separate claims, because each fails on its own. By day the window
+    // is the brightest thing in the room; at midnight it is not brighter than
+    // the wall; and the wall itself is the control — it is lit by the room's
+    // own rig, which the clock does not touch, so if BOTH moved the cause is
+    // the exposure or the grade, not the glazing.
+    const wallHeld = Math.abs(paneDay.wall - paneNight.wall) < 1.5;
+    results.push({
+      name: 'E9a.2: the shopfront glazing follows the street clock',
+      pass: paneDay.glass > paneDay.wall * 2.5 && paneNight.glass <= paneNight.wall && wallHeld,
+      detail: `13:00 pane ${paneDay.glass.toFixed(1)} vs wall ${paneDay.wall.toFixed(1)} `
+        + `(want pane > 2.5x wall); midnight pane ${paneNight.glass.toFixed(1)} vs wall `
+        + `${paneNight.wall.toFixed(1)} (want pane <= wall); the wall is the control and must NOT move `
+        + `(delta ${Math.abs(paneDay.wall - paneNight.wall).toFixed(2)}, allowed 1.5). daylight `
+        + `${paneNight.daylight.toFixed(2)} -> ${paneDay.daylight.toFixed(2)}. Open `
+        + 'docs/smoke/captures/interior-glazing-{night,day}.png — a number cannot see a black window',
+    });
+
+    // --- E9a.2: the ambience bed ducks indoors -----------------------------
+    //
+    // ambience is NOT in SUSPENDED_INDOORS and is driven from
+    // atmosphere.update(), which keeps running by design. Before this the
+    // full street bed played at street level inside the shop, rain included.
+    // The control is the same page on the way back out: a build that ducked
+    // and never released would pass a bare "ducked indoors" assertion.
+    const duckWalk = await intOnPg.evaluate(() => {
+      const dbg = window.__mcgrotDebug;
+      if (dbg.interior.isInside()) dbg.exitInterior();
+      dbg.stepFrames(3);
+      const outside = dbg.ambience.isDucked();
+      dbg.enterInterior();
+      dbg.stepFrames(3);
+      const inside = dbg.ambience.isDucked();
+      dbg.exitInterior();
+      dbg.stepFrames(3);
+      return { outside, inside, back: dbg.ambience.isDucked() };
+    });
+    results.push({
+      name: 'E9a.2: the street bed ducks indoors and comes back up on the way out',
+      pass: duckWalk.outside === false && duckWalk.inside === true && duckWalk.back === false,
+      detail: `ducked: outside=${duckWalk.outside} -> inside=${duckWalk.inside} -> back outside=`
+        + `${duckWalk.back} (want false/true/false; the third is the control — a build that ducked and `
+        + 'never released passes without it)',
+    });
+
     await intOffCtx.close();
     await intOnCtx.close();
     }

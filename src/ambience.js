@@ -81,7 +81,14 @@ export function createAmbience() {
     rainGain.gain.linearRampToValueAtTime(target, now + RAIN_RAMP);
   }
 
-  return { start, setDucked, triggerCrackle, setRain, get context() { return ctx; } };
+  // E9a.2: the duck state is now read by a gate. Returned as a getter rather
+  // than measured off master.gain, which ramps over DUCK_RAMP and would make
+  // an assertion a race against 0.6s of wall clock.
+  return {
+    start, setDucked, triggerCrackle, setRain,
+    isDucked: () => ducked,
+    get context() { return ctx; },
+  };
 }
 
 // --- Drone: two detuned oscillators through a lowpass filter --------------

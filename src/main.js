@@ -218,6 +218,11 @@ async function main() {
     // Anything these two put in the DOM comes down on the way in.
     interact.suspend();
     captions.suspend();
+    indoorDuck = true;
+    applyDuck();
+    // Set once here as well as per-frame, so a capture taken before the first
+    // update does not show the previous hour's window.
+    interior.setDaylight(atmosphere.state().sunAltitude);
     return true;
   }
 
@@ -239,6 +244,8 @@ async function main() {
     // interior's exposure never survives into a visible frame outside.
     atmosphere.releaseSuspend(interiorToken);
     interiorToken = null;
+    indoorDuck = false;
+    applyDuck();
     return true;
   }
 
@@ -255,9 +262,19 @@ async function main() {
 
   // Duck the ambience bed whenever a comic is being read to camera OR a nearby
   // busker is audible — both feed one combined ducking state.
+  // E9a.2 adds the third input: indoors. The bed is NOT suspended inside —
+  // ambience is not an updater and is driven from atmosphere.update(), which
+  // keeps running by design so the weather carries on without you. Before
+  // this, that meant the full street bed played at street level inside the
+  // shop, rain included, against the design line that says it muffles.
+  //
+  // Routed through the same combined state rather than calling setDucked from
+  // enterInterior: a direct call would be undone by the next applyDuck() the
+  // moment a comic stopped playing.
   let readingDuck = false;
   let proxDuck = false;
-  const applyDuck = () => ambience.setDucked(readingDuck || proxDuck);
+  let indoorDuck = false;
+  const applyDuck = () => ambience.setDucked(readingDuck || proxDuck || indoorDuck);
 
   // E10a.3: McGrot reads too, but he is NOT one of the 124 — a separate array
   // so npcs.npcs (which geomHash, the vendor census and the journal's
@@ -425,6 +442,12 @@ async function main() {
       if (indoors && SUSPENDED_INDOORS.has(u.name)) continue;
       u.update(dt, t);
     }
+    // E9a.2: the glazing follows the street clock. Driven here rather than
+    // from a suspend token because the pane is a colour on an unlit material,
+    // not fog and not exposure — atmosphere owns those two and nothing else.
+    // Only while inside: the material is invisible from the street, so a call
+    // out here would be work nobody can see.
+    if (indoors) interior.setDaylight(atmosphere.state().sunAltitude);
   }
   function renderNow() {
     renderer.info.reset();

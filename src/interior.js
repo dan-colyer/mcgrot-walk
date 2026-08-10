@@ -123,6 +123,22 @@ const TIN = 0x7a7263;
 const BRASS = 0x8a7434;          // khaki gold
 const STOCK_TONES = [0x8a6a34, 0x6d5a2c, 0x94793f, 0x5f4f2a, 0x7d6738, 0xa08f51];
 const GLASS = 0xa89e83;   // grimy daylight, seen from inside
+// ...and what the same pane is at night (E9a.2). Before this the glazing was
+// a constant pale box at every hour: stand in the shop at 3am and the window
+// was as bright as noon, which is the one thing in the room that has to agree
+// with the street because it IS the street. Kept above FOG_COLOUR (0x2a2519)
+// rather than matching it, so the aperture still reads as a window and not as
+// a hole knocked in the wall — the same failure the original dark-material
+// pass produced, and the reason the day tone is pale to begin with.
+const GLASS_NIGHT = 0x1a1710;
+// Daylight from sun altitude in DEGREES (atmosphere.state().sunAltitude,
+// measured across a day: -21.3 at midnight, +45.6 at 13:00). Zero at civil
+// twilight, full by +12 degrees; at 20:00 the sun is at +6.1 and this reads
+// 0.67, which is the half-lit window the hour deserves.
+function daylightFrom(sunAltitudeDeg) {
+  const t = (sunAltitudeDeg + 6) / 18;
+  return t < 0 ? 0 : (t > 1 ? 1 : t);
+}
 
 // One dot screen and one grain field already sit over everything (post.js).
 // The interior fog is a HELD BREATH rather than weather — just enough to keep
@@ -388,6 +404,11 @@ export function buildInterior() {
       layoutHash: 0, triangles: 0,
       enter() { return false; }, exit() { return false; },
       isInside: () => false, state: () => ({ enabled: false, inside: false }),
+      // A no-op rather than an absent key: main.js drives this every frame
+      // while inside, and the off arm must be callable without a guard at the
+      // call site. The stub already lacks `lights`, which no gate reaches —
+      // this one is reached on any build with the flag forced off.
+      setDaylight() {},
       update() {}, dispose() {},
     };
   }
@@ -440,6 +461,27 @@ export function buildInterior() {
   const glass = new THREE.Mesh(glassGeo, new THREE.MeshBasicMaterial({ color: GLASS, side: THREE.DoubleSide }));
   glass.name = 'interior-glass';
   scene.add(glass);
+  // The pane is a COLOUR on an unlit material, deliberately, and that is why
+  // driving it from the clock needs no suspend token. atmosphere owns fog and
+  // toneMappingExposure and hands those over through acquireSuspend; this is
+  // neither. Nothing outside the room can see this material, so writing it
+  // every frame while inside cannot repaint the street.
+  const glassDay = new THREE.Color(GLASS);
+  const glassNight = new THREE.Color(GLASS_NIGHT);
+  let daylight = 1;
+  function setDaylight(sunAltitudeDeg) {
+    const d = daylightFrom(sunAltitudeDeg);
+    if (d === daylight) return;
+    daylight = d;
+    // d SQUARED, not d. The lerp runs in gamma space and the day tone is far
+    // brighter than the night one, so a linear blend at d = 0.13 (3am, sun at
+    // -3.7 degrees) still rendered the pane at twice the lit wall's luminance
+    // — measured 78.2 against 42.2. Squared it reads 43.1, level with the
+    // wall, and at midnight 35.6, just under it. That is what a shopfront
+    // looks like from inside a lit room in the small hours. Daylight hours
+    // are untouched: 171.6 at 08:00 and 13:00, 4x the wall.
+    glass.material.color.copy(glassNight).lerp(glassDay, d * d);
+  }
 
   const lights = buildLights(scene);
 
@@ -488,7 +530,10 @@ export function buildInterior() {
   let inside = false;
 
   function state() {
-    return { enabled: true, inside, slug: SHOP_SLUG, name: SHOP_NAME, layoutHash, triangles };
+    return {
+      enabled: true, inside, slug: SHOP_SLUG, name: SHOP_NAME, layoutHash, triangles,
+      daylight, glassHex: glass.material.color.getHex(),
+    };
   }
 
   return {
@@ -501,6 +546,7 @@ export function buildInterior() {
     layoutHash,
     triangles,
     isInside: () => inside,
+    setDaylight,
     state,
     // enter/exit only record which side of the threshold we are on and where
     // the camera goes. Everything that has to happen AROUND that — the scene

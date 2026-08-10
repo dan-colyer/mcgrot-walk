@@ -4624,6 +4624,91 @@ running indoors by design. Nothing calls `setDucked` on entry, so **the full
 street bed plays at street level inside the shop, rain included** — against a
 design line (ROADMAP § E9) that says the bed ducks to muffled indoors.
 
+## The transition, part one: the clock and the bed (E9a.2)
+
+Two of E9a.2's five items, landed ahead of the door because neither depends
+on it. Both close a gap between the shipped build and a design line, and both
+were found by the E9/E10 phase gate rather than by a gate.
+
+### The glazing consults the clock
+
+`GLASS` was a constant. Stand in the shop at 3am and the shopfront was as
+bright as noon — the one surface in the room that has to agree with the street,
+because it IS the street.
+
+`interior.setDaylight(sunAltitudeDeg)` now lerps the pane between a day tone
+and a night one. **No suspend token, deliberately.** `atmosphere` owns fog and
+`toneMappingExposure` and hands those over through `acquireSuspend`; a colour
+on an unlit material in a scene atmosphere never sees is neither, and giving
+it a second hand-off would make the lock harder to reason about for nothing.
+
+Two numbers were measured rather than picked:
+
+- **The night tone, 0x1a1710.** ACES lifts an unlit material hard. The first
+  attempt, 0x33301f, rendered the midnight pane at 90.2 against a lit wall of
+  42.2 — a window twice as bright as the room at three in the morning. The
+  sweep was run against measured luminance, not against how it looked.
+- **The curve is d², not d.** The lerp runs in gamma space and the day tone is
+  far brighter, so a linear blend at d = 0.13 (3am, sun at −3.7°) still read
+  78.2. Squared it reads 43.1, level with the wall; midnight reads 35.6, just
+  under it; 13:00 is untouched at 171.6, four times the wall.
+
+**And a latent bug it uncovered, which mattered more than the glazing.**
+`atmosphere.update()` returns early while a suspend token is held, and
+`sunAltitude` was only ever assigned inside `applyPalette`. So while ANYONE
+held the token, `state().sunAltitude` froze at the hour the token was taken —
+the clock advanced and the derived reading did not. Indoors the token is
+always held, so the glazing would have shown the hour the player walked in at
+and never changed again. The suspended branch now resolves the palette into a
+scratch struct and derives the angle from it: **the token suspends painting,
+not deriving**, and nothing in that path touches a scene object or a renderer
+global. Any other consumer of `state()` under suspension was reading a stale
+number too.
+
+### The bed ducks indoors
+
+`ambience` is not an updater and is not in `SUSPENDED_INDOORS` — it is driven
+from `atmosphere.update()`, which keeps running by design so the weather
+carries on without you. The consequence was that the full street bed played at
+street level inside the shop, rain included.
+
+Routed through main.js's existing combined duck state (`readingDuck ||
+proxDuck || indoorDuck`) rather than calling `setDucked` from
+`enterInterior`. A direct call would be undone by the next `applyDuck()` the
+moment a comic stopped playing — which is a bug that would have shipped
+looking like a fixed one.
+
+### What the two gates assert, and what they refuse to
+
+**`E9a.2: the shopfront glazing follows the street clock`** — measured off the
+RENDERED FRAME, not off `state()`. `state().glassHex` would only prove
+`setDaylight` assigned a colour; it would pass on a build where the pane was
+behind a wall, culled, or drawn with the wrong side facing in — which is
+exactly how this window shipped black once before (see interior.js's
+DoubleSide note). So the assertion is the pane's pixel luminance against the
+lit wall beside it, at two hours in the same booted page.
+
+**The wall is the control and must not move** (delta < 1.5, measured 0.00). If
+both regions moved, the cause would be the exposure or the grade, not the
+glazing — and without that third clause the gate would credit the glazing for
+any change to the room's light.
+
+**`E9a.2: the street bed ducks indoors...and comes back up on the way out`** —
+the third reading is the control. A build that ducked on entry and never
+released passes a bare "ducked indoors" assertion.
+
+Both fault-injected: reverting the pane to a constant reddened the first
+(midnight 171.6 against a 42.2 wall); removing the release on exit reddened
+the second.
+
+**What they do not prove.** Neither says anything about the way IN — there is
+still no door on the shipped path, so both are reached only through
+`dbg.enterInterior()`. The glazing gate frames a fixed pose behind the
+counter, so it cannot see the pane from anywhere else in the room, and it
+tests two hours out of twenty-four. The duck gate reads `ambience.isDucked()`,
+a boolean, and never measures audio — headless audio timing is not gateable
+here, which is the same limitation E5a's one-voice gate carries.
+
 ## Vendors no longer stand on each other (census landing, 2026-08-10)
 
 Landing transcription batches 5, 7 and 8 took the vendor census from 124 to
