@@ -342,8 +342,18 @@ and does not report success until every changed file md5-matches the live URL.
 - **A catalog entry must not claim an mp3 that is not on disk.** It 404s on
   every overlay open and logs a console error, and the console-clean gate only
   catches it if some gate happens to open that station. `generate-tts.mjs`
-  writes `audio` back on success, so leave it null until the clip exists; the
-  `gullet` region checks all 418 entries.
+  writes `audio` back on success and **`merge-batches.mjs` sets it only when the
+  file exists** (fixed 2026-08-10 — E10a.3 fixed the generator and missed the
+  merger, which runs first in the daily job; it stayed green only because the
+  daily limit had always exceeded the size of a wave). Leave `audio` null until
+  the clip exists; the `gullet` region checks all 418 entries.
+- **Landing a transcription batch is a MILESTONE, not a merge.** `npcs.js`
+  builds one vendor per comic with an `npc` block, so folding a batch in adds
+  people to the street and moves goldens — 103→124 moved 23, and an unattended
+  124→135 moved 29 and broke 5 draw-call baselines and 9 gates that name 124.
+  `scripts/daily-tts.sh` now UNDOES any merge that changes the vendor census and
+  renders audio only; the landing (merge → `npm run smoke` → deliberate
+  recapture) is a human act. Procedure in `scripts/catalog-batches/BRIEF.md`.
 - `window.__mcgrotDebug` (main.js) is a dev probe — hostname-gated to localhost.
 - Asset regeneration (TTS/faces/OSM): see README.md; keys in `.env.local` (gitignored).
 - Texture/bundle URLs are content-hash versioned (atlas/strips etags, stamp-bundle) —
