@@ -136,6 +136,176 @@
           "headScale": 1.35
         }
       }
+    },
+    {
+      "id": "62e342f1",
+      "title": "McGrot — The Jowl Olympics",
+      "promptFile": "62e342f1.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Ina Whummle",
+        "blurb": "Chief Adjudicator o' the Jowl Games",
+        "voiceName": "Leda",
+        "accent": "brisk Fife/Kirkcaldy sports-commentator patter, clipped consonants",
+        "build": {
+          "height": 1.65,
+          "girth": 0.85,
+          "headScale": 1.35
+        }
+      }
+    },
+    {
+      "id": "633a3e7d",
+      "title": "McGrot — Fictional, Allegedly",
+      "promptFile": "633a3e7d.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Dod Wheen",
+        "blurb": "Suspects the Page Kens It's Bein' Read",
+        "voiceName": "Orus",
+        "accent": "low paranoid Leith mutter, deliberate menace",
+        "build": {
+          "height": 1.95,
+          "girth": 1.2,
+          "headScale": 1.4
+        }
+      }
+    },
+    {
+      "id": "636d4903",
+      "title": "McGrot — The Broth Blacks",
+      "promptFile": "636d4903.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Netta Wharrie",
+        "blurb": "Broth Correspondent tae Touring Sides",
+        "voiceName": "Aoede",
+        "accent": "flat, dry Fife, entirely unbothered by fame",
+        "build": {
+          "height": 1.7,
+          "girth": 1,
+          "headScale": 1.3
+        }
+      }
+    },
+    {
+      "id": "641002fc",
+      "title": "McGrot — The Heart o' Kirkcaldy",
+      "promptFile": "641002fc.txt",
+      "sparse": true,
+      "npc": {
+        "name": "Erchie Whaup",
+        "blurb": "Digs Where the Van Cannae Follow",
+        "voiceName": "Callirrhoe",
+        "accent": "hushed conspiratorial Fife whisper",
+        "build": {
+          "height": 1.75,
+          "girth": 1.05,
+          "headScale": 1.3
+        }
+      }
+    },
+    {
+      "id": "6427f771",
+      "title": "McGrot — The Triple McOffal",
+      "promptFile": "6427f771.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Cammy Whigmore",
+        "blurb": "Purveyor o' Sovereignty, Extra",
+        "voiceName": "Autonoe",
+        "accent": "quick, flat Leith fast-food counter-patter",
+        "build": {
+          "height": 1.6,
+          "girth": 1.1,
+          "headScale": 1.4
+        }
+      }
+    },
+    {
+      "id": "66f4b1a4",
+      "title": "McGrot — The Organoid Engine",
+      "promptFile": "66f4b1a4.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Grizzie Whinnie",
+        "blurb": "Chief Engineer o' the Gullet",
+        "voiceName": "Iapetus",
+        "accent": "hard, fast, half-shouted industrial Leith",
+        "build": {
+          "height": 1.8,
+          "girth": 1.25,
+          "headScale": 1.45
+        }
+      }
+    },
+    {
+      "id": "69b064db",
+      "title": "McGrot vs. Grot Loompas",
+      "promptFile": "69b064db.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Boaby Whangbeak",
+        "blurb": "Last Line Against the Loompas",
+        "voiceName": "Umbriel",
+        "accent": "hard spitting Leith brawler's bark",
+        "build": {
+          "height": 2,
+          "girth": 1.4,
+          "headScale": 1.5
+        }
+      }
+    },
+    {
+      "id": "69ef9026",
+      "title": "McGrot — Scree Ski",
+      "promptFile": "69ef9026.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Wattie Whussle",
+        "blurb": "Auld Mountain Guide, Occasionally Airborne",
+        "voiceName": "Algieba",
+        "accent": "breathless Highland lilt, gasping between words",
+        "build": {
+          "height": 1.9,
+          "girth": 0.95,
+          "headScale": 1.3
+        }
+      }
+    },
+    {
+      "id": "6aa1c186",
+      "title": "McGrot: Baby Arrival Surprise",
+      "promptFile": "6aa1c186.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Peggy Whitlock",
+        "blurb": "Midwife tae the Brothpot Line",
+        "voiceName": "Despina",
+        "accent": "soft matter-of-fact Leith, sing-song on the good news",
+        "build": {
+          "height": 1.65,
+          "girth": 1.15,
+          "headScale": 1.35
+        }
+      }
+    },
+    {
+      "id": "6aa89e0e",
+      "title": "McGrot — The Snaggletooth Test",
+      "promptFile": "6aa89e0e.txt",
+      "sparse": false,
+      "npc": {
+        "name": "Craigie Whorlie",
+        "blurb": "Examiner o' the Fraternity Snaggletooth",
+        "voiceName": "Erinome",
+        "accent": "gravelly harbourside Leith, whistling on missing teeth",
+        "build": {
+          "height": 1.85,
+          "girth": 1.2,
+          "headScale": 1.4
+        }
+      }
     }
   ]
 }
