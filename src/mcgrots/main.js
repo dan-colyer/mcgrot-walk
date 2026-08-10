@@ -21,6 +21,8 @@ import { ANCHORS, anchorById, nearestAnchor } from './anchors.js';
 import { makeActor } from './actor.js';
 import { makeCapsuleBody } from './actors/capsule.js';
 import { makeSegmentedBody } from './actors/segmented.js';
+import { makeFlatsBody } from './actors/flats.js';
+import { makeSkinnedBody } from './actors/skinned.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -28,6 +30,8 @@ import { makeSegmentedBody } from './actors/segmented.js';
 const BODIES = {
   capsule: () => makeCapsuleBody({}),
   segmented: (assets) => makeSegmentedBody({ assets, archetype: BODY_ARCHETYPE }),
+  flats: (assets) => makeFlatsBody({ assets, archetype: BODY_ARCHETYPE }),
+  skinned: (assets) => makeSkinnedBody({ assets, archetype: BODY_ARCHETYPE }),
 };
 const params = new URLSearchParams(location.search);
 const BODY_KIND = params.get('body') || 'capsule';
@@ -210,7 +214,7 @@ window.addEventListener('keydown', (e) => {
   // frame with an obvious identity, not a blank page.
   const makeBody = BODIES[BODY_KIND] || BODIES.capsule;
   const body = makeBody(null);
-  actor = makeActor({ body });
+  actor = makeActor({ body, camera });
   scene.add(actor.group);
   try {
     await actor.ready;

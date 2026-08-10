@@ -19,7 +19,7 @@
 // worth it against a figure that only slides.
 
 import { spawn } from 'child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, statSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'net';
@@ -41,11 +41,18 @@ const ONLY = (arg('only') || '').split(',').filter(Boolean);
 // Every candidate G1 is meant to compare. `file` is what supplies its line in
 // the cost table's "lines of code" column; a missing file means the candidate
 // is not written yet, which is reported rather than skipped silently.
+// `assets` is what the candidate ADDS to the payload, on disk, beyond the glb
+// every candidate already needs. Reported from the filesystem rather than from
+// the page: A2 was reporting a 5 KB sidecar and A3 an atlas measured in PIXELS,
+// which made the cost column meaningless.
 const CANDIDATES = [
-  { id: 'capsule', label: 'control (capsule)', file: 'src/mcgrots/actors/capsule.js', offline: null },
-  { id: 'segmented', label: 'A2 segmented', file: 'src/mcgrots/actors/segmented.js', offline: 'scripts/segment-glb.mjs' },
-  { id: 'flats', label: 'A3 hinged flats', file: 'src/mcgrots/actors/flats.js', offline: 'scripts/render-flats.mjs' },
-  { id: 'skinned', label: 'A1 skinned', file: 'src/mcgrots/actors/skinned.js', offline: 'scripts/rig-glb.mjs' },
+  { id: 'capsule', label: 'control (capsule)', file: 'src/mcgrots/actors/capsule.js', offline: null, assets: [] },
+  { id: 'segmented', label: 'A2 segmented', file: 'src/mcgrots/actors/segmented.js', offline: 'scripts/segment-glb.mjs',
+    assets: ['assets/characters/{A}-segments.json'] },
+  { id: 'flats', label: 'A3 hinged flats', file: 'src/mcgrots/actors/flats.js', offline: 'scripts/render-flats.mjs',
+    assets: ['assets/characters/{A}-flats.png', 'assets/characters/{A}-flats.json'] },
+  { id: 'skinned', label: 'A1 skinned', file: 'src/mcgrots/actors/skinned.js', offline: 'scripts/rig-glb.mjs',
+    assets: ['assets/characters/{A}-rig.json'] },
 ];
 
 const STRIDE = 0.72;          // metres per stride — must match actors/segmented.js
@@ -53,6 +60,10 @@ const STRIP_FRAMES = 8;
 const W = 320, H = 420;       // per-frame capture size; portrait, because a figure is
 
 const loc = (p) => (existsSync(join(root, p)) ? readFileSync(join(root, p), 'utf8').split('\n').length : null);
+const assetBytes = (paths, archetype) => paths.reduce((sum, p) => {
+  const f = join(root, p.replace('{A}', archetype));
+  return sum + (existsSync(f) ? statSync(f).size : 0);
+}, 0);
 
 function tile(frames, cols = frames.length) {
   const pngs = frames.map((b) => PNG.sync.read(b));
@@ -167,7 +178,7 @@ try {
       offlineLines: cand.offline ? loc(cand.offline) : null,
       drawCalls: cost.stats.drawCalls,
       triangles: cost.stats.triangles,
-      bytes: cost.stats.bytes,
+      bytes: assetBytes(cand.assets, ARCHETYPE),
       msPerFrame: cost.msPerFrame,
       errors: errors.length,
     });
@@ -177,7 +188,7 @@ try {
   }
 
   console.log(`\n[g1] renderer ${LAUNCH_LABEL}   archetype ${ARCHETYPE}   captures docs/smoke/captures/mcgrots/g1/\n`);
-  console.log('candidate            draws     tris    sidecar   ms/frame   runtime LOC   offline LOC   status');
+  console.log('candidate            draws     tris   asset KB   ms/frame   runtime LOC   offline LOC   status');
   for (const r of rows) {
     if (r.status !== 'ok') {
       console.log(`${r.label.padEnd(20)} ${'-'.repeat(48)} ${r.status}`);
@@ -185,7 +196,7 @@ try {
     }
     console.log(
       `${r.label.padEnd(20)} ${String(r.drawCalls).padStart(5)} ${String(r.triangles).padStart(8)} ` +
-      `${String(r.bytes).padStart(10)} ${r.msPerFrame.toFixed(3).padStart(10)} ` +
+      `${(r.bytes / 1024).toFixed(1).padStart(10)} ${r.msPerFrame.toFixed(3).padStart(10)} ` +
       `${String(r.lines).padStart(13)} ${String(r.offlineLines ?? '-').padStart(13)}   ${r.errors ? `${r.errors} PAGE ERRORS` : 'ok'}`);
   }
   console.log('\n[g1] the table judges cost. Open the strips and judge the motion.');

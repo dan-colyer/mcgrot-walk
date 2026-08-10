@@ -73,6 +73,91 @@ from the commit immediately after.
 - **Nothing about mobile.** No viewport pass yet, though the staging (tap an
   anchor, fixed cameras) was chosen to be mobile-shaped from the start.
 
+---
+
+## G1 — the animation bake-off
+
+```bash
+node scripts/mcgrots-bakeoff.mjs                       # all four, strips + cost
+node scripts/mcgrots-bakeoff.mjs --archetype=mcgrot
+node scripts/glb-anatomy.mjs assets/characters/rab-form.glb
+```
+
+Strips land in `docs/smoke/captures/mcgrots/g1/` — `<id>-walk.png` is eight
+frames across one stride, `<id>-poses.png` is idle / sit / head-turn.
+
+**All four candidates run.** Measured on `rab`, chromium/metal:
+
+| | draws | tris | asset KB | ms/frame | runtime LOC | offline LOC |
+|---|---|---|---|---|---|---|
+| control (capsule) | 2 | 156 | 0.0 | 0.017 | 60 | — |
+| A1 skinned | **1** | 5254 | 44.0 | 0.022 | 146 | 142 |
+| A2 segmented | 6 | 5254 | **7.3** | 0.021 | 198 | 195 |
+| A3 hinged flats | 6 | **12** | 76.9 | 0.081 | 175 | 66 |
+
+Asset KB is what a candidate adds *per character* on top of the 480 KB glb
+every candidate needs anyway.
+
+### The finding the milestone turned on
+
+`scripts/glb-anatomy.mjs` measures cross-sections through a normalised mesh.
+At ankle height every biped is two clearly separated masses; by a third of the
+way up they have fused into one ring. **That ring is the coat.**
+`docs/CANON.md` dresses this cast in heavy dockside coats and aprons and the
+geometry agrees.
+
+So only the lower legs need to articulate, and everything above the hem is one
+mass that sways. That is what makes A2 and A3 cheap, and it is why A1 buys less
+than it looks like it should — smooth deformation of a garment that barely
+deforms.
+
+### Two predictions the measurements overturned
+
+**A1 was expected to tear. It does not.** Auto-skinning by distance-to-bone is
+the crude end of the technique and these are lumpy Trellis reconstructions with
+no edge loops at the joints, so binding failures looked likely. The strip shows
+a continuous surface with no seams. The lumpiness is *why*: a solid blob has no
+thin features for a distance-weighted bind to get wrong. It also posts the best
+draw-call figure of the three, because skinning keeps the character one mesh.
+
+**Flats were expected to be the cheapest to run. They are the dearest**, at
+0.081 ms/frame against 0.021–0.022 for the two geometry candidates, despite
+carrying 12 triangles against 5254. Transparency, alpha-test and the billboard
+update cost more than the geometry they replace. Triangle count did not predict
+frame cost here.
+
+### What G1 does not settle
+
+- **No foot IK on any candidate**, so feet slide rather than plant. Whether
+  that reads at the game's camera distances is a judgement, not a measurement.
+- **A head-turn is not comparable across candidates.** A2 and A1 rotate a head;
+  A3 physically cannot — a sprite rotated out of plane vanishes — so it leans
+  instead. G6 makes Pomplé's head-turn load-bearing, so this is a real mark
+  against A3 that the cost table cannot show.
+- **Only `rab` has been rendered.** Run `--archetype=` across the cast before
+  choosing; the adaptive neck lands between 0.75 and 0.89 and `runt`'s head is
+  1055 triangles against `slab`'s 232.
+- **Pomplé is excluded.** He is a quadruped, emitted as a single rigid part,
+  and a biped rig would not give him the head-turn G6 needs.
+
+### Faults the strips caught that no number would have
+
+**The first segmented walk read as detached boots under a static coat**, feet
+lifting clear of the ground. The hip had been placed at the top of the visible
+leg geometry — the coat hem at y=0.22, where the geometry starts, not where the
+joint is. A stub rotating about its own top describes a steep arc. A virtual
+hip at y=0.46, inside the coat, flattens it and plants the feet.
+
+**Sitting swung the boots out horizontally at waist height.** A rigid segment
+has no knee, and there is no thigh geometry to bend because it is all coat. The
+pose now drops the body and hangs the legs near-vertical, which is what someone
+in a heavy coat on a low wall actually does.
+
+**The first sprite bake put a whole upper body in the torso cell.** `head`,
+`armL` and `armR` are *children* of `joint:torso`, so revealing the torso with
+`traverse()` revealed them too. Every part after it then overlapped in the
+assembled figure. Reveal the joint's own direct-child mesh, never a traverse.
+
 ### Rejected and recorded
 
 **Hand-authored camera positions.** Five eye positions written by hand in

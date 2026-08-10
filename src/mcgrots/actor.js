@@ -26,7 +26,10 @@ const WALK_SPEED = 1.35;      // m/s. Ordinary pace; the walk is the thing being
 const TURN_RATE = 4.2;        // rad/s toward the direction of travel
 const ARRIVE_EPS = 0.05;      // m — close enough to be parked
 
-export function makeActor({ body, height = 1.72 }) {
+// `camera` is optional and only used by candidates that billboard (A3). It is
+// passed here rather than reached for globally so a body still has no way to
+// touch the scene — the interface stays "pose yourself", not "render yourself".
+export function makeActor({ body, height = 1.72, camera = null }) {
   const group = new THREE.Group();
   group.name = 'actor';
 
@@ -97,6 +100,7 @@ export function makeActor({ body, height = 1.72 }) {
 
       body.pose(state, phase, dt);
       body.lookAt(headYaw);
+      if (body.faceCamera && camera) body.faceCamera(camera, group);
     },
 
     stats: () => body.stats(),

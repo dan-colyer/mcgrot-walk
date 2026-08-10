@@ -4,7 +4,8 @@ A second, small game in this repo. One pitch, McGrot's van, a handful of canon
 characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
-**Status: G0 landed 2026-08-10. G1 — the animation bake-off — is next.**
+**Status: G0 and G1 landed 2026-08-10. G2 — the style bake-off — is next,
+and it needs Dan's judgement on G1's strips before it can start.**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
 `npm run smoke:mcgrots` (13 checks, 1.3s); boot the game with
@@ -246,7 +247,7 @@ frame is a picture"). Prove the contrast gate can go red by fault-injecting a
 black material, watch it fail, restore, and commit *before* injecting anything
 (`CLAUDE.md` § Gotchas).
 
-### G1 — The animation bake-off ← **start here after G0**
+### G1 — The animation bake-off ✅ built 2026-08-10, awaiting judgement
 
 Dan's instruction: **prototype all three.** Do not shortcut to a favourite.
 
