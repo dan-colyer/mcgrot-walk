@@ -16,14 +16,22 @@ is the one clear candidate left on the roadmap). If you delegate, brief the
 whole milestone, review the diff by measurement rather than by summary, and
 send findings back instead of fixing them here.
 
-**Fable is the phase-gate reviewer**, and is now the only independent read.
-At the end of each major roadmap phase (E1, E2, …) a Fable session audits the
-phase end-to-end: architecture drift, quality against the roadmap's intent,
-cross-cutting regressions, and whether the roadmap itself still holds. Fable
-adjusts the roadmap and hands the next phase back to Opus. **Opus tells Dan
-when a Fable pass is due** — at a phase boundary, or earlier if the
+**A fresh session on Opus at xHigh is the phase-gate reviewer**, and is the
+only independent read. At the end of each major roadmap phase (E1, E2, …) that
+session audits the phase end-to-end: architecture drift, quality against the
+roadmap's intent, cross-cutting regressions, and whether the roadmap itself
+still holds. It adjusts the roadmap and hands the next phase back. **Opus tells
+Dan when a phase-gate pass is due** — at a phase boundary, or earlier if the
 architecture has drifted enough that a fresh read is worth more than another
 milestone.
+
+*Changed 2026-08-10, on cost: Fable held this role for the E2, E3 and E5 gates
+and is no longer affordable. What the role actually needs is a session that has
+not written the code and will re-run the measurements rather than read the
+summary — the E9/E10 gate did that on Opus xHigh and found two things the
+implementing session had not (see ROADMAP § "E9/E10 — phase-gate audit"). Do
+not run a phase gate at the default effort, and do not run it inside the
+conversation that implemented the phase.*
 
 ### The verification contract
 
@@ -98,8 +106,8 @@ afterwards:
   them sounded obviously right, and the point is to stop a later session
   re-deriving them.
 - **Memory gets what the repo cannot carry** — cross-session working facts,
-  not a second copy of this file. A Fable phase-gate session reads the repo and
-  has no access to that store, so anything a reviewer needs belongs in `docs/`.
+  not a second copy of this file. A phase-gate session reads the repo and has no
+  access to that store, so anything a reviewer needs belongs in `docs/`.
 
 **Pushing and deploying stay explicit asks.** Deploying publishes to a public
 site under Dan's name, and `main` sitting ahead of what is live is a normal
@@ -125,7 +133,7 @@ work regardless. The catches that justified the split turned out to come from
 *measuring* rather than from independence — the briefs had already asked for
 the measurements that were skipped. What independence genuinely bought was
 catching false claims in summaries, and that risk is now carried by the
-verification contract above plus the Fable phase gate.
+verification contract above plus the phase gate.
 
 Delegation is also a lossy context boundary, and a lossier one than
 compaction: a diff plus a summary is a worse way to acquire understanding than

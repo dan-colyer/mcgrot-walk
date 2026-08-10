@@ -4375,9 +4375,18 @@ calculator" rule biting for the third time in this project.
   have had their say, and it would then have to be recaptured twice more.
   **An interior golden belongs to E9a.3**, when the boot lands a player in the
   room and the pose becomes a state the game actually ships someone into.
-- **Nothing about audio indoors.** `proximityAudio` is held while inside, so
-  the street's busking simply stops rather than muffling. Ambience ducking
-  indoors-vs-out is named in the roadmap under E9a.2 and is not measured here.
+- **Nothing about audio indoors, and it is worse than "not muffled".**
+  `proximityAudio` is held while inside, so the street's busking stops dead.
+  The ambience BED does not: it is not an updater, is not in
+  `SUSPENDED_INDOORS`, and is driven from `atmosphere.update()` — which keeps
+  running indoors by design — so the full street bed plays at street level in
+  the shop, rain included. Nothing calls `setDucked` on entry. E9a.2's.
+  *(Corrected at the 2026-08-10 phase gate; this line previously said only that
+  the busking stops rather than muffling, which understated it.)*
+- **Nothing about the shipped default.** Both arms force the flag, deliberately
+  — a forced arm cannot witness what ships. Measured at the phase gate:
+  reverting `INTERIOR_ENABLED` to `false` leaves all thirteen of these gates
+  green and the whole suite green. See § "Neither enable commit is guarded".
 - **The glazing is a constant.** The shopfront reads as a pale light box at
   every hour, because the room does not consult the street clock. At 3am it
   will still be a bright window. Known, and it belongs with the transition —
@@ -4410,6 +4419,99 @@ against its 7.5 MB ceiling.
 **`SINCE_RULES` grew accordingly** — `src/interior.js` now routes to
 `render`, `weather`, `mobile` and `determinism` as well as its own region,
 because the module is on the boot path those regions all run through.
+
+## Neither enable commit is guarded (E9/E10 phase gate, 2026-08-10)
+
+Measured at the gate, and the reason it ran the suite instead of reading it.
+Both E10a and E9a.1 landed flag-first and then flipped their shipped default.
+**Neither flip is watched by anything that would notice it being flipped back.**
+
+Method: revert the constant, rebuild, run the region. Restored after each.
+
+| Injection | What went red |
+|---|---|
+| `INTERIOR_ENABLED = false` (`--only=interior`) | **nothing** — all 13 gates green |
+| `GULLET_ENABLED = false` (`--only=gullet,render`) | `draw calls +/-0 (E2c.1)` only — `skyline 315 vs 325`, `lamp-hero-night 323 vs 333` |
+
+Two things worth separating out of that.
+
+**The goldens do not police the Gullet.** With the stall gone, `golden:skyline`
+came in at **0.137%** against a 0.5% tolerance — a pass. The enable commit
+recaptured `skyline`, `skyline-clear` and `skyline-haar`, correctly, under the
+"nothing intentional lives under the golden tolerance" rule. But recapturing
+does not make the pose *sensitive*: after it, the stall's presence is still
+inside jitter range at that pose, so the only instrument that can see it is the
+draw-call baseline. This is the E3 gate's finding holding for a third time —
+the pixel diff and the draw-call count are one instrument, and neither half
+alone is.
+
+**The interior has no backstop at all**, and structurally cannot have this one:
+a second `THREE.Scene` that is never handed to `post.render()` adds zero draw
+calls to the street, which is precisely what the `interior` region's first
+claim gates. The property that makes the room cheap is the property that makes
+it invisible to every existing check.
+
+### The fix belongs in `flags.js`, not in two regions
+
+Precedent for the missing gate already exists twice and was simply not extended
+to the new flags: **`E8: the grade ships on`** (`styleShipped === 1`, a bare
+product read of the shipped value, separate from the isolation gate that proves
+the grade reaches the frame) and **`E3e: the shipped default stands the
+generated crowd in the street`** (booted with no override at all).
+
+Adding a third and fourth copy would leave the ninth flag to remember. The
+ruling instead: `flag()` records `{name, shippedDefault}` into a module-level
+Map, the debug API exposes it, and ONE gate boots with **no overrides** and
+asserts the whole table against an expected snapshot committed in
+`scripts/smoke.mjs`. The snapshot is the point — reverting a default then has
+to be done in two files, and the second one is the harness.
+
+Note what this gate must NOT do: read the resolved value on an arm that forces
+the flag. Every region's opposed pair legitimately overrides, so the shipped
+default is only observable on a boot that overrides nothing.
+
+### Why the region's own gates cannot cover it
+
+Both regions' pairs force the flag in both directions, deliberately — that is
+what makes the comparison sound (`flags.js`: "the suite boots the SAME build
+twice and attributes a measured difference to the flag"). A forced arm cannot
+also witness the default. The two claims are genuinely separate measurements
+and want separate gates, which is exactly the shape `E8: the grade ships on`
+already has.
+
+### The two suspend owners meet on a path nothing walks
+
+Not measured as a gate — recorded because the gate that should exist does not,
+and because the reasoning that dismissed it was wrong in an instructive way.
+
+`ending.begin()` refusing from indoors is asserted in prose on the grounds that
+`canOffer()` needs leg ≥ 1 and the north zone, which no gate sets up. But
+**`legs` is in `SUSPENDED_INDOORS`**, so `legs.state()` keeps returning the last
+STREET reading for as long as the player is inside — zone included. And
+`main.js`'s Enter handler is a bare `window` listener that is not suspended, so
+it reaches `ending.begin()` directly rather than through the held updater.
+
+So: stand at the Foot on leg ≥ 1, step into the shop, press Enter. `canOffer()`
+returns true off the frozen reading, and the only thing between the player and
+the haar closing over a deli is `acquireSuspend('ending')` returning null. The
+token is not a belt-and-braces measure there; it is the whole mechanism, on a
+reachable path, unmeasured.
+
+The gate E9a.2 owes: reuse the `ending` region's `walkToTheFoot` fixture, enter,
+press Enter, and assert **both** `begin() === false` **and**
+`atmosphere.suspendOwner() === 'interior'`. Without the second assert it passes
+vacuously on any build where `canOffer()` was false — the E10a.3 precondition
+lesson, applying to a gate before it is written for once.
+
+### Also corrected here: the ambience note in the `interior` region
+
+That section says audio indoors is unproven because "the street's busking simply
+stops rather than muffling". That is true of `proximityAudio` and understates
+the rest: `ambience` is not an updater, is not in `SUSPENDED_INDOORS`, and is
+driven from `atmosphere.update()` (`ambience.setRain(p.rain)`) which keeps
+running indoors by design. Nothing calls `setDucked` on entry, so **the full
+street bed plays at street level inside the shop, rain included** — against a
+design line (ROADMAP § E9) that says the bed ducks to muffled indoors.
 
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 

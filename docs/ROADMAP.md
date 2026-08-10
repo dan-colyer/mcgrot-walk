@@ -55,21 +55,26 @@ before E3a generated a mesh); what remains of E8 is close-out, not a loop.
 
 ## How this roadmap is used (the three tiers)
 
-- **Fable** thinks: phase design, decomposition, audits at phase gates,
-  re-planning. Each near-term phase below is already decomposed into
-  milestone-sized units with scope boundaries, dependencies, acceptance
-  shapes and named risks — so the design does not need re-deriving
-  downstream.
-- **Opus** briefs and verifies: takes the NEXT milestone unit, turns it into
-  a Sonnet brief (objective, files, constraints, acceptance criteria,
-  risks), reviews the diff against the brief with independent measurement,
-  deploys. The two E2d rules bind every brief: **every acceptance
-  measurement names a control that isolates the system's own contribution**,
-  and **when a symptom implicates three.js, read the vendored source before
-  theorising**. Where a unit below says "gate:", that is the acceptance
-  shape the brief should elaborate — not replace.
-- **Sonnet** implements a milestone end-to-end against the brief and reports
-  honestly, deviations flagged.
+*Superseded 2026-08-10 — kept because the plan below was written against it and
+its decomposition still binds. The three-model split is gone (see CLAUDE.md §
+"Why this changed"): **Opus works the milestone end to end**, and a fresh Opus
+session at xHigh runs the phase gate. What survives unchanged is the design
+already banked here — each near-term phase is decomposed into milestone-sized
+units with scope boundaries, dependencies, acceptance shapes and named risks,
+so none of it needs re-deriving downstream. Where a unit below says "gate:",
+that is the acceptance shape to elaborate, not replace, and the two E2d rules
+still bind every one of them: **every acceptance measurement names a control
+that isolates the system's own contribution**, and **when a symptom implicates
+three.js, read the vendored source before theorising**.*
+
+- ~~**Fable** thinks: phase design, decomposition, audits at phase gates.~~
+  Phase gates are now a fresh Opus xHigh session; phase design is the gate's
+  output, as before.
+- ~~**Opus** briefs and verifies.~~ Opus implements, verifies and deploys.
+- ~~**Sonnet** implements a milestone end-to-end.~~ Delegation is ad hoc now,
+  not a tier — a mechanical sweep too large to hold in one conversation. The
+  transcription factory (`scripts/catalog-batches/`) is the standing example
+  and the only one running.
 
 Containment conventions that recur below, named once: **flag-first** (a
 behaviour-changing feature lands behind a localhost/debug flag, gates green
@@ -123,7 +128,8 @@ exception left is E7a's mechanical hosting migration.
 | E6b the tram | **high (review)** | camera parenting, update order, suspended clamps |
 | E7a hosting move | medium | mechanical migration |
 | E7b presence | medium | plus a hard verify of the silent single-player fallback |
-| Phase gates | — | Fable, at every phase boundary — Opus flags when one is due |
+| Phase gates | **xhigh** | a FRESH session at every phase boundary, never the one that implemented the phase — Opus flags when one is due (Fable until 2026-08-10, then Opus xHigh on cost) |
+| E9a.2 the transition | **high (review)** | door prompt shares a frontage with `interact.js`; the first interior golden's pose is decided here |
 
 ## Phase D retrospective (why the roadmap changed)
 
@@ -3949,6 +3955,223 @@ machinery rather than new systems:
 Acceptance shapes inherit E4's (corpus through the Central Bar review step,
 event determinism from the seed, no golden movement outside deliberate
 enables). No new engine surface.
+
+## E9/E10 — phase-gate audit (2026-08-10, Opus xHigh): PASSED
+
+The first gate not run by Fable — see CLAUDE.md § "Development workflow" for
+why the role moved. Method note, and it is the opposite of E3's: this gate
+**ran the suite and fault-injected against it**, because both phases' central
+claim is about what a flag does and that is not a claim a code read can settle.
+Independently measured, not quoted: **318 PASS / 0 FAIL sharded, 106s, all 20
+regions**, matching the landing record. Every ruling below says whether it was
+measured or reasoned.
+
+**Both phases pass.** The Gullet and the Shop are the two best-gated units the
+project has landed — 24 and 13 gates, every one fault-injected, and the interior
+region's three unfalsifiable gates were caught and fixed *by the implementing
+session*, which is the behaviour the verification contract was written to
+produce. What follows is what a second pair of eyes found on top.
+
+### 1. Both enable commits shipped without a watcher — MEASURED
+
+The finding the gate exists for, and it is not the one the handoff predicted.
+
+Reverting `INTERIOR_ENABLED` to `false` and running `--only=interior`: **all
+thirteen gates stay green.** Reverting `GULLET_ENABLED` and running
+`--only=gullet,render`: **all twenty-four gullet gates stay green, and so does
+`golden:skyline` at 0.137% against a 0.5% tolerance.** The single check that
+went red for either was the unregioned draw-call invariant — `skyline 315 vs
+325`, `lamp-hero-night 323 vs 333`.
+
+Two things follow. The goldens do **not** police the Gullet's default: the
+enable recaptured `skyline`/`skyline-clear`/`skyline-haar` correctly under the
+"nothing intentional lives under the tolerance" rule, but the movement was
+always inside jitter range, so post-recapture the pose cannot tell the stall's
+presence from noise. Only the draw-call baseline can — the E3 gate's "the
+pairing is the instrument, neither half alone is" finding, holding again. And
+the interior has no such backstop at all, because a second scene that is never
+rendered adds zero draw calls.
+
+**This is the real answer to "was the E9a.1 enable right?"** The flip was right
+— putting the swap, the hand-off and the construction on the boot path months
+early is worth 381.7 KB, and reverting it now costs a commit to buy back a cost
+Dan has already accepted. The defect is that **nothing is watching it**, and
+that is cheap to fix and general.
+
+**Ruling — `flags.js` grows a registry, and one gate covers every flag.**
+`flag()` records `{name, shippedDefault}` into a module-level Map; the debug API
+exposes it; one gate boots with **no overrides at all** and asserts the whole
+table against an expected snapshot committed in `scripts/smoke.mjs`. Precedent
+exists and was simply not extended to the new flags: `E8: the grade ships on`
+(`styleShipped === 1`) and `E3e: the shipped default stands the generated crowd
+in the street` are the same gate for two earlier axes. Doing it at the helper
+rather than per module is what stops the ninth flag repeating this. **E9a.2
+carries it** — it is ~8 lines plus one gate, and the ninth flag is E9a.2's own
+door.
+
+### 2. The two suspend owners meet on a reachable path, and it is ungated — MEASURED by reading, reasoned on the outcome
+
+Sceptical item 3 in the handoff, and it matters more than the handoff thought.
+The reasoning there was that `canOffer()` needs leg ≥ 1 and the north zone and
+no gate sets that up. What that misses is *why* `canOffer()` can be true
+indoors: **`legs` is in `SUSPENDED_INDOORS`**, so `legs.state()` keeps returning
+the last STREET reading — zone and all — for as long as the player is inside.
+
+So the reachable sequence is ordinary: stand at the Foot on leg ≥ 1, step into
+the shop, press Enter. `main.js`'s Enter listener is a bare `window` handler and
+is **not** suspended indoors, so it calls `ending.begin()` directly; `canOffer()`
+returns true off the frozen street reading; and the only thing standing between
+the player and the haar closing over a deli is `acquireSuspend('ending')`
+returning null.
+
+That is the entire justification for the E5 phase gate's token, exercised by the
+product, on a path a visitor can walk — and it is asserted in prose. **E9a.2
+gates it**: the `ending` region already has the `walkToTheFoot` fixture that
+produces leg ≥ 1 + north, so the cost is that walk plus an enter and an Enter.
+Assert `begin() === false` **and** `atmosphere.suspendOwner() === 'interior'`
+after it, or the gate passes vacuously on a build where `canOffer()` was false
+all along — the E10a.3 lesson about preconditions, which is the second time it
+has applied to a gate nobody wrote yet.
+
+### 3. The keeper's wall is the emptiest wall in the room — LOOKED AT
+
+Opened both captures, which is the rule. `interior-counter.png` reads as a deli:
+five loaded shelves, the counter, the chequer, a pendant with a pool under it.
+`interior-keeper.png` — **the pose E9a.3's boot lands on and the one that gets
+the first interior golden** — is a brown box with one bright slab in it. No
+shelving is in frame (correct: the keeper faces the front wall), nothing is on
+the keeper's side of the counter, the door barely reads as a door, and the hams
+in the window read as five tally marks on a whiteboard rather than as hanging
+meat.
+
+Nothing numeric says so — 50.95% room-in-shot, mean 65.1, stddev 45.4, all
+comfortably inside their gates. **Dress the keeper's wall in E9a.2, before .3
+locks a golden onto it.** A back-fitting behind the counter, the till read from
+the keeper's side, and something on the wall the keeper looks at all day.
+
+### 4. Indoors you hear the whole street, unducked — MEASURED by reading
+
+Fable's E9a design says "ambience ducks to a muffled bed indoors". It does not.
+`ambience` is not an updater and is not in `SUSPENDED_INDOORS`; it is driven
+from `atmosphere.update()` (`ambience.setRain(p.rain)`), and atmosphere keeps
+running indoors by design. Nothing calls `setDucked` on entry. So the full
+street bed plays at street level inside the shop, rain included.
+
+`VALIDATION.md` names this as "the street's busking simply stops rather than
+muffling", which understates it — `proximityAudio` stops, the *bed* does not.
+Correct the note and duck it in E9a.2 with the rest of the two-sides-agree work.
+One `ambience.setDucked(true)` on enter and `false` on exit is most of it.
+
+### 5. "Seeded from the slug, not the day" is right, and its stated reason expires — REASONED
+
+E9a.1's determinism rule is sound. Its justification is not durable: "a
+date-varying interior would put every interior golden at the mercy of
+`SMOKE_DATE`" only holds while the enterable set has one member. **Fable's own
+E9 design has the daily seed choosing WHICH shop you get** ("who did you get
+today?" is the share thesis), so the moment E9c adds a second shop the hazard
+returns — through selection rather than through layout.
+
+**Ruling: establish `__mcgrotForceShop` when the second shop lands, not after.**
+An interior golden must name its shop in the pose, the way `--hour=` and
+`--weather=` already pin the other two axes. Cheap now, a recapture later. The
+layout-from-slug rule stands on its own merit regardless — a deli does not
+rearrange its fittings overnight.
+
+### 6. "Gates test the calculator" is NOT systemic — MEASURED by inventory
+
+Handhoff item 2 asked whether the three unfalsifiable interior gates were a
+pattern. Checked by inventory rather than by impression: `smoke.mjs` imports
+**nothing** from `src/`, so the purest form of the error — a node-side
+reimplementation testing itself — does not occur anywhere. Every harness
+mutator was enumerated (`setTime`, `setWeather`, `setRate`,
+`setWeatherSchedule`, `setStyleStrength`, `controls.setYaw/setEnabled/setRoom`,
+`torch.setToggle`, `atmosphereNudge`); all are either **fixtures** that
+establish an input the product must respond to, or explicitly control-arm-only
+— `setRoom`'s two uses are both guarded (`if (b)`, `if (!s)`), which is the fix
+from E9a.1.
+
+So it is neither three accidents nor a systemic rot. It is one specific shape:
+**the error appears exactly where the harness can call the same setter the
+product should have called**, and until the interior nothing in the suite had
+that property, because a flag read at boot cannot be faked by a gate. The
+mitigation is finding 1's registry — the one remaining place where the harness
+sets what the product should decide is the flag itself.
+
+### Sequencing: E9a.2 stands, with its scope widened
+
+**E9a.2 — the transition is the right next unit, and nothing should jump it.**
+The measured reason: the room is built on every boot and reachable by nobody, so
+every day it sits there is 381.7 KB with no return and an enable commit with no
+justification. E9a.2 is the smallest unit that converts it, and four separate
+deferrals queue behind it (the glazing constant, ambience ducking, the interior
+golden, the `interact.js` priority rule).
+
+Its scope grows by three items from this gate, all small and all on the same
+frontage: the **flag registry gate** (finding 1), the **ending-vs-interior token
+gate** (finding 2), and **dressing the keeper's wall** (finding 3). The
+`interact.js` priority rule the section already names is still the real risk —
+the Valvona & Crolla frontage at chainage 1486 is 12.78 m and `RANGE` is 8 m, so
+a vendor prompt and a door prompt can be raised in the same frame and
+`interact.js` has no rule for which wins.
+
+**E9a's numbered list does not match its own landing records.** The section lists
+five items; the records use E9a.1/.2/.3. Read the list as the decomposition
+(.1 room, .2 transition, .3 role boot, .4 the Queen of Leith, .5 gestures v1)
+and note that .4 and .5 are a distinct sub-phase — a scripted visitor and a verb
+set, neither of which needs E4's engine, which is why they can sit inside E9a
+rather than waiting for E9b.
+
+**The rest of the order holds unchanged**: E9a → E4 (E10b rides inside it) →
+E9b → E6b → E7, E9c with E7, E∞ continuous, E2f queue-jumping. Nothing that
+landed in E9a.1 or E10a changes what those phases depend on.
+
+### The transcription factory is the one thing genuinely behind
+
+Not a defect, a fact worth putting in the phase record: **125 of 418 comics are
+transcribed and 293 are not**, and the daily TTS trickle has been rendering zero
+clips because its queue is empty. The Gemini free allowance goes unused every
+morning. Verified against the live docs this pass rather than from memory:
+**30 prebuilt voices is still the complete set** (`ai.google.dev/gemini-api/
+docs/speech-generation`), so the wrap-at-30 in `merge-batches.mjs` and the batch
+brief is correct and there is nothing to raise.
+
+The binding constraint is Claude spend on transcription, and the shape that
+broke it before was a full factory launched at once. Three background Sonnet
+agents per wave is affordable and is now the standing pattern; see the Standing
+trickles section.
+
+**And the corpus is not all comics — MEASURED, and it changes the denominator.**
+This gate ran a wave of three and checked the returns rather than merging them.
+**Four of the 25 items examined across batches 7 and 8 are not McGrot comics at
+all**: two ChatGPT app screenshots from the "your year in pixels" recap series
+(`59063b8b`, `657ebc34`), a social-media post by a named real person
+(`5944d960`), and a promotional photograph of two franchises' costumed
+characters with an identifiable actor (`6261442b`). The corpus was scraped from
+a screenshots folder that also holds screenshots *about* McGrot, so this is a
+sampling artefact of the source, not a one-off.
+
+Two of the four were handled correctly by the agent that met them, and two were
+not: batch-8 wrote a performance for the photograph and marked it `sparse`, and
+transcribed the year-in-review card as a straight reading — which would have
+stood a vendor on Leith Walk reciting Dan's own BitLocker/Extron/Tapa recap in
+the published build. **Both were caught by opening the source images at the
+gate, and both entries were removed.** `sparse` is the wrong instrument for this
+and now says so in `BRIEF.md`: a `sparse` entry still becomes a vendor, so a
+non-comic must be *skipped and named*, never dressed. The rule and the four
+known ids are recorded there.
+
+Consequences: **418 is not a reachable target** — some slice of the 293 never
+becomes a comic, and 4-in-25 is the only rate anyone has measured. Do not
+extrapolate it into a plan; do expect every wave to return a couple of skips.
+Nothing downstream breaks, because a skipped item simply never acquires an `npc`
+block and so never enters the 124.
+
+**The rule this pass confirms:** transcription quality from a smaller model was
+excellent — the hardest verbatim tests in the wave passed, including a page
+printing *proclaime / proclaimment / proclamt* as three distinct garbles and
+another printing *pefform* and *perform* in the same repeated sentence, all
+preserved exactly. What a smaller model got wrong was not the reading, it was
+**deciding what counts as source**. Check the judgement calls, not the glyphs.
 
 ## E∞ — The Delight Ledger (continuous)
 
