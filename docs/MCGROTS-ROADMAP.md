@@ -46,7 +46,19 @@ All from Dan, 2026-08-10, in the conversation that produced this file.
 | Comic coverage | All 418 eventually. Start with a small selection for the prototype. |
 | Graphics style | Undecided by design — goes to a bake-off (G2). Candidates in § 5.2. |
 | Animation approach | **Prototype all three** (G1). Dan's call: do not pre-emptively pick one. |
+| The place | **The Foot of the Walk** — the Queen Victoria statue, Leith's meeting point since 1907. A real place with real obligation; `docs/LEITH.md` § 2 binds. |
+| Who arrives | **The canon principals as regulars** — Keth with One Eye, Mike English, the Taxman, the Government Inspector, the Leith Badger. Recurring characters you get to know, not a rotating vendor pool. |
+| Time | **One fixed hour, always.** No day cycle, no weather cycle. One authored lighting setup, tuned until it is beautiful. Which hour is a G2 decision, not a G0 one. |
+| Definition of done | **One good ten-minute visit.** The test is whether Dan would willingly sit through it a second time. See § 5.9. |
 | The street | Fully paused. Daily TTS launch agent stopped and disabled 2026-08-10. |
+
+Defaulted by Opus rather than asked, because reversing them is cheap — overturn
+freely: **mobile is a target from G0** (tap-an-anchor is already the mobile
+shape, and retrofitting cost the street a whole gate region); **captions on,
+diegetic where the style allows** (the game is entirely listening, and browsers
+block autoplay); **the browser remembers what you have heard**, locally only, so
+it does not touch the "forgotten when the room empties" ruling; **the player is
+a fly on the wall** — McGrot complains at the world, not at you.
 
 ---
 
@@ -85,6 +97,48 @@ captions can be driven off the clock rather than off the audio element.
 **Payload:** built street is 97 MB (`dist-site`) — comics 40 MB, audio 38 MB,
 shopfronts 13 MB, characters 3.2 MB. A prototype shipping a dozen comics and
 their mp3s is a few megabytes and fits GitHub Pages comfortably.
+
+### The Foot — what already exists, and what does not
+
+**The Foot is the origin of the existing OSM data.** `scripts/fetch-osm.mjs:48`
+— *"Origin: northernmost node of the street (Foot of the Walk)"*. Local
+chainage 0 is the pitch, `z` increases southward, and the fetched bbox
+(`55.952,-3.196,55.976,-3.164`) covers it comfortably.
+
+| Around the Foot | Count |
+|---|---|
+| Building footprints within 40 m | 15 |
+| …within 80 m | 41 |
+| …within 150 m | 128 |
+| Buildings carrying a name (whole dataset) | 31 |
+
+So the composed shots get real reference geometry for free, and the existing
+frontage and shopfront work already covers this end of the street.
+
+**The statue is not in the data.** The Overpass query fetches
+`way["name"="Leith Walk"]["highway"]` and `way["building"]` — ways only. A
+memorial is an OSM *node*, so Queen Victoria was never fetched and cannot be.
+She has to be authored, or added to the fetch as a separate query. Same for
+the PERSEVERE signage and the boundary plaque in `docs/LEITH.md` § 2.
+
+**The Central Bar stands at the Foot** (`docs/LEITH.md` line 70 — the tiled
+Victorian "people's palace"), which means the real-geometry rule from
+`docs/ROADMAP.md` applies to the shots: chamfer pubs at 45°, and never
+"correct" real geometry that looks wrong.
+
+### The canon cast does not exist yet
+
+`assets/characters/` holds seven meshes: `kenneth`, `mcgrot`, `morag`,
+`pomple`, `rab`, `runt`, `slab`. **None of the five principals chosen as the
+regulars are among them** — Keth with One Eye, Mike English, the Taxman, the
+Government Inspector and the Leith Badger are all specified in
+`docs/CANON.md` and all unbuilt. Each needs the full pipeline
+(`scripts/gen-character.mjs` → `scripts/gen-mesh.mjs`, FLUX form variant →
+Trellis at `mesh_simplify 0.98`, `texture_size 512`), a voice, and generated
+dialogue.
+
+This is the largest content lift in the plan, and § 5 orders the milestones
+around it.
 
 **Reusable as-is:** `assets.js` (`assetUrl` contract), `flags.js`, `day.js`,
 `characters.js` (`normalise()` and the glb loader), `interact.js`,
@@ -145,18 +199,25 @@ Deliverables:
 
 1. `src/mcgrots.html` + `src/mcgrots/main.js` booting a `THREE.Scene` with
    flat ground, one directional key light and ambient. No street modules
-   imported.
-2. **Three-person camera and the anchor set.** Four to six fixed, composed
-   camera positions covering the pitch. Tapping or clicking an anchor walks
-   the actor there; the camera cuts to that anchor's shot. Point-and-click
-   adventure staging — you author the shots, so the world only has to hold up
-   from angles you chose.
-3. A placeholder actor (a capsule) that translates between anchors at walking
+   imported. **One fixed lighting setup** — no clock, no weather, no
+   `atmosphere.js`. Pick any defensible hour for now and leave it; G2 chooses
+   the real one, because lighting and style are the same decision.
+2. **The Foot, roughly blocked out.** Pull the building footprints within
+   ~80 m of local origin from `assets/leith.json` (41 of them, § 3) as
+   extruded massing. This is siting reference for the camera shots, not
+   finished dressing — G3 dresses it. The statue is a placeholder box at
+   this stage; it is not in the OSM data and has to be authored.
+3. **Third-person camera and the anchor set.** Four to six fixed, composed
+   camera positions covering the pitch, sited against the real massing from
+   deliverable 2. Tapping or clicking an anchor walks the actor there; the
+   camera cuts to that anchor's shot. Point-and-click adventure staging — you
+   author the shots, so the world only has to hold up from angles you chose.
+4. A placeholder actor (a capsule) that translates between anchors at walking
    pace, so G1's candidates have something to replace.
-4. `scripts/smoke-mcgrots.mjs` with regions `boot`, `camera`, `anchors`.
+5. `scripts/smoke-mcgrots.mjs` with regions `boot`, `camera`, `anchors`.
    Reuse `scripts/launch.mjs` for the GPU browser — do **not** extend the
    street's 7,066-line `smoke.mjs`.
-5. A debug probe equivalent to `scripts/probe.mjs` pointed at
+6. A debug probe equivalent to `scripts/probe.mjs` pointed at
    `/mcgrots.html`, or a flag on the existing one.
 
 Acceptance: the suite boots the page, asserts the anchor count and that each
@@ -255,24 +316,67 @@ that renders neutral or cool has failed before it is judged.
 from E8 — extend it rather than writing a second one, but note it judges
 **still frames** and G2 needs motion for the same reason G1 does.
 
+G2 also chooses **which fixed hour**. Time is a single authored lighting
+setup, so this is one decision made once, and it belongs with the style rather
+than before it. `docs/STYLE.md` argues for a low warm sun; a dusk setup with
+the van's serving hatch as a practical light is the other obvious candidate,
+and it is much cheaper to make beautiful. Judge them as part of the same round.
+
+### The ordering rule for everything after G2
+
+**The five principals do not exist** (§ 3), and generating them is the largest
+content lift here. Building them before the loop can be judged would front-load
+weeks of character work against a kill criterion — "one good ten-minute visit"
+— that cannot yet be applied to anything.
+
+So: **placeholder cast first, real cast last.** Stand the seven existing
+meshes in as the regulars, get the loop to the point where it can be judged,
+and generate the real five only once the loop is worth dressing. If the visit
+is not good with stand-ins, five beautiful new characters will not save it.
+
+**Voices before bodies**, for the same reason. This is a game about listening;
+a stand-in body reading the right lines in the right voice tells you far more
+about whether the visit works than a finished mesh reading nothing.
+
 ### G3 — The pitch
 
-The van (from `gullet.js`), the ground, the dressing, the composed shots
-finalised against the chosen style. `mcgrotIsIn(dayKey)` already exists and
-already decides whether he is in — 3 days in 8.
+The Foot, dressed. The van (from `gullet.js`), the ground, the statue, the
+composed shots finalised against the chosen style. `mcgrotIsIn(dayKey)` already
+exists and already decides whether he is in — 3 days in 8 — and it is
+**date-keyed, not hour-keyed**, so the fixed-hour decision does not touch it.
+"Was McGrot in today" survives as the reason to come back.
+
+Queen Victoria has to be authored (§ 3). `docs/LEITH.md` § 2 carries the
+PERSEVERE signage, the boundary plaque and the Central Bar; the real-geometry
+rule applies — never "correct" something real that looks wrong.
 
 ### G4 — The rota
 
-Arrivals as a pure function of **wall-clock time** (§ 6). One reader at a time,
-which is the whole reason this works: on the street 156 people talk at once and
-none of them land. Audio and reactions driven off `readings.json` phrase
-timings.
+Arrivals as a pure function of **wall-clock time** (§ 6). Note that a fixed
+hour freezes the *lighting*, not the schedule: the clock still advances and
+still drives who turns up, there is simply no dawn.
 
-### G5 — McGrot's complaints
+One reader at a time, which is the whole reason this works: on the street 156
+people talk at once and none of them land. Audio and reactions driven off
+`readings.json` phrase timings.
 
-Generate his dialogue from the corpus in § 3, styled on the 205 director
-briefs in `scripts/tts-prompts/`, then TTS through the existing
-`scripts/generate-tts.mjs`.
+**Sizing.** 82.8 minutes across 125 readings is roughly 40 s each, so a
+ten-minute visit is about **six to eight readings** plus McGrot's interjections
+and the gaps between. That is the content budget for the prototype — not the
+"dozen comics" this document assumed before the kill criterion was set.
+
+Runs on the placeholder cast. See the ordering rule above.
+
+### G5 — The voices
+
+Generate dialogue for **McGrot and the five principals** from the corpus in
+§ 3, styled on the 205 director briefs in `scripts/tts-prompts/`, then TTS
+through the existing `scripts/generate-tts.mjs`.
+
+Each principal has a full specification in `docs/CANON.md` — temperament,
+register, props, what is *established* canon versus *suggested* design freedom.
+That split binds: established facts are not up for reinterpretation by a
+generator.
 
 **The trap, and the gate it needs.** Comic lines are sacred *as quotations*
 (`CLAUDE.md` § Verbatim rule). A generator handed them as style context will
@@ -295,10 +399,25 @@ dog. **His silhouette and head-turn are the load-bearing animation in the whole
 game**, and that should have been a G1 judging criterion; if G1 has already
 run, re-check the winner against a dog before committing.
 
-### G7 — Ship on GitHub Pages
+### G7 — Judge against the kill criterion
 
-A dozen comics and their mp3s. Single-file artifact via `build.mjs` if it comes
-free; otherwise the multi-file site. Deploying stays Dan's explicit call.
+Stop and apply the bar before spending anything on the real cast. The visit
+should be playable end to end on stand-in bodies with real voices. Dan sits
+through it. If he does not want a second run, the honest outcome is to say so
+and stop — a measured rejection is delivered work, not a shortfall.
+
+### G8 — The real cast
+
+Only if G7 passes. Five principals through `scripts/gen-character.mjs` →
+`scripts/gen-mesh.mjs`, then `normalise()` in `characters.js` so they carry the
+same treatment as everything else. Re-judge each against the G2 style; the
+pipeline was settled at E3a and is not being re-swept.
+
+### G9 — Ship on GitHub Pages
+
+Six to eight comics and their mp3s, plus the generated voice lines.
+Single-file artifact via `build.mjs` if it comes free; otherwise the multi-file
+site. Deploying stays Dan's explicit call.
 
 ### Later — Multiplayer
 
@@ -374,14 +493,37 @@ should stay green and untouched.
 
 ---
 
-## 9. Still open
+## 9. The kill criterion
 
-1. **How many comics in the prototype**, and which. A dozen is the working
-   assumption; the selection has not been made and probably wants Dan's eye —
-   the readings vary a lot in quality.
+**One good ten-minute visit.** The test is whether Dan would willingly sit
+through it a second time.
+
+That is a felt judgement, not a checklist, and it is deliberately not
+mechanised — every gate in this project measures whether something is *correct*
+and none of them can tell whether it is any good. G7 is where it gets applied,
+before the expensive character work in G8.
+
+What the visit has to contain to be judged at all: the chosen style, a walk
+between anchors that reads well, six to eight readings on the wall clock,
+McGrot's complaints in the gaps, and Pomplé doing something you notice. Bodies
+may be stand-ins. Voices may not.
+
+**Failing is a valid outcome and should be reported as one.** The reason this
+project exists is that the street was allowed to keep going at 80%.
+
+---
+
+## 10. Still open
+
+1. **Which six to eight comics.** The readings vary a lot in quality and the
+   selection wants Dan's eye rather than a script's.
 2. **Does the player pick their own body**, or is one assigned? E7b's ruling
    for the street was preset names and no user input, for moderation reasons
    that still apply.
-3. **What the pitch actually is.** "A small patch of land" — a car park, a
-   corner, waste ground, the Foot. Affects the composed shots and the dressing.
-4. **Whether G1's winner survives a dog.** See G6.
+3. **Whether G1's winner survives a dog.** See G6.
+4. **How the statue gets made** — authored by hand, added to the Overpass
+   fetch as a node query (which gets a position but no shape), or generated
+   through the character pipeline. Nobody has looked at what reference exists.
+5. **Whether the Foot's real buildings help or hurt.** 41 footprints within
+   80 m is reference, not obligation; a stylised pitch may want less of it.
+   G0 blocks them out precisely so this can be judged rather than assumed.
