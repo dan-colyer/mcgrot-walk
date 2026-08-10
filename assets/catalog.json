@@ -1,8 +1,8 @@
 {
   "meta": {
     "total": 418,
-    "done": 124,
-    "pending": 294,
+    "done": 125,
+    "pending": 293,
     "sourceDirs": [
       "/Users/dan/Desktop/screenshots/mcgrot",
       "/Users/dan/Desktop/screenshots/mcgrot/other"
@@ -2676,7 +2676,8 @@
       "audio": "audio/3c6b637b.mp3",
       "promptFile": "3c6b637b.txt",
       "npc": null,
-      "hero": true
+      "hero": true,
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "3d68e45a",
@@ -3084,7 +3085,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "4fe127d1",
@@ -3108,7 +3109,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "50f0b324",
@@ -3132,7 +3133,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "51256a62",
@@ -3156,7 +3157,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "51834c74",
@@ -3180,7 +3181,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "52ce12ef",
@@ -3204,7 +3205,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "53088e97",
@@ -3228,7 +3229,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "5494ce23",
@@ -3408,7 +3409,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "5d49e093",
@@ -3432,7 +3433,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "5d715a3c",
@@ -3456,7 +3457,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "5eeec173",
@@ -3480,7 +3481,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "5f1b8828",
@@ -3504,7 +3505,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "6075cdd0",
@@ -3528,7 +3529,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "60ee906a",
@@ -3552,7 +3553,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-3.1-flash-tts-preview"
+      "ttsModel": "gemini-2.5-flash-preview-tts"
     },
     {
       "id": "61a16f6a",
@@ -3576,7 +3577,7 @@
         }
       },
       "sparse": false,
-      "ttsModel": "gemini-2.5-flash-preview-tts"
+      "ttsModel": "gemini-3.1-flash-tts-preview"
     },
     {
       "id": "6261442b",
