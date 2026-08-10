@@ -41,6 +41,9 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 cd "$REPO" || { echo "repo not found"; exit 1; }
 
+# Read the index BEFORE we touch anything — see the commit guard at the end.
+PRESTAGED="$(git diff --cached --name-only 2>/dev/null)"
+
 if [ ! -f .env.local ]; then
   echo "no .env.local — GEMINI_API_KEY unavailable, nothing to do"
   exit 1
@@ -59,6 +62,26 @@ status=$?
 echo "generate-tts exited $status"
 
 # Commit only what this job produces. Explicit pathspecs, never `git add -A`.
+#
+# THE PATHSPECS ARE NOT A GUARANTEE, and it took a real incident to say so.
+# scripts/tts-prompts and scripts/catalog-batches are where a transcription
+# wave is AUTHORED, not just where this job's inputs happen to live — so any
+# uncommitted work there at 09:30 gets swept into a commit whose subject line
+# says it rendered audio. On 2026-08-10 that took a reviewer's correction to
+# batch-8.json and a new rule in BRIEF.md into c9b7b1b. They are still in the
+# pathspecs, because an mp3 committed without the prompt it was rendered from
+# is worse; two things guard them instead.
+#
+# First: if a human has already STAGED anything, this job does not commit at
+# all. A dirty index means someone is mid-commit, and the files are theirs.
+if [ -n "$PRESTAGED" ]; then
+  echo "index already has staged changes — someone is mid-commit, so this run"
+  echo "generates but does not commit. Staged when we started:"
+  echo "$PRESTAGED" | sed 's/^/  /'
+  echo "=== $(date '+%Y-%m-%d %H:%M:%S') daily-tts done (no commit) ==="
+  exit 0
+fi
+
 git add -- assets/audio assets/catalog.json scripts/tts-progress.json \
            scripts/tts-prompts scripts/catalog-batches 2>/dev/null
 
@@ -66,10 +89,15 @@ if git diff --cached --quiet; then
   echo "nothing new to commit"
 else
   n=$(git diff --cached --name-only -- assets/audio | grep -c '\.mp3$')
+  # Second: the message NAMES everything that is not audio, so a swept file is
+  # visible in the log instead of hiding behind "Render N readings".
+  other=$(git diff --cached --name-only -- scripts/catalog-batches | tr '\n' ' ')
   git commit -q -m "Render $n NPC comic reading(s) via Gemini TTS
 
-Automated daily harvest (scripts/daily-tts.sh). Not pushed."
+Automated daily harvest (scripts/daily-tts.sh). Not pushed.
+Batch files in this commit: ${other:-none}"
   echo "committed $n new mp3(s): $(git rev-parse --short HEAD)"
+  echo "batch files swept in: ${other:-none}"
 fi
 
 echo "=== $(date '+%Y-%m-%d %H:%M:%S') daily-tts done ==="

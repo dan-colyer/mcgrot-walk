@@ -4173,6 +4173,22 @@ another printing *pefform* and *perform* in the same repeated sentence, all
 preserved exactly. What a smaller model got wrong was not the reading, it was
 **deciding what counts as source**. Check the judgement calls, not the glyphs.
 
+**And the daily cron will commit a wave out from under you — FIXED here.** The
+09:30 launchd job fired mid-audit, merged the batch that had just landed,
+rendered its eleven clips, and swept a reviewer's uncommitted correction to
+`batch-8.json` plus a new rule in `BRIEF.md` into `c9b7b1b`, "Render 11 NPC
+comic reading(s) via Gemini TTS". `daily-tts.sh`'s own comment claimed work in
+progress could never be swept in; that is true of `src/` and false of
+`scripts/catalog-batches` and `scripts/tts-prompts`, which are where a wave is
+**authored**, not merely where the job's inputs sit. The pathspecs stay — an
+mp3 committed without the prompt it was rendered from is worse — and two
+guards go in instead: **the job does not commit at all if a human has already
+staged anything** (fault-injected both ways: fires with a staged file, passes
+on a clean index), and the commit message now **names every batch file it
+sweeps** so nothing hides behind the subject line. The practical rule for a
+session running a wave: commit your own work before 09:30, or expect the cron
+to do it for you under the wrong title.
+
 ## E∞ — The Delight Ledger (continuous)
 
 A maintained list in `docs/DELIGHTS.md` of second- and third-pass discoveries.
