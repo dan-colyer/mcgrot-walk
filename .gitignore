@@ -38,3 +38,5 @@ scripts/.tts-logs/
 # so they are kept locally rather than re-generated — but only a JUDGED mesh
 # earns a place in assets/, and nothing here is one yet.
 scratchpad/
+src/mcgrots-compare-bundle.js
+src/mcgrots-flats-bundle.js

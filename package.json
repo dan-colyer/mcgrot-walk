@@ -9,6 +9,7 @@
     "dev": "npm run bundle && cd src && python3 ../scripts/serve.py ${PORT:-5174}",
     "bundle:mcgrots": "esbuild src/mcgrots/main.js --bundle --outfile=src/mcgrots-bundle.js && node scripts/stamp-mcgrots.mjs",
     "dev:mcgrots": "npm run bundle:mcgrots && cd src && python3 ../scripts/serve.py ${PORT:-5175}",
+    "compare:mcgrots": "esbuild src/mcgrots/tools/compare-page.js --bundle --outfile=src/mcgrots-compare-bundle.js && cd src && python3 ../scripts/serve.py ${PORT:-5176}",
     "smoke:mcgrots": "node scripts/smoke-mcgrots.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:par": "node scripts/smoke.mjs --shards",
