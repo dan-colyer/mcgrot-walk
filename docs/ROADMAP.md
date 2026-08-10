@@ -192,7 +192,8 @@ Decisions taken:
   changes the vendor census and logs what to run instead. Render is the trickle;
   landing is a human act with a suite run and a deliberate recapture.
 
-  **The next landing is sized and measured: census 124 → 156, 32 new comics.**
+  **The next landing is sized and measured: census 124 → 156, 32 new comics,
+27 goldens and 3 draw-call budget gates to recapture, worst move 5.442%.**
   Merging is clean — `merge-batches.mjs` no longer claims mp3s that are not on
   disk, so the landing can be green before the audio exists and the trickle
   fills it in over the following days.
@@ -4247,10 +4248,14 @@ launchd job fired mid-audit, on a day a wave happened to be landing.
 It merged the batch that had just been written, rendered eleven clips, and
 committed everything as `c9b7b1b`, "Render 11 NPC comic reading(s) via Gemini
 TTS". `npcs.js` builds one vendor per comic with an `npc` block, so that merge
-was not a data update — it put eleven people on the street. **Census 124 → 135.
-Measured immediately after: 29 goldens moved by up to 5.6%, five draw-call
-baselines broke, and nine gates that name 124 went red.** `main` was red, from
-an automated commit, with nothing between the merge and the commit.
+was not a data update — it put eleven people on the street. **Census 124 → 135, and the suite went red**: at least 27 goldens outside
+tolerance (worst 5.600%), at least five draw-call baselines, at least nine
+gates that name 124. Those are floors — the failure list was read off a
+truncated run and the state was reverted before an exact count was possible.
+`main` was red, from an automated commit, with nothing between merge and
+commit. The figure that matters going forward is the pending landing's, and it
+was measured exactly: **census 124 → 156 moves 27 goldens and 3 draw-call
+budget gates, worst 5.442%.**
 
 The roadmap had already recorded this exact event once — "103 → 124 moved 23
 goldens ... and nobody noticed because smoke had not been run since". The E2

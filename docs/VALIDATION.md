@@ -4520,9 +4520,21 @@ Measured immediately afterwards, against the committed state:
 | | before | after |
 |---|---|---|
 | comics with an `npc` block | 124 | 135 |
-| goldens outside tolerance | 0 | **29** (up to 5.600% at `golden-haar:mid-805-far`) |
-| draw-call baselines broken | 0 | 5 (`north-250-far` 46 vs 40, `foot-1500-far` 36 vs 41, `skyline` 346 vs 325, `lamp-hero-night` 354 vs 333, `mid-805-far` 42 vs 45) |
-| census gates naming 124 | pass | 9 red |
+| goldens outside tolerance | 0 | at least **27**, worst 5.600% (`golden-haar:mid-805-far`) |
+| draw-call baselines broken | 0 | at least 5 (`north-250-far` 46 vs 40, `foot-1500-far` 36 vs 41, `skyline` 346 vs 325, `lamp-hero-night` 354 vs 333, `mid-805-far` 42 vs 45) |
+| census gates naming 124 | pass | at least 9 red |
+
+**"At least" is doing real work in that table and is not hedging.** The failure
+list was read off a filtered run truncated at 40 lines, so those three counts
+are floors, not totals, and the exact figures for the census-135 state were
+never re-derived — the state was reverted before that was possible. An earlier
+draft of this section said "29 goldens", which was a miscount of the same
+truncated list. The number that matters going forward is the landing's, and
+that one was measured exactly:
+
+**The pending landing, census 124 → 156, measured in `--only=render,weather`:
+27 goldens outside tolerance, 3 draw-call budget gates, 31 failures in those
+two regions, worst golden 5.442%.** Reverted after measuring; tree clean.
 
 The E2 phase gate had already recorded this event once — "103 → 124 moved 23
 goldens ... and nobody noticed because smoke had not been run since" — and
