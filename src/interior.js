@@ -3,8 +3,9 @@
 // The reframe this serves is E9's: you are not a tourist on Leith Walk, you
 // are the keeper of a business on it. This unit builds the ROOM and nothing
 // else. There is no door prompt and no transition yet (E9a.2), no keeper
-// spawn (E9a.3) and no visitor (E9a.4) — the room is reachable only from the
-// debug API, behind `__mcgrotForceInterior`, and shipped OFF.
+// spawn (E9a.3) and no visitor (E9a.4) — the room is built on every boot but
+// is reachable only from the debug API. `__mcgrotForceInterior` is still the
+// gate suite's lever in both directions; see the enable note below.
 //
 // A STAGED SET, NOT CARVED GEOMETRY (Fable's ruling, ROADMAP § E9)
 //
@@ -50,7 +51,19 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { flag } from './flags.js';
 import { hashDateKey } from './day.js';
 
-const INTERIOR_ENABLED = false; // flag-first; flipped at the enable commit
+// E9a.1 landed OFF, so the room was verified against unmoved goldens before
+// any pixel changed. This is the enable commit: the flag stays as the gate
+// suite's lever (every opposed pair in the `interior` region needs both arms),
+// but the shipped default is now ON.
+//
+// WHAT THIS DOES AND DOES NOT TURN ON. It builds the room on every boot. It
+// does NOT put a way into it on the shipped path — the door is E9a.2 and the
+// keeper boot is E9a.3 — so no visitor can reach it yet and no golden can
+// move. The measured cost of carrying it is in docs/ROADMAP.md's landing
+// record; the reason to pay it now rather than at .2 is that it puts the
+// scene swap, the exposure hand-off and the room's construction on the same
+// code path every visitor already runs, months before anything depends on it.
+const INTERIOR_ENABLED = true;
 
 export const SHOP_SLUG = 'valvona-crolla';
 export const SHOP_NAME = 'Valvona & Crolla';

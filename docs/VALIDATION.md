@@ -4369,11 +4369,12 @@ calculator" rule biting for the third time in this project.
 - **Nothing about the keeper.** The spawn is the customer's side of the
   counter. The boot that wakes you BEHIND it moves the mobile street golden,
   and lands flag-first in E9a.3.
-- **No golden.** The interior has no captured golden at all while the flag is
-  off, so the two captures are a reviewer's instrument and not a regression
-  one. That is deliberate: a golden of a room nobody can enter locks in a
-  picture before the transition and the boot have had their say. The enable
-  commit is where an interior golden is worth having.
+- **No golden**, and the enable commit did not change that. The two captures
+  are a reviewer's instrument, not a regression one. Deliberate: a golden of a
+  room nobody can enter locks in a picture before the transition and the boot
+  have had their say, and it would then have to be recaptured twice more.
+  **An interior golden belongs to E9a.3**, when the boot lands a player in the
+  room and the pose becomes a state the game actually ships someone into.
 - **Nothing about audio indoors.** `proximityAudio` is held while inside, so
   the street's busking simply stops rather than muffling. Ambience ducking
   indoors-vs-out is named in the roadmap under E9a.2 and is not measured here.
@@ -4384,6 +4385,31 @@ calculator" rule biting for the third time in this project.
 - **One shop.** Everything here is Valvona & Crolla. Nothing gates that a
   SECOND interior could be built from the same module kit, which is E9c's
   claim and not a claim this unit makes.
+
+### The enable commit, and why it recaptured nothing
+
+`INTERIOR_ENABLED = true`. **No golden moved, and none could have** — there is
+no way into the room on the shipped path. The door is E9a.2 and the keeper
+boot is E9a.3, so flipping the default builds the room on every boot and
+changes not one rendered pixel of the street. Suite 318 PASS / 0 FAIL, every
+golden inside its own measured noise band, audit: *nothing moved*.
+
+That is worth writing down rather than filing as a clean pass, because a
+flag-first landing whose enable commit recaptures nothing is a signal that the
+flag was covering something unreachable rather than something invisible. The
+two are different, and only the second is what the pattern is for.
+
+**What the enable actually buys, and what it costs.** It puts the scene swap,
+the exposure hand-off and the room's construction on the code path every
+visitor runs, months before anything depends on them — so a regression in any
+of the three surfaces in the ordinary suite rather than only in this region's
+ON arm. The cost, measured: **4,240 triangles and 381.7 KB of GPU geometry**
+built at every boot and reachable by nobody, and the artifact 6.96 → 6.97 MB
+against its 7.5 MB ceiling.
+
+**`SINCE_RULES` grew accordingly** — `src/interior.js` now routes to
+`render`, `weather`, `mobile` and `determinism` as well as its own region,
+because the module is on the boot path those regions all run through.
 
 ## E3 phase gate (Fable, 2026-08-07) — method and rationale
 

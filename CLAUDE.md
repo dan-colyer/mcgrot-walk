@@ -255,8 +255,8 @@ and does not report success until every changed file md5-matches the live URL.
   (title card).
 - `src/interior.js` — the Shop (E9a.1). Valvona & Crolla, its OWN
   `THREE.Scene` at its own origin, axis-aligned — NOT a room carved out of the
-  street mesh and not at the building's real coordinates. Behind
-  `__mcgrotForceInterior`, shipped default OFF. `main.js` owns the swap, not
+  street mesh and not at the building's real coordinates.
+  `__mcgrotForceInterior` is the gate lever in both directions. `main.js` owns the swap, not
   this module: `activeScene` is what `post.render()` gets, `enterInterior()`
   reparents the camera, hides the sky dome and torch, takes atmosphere's
   suspend token for `toneMappingExposure`, and hands `controls` the room. The
@@ -264,9 +264,10 @@ and does not report success until every changed file md5-matches the live URL.
   sees. Layout is seeded from the SHOP SLUG, never the day. `SUSPENDED_INDOORS`
   in main.js names the updaters held while inside; **skipping an updater stops
   it thinking, not showing**, so anything that puts DOM on screen also needs a
-  `suspend()` (interact and captions have one). Boot it with
-  `npm run probe -- --interior=on`. When the enable commit flips the default,
-  `SINCE_RULES` must grow `render`, `weather`, `mobile` and `determinism`.
+  `suspend()` (interact and captions have one). Shipped default is now ON
+  (E9a.1 enable), but there is still NO WAY IN on the shipped path — the room
+  is built at every boot and reachable only from `dbg.enterInterior()`, so
+  enabling it moved no golden. Boot it with `npm run probe -- --interior=on`.
 - **`atmosphere.acquireSuspend(owner)` is the ONLY way to own fog/exposure**
   (E9a.1, on the E5 phase-gate ruling). It returns a token or NULL if someone
   else holds it; `releaseSuspend(token)` is idempotent and ignores a stale

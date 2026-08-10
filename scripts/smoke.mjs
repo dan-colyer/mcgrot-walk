@@ -135,11 +135,11 @@ const SINCE_RULES = [
   [/^src\/moments\.js$/, ['moments', 'collision']],
   // E9a.1: the shop interior. Its own region, plus `collision` because
   // controls.js's movement integration is the one place the room's bounds and
-  // the street's solids share a code path. Landed flag-off, so it reaches no
-  // rendering region yet — when the enable commit flips the default it must
-  // grow `render`, `weather`, `mobile` and `determinism`, exactly as the
-  // gullet's rule had to.
-  [/^src\/interior\.js$/, ['interior', 'collision']],
+  // the street's solids share a code path. Since the enable commit the module
+  // also builds on every boot, so it is on the path every rendering region
+  // boots through — hence render/weather/mobile/determinism, even though no
+  // visitor can yet reach the room and no golden frames it.
+  [/^src\/interior\.js$/, ['interior', 'collision', 'render', 'weather', 'mobile', 'determinism']],
   [/^src\/controls\.js$/, ['interior', 'collision', 'moments', 'legs', 'mobile']],
   // E6a: collision.js is read by controls (movement), moments (spawn) and the
   // three prop modules. It draws nothing and renders nothing, so it cannot

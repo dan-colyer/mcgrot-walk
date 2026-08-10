@@ -3709,6 +3709,37 @@ prompt it raised on the last street frame stayed in the DOM. `interact.suspend()
 and `captions.suspend()` now bring their own DOM down on the way in. It was
 caught by *opening the capture*, which is the entire case for that rule.
 
+#### E9a.1 enable (2026-08-08) — and it recaptured nothing
+
+`INTERIOR_ENABLED = true`. Suite **318 PASS / 0 FAIL** sharded, every golden
+inside its own measured noise band, `goldens:audit`: *nothing moved, no
+recapture needed*.
+
+**No golden moved, and none could have.** There is no way into the room on the
+shipped path — the door is E9a.2, the keeper boot is E9a.3 — so the default
+flip builds the room on every boot and changes not one rendered pixel of the
+street. Worth recording rather than filing as a clean pass: a flag-first
+landing whose enable recaptures nothing means the flag was covering something
+*unreachable* rather than something *invisible*, and only the second is what
+the pattern is for. (E10a's enable, by contrast, moved three goldens.)
+
+**What it buys:** the scene swap, the exposure hand-off and the room's
+construction now sit on the code path every visitor runs, so a regression in
+any of the three surfaces in the ordinary suite instead of only in this
+region's ON arm. `SINCE_RULES` grew to match — `src/interior.js` routes to
+`render`, `weather`, `mobile` and `determinism` as well as `interior`.
+
+**What it costs, measured:** 4,240 triangles and **381.7 KB** of GPU geometry
+built at boot and reachable by nobody, and the artifact 6.96 → **6.97 MB**
+against its 7.5 MB ceiling. Both are Dan's to reverse if the room is still
+unreachable by the time E9a.2 slips.
+
+**Deferred deliberately: the interior golden.** Capturing one now would lock in
+a picture of a room nobody can enter, before the transition and the boot have
+had their say, and it would then be recaptured twice more. It belongs to
+E9a.3, when the boot lands a player in the room and the pose becomes a state
+the game actually ships someone into.
+
 **Next: E9a.2, the transition** — a door prompt on the Valvona & Crolla façade
 at chainage 1486, the panel wipe both ways, and the interaction with
 `interact.js`'s existing NPC proximity prompt at the same frontage (the risk
