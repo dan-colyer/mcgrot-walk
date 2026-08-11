@@ -189,8 +189,22 @@ const baseUrl = (port, candidate) => {
   return `http://127.0.0.1:${port}/mcgrots.html${query}`;
 };
 
+// A page cut has two clocks: page.js removes the cutting class after its
+// wall-clock hold, then .page-cut's stepped opacity transition snaps on its
+// own schedule. Waiting for either one alone can capture the paper over the
+// panel even though the other state has cleared.
 const waitForPageCut = (page, candidate) => candidate.params.page === 'on'
-  ? page.waitForTimeout(160)
+  ? (async () => {
+    // snapTo() starts page.cut() asynchronously and returns before its class
+    // is observable. Observe the new cut first so stale settled predicates
+    // from the previous anchor cannot pass immediately.
+    await page.waitForFunction(() => window.__mcgrotsDebug.pageStats().cutting, null, { timeout: 2000 });
+    await page.waitForFunction(() => !window.__mcgrotsDebug.pageStats().cutting, null, { timeout: 2000 });
+    await page.waitForFunction(
+      () => getComputedStyle(document.querySelector('.page-cut')).opacity === '0',
+      null, { timeout: 2000 },
+    );
+  })()
   : Promise.resolve();
 
 let server;

@@ -290,15 +290,22 @@ fixed anchor camera. `--archetype=` re-runs the same sheets on another real
 cast member; `--hour=` is carried as sheet metadata while the current page keeps
 its fixed `LIGHT` setup.
 
-The successful Chromium/Metal run captured 15 frames per candidate and all five
+The first Chromium/Metal run captured 15 frames per candidate and all five
 sheets. Opening the sheets showed S1/S2 figures with visible silhouettes,
 highlights and S1 ink rather than the former featureless black blob; S2's
 distance flattening was visible but subtle at these anchor views. S3 key's
-five-tone dither visibly differed from its posterise control. S4's paper and
-panel rule survived every column, but the 3D scene was fully occluded inside
-the panel in all five sheets. This S4 row is a faithful capture of a broken
-candidate, not a limitation of the rig. Dan independently reproduced the same
-product fault with both
+five-tone dither visibly differed from its posterise control. Its S4 approach
+and mid-stride cells were empty because the rig waited a fixed 160ms: that was
+shorter than the combined page hold and stepped opacity transition, so it was
+a capture timing artefact. `waitForPageCut()` now waits for both
+`pageStats().cutting === false` and computed `.page-cut` opacity `0`.
+
+The rerun captured the same 15 frames per candidate. Opening the corrected
+`counter.png` and `far.png` showed an S4 scene in all three columns — approach,
+mid-stride and arrived — in both opened sheets. The earlier independent reproduction
+of the empty panel was still a faithful capture of the broken product
+candidate at that time, not a limitation of the rig. Dan reproduced that
+earlier product fault with both
 `node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --page=on
 --anchor=counter --frames=600` and
 `node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --page=on
