@@ -360,20 +360,52 @@ that renders neutral or cool has failed before it is judged.
 from E8 — extend it rather than writing a second one, but note it judges
 **still frames** and G2 needs motion for the same reason G1 does.
 
-**G2 has NOT closed**, and what remains is one specific fault rather than the
-whole milestone.
+**G2 CLOSED 2026-08-11 on S2 · Aerial flatten — provisionally, and Dan said so
+in the same breath.** His words: none of the four were interesting or original
+enough to be worth considering, so there will be **another pass later** and S2
+is accepted for now rather than settled.
 
-Done: all four candidates built, isolated and gated (13 checks,
-`--only=style`), four fault injections recorded, and both blocking faults
-fixed — the **cast-albedo fault** (`src/mcgrots/actors/texture.js` lifts the
-character textures at load) and **F4** (the actor's geometry had no `normal`
-attribute; `MeshToonMaterial` doesn't get three's auto-flatShading fallback
-that `MeshLambertMaterial` gets for free — see § 10 fault F4). Suite 26/26.
-S1 and S2 can now be ranked against each other; the character is legible and
-cel-shaded, not a black blob, under both.
+Treat that as a live constraint, not a courtesy. A later session reading "G2
+chose S2" without this paragraph would build on it as a decided thing. It is
+not. What S2 has going for it is that it is the corpus's most distinctive
+measured property and the one no off-the-shelf toon shader does; what it lacks
+is an idea. The second pass should start from the comics again rather than from
+S2, and the candidates it rejects should be more adventurous than the four here,
+which were all conventional treatments of the same cel/quantise family.
 
-Still owed by G2: **which fixed hour**, and it should be settled together
-with the key (S3) rather than separately.
+Ranked from the capture-review rig, `npm run styleshots:mcgrots` — five contact
+sheets, one per anchor, six rows (four candidates plus the baseline and S3's
+posterise control) and three columns (approach, mid-stride, arrived). Building
+that rig is what made a ranking possible at all; nothing before it let the four
+be seen side by side in motion.
+
+Done: all four candidates built, isolated and gated, four fault injections
+recorded, and three blocking faults fixed — the **cast-albedo fault**
+(`src/mcgrots/actors/texture.js` lifts the character textures at load), **F4**
+(the actor's geometry had no `normal` attribute; `MeshToonMaterial` doesn't get
+three's auto-flatShading fallback that `MeshLambertMaterial` gets for free), and
+**F5** (S4's full-bleed paper painted over the canvas, so its panel was empty in
+every capture — two green geometry gates never looked inside it). Suite 27/27.
+
+**Still owed by G2, and now carried into the next milestone: which fixed hour.**
+It was to be settled with the key, and it was not settled, because the sun
+investigation turned it into a different question — see below.
+
+**The sun is not the lever (measured 2026-08-11, `npm run sun:mcgrots`).** The
+shipped grade was chosen on whole-frame mean/stddev, and the actor is a few
+percent of the frame, so its legibility was never in the objective. Supplying
+the missing term — an actor-only torso patch, reusing F4's geometry-derived
+sampling — and sweeping 48 settings put the shipped `-2.10 / 0.34 rad` **7th of
+48**, with actor mean 6.9 against the best setting's 7.0 and a *worse* peak
+(85.0 vs 83.5). A morag cross-check was the same wash, 55.2 against 56.0.
+
+The reason is geometric and is in the tool's own output: camera-to-sun
+separation is 54.0° at counter, 51.4° at wall, 35.4° at back, 31.3° at far and
+26.9° at kerb. Five anchors face five ways, so no single sun azimuth is in front
+of the actor at more than one of them, and the average barely moves. **Do not
+re-run this sweep.** The three options it leaves are a fill or rim light carried
+by the camera (the only one that fixes all five anchors at once), moving the
+anchor cameras, or accepting a dark figure at rest as the look.
 
 G2 also chooses **which fixed hour**. Time is a single authored lighting
 setup, so this is one decision made once, and it belongs with the style rather
