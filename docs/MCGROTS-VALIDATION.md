@@ -321,6 +321,21 @@ lightness" grades.
 - **Colour matching could not see an antialiased line at all.** Replaced by a
   per-pixel diff against that control.
 
+### Falsified 2026-08-11
+
+Three injections, each restored from the commit immediately after:
+
+| Injection | Went red |
+|---|---|
+| `uninstall()` stops restoring swapped materials | every arm reverts bit-identically |
+| `INK_MAX_RADIUS` 12 → 0 (nothing is inkable) | S1 inks the objects; S1 puts visible ink |
+| `PAGE.margin` 0.062 → 0 | S4 insets the render; S4 renders at panel size |
+
+The middle one is the useful pairing: the count check and the pixel check fail
+together, so neither is carrying the other. The material-leak injection is the
+one worth keeping in mind — it is invisible in a still, and only the frame hash
+catches it.
+
 ### The cast is unreadable, and it is the asset
 
 **Found by G2, caused before it, and not fixed here.** The characters render as
