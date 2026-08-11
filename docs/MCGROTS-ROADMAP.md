@@ -5,9 +5,9 @@ characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
-and gated (2026-08-11) — but G2 is NOT closed. The cast renders as a near-black
-silhouette and no lighting setting reaches it, so the styles have been judged
-against an unreadable subject. Lifting the cast albedo comes first. See § G2.**
+and gated (2026-08-11), and the cast-albedo fault that blocked judging them is
+FIXED. G2 is still NOT closed: under the S1/S2 cel look the character alone
+renders as a black blob, and that is undiagnosed. See § G2 and § 10 fault F4.**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
 `npm run smoke:mcgrots` (25 checks, 1.9s); boot the game with
@@ -359,14 +359,23 @@ that renders neutral or cool has failed before it is judged.
 from E8 — extend it rather than writing a second one, but note it judges
 **still frames** and G2 needs motion for the same reason G1 does.
 
-**G2 has NOT closed.** All four candidates are built, isolated and gated (12
-checks, `--only=style`), but they have been judged on a subject that renders as
-a **near-black silhouette**. The grade sweep now measures the cast rather than
-only the frame, and says no light setting reaches it: the character textures
-average RGB(44, 37, 31) and `material.color` saturates at 1.0, so nothing
-downstream can lift them. Full table in `MCGROTS-VALIDATION` § "The cast is
-unreadable". **Re-authoring or lifting the cast albedo comes before any style
-ranking is worth having**, and before G3's dressing.
+**G2 has NOT closed**, and what remains is one specific fault rather than the
+whole milestone.
+
+Done: all four candidates built, isolated and gated (12 checks,
+`--only=style`), three fault injections recorded, and the **cast-albedo fault
+fixed** — `src/mcgrots/actors/texture.js` lifts the character textures at load,
+which took the cast from a black hole in the frame to a legible figure. Suite
+25/25.
+
+Open: **under S1/S2 the character is still a black blob** while every other
+object in the scene cel-shades correctly (fault F4 below). Until that is fixed
+the two look candidates cannot be ranked, because the thing the player watches
+is the thing that is broken in them. S3 and S4 are unaffected and are
+judgeable now.
+
+Also still owed by G2: **which fixed hour**, and it should be settled together
+with the key (S3) rather than separately.
 
 G2 also chooses **which fixed hour**. Time is a single authored lighting
 setup, so this is one decision made once, and it belongs with the style rather
@@ -609,6 +618,45 @@ lands between 0.75 and 0.89, and `runt`'s head is 1,055 triangles against
 `slab`'s 232. Run `scripts/rig-glb.mjs` and the bake-off across the rest before
 the rig is relied on. Pomplé is excluded by design — a quadruped is not a biped
 and G6 gives him his own treatment.
+
+**F3 is now also blocking a measurement, not just coverage.** `rab` is the only
+archetype with a `-rig.json` sidecar; the other six 404, so anything that drives
+the game can only ever see `rab`. That is why `scripts/mcgrots-cast-albedo.mjs`
+reads the glbs offline instead.
+
+### F4 — The cel look renders the character black (G2, open, BLOCKING)
+
+**This is the one thing standing between G2 and a decision, and it is not
+diagnosed.** Under `?look=inked` and `?look=aerial` the character renders as a
+featureless black blob. Every other object in the scene — the van placeholder,
+both seat ledges, the statue plinth, the merged massing — cel-shades correctly
+in the same frame.
+
+What has been ruled out, each visually confirmed in
+`docs/smoke/captures/mcgrots/g2/`:
+
+- **Not the outline.** The blob is identical with `uThickness` at 0, which the
+  suite captures as `s1-control-nothickness.png`.
+- **Not the shade band.** `SHADE_BAND` 52 against 130 changes nothing.
+- **Not the albedo.** The same texture on the same figure reads perfectly under
+  the shipped Lambert path — compare `none-a.png` with `s1-inked.png` from the
+  same run.
+- **Not the lighting.** Same lights, same frame, same instant.
+
+The only property the character does not share with the objects that work is
+that it is a **SkinnedMesh**. `looks.js` builds its cel material with
+`MeshToonMaterial` plus an `onBeforeCompile` that injects the aerial ramp, and a
+constant `customProgramCacheKey`. A bisecting probe pointed at the injection and
+then contradicted itself on a second run, so **treat that probe's output as
+unreliable**: the cast-isolation-by-diff it used is not trustworthy when the
+figure is close to the background colour. Verify with pictures, not with that
+metric.
+
+Suggested first moves, cheapest first: render the cel material with
+`onBeforeCompile` removed entirely and look; then with `customProgramCacheKey`
+removed and look; then check whether `MeshToonMaterial` + `USE_SKINNING` picks up
+the wrong cached program. Do not re-derive the four rulings above — they are
+measured.
 
 ---
 

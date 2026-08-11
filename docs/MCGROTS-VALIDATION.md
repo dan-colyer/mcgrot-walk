@@ -336,6 +336,26 @@ together, so neither is carrying the other. The material-leak injection is the
 one worth keeping in mind — it is invisible in a still, and only the frame hash
 catches it.
 
+### The cast was unreadable, and it was the asset — FIXED
+
+**Resolved 2026-08-11** by `src/mcgrots/actors/texture.js`, which lifts the
+character textures at load. Everything below is the diagnosis that got there and
+is kept because it is the reason the fix is where it is.
+
+`scripts/mcgrots-cast-albedo.mjs` reads the embedded image out of all seven
+glbs, offline: rab 37.8, kenneth 55.5, morag 59.3, runt 35.2, slab 44.5,
+mcgrot 55.7, pomple 76.1 — **cast mean 50.9 of 255**, against the comics' L*
+50.5 (about 120). A gamma lift at exponent 0.55 lands the cast mean at 105,
+short of the comics on purpose.
+
+Measured effect at sun 6 / hemi 3: **cast mean 8.3 → 15.6**, and the figure is
+legible in `none-a.png` where it was previously a hole in the frame.
+
+Applied at load rather than to the files because the **paused street loads the
+same seven glbs** and inlines them into its single-file build.
+
+### Why the fix is not in the lights
+
 ### The cast is unreadable, and it is the asset
 
 **Found by G2, caused before it, and not fixed here.** The characters render as
@@ -365,11 +385,39 @@ dramatic key in 418 pages — and the sweep says it moves the cast by 2.7
 luminance. A light added to a scene on a rationale the measurement contradicts
 is worse than no light.
 
+### The cel look still renders the character black — F4, open and blocking
+
+With the albedo fixed, the shipped Lambert path shows a legible figure. **Under
+`?look=inked` and `?look=aerial` it is still a featureless black blob**, while
+the van, both ledges, the plinth and the massing cel-shade correctly in the same
+frame.
+
+Ruled out, each confirmed by opening a capture rather than by a number:
+
+| Suspect | Evidence it is not the cause |
+|---|---|
+| the outline | identical at `uThickness` 0 (`s1-control-nothickness.png`) |
+| the shade band | `SHADE_BAND` 52 vs 130 changes nothing |
+| the albedo | same texture reads fine in `none-a.png`, same run |
+| the lighting | same lights, same frame, same instant |
+
+The only property the character does not share with the objects that work is
+that it is a **SkinnedMesh**.
+
+**A warning for whoever picks this up.** A bisecting probe was written to
+isolate the cel material's parts and it **contradicted itself between two runs**
+— the same variant reported cast mean 15.5 and then 1.8. The cause is the
+probe's own metric: isolating the actor by hiding it and diffing counts only
+pixels that differ from the background, which collapses to a tiny biased sample
+exactly when the figure is dark. That metric is sound for measuring a
+*difference* between two grades and unsound for measuring an absolute. **Verify
+this fault with pictures.**
+
 **What G2 does NOT prove, therefore:** that any of the four candidates looks
 good. They are gated as *present, isolated and reversible*, and the frames are
-in the captures folder to be opened. They have been judged on a subject that
-renders as a silhouette, so the ranking is not yet meaningful — the cast has to
-be re-authored or lifted first. That is G3's first job, ahead of dressing.
+in the captures folder to be opened. S3 and S4 can be judged now; **S1 and S2
+cannot be ranked until F4 is fixed**, because the figure is the thing the player
+watches and it is the thing that is broken in them.
 
 **Also unproven:** the fixed hour. G2 owes that decision and it is still open;
 it should be settled together with the key (S3), not separately.
