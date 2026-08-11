@@ -5,12 +5,13 @@ characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
-and gated (2026-08-11). The cast-albedo fault and fault F4 (the cel look
-rendering the character black) are both FIXED — S1 and S2 can now be ranked.
-See § G2 and § 10 fault F4 (closed).**
+and gated (2026-08-11). The cast-albedo fault, F4 (the cel look rendering the
+character black) and F5 (S4's panel rendering empty) are all FIXED — all four
+candidates can now be ranked. Dan's provisional ranking after the first sheets
+is S2 ahead. See § G2 and § 10 faults F4, F5 (both closed).**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (26 checks, 1.3s); boot the game with
+`npm run smoke:mcgrots` (27 checks, 1.3s); boot the game with
 `npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
@@ -680,6 +681,64 @@ Gate: `docs/MCGROTS-VALIDATION.md` § G2, "S1 does not render the actor as a
 flat black silhouette." Fault-injected (the `computeVertexNormals()` call
 disabled) and confirmed red — torso patch stddev 0.0, max 0.0 — then
 restored.
+
+### F5 — S4's panel rendered empty (G2, CLOSED 2026-08-11)
+
+**Root cause, measured: `#page` painted over the canvas.** `page.js`'s
+`createPage()` appends `#page` (containing `.page-paper`, full-bleed by
+design — see its own comment on why) to `document.body` AFTER the canvas.
+Neither sets a `z-index`. Two `position`ed siblings with `z-index: auto`
+paint in DOM order, later wins, so the paper painted over the canvas
+everywhere the whole time `?page=on` was set — not just around the panel,
+inside it too. `?page=on` painted cream, the panel rule and the caption
+correctly; the panel itself held nothing.
+
+**This was the brief's own leading suspect, and this time it was right** —
+but only established by measuring it, per the brief's own warning that the
+two briefs before it both named the wrong suspect. Confirmed by forcing the
+canvas's `z-index` above `#page`'s and watching the scene appear.
+
+**Neither existing S4 gate could have caught it.** "S4 insets the render
+into a panel" reads the panel's geometry (`panelFraction`); "S4 renders at
+the panel size" reads the drawing buffer's dimensions. Neither samples a
+pixel inside the panel — the second candidate this session to render nothing
+behind fully green numeric gates (F4 was the first, a black actor through a
+full suite of green style checks).
+
+**Fix:** kept `.page-paper` as one full-bleed surface (its own comment
+explains why: alignment at a fractional device ratio, not four strips that
+can drift apart) and cut the panel rect out of it with `clip-path`, computed
+in `layout()` from the same `v` rect the canvas is already inset to. Did
+**not** reparent the canvas into `#page`'s stacking context — moving a live
+WebGL canvas on every page toggle is a context-loss risk for what is purely
+a CSS fault.
+
+**Two more real factors were needed before a CAPTURE showed the fix**,
+neither a bug: the boot places the actor with a snap cut (there is no
+previous shot, but a snap is still a snap — main.js), and the hold is real
+wall-clock time (`page.js`: 130ms), deliberately not tied to the frozen rAF
+clock the harness drives by hand. `.page-cut`'s own
+`transition: opacity 60ms steps(1, end)` adds a further ~60ms of lag after
+the hold's class clears before the PAINTED value actually reaches 0 — a
+single-step transition holds the start value for the full duration and
+snaps only at the end. Automated CDP round trips are typically faster than
+either, so a capture taken right after boot lands mid-hold — legitimately
+covered by the gutter paper, same as a real player's eye would be for that
+beat. `scripts/mcgrots-shot.mjs` now waits for both before shooting or
+evaluating; test-tooling only, no product change.
+
+**`npm run styleshots:mcgrots`'s own sheets still show two empty S4
+columns per anchor** (approach, mid-stride; arrived is fine) — not this
+fault. That rig (`scripts/mcgrots-styleshots.mjs`, Codex's) already has its
+own `waitForPageCut()` helper for exactly this concern, waiting 160ms — 30ms
+short of the ~190ms (130 hold + 60 steps-lag) a capture actually needs to
+land clear of the veil. Out of scope to fix here (Codex's file, off-limits
+per the brief); flagged rather than patched.
+
+Gate: `docs/MCGROTS-VALIDATION.md` § G2, "S4 holds a scene in the panel, not
+empty paper." Fault-injected (the `clip-path` assignment disabled) and
+confirmed red — 98.4% of sampled panel pixels matched the paper colour —
+then restored.
 
 ---
 

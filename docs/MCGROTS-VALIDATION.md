@@ -624,3 +624,103 @@ not with that probe.**
 
 G2 can now rank S1 and S2 on their own terms; the fixed-hour decision (§ G2)
 is still open and unrelated to this fault.
+
+### S4's panel rendered empty — F5, FIXED
+
+**Resolved 2026-08-11.** Root cause: `#page` painted over the canvas.
+`createPage()` appends `#page` (which contains `.page-paper`, full-bleed by
+design — the comment above it explains the alignment reason) to
+`document.body` AFTER the canvas already exists in the DOM. Neither element
+sets a `z-index`. Two `position`ed siblings with `z-index: auto` paint in DOM
+order, later wins — so `.page-paper` painted over the canvas everywhere the
+whole time `?page=on` was set, not just around the panel it was meant to
+frame. `?page=on` painted cream, the panel rule and the caption correctly;
+the panel itself held nothing, ever.
+
+**This was the brief's own leading suspect, and this time it was right** —
+established by measuring, not by agreeing: forcing the canvas's `z-index`
+above `#page`'s and re-rendering made the scene appear inside the panel.
+`document.elementFromPoint`/`elementsFromPoint` at the panel's centre had
+reported the canvas as topmost throughout, which briefly looked like a
+refutation — it is not one, because `pointer-events: none` (set on `#page`
+for exactly the reason its own comment gives: furniture, not content) makes
+the browser skip that whole subtree for HIT-TESTING while leaving its PAINT
+order untouched. The two are orthogonal; only the second one draws pixels.
+
+**Neither existing S4 gate could have caught it**, and both stayed green
+throughout: "S4 insets the render into a panel" reads the panel's geometry
+(`panelFraction`); "S4 renders at the panel size" reads the drawing buffer's
+dimensions. Neither samples a pixel inside the panel. This is the second
+candidate this session to render nothing behind fully green numeric gates —
+F4 was a solid black actor through a full suite of green style checks; F5 is
+an empty panel through both of S4's.
+
+**Fix:** kept `.page-paper` as one full-bleed surface — the property that
+motivated it (alignment at a fractional device ratio, rather than four
+strips that can drift a pixel apart) survives — and cut the panel rect out
+of it with `clip-path`, computed in `layout()` from the same `v` rect the
+canvas is already inset to, using the CSS `evenodd` fill rule to punch a
+rectangular hole in a full-window polygon. Considered and rejected:
+reparenting the canvas into `#page`'s own stacking context (children of a
+single `position: fixed` ancestor paint as one atomic group, so this would
+also have worked) — rejected because it means moving a live WebGL canvas in
+and out of the DOM on every page toggle, a context-loss risk for what is
+purely a CSS fault, for no benefit the `clip-path` version doesn't already
+have.
+
+**Two more real factors, neither a bug, were needed before a CAPTURE showed
+the fix**, and both cost real debugging time before their nature was clear:
+
+- The boot places the actor with a **snap cut** — there is no previous shot
+  to cut away from, but `goTo('back', { snap: true })` runs unconditionally
+  at boot regardless, and a snap is still a snap (`main.js`). The hold is
+  **real wall-clock time** (`page.js`: `PAGE.cutMs` = 130ms), deliberately
+  not tied to the frozen rAF clock this harness drives by hand — so it is
+  the one piece of S4's behaviour a capture script cannot fast-forward
+  through by calling `stepFrames()` a thousand times; only real elapsed time
+  clears it.
+- `.page-cut`'s own CSS, `transition: opacity 60ms steps(1, end)`, adds a
+  further **~60ms of lag** after the hold's `.on` class clears before the
+  PAINTED opacity value actually reaches 0. A `steps(1, end)` transition
+  holds the start value for the entire duration and snaps only at the very
+  end — measured directly: immediately after `pageStats().cutting` read
+  `false` (the class gone), `getComputedStyle(elCut).opacity` still read
+  `"1"`.
+
+Combined, a capture needs roughly **190ms** of real wall-clock time from
+boot before the panel is genuinely clear, and automated CDP round trips are
+often faster than that — a shot taken right after boot lands mid-hold,
+legitimately covered by the gutter paper, same as a real player's eye would
+be for that beat. `scripts/mcgrots-shot.mjs` now waits for both conditions
+(`!pageStats().cutting`, then computed opacity `=== '0'`) before shooting or
+evaluating anything. This is test-tooling only; nothing about the product's
+timing changed.
+
+**Verified the gutter-hold cut still works, not just that the panel isn't
+permanently empty.** Triggered a real `snapTo()` between two anchors,
+captured ~100ms into the transition (opacity confirmed `"1"` at that point —
+inside the visible-hold window, not the class-just-flipped instant): the
+panel showed solid paper with **no leak of either the old or the new
+scene**. Then let it clear and confirmed the actor had legitimately arrived
+at the new anchor. The `clip-path` change only affects `.page-paper`; `.page-
+frame`, `.page-title`, `.page-caption` and `.page-cut` are untouched and
+still belong to `#page`'s stacking group, painting above the canvas exactly
+as before — which is what the cut still relies on to hide the swap.
+
+**`npm run styleshots:mcgrots`'s own sheets still show two empty S4 columns
+per anchor** (approach, mid-stride; arrived is clear) — this is not F5
+recurring. That rig already carries its own `waitForPageCut()` helper for
+exactly this concern (`scripts/mcgrots-styleshots.mjs`, owned by the Codex
+session that built it), waiting 160ms — roughly 30ms short of the ~190ms a
+capture needs to land clear of both the hold and the steps-transition lag
+measured above. Out of scope to fix here: that file was explicitly off
+limits for this brief. Flagged for whoever owns it next rather than patched
+around.
+
+Gate: `docs/MCGROTS-VALIDATION.md` (this file) § G2's style-region table,
+"S4 holds a scene in the panel, not empty paper." Control: `PAGE.paper`'s
+own RGB (`#d8c69b`) — an empty panel is that colour edge to edge, because
+that is literally what sits behind it, and a real render fills the panel
+with sky, ground and massing, none of which is close to it. Fault-injected
+(the `clip-path` assignment disabled) and confirmed red — 98.4% of sampled
+panel pixels matched the paper colour, against 0.0% fixed — then restored.
