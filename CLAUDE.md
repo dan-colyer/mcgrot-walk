@@ -8,15 +8,34 @@ garbled text), plus an ambient crowd, wrecked vehicles and photo-derived façade
 
 ## Development workflow
 
-**Opus works the milestone end to end.** Planning against `docs/ROADMAP.md`,
-implementation, verification, deploying — one persistent conversation. There
-is no implementer tier; see "Why this changed" below before reinstating one.
+**The active project is McGrot's, under `src/mcgrots/`.** The street is paused
+— see `docs/MCGROTS-ROADMAP.md` § 8. Where this file and that one disagree,
+that one wins for anything under `src/mcgrots/`, and this file's architecture
+and gotchas sections still describe the street.
 
-Delegation is an ad-hoc tool, not a role: reach for a Sonnet session only for
-a genuinely mechanical sweep too large to hold here (E7a's hosting migration
-is the one clear candidate left on the roadmap). If you delegate, brief the
-whole milestone, review the diff by measurement rather than by summary, and
-send findings back instead of fixing them here.
+**Opus orchestrates from a herdr session; workers implement in their own
+panes.** Reinstated 2026-08-11 on Dan's call, replacing the single-session
+arrangement below. Opus plans the milestone, writes the brief, drives the
+workers, reviews by measurement and reports to Dan. It does not implement.
+
+Two workers, deliberately of different kinds: **Sonnet** (`claude`, the
+established implementer) and **Codex** (OpenAI's CLI, on trial — it does not
+follow this repo's conventions by default, so brief it explicitly and review
+it the same way). Give each worker its own file. `looks.js` and `main.js` are
+the hot spots; parallel edits to either are how a session loses a morning.
+
+**Workers talk back over herdr, not over the pane's scrollback.** Claude Code's
+own cross-session messaging needs v2.1.224 and the `stable` channel is pinned
+to 2.1.220, so it is unavailable here; re-check when stable moves. The
+convention both workers follow is in `AGENTS.md` § "Reporting back".
+
+*Superseded, kept because its reasoning still applies: Opus previously worked
+the milestone end to end, with no implementer tier — see "Why this changed"
+below. The catches that justified splitting the work came from measuring, not
+from independence, so an orchestrator's value is enforcing the verification
+contract rather than adding a layer. Delegation is also a lossy context
+boundary: a diff plus a summary is a worse way to understand code than having
+written it.*
 
 **A fresh session on Opus at xHigh is the phase-gate reviewer**, and is the
 only independent read. At the end of each major roadmap phase (E1, E2, …) that

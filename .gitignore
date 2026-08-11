@@ -40,3 +40,4 @@ scripts/.tts-logs/
 scratchpad/
 src/mcgrots-compare-bundle.js
 src/mcgrots-flats-bundle.js
+.herdr/
