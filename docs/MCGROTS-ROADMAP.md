@@ -615,10 +615,14 @@ is closer than any anchor shot. Revisit once G3 fixes the shots.
 
 Generated the five missing biped sidecars with `scripts/rig-glb.mjs`; `rab` was
 left untouched. The Chromium/Metal bake-off rendered all five walk strips and
-pose strips successfully. The walk strips show readable knee motion and no
-shoulder or hip tear in any of the five. The adaptive neck measurements span
-0.75–0.89 as expected, and the per-archetype render measurements now exist for
-the cast rather than for `rab` alone.
+pose strips successfully. The walk strips show readable knee motion, but the
+per-archetype verdict is mixed: kenneth and slab stay continuous through the
+whole stride, while morag has a flat light shard projecting forward from the
+hip in frames 3, 4, 7 and 8, and runt has the same shard in frames 3 and 4.
+Shoulder tearing is absent. Mcgrot has an angular lower-garment flap at maximum
+extension, but not the same confirmed light hip shard. The adaptive neck
+measurements span 0.75–0.89 as expected, and the per-archetype render
+measurements now exist for the cast rather than for `rab` alone.
 
 The sit strips still show dark angular hip/lower-coat deformation on morag, runt
 and slab (with angular folds but no split on kenneth and mcgrot). This is a

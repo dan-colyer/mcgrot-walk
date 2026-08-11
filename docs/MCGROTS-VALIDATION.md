@@ -119,14 +119,30 @@ one draw, no page errors, and wrote the walk and pose strips to
 | runt | 3861 | 0.75 | 1 | 4637 | 40.7 | 0.023 |
 | slab | 2812 | 0.89 | 1 | 3530 | 29.8 | 0.023 |
 
-The opened walk strips showed readable alternating knee motion, continuous
-coat/torso silhouettes, and no visible shoulder or hip tear across the five
-archetypes. The opened sit strips showed dark angular hip/lower-coat
-deformation on morag, runt and slab; kenneth and mcgrot showed angular folds
-without a visible split. This coverage measures the cast's walk behaviour; it
-does not close the existing sitting fault or prove foot planting. Pomplé is
-deliberately not included because he is a quadruped and has a separate G6
-treatment.
+The opened walk strips showed readable alternating knee motion, but not a
+uniformly clean deformation result:
+
+- **kenneth:** clean silhouette through the stride; no shoulder tear or hip
+  shard.
+- **mcgrot:** no shoulder tear; an angular lower-garment flap appears at maximum
+  extension, but the reviewed strip does not show the same confirmed light hip
+  shard as morag and runt.
+- **morag:** a flat light shard projects forward at hip height in walk-strip
+  frames 3, 4, 7 and 8, absent from frames 1, 2, 5 and 6. The independent
+  `node scripts/mcgrots-shot.mjs --body=skinned --archetype=morag
+  --anchor=far --frames=130 --shot=/tmp/morag-mid-130.png` capture shows the
+  same wedge at the left hip mid-stride.
+- **runt:** the same flat plate appears at hip height in walk-strip frames 3
+  and 4.
+- **slab:** clean silhouette through the stride; no shoulder tear or hip shard.
+
+The shoulder tear is absent across all five; the morag and runt hip artefacts
+are measured walk-time deformation faults, not merely sitting faults. The
+opened sit strips additionally showed dark angular hip/lower-coat deformation
+on morag, runt and slab; kenneth and mcgrot showed angular folds without a
+visible split. This coverage measures the cast's walk behaviour; it does not
+prove foot planting. Pomplé is deliberately not included because he is a
+quadruped and has a separate G6 treatment.
 
 ### The finding the milestone turned on
 
