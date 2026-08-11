@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # McGrot Walk
 
 First-person Three.js POC: post-apocalyptic Leith Walk (real OSM footprints), 400+
