@@ -374,6 +374,14 @@ This is a measured recommendation, not a shipped lighting change: preserve
 `-2.62 / 0.75 rad` first if the hour is reopened. No acceptance gate was
 added, so no fault injection applies.
 
+Verification for this investigation: `node --check scripts/mcgrots-sun.mjs` and
+`git diff --check` passed. After control cleared the shared render commands,
+`npm run bundle:mcgrots` completed with a 1.9 MB bundle and
+`npm run smoke:mcgrots` completed **27/27 passed in 1.2s** under Chromium/Metal.
+That bundle included Sonnet's in-flight `src/mcgrots/page.js`; the smoke result
+is repository verification, not evidence for this sun change, and the S4/page
+result in particular is not attributed here.
+
 ### The candidates came from reading the comics, not from a list of techniques
 
 The first G2 scaffold offered posterise / riso / PS1 / clay / stop-motion —
@@ -416,6 +424,7 @@ bundle** — the mistake the street's acceptance gates made twice.
 | style | switching the key repaints | Same style, same scene, one uniform |
 | style | S4 insets the render | Panel is 50–85% of the window |
 | style | S4 renders at panel size | Drawing buffer ≠ window, and the aspect matches |
+| style | S4 holds a scene in the panel, not empty paper (F5) | <50% of sampled panel pixels match the paper colour |
 | style | console clean | Through every arm |
 
 ### Faults these gates caught, each of which looked fine as a number first
@@ -471,11 +480,16 @@ Three injections, each restored from the commit immediately after:
 | `INK_MAX_RADIUS` 12 → 0 (nothing is inkable) | S1 inks the objects; S1 puts visible ink |
 | `PAGE.margin` 0.062 → 0 | S4 insets the render; S4 renders at panel size |
 | F4 fix disabled (`computeVertexNormals()` skipped) | S1 does not render the actor as a flat black silhouette |
+| F5 fix disabled (`clip-path` assignment skipped) | S4 holds a scene in the panel, not empty paper |
 
 The middle one is the useful pairing: the count check and the pixel check fail
 together, so neither is carrying the other. The material-leak injection is the
 one worth keeping in mind — it is invisible in a still, and only the frame hash
-catches it.
+catches it. The F5 injection is the same shape as F4's: restoring the exact
+symptom (98.4% of the panel matching the paper colour) while the two
+pre-existing S4 gates it was added beside — geometry and buffer size — stayed
+green the whole time, which is the point of adding a gate that looks inside
+the rect rather than around it.
 
 **The F4 gate itself needed three redesigns before it discriminated anything.**
 A chest-height single-pixel sample read "black" whether the fix was present or
