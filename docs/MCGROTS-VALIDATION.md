@@ -102,6 +102,32 @@ Measured on `rab`, chromium/metal:
 Asset KB is what a candidate adds *per character* on top of the 480 KB glb
 every candidate needs anyway.
 
+### F3 cast coverage (2026-08-11)
+
+`node scripts/rig-glb.mjs kenneth mcgrot morag runt slab` generated the five
+missing biped sidecars; `rab-rig.json` was not regenerated. Each sidecar has
+nine bones and matched the mesh vertex count. The bake-off was then run once
+per archetype with `--only=skinned`, using Chromium/Metal; each run returned
+one draw, no page errors, and wrote the walk and pose strips to
+`docs/smoke/captures/mcgrots/g1/`.
+
+| archetype | vertices | neck | draws | tris | asset KB | ms/frame |
+|---|---:|---:|---:|---:|---:|---:|
+| kenneth | 2400 | 0.79 | 1 | 2624 | 25.5 | 0.024 |
+| mcgrot | 3084 | 0.86 | 1 | 3952 | 32.6 | 0.024 |
+| morag | 3598 | 0.89 | 1 | 4410 | 38.0 | 0.024 |
+| runt | 3861 | 0.75 | 1 | 4637 | 40.7 | 0.023 |
+| slab | 2812 | 0.89 | 1 | 3530 | 29.8 | 0.023 |
+
+The opened walk strips showed readable alternating knee motion, continuous
+coat/torso silhouettes, and no visible shoulder or hip tear across the five
+archetypes. The opened sit strips showed dark angular hip/lower-coat
+deformation on morag, runt and slab; kenneth and mcgrot showed angular folds
+without a visible split. This coverage measures the cast's walk behaviour; it
+does not close the existing sitting fault or prove foot planting. Pomplé is
+deliberately not included because he is a quadruped and has a separate G6
+treatment.
+
 ### The finding the milestone turned on
 
 `scripts/glb-anatomy.mjs` measures cross-sections through a normalised mesh.
@@ -172,9 +198,9 @@ the posture this whole game is about — the player sits near the van and listen
   A3 physically cannot — a sprite rotated out of plane vanishes — so it leans
   instead. G6 makes Pomplé's head-turn load-bearing, so this is a real mark
   against A3 that the cost table cannot show.
-- **Only `rab` has been rendered.** Run `--archetype=` across the cast before
-  choosing; the adaptive neck lands between 0.75 and 0.89 and `runt`'s head is
-  1055 triangles against `slab`'s 232.
+- **The five other bipeds are now rendered.** Their walk strips are in the G1
+  capture directory and the measurements are recorded in § "F3 cast coverage"
+  above. This does not cover Pomplé, whose quadruped treatment belongs to G6.
 - **Pomplé is excluded.** He is a quadruped, emitted as a single rigid part,
   and a biped rig would not give him the head-turn G6 needs.
 

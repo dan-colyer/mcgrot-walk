@@ -611,18 +611,21 @@ No foot IK on any candidate, so the feet slip rather than plant. Whether it
 reads at the game's actual camera distances is unjudged — the G1 review camera
 is closer than any anchor shot. Revisit once G3 fixes the shots.
 
-### F3 — Only one archetype rendered (G1, open)
+### F3 — Only one archetype rendered (G1, complete 2026-08-11)
 
-Everything in G1 was measured on `rab`. The cast varies: the adaptive neck
-lands between 0.75 and 0.89, and `runt`'s head is 1,055 triangles against
-`slab`'s 232. Run `scripts/rig-glb.mjs` and the bake-off across the rest before
-the rig is relied on. Pomplé is excluded by design — a quadruped is not a biped
-and G6 gives him his own treatment.
+Generated the five missing biped sidecars with `scripts/rig-glb.mjs`; `rab` was
+left untouched. The Chromium/Metal bake-off rendered all five walk strips and
+pose strips successfully. The walk strips show readable knee motion and no
+shoulder or hip tear in any of the five. The adaptive neck measurements span
+0.75–0.89 as expected, and the per-archetype render measurements now exist for
+the cast rather than for `rab` alone.
 
-**F3 is now also blocking a measurement, not just coverage.** `rab` is the only
-archetype with a `-rig.json` sidecar; the other six 404, so anything that drives
-the game can only ever see `rab`. That is why `scripts/mcgrots-cast-albedo.mjs`
-reads the glbs offline instead.
+The sit strips still show dark angular hip/lower-coat deformation on morag, runt
+and slab (with angular folds but no split on kenneth and mcgrot). This is a
+known A1 pose limitation, not a reason to hide the measured walk result; G3's
+real ledge and the open sitting fault still own the next decision. Pomplé is
+excluded by design — a quadruped is not a biped and G6 gives him his own
+treatment.
 
 ### F4 — The cel look renders the character black (G2, open, BLOCKING)
 
