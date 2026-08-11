@@ -29,6 +29,7 @@
 // no-op when off cannot be trusted to be the only thing that changed when on.
 
 import * as THREE from 'three';
+import { KEYS, DEFAULT_KEY, keyById, toRgbTriplets } from './keys.js';
 
 // The twelve swatches k-means'd from 60 comics in CIELAB — docs/STYLE.md.
 // Posterisation quantises to THESE rather than to an even cube, so the result
@@ -49,10 +50,24 @@ export const PALETTE = [
 ];
 
 // id must be stable: the gate suite and the bake-off both address styles by it.
+//
+// `riso` was REMOVED at the widened round (2026-08-11). It was already known
+// broken — three plates that would not separate, reading as flat sepia — but
+// the reason it went rather than getting fixed came from reading the corpus:
+// THE COMICS ARE NOT RISO. Nine pages sampled across the 418 show no rosette,
+// no plate misregistration and no visible screen. They are flat digital fills
+// with an ink line and a paper texture. `riso` was a printing process picked
+// off a list of printing processes, and the test a candidate has to pass here
+// is whether it could only have come from these comics. It could not.
+//
+// `posterise` stays, and is now a CONTROL rather than a candidate. It quantises
+// to STYLE.md's pooled twelve; `key` quantises to a measured five. Keeping both
+// renderable is what makes "a page is one key" a comparison instead of an
+// assertion — see keys.js for why the pooled twelve is the wrong target.
 export const STYLES = [
   { id: 'none', label: 'None (control)', mode: 0 },
-  { id: 'posterise', label: 'Posterised to the 12 swatches', mode: 1 },
-  { id: 'riso', label: 'Risograph misregistration', mode: 2 },
+  { id: 'posterise', label: 'Posterised to the pooled 12 (control)', mode: 1 },
+  { id: 'key', label: 'S3 · One key at a time', mode: 3 },
 ];
 
 export const styleById = (id) => STYLES.find((s) => s.id === id) || STYLES[0];
@@ -75,6 +90,7 @@ uniform vec2  uResolution;
 uniform int   uMode;
 uniform float uStrength;     // 0 = provably neutral, 1 = as authored
 uniform vec3  uPalette[12];
+uniform vec3  uKey[5];       // the CURRENT page's five, dark -> paper
 uniform float uRegister;     // ink plate offset, pixels
 uniform float uHalftone;     // dot pitch, pixels
 uniform float uGrain;
@@ -116,6 +132,34 @@ void main() {
     float d = hash(floor(px / max(1.0, uHalftone)));
     col = clamp(col + (d - 0.5) * 0.10, 0.0, 1.0);
     col = nearestSwatch(col);
+  } else if (uMode == 3) {
+    // ONE KEY AT A TIME. The same machinery as posterise, aimed at five
+    // measured swatches instead of twelve pooled ones.
+    //
+    // The difference that matters is not the count, it is CO-OCCURRENCE. The
+    // pooled twelve holds swatches from pages that never appear together, so
+    // quantising against it pulls a mid toward whichever cluster happens to be
+    // nearest in the pool rather than toward one this page would have used.
+    // Five that were measured off ONE page cannot do that.
+    //
+    // Matching is on LUMINANCE ALONE here, where posterise matches on weighted
+    // RGB distance. Deliberate, and it follows from the keys' structure: a key
+    // is ordered dark -> paper and is a single warmth axis (docs/STYLE.md rule
+    // 2), so the nearest swatch by tone IS the nearest swatch. Matching on RGB
+    // instead lets a warm mid jump the ordering and land on the accent, which
+    // stipples the frame with the one saturated note in the key.
+    vec2 px = vUv * uResolution;
+    float d = hash(floor(px / max(1.0, uHalftone)));
+    vec3 dithered = clamp(col + (d - 0.5) * 0.10, 0.0, 1.0);
+    float l = luma(dithered);
+
+    float best = 1e9;
+    vec3 hit = uKey[0];
+    for (int i = 0; i < 5; i++) {
+      float diff = abs(luma(uKey[i]) - l);
+      if (diff < best) { best = diff; hit = uKey[i]; }
+    }
+    col = hit;
   } else if (uMode == 2) {
     // RISOGRAPH. Three ink plates pulled slightly out of register. The offset
     // scales with how DARK the pixel is, so the drift shows in the inked areas
@@ -156,6 +200,7 @@ export function createStyle(renderer) {
     uMode: { value: 0 },
     uStrength: { value: 1 },
     uPalette: { value: PALETTE.map(([r, g, b]) => new THREE.Vector3(r / 255, g / 255, b / 255)) },
+    uKey: { value: toRgbTriplets(keyById(DEFAULT_KEY)).map(([r, g, b]) => new THREE.Vector3(r / 255, g / 255, b / 255)) },
     uRegister: { value: 3.2 },
     uHalftone: { value: 2.0 },
     uGrain: { value: 0.10 },
@@ -184,6 +229,7 @@ export function createStyle(renderer) {
   const quadCamera = new THREE.Camera();
 
   let current = 'none';
+  let currentKey = DEFAULT_KEY;
 
   function resize() {
     const s = renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -202,6 +248,20 @@ export function createStyle(renderer) {
       uniforms.uMode.value = s.mode;
     },
     setStrength(v) { uniforms.uStrength.value = v; },
+
+    // The key is a per-BEAT choice, not a per-style one: `key` mode stays
+    // installed while the page it prints on changes. G4 drives this from who
+    // has arrived at the van; G2 only has to prove the swap is clean.
+    setKey(id) {
+      const k = keyById(id);
+      currentKey = k.id;
+      const rgb = toRgbTriplets(k);
+      for (let i = 0; i < rgb.length; i++) {
+        uniforms.uKey.value[i].set(rgb[i][0] / 255, rgb[i][1] / 255, rgb[i][2] / 255);
+      }
+    },
+    get key() { return currentKey; },
+    keyIds: () => KEYS.map((k) => k.id),
     uniforms,
     resize,
 

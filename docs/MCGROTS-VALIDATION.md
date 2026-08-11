@@ -221,3 +221,140 @@ of 137 (four times the street's measured 0.139 median). Replaced by
 shots and reports mean, stddev, crushed and blown. Chosen pair is the darkest
 in the grid that crushes nothing: sun 6, hemi 3 → mean 76.7, stddev 51.4,
 0.0% black.
+
+---
+
+## G2 — the style bake-off
+
+```bash
+npm run smoke:mcgrots -- --only=style      # 12 checks
+npm run dev:mcgrots                        # /mcgrots.html?look=aerial&style=key&page=on
+node scripts/mcgrots-grade.mjs             # now reports the CAST, not just the frame
+node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg --k=5
+```
+
+Captures land in `docs/smoke/captures/mcgrots/g2/` (gitignored).
+
+### The candidates came from reading the comics, not from a list of techniques
+
+The first G2 scaffold offered posterise / riso / PS1 / clay / stop-motion —
+a list of rendering processes. Nine comics sampled across the 418 in
+`assets/comics/` say the corpus is none of them, and says several things
+`docs/STYLE.md` does not, because that document measures **colour only**:
+
+- Everything is **ink-outlined**, constant weight, no taper.
+- **Two tones per surface** — lit and shade, hard edge, no gradient.
+- **Distance is drawn, not fogged.** Foreground figures inked and warm;
+  mid-ground people one flat tone with a thin line; background cranes and
+  tenements a pale wash with *no outline at all*.
+- **One key per page**, four or five swatches — never twelve.
+- The **paper is furniture**: cream margin, cream gutters, title bar above,
+  caption bar below.
+- A **face is three to five marks**.
+
+The four candidates Dan chose (2026-08-11) are S1 inked cel, S2 aerial flatten,
+S3 one key at a time, S4 the page. S5 (bubbles as world objects) and S6
+(three-mark faces) were deferred to G6.
+
+### Three arms, and why they are three separate URL params
+
+`?look=` mutates the scene before it draws, `?style=` grades the finished frame,
+`?page=` puts furniture around it. Folding them into one `?style=` would make
+every candidate a bundle, and **a bundle cannot be a control for another
+bundle** — the mistake the street's acceptance gates made twice.
+
+| Region | Check | What it proves |
+|---|---|---|
+| style | judging the chosen body | The region runs on `?body=skinned`, G1's pick, not the capsule |
+| style | **every arm reverts bit-identically** | Install + revert of all three arms returns the exact frame |
+| style | S1 inks objects, cels everything | hulls > 0, hulls < swapped, aerial = 0 |
+| style | S1 puts visible ink in the frame | ≥0.25% of pixels darken vs a **zero-width-line control** |
+| style | S2 is S1 plus the ramp | Same hulls, same swaps, only `aerial` differs |
+| style | S2 washes distance out | Lighter *and* flatter than S1 |
+| style | every key is exactly five | A six-entry key would half-fill the uniform and quantise to black |
+| style | S3 lands on its five swatches | 100% of pixels within 10/255 of the `dock` key |
+| style | switching the key repaints | Same style, same scene, one uniform |
+| style | S4 insets the render | Panel is 50–85% of the window |
+| style | S4 renders at panel size | Drawing buffer ≠ window, and the aspect matches |
+| style | console clean | Through every arm |
+
+### Faults these gates caught, each of which looked fine as a number first
+
+**The outline was drawn 1.2 m underground.** Hulls were added as SIBLINGS of the
+mesh they outline, which drops the mesh's own local transform — the van's body
+sits at `y = 1.2` inside its group. What survived was a sliver of z-fighting at
+one edge, which read as a thin outline and measured 0.03% ink. Parenting the
+hull to the mesh with no local transform makes the world transform identical by
+construction; ink went 0.03% → 0.29% at the same line width.
+
+**The outline engulfed the character.** A hand-picked thickness coefficient came
+to ~7.5 cm of push on a 1.72 m figure — wider than its own limbs — so the hull
+swallowed it and rendered a solid black blob. The push is now **derived**:
+`δ = 2·N·z / (P₁₁·height)` gives an exactly N-pixel line at any distance, fov or
+resolution, so the suite's 1280×720 cannot flatter it.
+
+**The ground plane's own hull filled two-thirds of the frame.** An inverted hull
+assumes a closed solid seen from outside and a 400 m ground plane is neither.
+The rule that fixes it is the corpus's, not a workaround: ground and sky carry
+no line, objects do. Enforced by bounding-sphere radius, so a prop added in G3
+inherits it without editing a list.
+
+**The two-band ramp lifted every shadow to 35%.** `SHADE_BAND` was 90/255,
+which put a floor under every unlit surface and flattened the pitch. Now 52 —
+the same argument as the street's rejected "lift the game toward the comics'
+lightness" grades.
+
+### Faults in the GATES, which is the other half of the same discipline
+
+- **The revert check compared frames at different clock times.** It stepped at
+  1/60 between arms, so ten frames of idle animation had passed and the two
+  hashes differed on a scene that was reverting perfectly. Every step in that
+  check is now `dt = 0`.
+- **The ink check measured darkness, not ink.** It used the crushed-pixel
+  fraction and read `0.00% → 0.00%` on a frame with a line in it: the hull is
+  `#211f1c`, luminance ~32, and the crush floor is 12.
+- **Then it measured ink against the wrong control.** Against the *unstyled*
+  frame it read `1.74% → 0.02%` — the unstyled scene's own shadows are already
+  that colour and the cel ramp then lifts them. The control is now the same look
+  with the line at **zero width**: same materials, same hulls, same draw calls,
+  same clock, so a difference is the line and can be nothing else.
+- **Colour matching could not see an antialiased line at all.** Replaced by a
+  per-pixel diff against that control.
+
+### The cast is unreadable, and it is the asset
+
+**Found by G2, caused before it, and not fixed here.** The characters render as
+near-black silhouettes at every anchor. `scripts/mcgrots-grade.mjs` now isolates
+the cast by hiding the actor and diffing — every changed pixel is the actor and
+nothing else, so it needs no mask and no depth buffer.
+
+| Swept | Range | Cast mean luminance |
+|---|---|---|
+| sun | 6 → 12 | 5.0 → 8.9 |
+| hemisphere | 3 → 8 | 8.9 → 10.8 |
+| cast albedo | 0.42 → 1.35 | 3.0 → 8.9 |
+| camera-side fill | 0 → 6 | 8.3 → 11.0 |
+
+The frame's mean over the same grid is **74–114**. Nothing moves the cast.
+
+The reason is the asset: `rab`'s texture averages **RGB(44, 37, 31)** measured
+off the decoded image, and `material.color` saturates at 1.0, so no multiplier
+can lift a map that dark — which is why albedo 1.35 did almost nothing. This is
+exactly what `docs/STYLE.md` warns about under *"Author cream-forward"*: the
+dark end of the palette is where things **land**, not where they should be
+**painted**. The character glbs were authored at the landing point.
+
+**Rejected: a camera-side fill light.** Built, swept, removed. It is what the
+corpus would suggest — the comics light figures flat and frontally, with no
+dramatic key in 418 pages — and the sweep says it moves the cast by 2.7
+luminance. A light added to a scene on a rationale the measurement contradicts
+is worse than no light.
+
+**What G2 does NOT prove, therefore:** that any of the four candidates looks
+good. They are gated as *present, isolated and reversible*, and the frames are
+in the captures folder to be opened. They have been judged on a subject that
+renders as a silhouette, so the ranking is not yet meaningful — the cast has to
+be re-authored or lifted first. That is G3's first job, ahead of dressing.
+
+**Also unproven:** the fixed hour. G2 owes that decision and it is still open;
+it should be settled together with the key (S3), not separately.

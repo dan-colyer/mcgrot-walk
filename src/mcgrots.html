@@ -19,11 +19,54 @@
     text-shadow: 0 1px 3px rgba(0,0,0,.8);
   }
   body.booted #hint { opacity: .72; }
+
+  /* S4 — the page. Furniture only; page.js owns every position, because the
+     panel rect is also what the renderer draws into and the two cannot be
+     allowed to disagree. Nothing here sets left/top/width/height. */
+  #page { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #page.on { display: block; }
+  body.paged { background: #d8c69b; }
+  body.paged #scene { position: fixed; width: auto; height: auto; }
+  /* The paper is the whole window and the panel is drawn ON it, so the margin
+     and the gutters are one surface rather than four strips that can misalign
+     by a pixel at a fractional device ratio. */
+  .page-paper { position: absolute; inset: 0; background: #d8c69b; }
+  .page-frame {
+    position: absolute; border-style: solid; border-color: #211f1c;
+    box-sizing: content-box; margin: -0.75px;   /* rule sits OUTSIDE the panel,
+                                                   so it never eats a pixel of
+                                                   the render it surrounds */
+  }
+  .page-title, .page-caption {
+    position: absolute; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #211f1c; text-align: center; padding: 0 4vw; box-sizing: border-box;
+  }
+  /* Heavy, condensed, capitals — the corpus title treatment. A system stack
+     rather than a webfont: this is a prototype and a 200KB face to judge a
+     border would be paying for the wrong thing. G3 picks a real face. */
+  .page-title {
+    top: 0;
+    font: 800 clamp(17px, 3.4vw, 34px)/1 ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: -0.015em; text-transform: uppercase;
+  }
+  .page-caption {
+    height: 6.2vh;
+    font: 500 clamp(12px, 1.7vw, 18px)/1.35 ui-sans-serif, "Helvetica Neue", Arial, sans-serif;
+  }
+  /* The cut. Opacity, stepped — see page.js on why this is a hold on the paper
+     and not a crossfade. `steps(1)` is what keeps it a hold: an eased opacity
+     would be the film grammar the comment argues against. */
+  .page-cut {
+    position: absolute; background: #d8c69b;
+    opacity: 0; transition: opacity 60ms steps(1, end);
+  }
+  .page-cut.on { opacity: 1; }
 </style>
 </head>
 <body>
 <canvas id="scene"></canvas>
 <div id="hint">Tap a ring to walk there &middot; or press 1&ndash;5</div>
-<script src="mcgrots-bundle.js?v=ea8a4a95a9"></script>
+<script src="mcgrots-bundle.js?v=8b1a62e23b"></script>
 </body>
 </html>

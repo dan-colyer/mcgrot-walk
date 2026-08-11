@@ -24,6 +24,9 @@ import { makeSegmentedBody } from './actors/segmented.js';
 import { makeFlatsBody } from './actors/flats.js';
 import { makeSkinnedBody } from './actors/skinned.js';
 import { createStyle, STYLES } from './style.js';
+import { createLooks, LOOKS } from './looks.js';
+import { createPage } from './page.js';
+import { KEYS } from './keys.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -37,8 +40,25 @@ const BODIES = {
 const params = new URLSearchParams(location.search);
 const BODY_KIND = params.get('body') || 'capsule';
 const BODY_ARCHETYPE = params.get('archetype') || 'rab';
-// G2's bake-off lever, the same shape as G1's `?body=`.
+// G2's bake-off levers, the same shape as G1's `?body=`.
+//
+// THREE INDEPENDENT ARMS, and they are separate params on purpose. A style in
+// this game is not one thing: `look` mutates the scene before it draws
+// (looks.js), `style` grades the finished frame (style.js), `page` puts
+// furniture around it (page.js). Folding them into one `?style=` would make
+// every candidate a bundle, and a bundle cannot be a control for another
+// bundle — which is exactly the mistake the street's acceptance gates made
+// twice (CLAUDE.md, the verification contract).
+//
+// So the four candidates Dan chose address as:
+//   S1 inked cel      ?look=inked
+//   S2 aerial flatten ?look=aerial      (S1 is its control: same but aerial=0)
+//   S3 one key        ?style=key        (posterise is its control)
+//   S4 the page       ?page=on
 const STYLE_KIND = params.get('style') || 'none';
+const LOOK_KIND = params.get('look') || 'none';
+const PAGE_ON = params.get('page') === 'on';
+const KEY_KIND = params.get('key') || null;
 
 const FIXED_DT = 1 / 60;
 
@@ -51,6 +71,7 @@ renderer.toneMappingExposure = LIGHT.exposure;
 
 const style = createStyle(renderer);
 const scene = new THREE.Scene();
+const looks = createLooks(scene);
 scene.background = new THREE.Color(LIGHT.skyColor);
 // Enough fog to give the massing depth without hiding the far side of the
 // junction. This is a placeholder grade — G2 owns the real one.
@@ -73,6 +94,20 @@ const sun = new THREE.DirectionalLight(LIGHT.sunColor, LIGHT.sunIntensity);
   sun.target.position.set(PITCH.x, 0, PITCH.z);
 }
 scene.add(sun, sun.target);
+
+// NO FILL LIGHT HERE, and that is a measured rejection rather than an omission.
+//
+// The cast renders as a near-black silhouette at every anchor. A camera-side
+// fill was the obvious fix and is what the corpus would suggest — the comics
+// light figures flat and frontally, with no dramatic key anywhere in 418 pages.
+// It was built, swept from 0 to 6 against sun 6-9, hemisphere 3-5 and cast
+// albedo 0.42-1.0, and it moved the cast's mean luminance from 8.3 to 11.0 in a
+// frame whose mean is ~100. It is not the lever, so it is not in the scene.
+//
+// The lever is the ASSET. `rab`'s texture averages RGB(44, 37, 31) — measured
+// off the decoded image — and `material.color` saturates at 1.0, so no
+// multiplier can lift a map that dark. See docs/MCGROTS-VALIDATION § "The cast
+// is unreadable" for the full table and what it means for G3.
 
 // The van's footprint, as a box. gullet.js builds the real one and G3 brings
 // it in; G0 needs something the shots can be composed against.
@@ -148,11 +183,20 @@ function goTo(id, { snap = false } = {}) {
   if (!a) return false;
   current = a;
   if (snap) {
-    actor.snapTo(a.pos.x, a.pos.z, a.yaw);
-    actor.setState(a.sit ? 'sit' : 'idle');
+    // A SNAP is a panel change: the actor is somewhere else on the next frame
+    // and so is the camera. Under S4 that gets the gutter hold, which is what
+    // the whole candidate is testing. A WALK is not — the walk between anchors
+    // is the thing Dan asked to be able to watch (roadmap § decisions), and
+    // cutting away from it would be cutting away from the game.
+    page.cut(() => {
+      actor.snapTo(a.pos.x, a.pos.z, a.yaw);
+      actor.setState(a.sit ? 'sit' : 'idle');
+      placeCamera();
+    });
   } else {
     actor.walkTo(a.pos.x, a.pos.z, a.yaw);
   }
+  page.setCaption(a.label);
   return true;
 }
 
@@ -195,12 +239,29 @@ function frame(dt) {
   style.render(scene, camera);
 }
 
-function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
+// The renderer draws into the PANEL, not the window, whenever S4 is on. When it
+// is off the panel rect is the whole window, so this is one code path rather
+// than a branch — an `if (paged)` here would mean the unpaged case stopped
+// being exercised the moment the page shipped.
+//
+// Takes the rect as an argument rather than reading `page` out of the closure,
+// because page.js calls this back from inside createPage's own layout: closing
+// over the binding would be a temporal-dead-zone fault that only fires if a
+// resize ever beats boot.
+function applyViewport(v) {
+  renderer.setSize(v.w, v.h, false);
+  camera.aspect = v.w / v.h;
   camera.updateProjectionMatrix();
+  style.resize();
+  // In DRAWING-BUFFER pixels, not CSS pixels: the outline is specified in
+  // device pixels and setPixelRatio is up to 2 here, so passing v.h would halve
+  // the line on a retina display and nowhere else.
+  looks.setViewportHeight(renderer.getDrawingBufferSize(new THREE.Vector2()).y);
 }
+
+const page = createPage({ canvas, onResize: applyViewport });
+
+function resize() { applyViewport(page.viewport()); }
 window.addEventListener('resize', resize);
 
 let autoRunning = true;
@@ -214,8 +275,13 @@ function tick(now) {
 }
 
 function onPick(clientX, clientY) {
-  pointer.x = (clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+  // Against the CANVAS rect, not the window. Under S4 the canvas is inset into
+  // the panel, so window-relative NDC would aim the ray at a point offset by
+  // the whole margin — a click that walks you to the wrong anchor, and one that
+  // would only appear once the page was switched on.
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((clientY - r.top) / r.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObject(footData.ground, false);
   if (!hits.length) return;
@@ -255,6 +321,13 @@ window.addEventListener('keydown', (e) => {
   }
 
   style.setStyle(STYLE_KIND);
+  if (KEY_KIND) style.setKey(KEY_KIND);
+  // AFTER the actor and the massing are in the scene. looks.js traverses once
+  // at install and swaps what it finds, so installing before the cast exists
+  // would ink the ground and leave every character un-outlined — and the frame
+  // would still look plausibly styled, which is the dangerous kind of wrong.
+  looks.install(LOOK_KIND);
+  page.setEnabled(PAGE_ON);
   goTo('back', { snap: true });
   resize();
   placeCamera();
@@ -277,6 +350,23 @@ window.addEventListener('keydown', (e) => {
         if (exposure !== undefined) renderer.toneMappingExposure = exposure;
         if (groundColor !== undefined) footData.ground.material.color.setHex(groundColor);
       },
+      // The CAST's albedo, so it can be swept alongside the lights rather than
+      // picked. G1 shipped ALBEDO_MULTIPLY 0.42 with no recorded reason and the
+      // grade sweep never looked at the cast, so the two were tuned against
+      // different things: at 0.42 the figures sit near luminance 10 in a frame
+      // whose mean is 75, and no (sun, hemi) pair in the sweep's grid can lift
+      // them, because the anchors' cameras always see the shadow side.
+      //
+      // Scales from a REMEMBERED BASE, so repeated calls do not compound —
+      // a multiplier applied to the live colour would make the sweep's result
+      // depend on the order its grid was visited.
+      setCastAlbedo(k) {
+        actor.group.traverse((o) => {
+          if (!o.isMesh || !o.material?.color) return;
+          if (!o.userData.baseColor) o.userData.baseColor = o.material.color.clone();
+          o.material.color.copy(o.userData.baseColor).multiplyScalar(k);
+        });
+      },
       // G1's bake-off handles. `body` names which candidate is loaded and
       // `bodyError` is non-null when it failed — a failed candidate must be
       // reportable rather than an unexplained blank frame.
@@ -286,6 +376,29 @@ window.addEventListener('keydown', (e) => {
       styleIds: () => STYLES.map((s) => s.id),
       setStyle: (id) => style.setStyle(id),
       setStyleStrength: (v) => style.setStrength(v),
+
+      // G2's other two arms. Each is separately switchable at runtime, which is
+      // what lets a gate boot ONCE and measure on-vs-off from the same process
+      // — the street's flag gates boot twice and attribute a difference to the
+      // flag, which is only sound because nothing else differs. Here nothing
+      // else CAN differ, because it is the same scene.
+      look: () => looks.look,
+      lookIds: () => LOOKS.map((l) => l.id),
+      setLook: (id) => looks.install(id),
+      clearLook: () => looks.uninstall(),
+      lookStats: () => looks.stats(),
+      lookUniforms: looks.uniforms,
+
+      key: () => style.key,
+      keyIds: () => style.keyIds(),
+      setKey: (id) => style.setKey(id),
+      keys: KEYS,
+
+      page: () => page.enabled,
+      setPage: (v) => { page.setEnabled(!!v); resize(); },
+      setPageTitle: (t) => page.setTitle(t),
+      setPageCaption: (t) => page.setCaption(t),
+      pageStats: () => page.stats(),
       get bodyError() { return bodyError; },
       bodyStats: () => actor.stats(),
       setActorState: (s) => actor.setState(s),

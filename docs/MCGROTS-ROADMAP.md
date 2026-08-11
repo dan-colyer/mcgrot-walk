@@ -4,11 +4,13 @@ A second, small game in this repo. One pitch, McGrot's van, a handful of canon
 characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
-**Status: G0 and G1 landed 2026-08-10. G2 — the style bake-off — is next,
-and it needs Dan's judgement on G1's strips before it can start.**
+**Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
+and gated (2026-08-11) — but G2 is NOT closed. The cast renders as a near-black
+silhouette and no lighting setting reaches it, so the styles have been judged
+against an unreadable subject. Lifting the cast albedo comes first. See § G2.**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (13 checks, 1.3s); boot the game with
+`npm run smoke:mcgrots` (25 checks, 1.9s); boot the game with
 `npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
@@ -310,19 +312,39 @@ Runs on whichever rig or rigs survive G1. Style and animation are one
 decision, not two — a style with no opinion about how a body moves cannot be
 judged here.
 
-Candidates, from the 2026-08-10 conversation:
+**The candidate list was replaced on 2026-08-11**, on Dan's instruction to widen
+it and to derive the options from the comics rather than from a list of
+rendering processes. Nine comics sampled across the 418 in `assets/comics/`
+carry several properties `docs/STYLE.md` does not record, because that document
+measures colour only — see `docs/MCGROTS-VALIDATION.md` § G2 for the full read.
 
-1. **Inked comic / toon** — cream ground, near-black outlines, halftone.
-2. **Posterised to the 12 measured swatches** (`docs/STYLE.md`) — post pass only.
-3. **Low-res / PS1 chunk** — small render target, vertex jitter, dithered upscale.
-4. **Risograph misregistration** — two or three ink plates slightly out of
-   register, drift tied to depth not time, paper grain. No outlines, all tone.
-5. **One material, no textures** — matte clay, one warm key light. Makes the
-   crude meshes read as deliberate.
-6. **Stop-motion** — segmented plasticine figures animated on twos or threes,
-   visible thumb marks, slight pop between poses. Wants exactly what G1's
-   segmented and flat candidates produce, and animating on threes is a third
-   of the work while looking better than smooth.
+**The four Dan chose, all built and gated:**
+
+1. **S1 · Inked cel** (`?look=inked`) — inverted-hull outline plus a hard
+   two-band ramp. Geometry, not a post pass: the street's ban on outlines rests
+   on having no depth buffer and on Sobel wrecking photographed brick, and
+   neither carries to a hand-built pitch with no photos in it.
+2. **S2 · Aerial flatten** (`?look=aerial`) — line weight, saturation and tonal
+   range all fall off with distance. The corpus's most distinctive property and
+   the one no off-the-shelf toon shader does. **S1 is its control**: identical
+   in every respect but the ramp.
+3. **S3 · One key at a time** (`?style=key`) — five measured swatches per beat
+   rather than the pooled twelve. See `src/mcgrots/keys.js`: no comic uses
+   twelve colours, so quantising to the pool mixes swatches that never
+   co-occur. `posterise` stays as the control.
+4. **S4 · The page** (`?page=on`) — paper margin, panel rule, title and caption
+   bars around an inset viewport, and a gutter-hold cut on anchor change. The
+   only candidate that changes the game rather than the pixels, and the staging
+   was already panel-shaped: G0 fixed one camera per anchor and made it cut.
+
+**Deferred to G6:** S5 bubbles as world objects, S6 three-mark faces. Both are
+clearly right from the corpus but are character work, and G6 already owns
+Pomplé's head-turn and dialogue delivery.
+
+**Dropped:** risograph (the comics show no rosette, no misregistration, no
+screen — it was a printing process picked off a list of printing processes),
+PS1 chunk and clay (nothing in the corpus suggests either), stop-motion (S4's
+panel cut is this world's version of it, and closer to the source).
 
 Rejected in advance: **split-screen comic panels**. It reads well solo and
 breaks shared attention the moment multiplayer lands — if two players see
@@ -336,6 +358,15 @@ that renders neutral or cool has failed before it is judged.
 `npm run style` (`scripts/style-sheet.mjs`) is the existing judging harness
 from E8 — extend it rather than writing a second one, but note it judges
 **still frames** and G2 needs motion for the same reason G1 does.
+
+**G2 has NOT closed.** All four candidates are built, isolated and gated (12
+checks, `--only=style`), but they have been judged on a subject that renders as
+a **near-black silhouette**. The grade sweep now measures the cast rather than
+only the frame, and says no light setting reaches it: the character textures
+average RGB(44, 37, 31) and `material.color` saturates at 1.0, so nothing
+downstream can lift them. Full table in `MCGROTS-VALIDATION` § "The cast is
+unreadable". **Re-authoring or lifting the cast albedo comes before any style
+ranking is worth having**, and before G3's dressing.
 
 G2 also chooses **which fixed hour**. Time is a single authored lighting
 setup, so this is one decision made once, and it belongs with the style rather

@@ -24,6 +24,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'net';
+import { createHash } from 'crypto';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
 import { LAUNCH_OPTS, LAUNCH_LABEL } from './launch.mjs';
@@ -31,7 +32,7 @@ import { LAUNCH_OPTS, LAUNCH_LABEL } from './launch.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'docs/smoke/captures/mcgrots/g0');
 
-const REGIONS = ['boot', 'camera', 'anchors'];
+const REGIONS = ['boot', 'camera', 'anchors', 'style'];
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
 const wants = (r) => ONLY.size === 0 || ONLY.has(r);
@@ -250,6 +251,259 @@ try {
       `anchor=${sat.anchor} state=${sat.actorState}`);
 
     check('console still clean after driving the anchors',
+      consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+  }
+
+  // --------------------------------------------------------------- style ---
+  // G2's four candidates. Every check here boots ONCE and switches arms in
+  // place, which is a stronger control than the street's flag gates get: those
+  // boot twice and attribute a measured difference to the flag, sound only
+  // because nothing else differs. Here nothing else CAN differ — same process,
+  // same scene, same frame counter.
+  if (wants('style')) {
+    const shot = async (name) => {
+      const buf = await page.screenshot();
+      writeFileSync(join(OUT, `../g2/${name}.png`), buf);
+      return buf;
+    };
+    mkdirSync(join(OUT, '../g2'), { recursive: true });
+
+    // ON THE SKINNED BODY, not the capsule the rest of the suite uses. G1 chose
+    // A1 skinned (docs/MCGROTS-VALIDATION § G1), and the outline's hardest path
+    // by a wide margin is the skinned one: the hull has to be posed by the same
+    // skeleton on the same frame, through three's `<skinnormal_vertex>`, or the
+    // line walks beside the character instead of around it. Gating the outline
+    // on a capsule would gate the easy case and ship the broken one.
+    await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
+      { waitUntil: 'load' });
+    await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+    const bodyOk = await page.evaluate(() => window.__mcgrotsDebug.bodyError);
+    check('the style region is judging the chosen body, not the control',
+      bodyOk === null, bodyOk ? `skinned failed: ${bodyOk}` : 'skinned loaded');
+
+    await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setPage(false); d.clearLook(); d.setStyle('none');
+      d.setMarkersVisible(false);
+      d.snapTo('kerb'); d.stepFrames(120);
+    });
+
+    // --- the no-op invariant, and it is the load-bearing one ---------------
+    // Off must be BIT-IDENTICAL to a plain render. Three arms now mutate three
+    // different things — the scene graph, the frame, and the DOM — and the
+    // scene-graph one is the dangerous arm, because a leaked material or a
+    // stranded hull would look like a slightly different picture rather than
+    // like a bug.
+    const base = await shot('none-a');
+    const baseHash = createHash('md5').update(base).digest('hex');
+
+    // Install and REVERT every arm, then re-render. This is the check that a
+    // look actually reverses rather than the check that it installs.
+    //
+    // EVERY STEP HERE IS dt=0. The first version stepped at the normal 1/60 and
+    // failed with two different hashes on a scene that was reverting perfectly:
+    // ten frames of game time had passed between the two captures and the idle
+    // pose had moved. A frame-identity check has to hold the clock still, or it
+    // measures the animation and calls it a leak.
+    await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setLook('inked'); d.stepFrames(1, 0);
+      d.setLook('aerial'); d.stepFrames(1, 0);
+      d.setStyle('key'); d.stepFrames(1, 0);
+      d.setPage(true); d.stepFrames(1, 0);
+      d.setPage(false); d.setStyle('none'); d.clearLook(); d.stepFrames(1, 0);
+    });
+    const after = await shot('none-b');
+    const afterHash = createHash('md5').update(after).digest('hex');
+    check('every style arm reverts to a bit-identical frame',
+      baseHash === afterHash, `${baseHash.slice(0, 12)} vs ${afterHash.slice(0, 12)}`);
+
+    // --- S1 / S2: the scene actually changed ------------------------------
+    // `install()` returning true proves a function ran. These prove the scene
+    // graph holds outline geometry and swapped materials — the gate has to test
+    // the product, not the calculator (CLAUDE.md).
+    const inked = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setLook('inked'); d.stepFrames(4);
+      return { stats: d.lookStats(), render: d.state() };
+    });
+    // Cel-shading applies to EVERY mesh; the outline applies only to objects
+    // under INK_MAX_RADIUS (looks.js — the ground and the massing carry no line
+    // in the corpus, and a ground plane's inverted hull lands in front of the
+    // camera). So hulls < swapped is correct here, and asserting equality is
+    // what the first version of this gate got wrong.
+    check('S1 inks the objects and cels everything',
+      inked.stats.hulls > 0 && inked.stats.hulls < inked.stats.swapped && inked.stats.aerial === 0,
+      `hulls=${inked.stats.hulls} of ${inked.stats.swapped} meshes, aerial=${inked.stats.aerial}`);
+
+    // The outline must be VISIBLE, not merely present — a hull whose thickness
+    // rounds to nothing passes a count and draws no line.
+    //
+    // Measured as INK COVERAGE, not as darkness. The first version of this
+    // check used the crushed-pixel fraction and read 0.00% -> 0.00% on a frame
+    // that did have ink in it: the hull colour is #211f1c, luminance ~32, and
+    // the crush floor is 12. It was measuring the wrong quantity and would have
+    // stayed red however good the outline was.
+    // MEASURED AS A PER-PIXEL DIFF, not as "how many pixels are ink-coloured".
+    // Two things defeated colour matching, and both are properties of the
+    // product rather than of the test: the frame is antialiased, so a 2.2px
+    // line is mostly blend pixels and only its core is ever the exact hull
+    // colour; and the cast is dark, so a line drawn around a dark figure is
+    // near-invisible to a colour match. It read 0.02% on a frame with a line
+    // clearly in it.
+    //
+    // The diff has neither problem. Against the zero-width control, every pixel
+    // the line touches is darker than it was and nothing else changed.
+    const inkDiff = (a, b) => {
+      const pa = PNG.sync.read(a), pb = PNG.sync.read(b);
+      let darker = 0;
+      const n = pa.width * pa.height;
+      for (let i = 0; i < n; i++) {
+        const o = i * 4;
+        const la = 0.2126 * pa.data[o] + 0.7152 * pa.data[o + 1] + 0.0722 * pa.data[o + 2];
+        const lb = 0.2126 * pb.data[o] + 0.7152 * pb.data[o + 1] + 0.0722 * pb.data[o + 2];
+        if (lb - la > 8) darker++;
+      }
+      return (darker / n) * 100;
+    };
+    const inkedShot = await shot('s1-inked');
+    const inkedStats = luminanceStats(inkedShot);
+
+    // THE CONTROL IS THE SAME LOOK WITH THE LINE SET TO ZERO WIDTH, not the
+    // unstyled frame. Measured against unstyled this check read 1.74% -> 0.02%
+    // and looked like the outline had vanished; what it was actually measuring
+    // is that the UNSTYLED scene has 1.74% of its pixels near #211f1c already,
+    // because its own shadows are that colour, and the cel ramp then lifts them.
+    // Ink coverage and shadow coverage are not separable in that comparison.
+    //
+    // With `uThickness` at 0 every other thing is identical — same materials,
+    // same hull meshes, same draw calls, same clock — so a difference in ink
+    // coverage is the line and can be nothing else.
+    const inkOff = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      const was = d.lookUniforms.uThickness.value;
+      d.lookUniforms.uThickness.value = 0;
+      d.stepFrames(1, 0);
+      return was;
+    }).then(async (was) => {
+      const buf = await shot('s1-control-nothickness');
+      await page.evaluate((w) => {
+        window.__mcgrotsDebug.lookUniforms.uThickness.value = w;
+        window.__mcgrotsDebug.stepFrames(1, 0);
+      }, was);
+      return buf;
+    });
+
+    const inkCoverage = inkDiff(inkedShot, inkOff);
+    check('S1 puts visible ink in the frame',
+      inkCoverage > 0.25,
+      `${inkCoverage.toFixed(2)}% of pixels darkened vs the zero-width control`);
+
+    // --- S2: the depth ramp, with S1 as the control -----------------------
+    // S2 is S1 with `aerial` at 1 and NOTHING else different — same materials,
+    // same hulls, same code path. So a difference between these two frames is
+    // the depth ramp and can be nothing else. That is the isolation the street's
+    // acceptance gates got wrong twice.
+    const aerialShot = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setLook('aerial'); d.stepFrames(4);
+      return d.lookStats();
+    }).then(async (stats) => ({ stats, buf: await shot('s2-aerial') }));
+
+    const aerialStats = luminanceStats(aerialShot.buf);
+    check('S2 is S1 plus the ramp and nothing else',
+      aerialShot.stats.hulls === inked.stats.hulls
+      && aerialShot.stats.swapped === inked.stats.swapped
+      && aerialShot.stats.aerial === 1,
+      `hulls ${aerialShot.stats.hulls} swapped ${aerialShot.stats.swapped} aerial ${aerialShot.stats.aerial}`);
+
+    // The ramp washes distance toward paper, so the frame gets LIGHTER and
+    // FLATTER than S1. Both directions asserted: lighter alone would also be
+    // true of simply turning the exposure up.
+    check('S2 washes the distance out: lighter and flatter than S1',
+      aerialStats.mean > inkedStats.mean && aerialStats.stddev < inkedStats.stddev,
+      `mean ${inkedStats.mean.toFixed(1)} -> ${aerialStats.mean.toFixed(1)}, ` +
+      `stddev ${inkedStats.stddev.toFixed(1)} -> ${aerialStats.stddev.toFixed(1)}`);
+
+    // --- S3: the key, with posterise as the control -----------------------
+    await page.evaluate(() => window.__mcgrotsDebug.clearLook());
+    const keyed = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setStyle('key'); d.setKey('dock'); d.stepFrames(4);
+      return { key: d.key(), keys: d.keys.map((k) => ({ id: k.id, n: k.swatches.length })) };
+    });
+    const keyShot = await shot('s3-key-dock');
+
+    // Every key is exactly five, dark -> paper. A hand-edited six-entry key
+    // would half-fill a fixed-size uniform array and quantise against black,
+    // which is a fault that renders as "a bit dark" rather than as an error.
+    check('every key is exactly five swatches',
+      keyed.keys.every((k) => k.n === 5), keyed.keys.map((k) => `${k.id}:${k.n}`).join(' '));
+
+    // The claim S3 makes is that the frame lands ON the key. So: what fraction
+    // of pixels are within a tight distance of one of the five? Measured
+    // against posterise's pooled twelve on the identical shot.
+    const keyMembership = (buf, swatches) => {
+      const png = PNG.sync.read(buf);
+      let onPalette = 0;
+      const n = png.width * png.height;
+      for (let i = 0; i < n; i++) {
+        const o = i * 4;
+        for (const [r, g, b] of swatches) {
+          if (Math.abs(png.data[o] - r) < 10 && Math.abs(png.data[o + 1] - g) < 10
+            && Math.abs(png.data[o + 2] - b) < 10) { onPalette++; break; }
+        }
+      }
+      return (onPalette / n) * 100;
+    };
+    const dockSwatches = [[0x43, 0x43, 0x27], [0x7d, 0x59, 0x2b], [0x71, 0x6a, 0x44],
+      [0xa0, 0x90, 0x5f], [0xd8, 0xc6, 0x9b]];
+    const onKey = keyMembership(keyShot, dockSwatches);
+    check('S3 lands the frame on its five measured swatches',
+      onKey > 90, `${onKey.toFixed(1)}% of pixels on the dock key`);
+
+    // Switching key must actually repaint. Same style, same scene, one uniform.
+    const goldShot = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug; d.setKey('gold'); d.stepFrames(2);
+    }).then(() => shot('s3-key-gold'));
+    check('switching the key repaints the frame',
+      createHash('md5').update(keyShot).digest('hex')
+        !== createHash('md5').update(goldShot).digest('hex'),
+      `dock vs gold differ`);
+
+    // --- S4: the page ------------------------------------------------------
+    await page.evaluate(() => { window.__mcgrotsDebug.setStyle('none'); });
+    const paged = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.setPage(true);
+      d.setPageTitle("McGrot's"); d.stepFrames(4);
+      return d.pageStats();
+    });
+    await shot('s4-page');
+
+    // The inset must actually inset. A page whose panel is the whole window is
+    // furniture that drew nothing — and it would still look like a normal
+    // frame, so nothing else here would catch it.
+    check('S4 insets the render into a panel',
+      paged.enabled && paged.panelFraction > 0.5 && paged.panelFraction < 0.85,
+      `panel is ${(paged.panelFraction * 100).toFixed(1)}% of the window`);
+
+    // The renderer must have been told. If the drawing buffer still matches the
+    // window, the panel is a mask over a full-window render and every camera in
+    // the game is framed for the wrong aspect.
+    const buffer = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      const s = d.renderer.getSize(new d.THREE.Vector2());
+      return { w: s.x, h: s.y, win: [window.innerWidth, window.innerHeight], aspect: d.camera.aspect };
+    });
+    check('S4 renders at the panel size, not the window size',
+      buffer.w < buffer.win[0] && Math.abs(buffer.aspect - buffer.w / buffer.h) < 0.01,
+      `buffer ${buffer.w}x${buffer.h} in window ${buffer.win.join('x')}, aspect ${buffer.aspect.toFixed(3)}`);
+
+    await page.evaluate(() => { window.__mcgrotsDebug.setPage(false); });
+    check('console still clean after every style arm',
       consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
   }
 
