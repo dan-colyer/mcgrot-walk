@@ -5,12 +5,12 @@ characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
-and gated (2026-08-11), and the cast-albedo fault that blocked judging them is
-FIXED. G2 is still NOT closed: under the S1/S2 cel look the character alone
-renders as a black blob, and that is undiagnosed. See § G2 and § 10 fault F4.**
+and gated (2026-08-11). The cast-albedo fault and fault F4 (the cel look
+rendering the character black) are both FIXED — S1 and S2 can now be ranked.
+See § G2 and § 10 fault F4 (closed).**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (25 checks, 1.9s); boot the game with
+`npm run smoke:mcgrots` (26 checks, 1.3s); boot the game with
 `npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
@@ -362,19 +362,16 @@ from E8 — extend it rather than writing a second one, but note it judges
 **G2 has NOT closed**, and what remains is one specific fault rather than the
 whole milestone.
 
-Done: all four candidates built, isolated and gated (12 checks,
-`--only=style`), three fault injections recorded, and the **cast-albedo fault
-fixed** — `src/mcgrots/actors/texture.js` lifts the character textures at load,
-which took the cast from a black hole in the frame to a legible figure. Suite
-25/25.
+Done: all four candidates built, isolated and gated (13 checks,
+`--only=style`), four fault injections recorded, and both blocking faults
+fixed — the **cast-albedo fault** (`src/mcgrots/actors/texture.js` lifts the
+character textures at load) and **F4** (the actor's geometry had no `normal`
+attribute; `MeshToonMaterial` doesn't get three's auto-flatShading fallback
+that `MeshLambertMaterial` gets for free — see § 10 fault F4). Suite 26/26.
+S1 and S2 can now be ranked against each other; the character is legible and
+cel-shaded, not a black blob, under both.
 
-Open: **under S1/S2 the character is still a black blob** while every other
-object in the scene cel-shades correctly (fault F4 below). Until that is fixed
-the two look candidates cannot be ranked, because the thing the player watches
-is the thing that is broken in them. S3 and S4 are unaffected and are
-judgeable now.
-
-Also still owed by G2: **which fixed hour**, and it should be settled together
+Still owed by G2: **which fixed hour**, and it should be settled together
 with the key (S3) rather than separately.
 
 G2 also chooses **which fixed hour**. Time is a single authored lighting
@@ -631,16 +628,39 @@ real ledge and the open sitting fault still own the next decision. Pomplé is
 excluded by design — a quadruped is not a biped and G6 gives him his own
 treatment.
 
-### F4 — The cel look renders the character black (G2, open, BLOCKING)
+### F4 — The cel look renders the character black (G2, CLOSED 2026-08-11)
 
-**This is the one thing standing between G2 and a decision, and it is not
-diagnosed.** Under `?look=inked` and `?look=aerial` the character renders as a
-featureless black blob. Every other object in the scene — the van placeholder,
-both seat ledges, the statue plinth, the merged massing — cel-shades correctly
-in the same frame.
+**Root cause: the actor's geometry has no `normal` attribute.**
+`actors/skinned.js` builds the SkinnedMesh from the auto-rigged Trellis glb
+with `position`, `uv`, `skinIndex`, `skinWeight` — no `normal`, ever (measured
+directly off `mesh.geometry.attributes`). `MeshLambertMaterial` (and Phong,
+Standard, Physical) silently compute derivative-based flat normals when a
+geometry has none — three.js's `WebGLPrograms.getParameters` gates that
+auto-`flatShading` fallback on those four material type names, literally, in
+an `||` chain. `MeshToonMaterial` is not in that chain, so its shader still
+declares and samples a `normal` attribute the buffer never provides; WebGL
+supplies the attribute's default value, `(0,0,0)`, and every `dot(N,L)` in
+both the direct and indirect diffuse terms is zero. Black, regardless of
+colour, map, ramp, outline or cache key — which is exactly why the four
+rulings below all held without ever finding the cause.
 
-What has been ruled out, each visually confirmed in
-`docs/smoke/captures/mcgrots/g2/`:
+**Not what the brief suspected.** A constant `customProgramCacheKey` sharing
+a program across a skinning-define mismatch was the leading hypothesis and it
+is **refuted**: three folds `object.isSkinnedMesh` into the program cache
+lookup independently of `customProgramCacheKey`, and dumping the compiled
+program's own `parameters` object (the first argument to
+`material.onBeforeCompile`, which carries far more than `.vertexShader`/
+`.fragmentShader` text) showed `skinning: true` throughout. What it showed
+instead was `vertexNormals: false` for the actor's compile and `true` for
+every other cel-shaded mesh in the same frame.
+
+**Fix:** `looks.js`'s `install()` calls `mesh.geometry.computeVertexNormals()`
+once for any target mesh missing the attribute, before building its cel
+material. Confined to `looks.js`; `actors/skinned.js` is untouched.
+
+What had been ruled out, each visually confirmed in
+`docs/smoke/captures/mcgrots/g2/`, and still correct — none of them touch
+normals, which is consistent with the real cause:
 
 - **Not the outline.** The blob is identical with `uThickness` at 0, which the
   suite captures as `s1-control-nothickness.png`.
@@ -650,20 +670,16 @@ What has been ruled out, each visually confirmed in
   same run.
 - **Not the lighting.** Same lights, same frame, same instant.
 
-The only property the character does not share with the objects that work is
-that it is a **SkinnedMesh**. `looks.js` builds its cel material with
-`MeshToonMaterial` plus an `onBeforeCompile` that injects the aerial ramp, and a
-constant `customProgramCacheKey`. A bisecting probe pointed at the injection and
-then contradicted itself on a second run, so **treat that probe's output as
-unreliable**: the cast-isolation-by-diff it used is not trustworthy when the
-figure is close to the background colour. Verify with pictures, not with that
-metric.
+The bisecting probe that contradicted itself between runs (cast mean 15.5
+then 1.8) was not used to re-verify this fix, for the reason recorded at the
+time: hide-and-diff isolation collapses to a biased sample when the figure is
+dark. Verified instead with pictures (`mcgrots-shot.mjs` captures, each
+suspect removed in turn) and with the compiled shader's own parameters.
 
-Suggested first moves, cheapest first: render the cel material with
-`onBeforeCompile` removed entirely and look; then with `customProgramCacheKey`
-removed and look; then check whether `MeshToonMaterial` + `USE_SKINNING` picks up
-the wrong cached program. Do not re-derive the four rulings above — they are
-measured.
+Gate: `docs/MCGROTS-VALIDATION.md` § G2, "S1 does not render the actor as a
+flat black silhouette." Fault-injected (the `computeVertexNormals()` call
+disabled) and confirmed red — torso patch stddev 0.0, max 0.0 — then
+restored.
 
 ---
 

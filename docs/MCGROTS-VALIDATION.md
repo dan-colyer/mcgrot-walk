@@ -311,6 +311,7 @@ bundle** — the mistake the street's acceptance gates made twice.
 | style | **every arm reverts bit-identically** | Install + revert of all three arms returns the exact frame |
 | style | S1 inks objects, cels everything | hulls > 0, hulls < swapped, aerial = 0 |
 | style | S1 puts visible ink in the frame | ≥0.25% of pixels darken vs a **zero-width-line control** |
+| style | S1 does not render the actor as a flat black silhouette | Torso-only patch (F4): stddev > 2 and max luma > 12 |
 | style | S2 is S1 plus the ramp | Same hulls, same swaps, only `aerial` differs |
 | style | S2 washes distance out | Lighter *and* flatter than S1 |
 | style | every key is exactly five | A six-entry key would half-fill the uniform and quantise to black |
@@ -372,11 +373,24 @@ Three injections, each restored from the commit immediately after:
 | `uninstall()` stops restoring swapped materials | every arm reverts bit-identically |
 | `INK_MAX_RADIUS` 12 → 0 (nothing is inkable) | S1 inks the objects; S1 puts visible ink |
 | `PAGE.margin` 0.062 → 0 | S4 insets the render; S4 renders at panel size |
+| F4 fix disabled (`computeVertexNormals()` skipped) | S1 does not render the actor as a flat black silhouette |
 
 The middle one is the useful pairing: the count check and the pixel check fail
 together, so neither is carrying the other. The material-leak injection is the
 one worth keeping in mind — it is invisible in a still, and only the frame hash
 catches it.
+
+**The F4 gate itself needed two redesigns before it discriminated anything.**
+A chest-height single-pixel sample read "black" whether the fix was present or
+not — the cast wears near-black coats by design (measured luma 1-5 on the
+jacket in a *known-good* render). A bounding box around the whole seated
+figure also false-passed with the fault still live (measured stddev 53-57):
+its top edge sat above the actual head and its bottom edge crossed the gap
+between the sitting pose's splayed legs, sampling background and bench pixels
+that never touch the actor. The version that discriminates is a patch
+confined to the torso band only — above the leg-splay, below the collar,
+verified row-by-row to be inside the silhouette at every y — where the fault
+reads exactly `(0,0,0)` and the fix reads real variance.
 
 ### The cast was unreadable, and it was the asset — FIXED
 
@@ -427,39 +441,60 @@ dramatic key in 418 pages — and the sweep says it moves the cast by 2.7
 luminance. A light added to a scene on a rationale the measurement contradicts
 is worse than no light.
 
-### The cel look still renders the character black — F4, open and blocking
+### The cel look rendered the character black — F4, FIXED
 
-With the albedo fixed, the shipped Lambert path shows a legible figure. **Under
-`?look=inked` and `?look=aerial` it is still a featureless black blob**, while
-the van, both ledges, the plinth and the massing cel-shade correctly in the same
-frame.
+**Resolved 2026-08-11.** Root cause: the skinned actor's geometry
+(`actors/skinned.js`, built from the auto-rigged Trellis glb) carries
+`position`, `uv`, `skinIndex`, `skinWeight` and **no `normal` attribute** —
+measured directly (`Object.keys(mesh.geometry.attributes)`). `MeshLambertMaterial`
+(and Phong/Standard/Physical) silently substitute derivative-computed flat
+normals when a geometry has none — three.js's `WebGLPrograms.getParameters`
+gates that auto-`flatShading` fallback on those four material names by name,
+literally. `MeshToonMaterial` is not on the list, so its shader still declares
+and reads a `normal` attribute the buffer never provides; WebGL feeds the
+attribute's default value, `(0,0,0)`, and every `dot(N,L)` is zero — direct
+*and* indirect diffuse both vanish. Solid black, regardless of colour, map,
+ramp, outline or cache key, which is exactly why every ruling in the table
+below held: none of them touch normals.
 
-Ruled out, each confirmed by opening a capture rather than by a number:
+**What it was not**, confirmed by isolating each in turn and rendering
+(`mcgrots-shot.mjs`, not the bisecting probe the warning below distrusts):
+removing `onBeforeCompile` entirely, removing `customProgramCacheKey`,
+forcing the colour to solid red, dropping the texture map, disabling the
+outline hull, and removing the gradient ramp — the figure stayed black
+through every one of them. `MeshLambertMaterial` and `MeshPhongMaterial` on
+the *same* mesh both rendered correctly, which is what narrowed it from "the
+toon shading model" to "the auto-flatShading whitelist those two are on and
+Toon isn't." Dumping the compiled shader's own `parameters` object
+(`material.onBeforeCompile(shader, ...)`'s first argument carries them, not
+just `.vertexShader`/`.fragmentShader` text) showed `vertexNormals: false`
+for the actor's compile and `true` for every other cel-shaded mesh in the
+same frame — the direct measurement that closed it.
 
-| Suspect | Evidence it is not the cause |
-|---|---|
-| the outline | identical at `uThickness` 0 (`s1-control-nothickness.png`) |
-| the shade band | `SHADE_BAND` 52 vs 130 changes nothing |
-| the albedo | same texture reads fine in `none-a.png`, same run |
-| the lighting | same lights, same frame, same instant |
+The brief's leading suspect — a constant `customProgramCacheKey` sharing a
+program across a skinning-define mismatch — was **refuted**, not confirmed:
+three's cache key construction folds `object.isSkinnedMesh` into the lookup
+independently of `customProgramCacheKey`, and the compiled program's own
+`skinning` parameter read `true` for the actor throughout.
 
-The only property the character does not share with the objects that work is
-that it is a **SkinnedMesh**.
+**Fix:** `looks.js`'s `install()` now calls `mesh.geometry.computeVertexNormals()`
+once, only for a target mesh whose geometry lacks the attribute, before
+building its cel material. Scoped to `looks.js` because that is where the
+Toon-specific requirement is introduced; `actors/skinned.js` is unchanged.
 
-**A warning for whoever picks this up.** A bisecting probe was written to
-isolate the cel material's parts and it **contradicted itself between two runs**
-— the same variant reported cast mean 15.5 and then 1.8. The cause is the
-probe's own metric: isolating the actor by hiding it and diffing counts only
-pixels that differ from the background, which collapses to a tiny biased sample
-exactly when the figure is dark. That metric is sound for measuring a
-*difference* between two grades and unsound for measuring an absolute. **Verify
-this fault with pictures.**
+**S1/S2 still differ only by the ramp.** The fix touches normals, not the
+`aerial` uniform or any code S2 depends on — confirmed unaffected by
+construction, not just by inspection.
 
-**What G2 does NOT prove, therefore:** that any of the four candidates looks
-good. They are gated as *present, isolated and reversible*, and the frames are
-in the captures folder to be opened. S3 and S4 can be judged now; **S1 and S2
-cannot be ranked until F4 is fixed**, because the figure is the thing the player
-watches and it is the thing that is broken in them.
+Ruled out (kept for anyone re-deriving this): the outline (`uThickness` 0
+unchanged), the shade band (`SHADE_BAND` 52 vs 130 unchanged), the albedo
+(same texture reads fine under Lambert), the lighting (same lights, same
+frame, same instant). The bisecting probe that contradicted itself between
+runs (cast mean 15.5 then 1.8, isolating the actor by hide-and-diff) remains
+untrustworthy for the reason recorded at the time — it collapses to a biased
+sample when the figure is dark — and was not used to re-verify this fix.
+**Verified with pictures and with the compiled shader's own parameters,
+not with that probe.**
 
-**Also unproven:** the fixed hour. G2 owes that decision and it is still open;
-it should be settled together with the key (S3), not separately.
+G2 can now rank S1 and S2 on their own terms; the fixed-hour decision (§ G2)
+is still open and unrelated to this fault.

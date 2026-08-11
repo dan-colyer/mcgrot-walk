@@ -401,6 +401,76 @@ try {
       inkCoverage > 0.25,
       `${inkCoverage.toFixed(2)}% of pixels darkened vs the zero-width control`);
 
+    // F4: the actor's geometry has no `normal` attribute (auto-rigged from a
+    // Trellis glb — see actors/skinned.js). MeshLambertMaterial papers over
+    // that with three's own auto-flatShading fallback; MeshToonMaterial is
+    // not on the four-name whitelist that fallback checks, so the shader
+    // reads WebGL's default (0,0,0) for every vertex normal and both direct
+    // and indirect diffuse are zero — a solid black silhouette regardless of
+    // colour, map, ramp, outline or cache key. looks.js now computes normals
+    // once for any target mesh missing them.
+    //
+    // MEASURED AS VARIANCE WITHIN A PATCH OF THE ACTOR'S OWN TORSO, not as a
+    // single-pixel or frame-wide brightness floor — both tried and rejected.
+    // A chest-height SAMPLE reads as "black" with or without the fault: the
+    // cast wears near-black coats by design (measured luma 1-5 on the jacket
+    // in a known-good render — ALBEDO_MULTIPLY is 0.42 and the shade band
+    // sits at 52/255). The frame-WIDE crush floor (12% of all pixels) never
+    // trips either, since the actor is a few percent of the frame at most —
+    // a fully black figure against a lit wall passed that gate every time
+    // this fault was live (measured). And a naive bounding BOX around the
+    // whole figure also false-passed on the broken render (measured stddev
+    // 53-57 with the fault still live): its top edge sat above the seated
+    // figure's actual head and its bottom edge crossed the gap between the
+    // splayed sitting legs, both of which sample background/bench pixels
+    // that never touch the actor at all.
+    //
+    // What actually discriminates: a patch confined to the TORSO band only
+    // (above the leg-splay, below the collar), where every pixel in every
+    // row is part of the figure. Measured on `kerb` (the sit anchor this
+    // region already snaps to): with the fault live this patch is uniformly
+    // (0,0,0) — mean 0.00, stddev 0.00, max 0.0. Fixed, the same patch reads
+    // mean 4.5, stddev 7.0, max 74.6 — the cap/collar highlight and the
+    // lit/shade split the fault erases. Fractions of actor.height are
+    // derived from that measurement (kerb is the only anchor this runs
+    // against), not eyeballed: 0.35h-0.62h above the group origin is the
+    // torso in a SIT pose, clear of both the collar above and the knees
+    // apart below.
+    const actorBox = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      const toUv = (v) => {
+        const c = v.clone().project(d.camera);
+        return { x: c.x * 0.5 + 0.5, y: 1 - (c.y * 0.5 + 0.5) };
+      };
+      const base = d.actor.group.position.clone();
+      const top = base.clone(); top.y += d.actor.height * 0.62;
+      const bottom = base.clone(); bottom.y += d.actor.height * 0.35;
+      return { top: toUv(top), bottom: toUv(bottom) };
+    });
+    const boxStats = (buf, box) => {
+      const png = PNG.sync.read(buf);
+      const y0 = Math.max(0, Math.round(box.top.y * png.height));
+      const y1 = Math.min(png.height - 1, Math.round(box.bottom.y * png.height));
+      const cx = Math.round(box.top.x * png.width);
+      const halfW = 45;   // narrow: the torso only, never the arms or the bench beside it
+      const x0 = Math.max(0, cx - halfW), x1 = Math.min(png.width - 1, cx + halfW);
+      let sum = 0, sumSq = 0, max = 0, n = 0;
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const o = (y * png.width + x) * 4;
+          const l = 0.2126 * png.data[o] + 0.7152 * png.data[o + 1] + 0.0722 * png.data[o + 2];
+          sum += l; sumSq += l * l; if (l > max) max = l;
+          n++;
+        }
+      }
+      const mean = n ? sum / n : 0;
+      return { mean, stddev: n ? Math.sqrt(Math.max(0, sumSq / n - mean * mean)) : 0, max, n };
+    };
+    const actorStats = boxStats(inkedShot, actorBox);
+    check('S1 does not render the skinned actor as a flat black silhouette',
+      actorStats.stddev > 2 && actorStats.max > CRUSH_LUMA,
+      `torso patch stddev ${actorStats.stddev.toFixed(1)}, max ${actorStats.max.toFixed(1)}, n=${actorStats.n}`);
+
     // --- S2: the depth ramp, with S1 as the control -----------------------
     // S2 is S1 with `aerial` at 1 and NOTHING else different — same materials,
     // same hulls, same code path. So a difference between these two frames is
