@@ -436,23 +436,51 @@ try {
     // against), not eyeballed: 0.35h-0.62h above the group origin is the
     // torso in a SIT pose, clear of both the collar above and the knees
     // apart below.
+    //
+    // THE HALF-WIDTH IS DERIVED FROM THE MESH, not a constant, since F3
+    // landed five more archetypes and this region can now run against any
+    // of them. A hand-picked 45px was tuned for rab (torso ~180px on screen
+    // at this anchor); morag's is ~95px, and 45px of half-width either side
+    // would already span her whole torso and start sampling the bench
+    // beside her — the same false-pass this gate's box redesign exists to
+    // avoid, just moved from the vertical axis to the horizontal one. The
+    // geometry's own bind-pose bounding box (rest pose — skinning deforms
+    // only on the GPU, so this is a per-archetype PROXY for shoulder width,
+    // not a live per-frame measurement) scales with the archetype: rab's
+    // local half-width is 0.342, morag's 0.208 — a 0.61 ratio, close to the
+    // ~0.53 ratio Dan measured on screen. Shrunk by SAFETY so the sampled
+    // strip sits inside the torso rather than reaching the arms; calibrated
+    // so rab's derived half-width lands within a pixel of the 45px this
+    // check shipped with.
     const actorBox = await page.evaluate(() => {
       const d = window.__mcgrotsDebug;
       const toUv = (v) => {
         const c = v.clone().project(d.camera);
         return { x: c.x * 0.5 + 0.5, y: 1 - (c.y * 0.5 + 0.5) };
       };
+      let mesh = null;
+      d.scene.traverse((o) => { if (o.isSkinnedMesh) mesh = o; });
+      mesh.geometry.computeBoundingBox();
+      const bb = mesh.geometry.boundingBox;
+      const SAFETY = 0.5;
+      const halfWidthWorld = ((bb.max.x - bb.min.x) / 2) * d.actor.height * SAFETY;
       const base = d.actor.group.position.clone();
       const top = base.clone(); top.y += d.actor.height * 0.62;
       const bottom = base.clone(); bottom.y += d.actor.height * 0.35;
-      return { top: toUv(top), bottom: toUv(bottom) };
+      const center = base.clone(); center.y += d.actor.height * 0.48;
+      const right = new d.THREE.Vector3(halfWidthWorld, 0, 0)
+        .applyQuaternion(d.actor.group.quaternion).add(center);
+      return { top: toUv(top), bottom: toUv(bottom), center: toUv(center), right: toUv(right) };
     });
     const boxStats = (buf, box) => {
       const png = PNG.sync.read(buf);
       const y0 = Math.max(0, Math.round(box.top.y * png.height));
       const y1 = Math.min(png.height - 1, Math.round(box.bottom.y * png.height));
       const cx = Math.round(box.top.x * png.width);
-      const halfW = 45;   // narrow: the torso only, never the arms or the bench beside it
+      // 12px floor: at some archetype/anchor pairing the derived width could
+      // round to almost nothing, which would pass by sampling too little to
+      // measure anything rather than by the actor being lit.
+      const halfW = Math.max(12, Math.round(Math.abs(box.right.x - box.center.x) * png.width));
       const x0 = Math.max(0, cx - halfW), x1 = Math.min(png.width - 1, cx + halfW);
       let sum = 0, sumSq = 0, max = 0, n = 0;
       for (let y = y0; y <= y1; y++) {
