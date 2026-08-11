@@ -37,6 +37,21 @@ contract rather than adding a layer. Delegation is also a lossy context
 boundary: a diff plus a summary is a worse way to understand code than having
 written it.*
 
+**The orchestrator starts the gate pane; the gate reports to Dan, not to the
+orchestrator.** Settled 2026-08-11 on Dan's question. Starting a pane is
+mechanical and there is no reason he should do it by hand — `herdr workspace
+create --cwd <repo> --label gate --no-focus`, then `herdr agent start gate
+--kind claude --pane w4:p1 -- --model opus`. Receiving its findings is the
+opposite: the orchestrator made the decisions under audit and would choose the
+framing, which hands back the one thing independence buys — catching a false
+claim in a summary. So the gate writes `.herdr/gate.md` for Dan and does not
+ping control. For the same reason a subagent cannot be the gate: its report
+returns to the orchestrator by construction.
+
+Give it the commit range and the three documents, and **nothing else** — no
+list of what to check and no account of what happened, both of which shape what
+it finds. Today's numbers are in the commit messages for it to disagree with.
+
 **A fresh session on Opus at xHigh is the phase-gate reviewer**, and is the
 only independent read. At the end of each major roadmap phase (E1, E2, …) that
 session audits the phase end-to-end: architecture drift, quality against the
