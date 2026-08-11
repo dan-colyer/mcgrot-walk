@@ -108,6 +108,26 @@ try {
   // Freeze rAF, then drive frames by hand — nothing advances that this script
   // did not advance.
   await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+  // S4's boot places the actor with a SNAP cut (main.js: there is no previous
+  // shot yet, but a snap is still a snap), and the hold is real wall-clock
+  // time (page.js: 130ms, deliberately not tied to the frozen rAF clock this
+  // harness drives by hand). CDP round trips here are typically faster than
+  // that, so a shot taken right after boot lands mid-hold — the panel is
+  // legitimately covered by the gutter paper, same as a real player's eye
+  // would be for that beat. Wait for it to clear rather than capture through
+  // it; a capture is not supposed to prove what a transition looks like.
+  //
+  // `pageStats().cutting` alone is not enough: it reads the `.on` CLASS,
+  // which page.js removes at the 130ms mark, but `.page-cut`'s own CSS is
+  // `transition: opacity 60ms steps(1, end)` — a single-step transition holds
+  // the START value (opacity 1) for the FULL 60ms and only snaps to 0 at the
+  // end of it. Measured: right after `cutting` reads false, computed opacity
+  // still read "1". So this waits for the paint state, not the class.
+  await page.waitForFunction(() => !window.__mcgrotsDebug.pageStats().cutting, null, { timeout: 2000 });
+  await page.waitForFunction(
+    () => getComputedStyle(document.querySelector('.page-cut')).opacity === '0',
+    null, { timeout: 2000 },
+  );
 
   if (anchor) {
     const ids = await page.evaluate(() => window.__mcgrotsDebug.anchorIds());

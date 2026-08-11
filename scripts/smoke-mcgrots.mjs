@@ -579,7 +579,7 @@ try {
       d.setPageTitle("McGrot's"); d.stepFrames(4);
       return d.pageStats();
     });
-    await shot('s4-page');
+    const pageShot = await shot('s4-page');
 
     // The inset must actually inset. A page whose panel is the whole window is
     // furniture that drew nothing — and it would still look like a normal
@@ -599,6 +599,51 @@ try {
     check('S4 renders at the panel size, not the window size',
       buffer.w < buffer.win[0] && Math.abs(buffer.aspect - buffer.w / buffer.h) < 0.01,
       `buffer ${buffer.w}x${buffer.h} in window ${buffer.win.join('x')}, aspect ${buffer.aspect.toFixed(3)}`);
+
+    // F5: `?page=on` painted the paper, the panel rule and the caption, and
+    // the panel itself held no scene — a featureless paper-coloured rect.
+    // Both checks above stayed green throughout: one reads the panel's
+    // GEOMETRY (`panelFraction`), the other the drawing buffer's DIMENSIONS.
+    // Neither samples a pixel inside the panel, so neither could have caught
+    // it — the second candidate this session to render nothing behind green
+    // numeric gates (F4 was the first). This one looks inside the rect.
+    //
+    // THE CONTROL IS THE PAPER'S OWN COLOUR, `PAGE.paper` (`#d8c69b`), not a
+    // second render: an empty panel is the paper colour edge-to-edge, because
+    // that is literally what is behind it (`.page-paper` is full-bleed by
+    // design — see page.js). A real render fills the panel with sky, ground
+    // and massing, none of which is `#d8c69b`, so the fraction of panel
+    // pixels matching the paper closely is near 100% when broken and low
+    // when not — no second boot, no scene-specific assumption, and it holds
+    // regardless of which anchor or archetype the region runs against.
+    const panelStats = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      const v = d.pageStats().viewport;
+      return { x: Math.round(v.x), y: Math.round(v.y), w: Math.round(v.w), h: Math.round(v.h) };
+    });
+    const PAPER_RGB = [0xd8, 0xc6, 0x9b];
+    const paperMatchFraction = (buf, rect, tol = 6) => {
+      const png = PNG.sync.read(buf);
+      let matched = 0, n = 0;
+      // Every 3rd pixel both axes: the panel is ~650k px at 1280x720 and this
+      // check runs once per suite — subsampling costs nothing a full scan
+      // would buy, since the fault this catches is uniform across the panel.
+      for (let y = rect.y; y < rect.y + rect.h; y += 3) {
+        for (let x = rect.x; x < rect.x + rect.w; x += 3) {
+          if (x < 0 || y < 0 || x >= png.width || y >= png.height) continue;
+          const o = (y * png.width + x) * 4;
+          if (Math.abs(png.data[o] - PAPER_RGB[0]) < tol
+            && Math.abs(png.data[o + 1] - PAPER_RGB[1]) < tol
+            && Math.abs(png.data[o + 2] - PAPER_RGB[2]) < tol) matched++;
+          n++;
+        }
+      }
+      return n ? (matched / n) * 100 : 0;
+    };
+    const panelPaperFraction = paperMatchFraction(pageShot, panelStats);
+    check('S4 holds a scene in the panel, not empty paper',
+      panelPaperFraction < 50,
+      `${panelPaperFraction.toFixed(1)}% of sampled panel pixels match the paper colour (control: 100% is an empty panel)`);
 
     await page.evaluate(() => { window.__mcgrotsDebug.setPage(false); });
     check('console still clean after every style arm',

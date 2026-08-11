@@ -97,6 +97,21 @@ export function createPage({ canvas, onResize }) {
       el.style.height = `${v.h}px`;
     }
     elFrame.style.borderWidth = `${rule}px`;
+    // F5: `#page` is appended to `document.body` AFTER the canvas, and neither
+    // sets a z-index — two `position`ed siblings with `z-index: auto` paint in
+    // DOM order, later wins. So `.page-paper`, being full-bleed BY DESIGN (the
+    // comment above it explains why: one surface rather than four strips that
+    // can misalign at a fractional device ratio), painted over the canvas
+    // EVERYWHERE, including inside the panel — not just around it. Measured:
+    // forcing the canvas's z-index above `#page`'s made the scene appear:
+    // that confirms the mechanism. The fix keeps the one-surface paper (so the
+    // alignment property that motivated it survives) and cuts the panel rect
+    // out of it with `clip-path`, rather than moving the canvas into `#page`'s
+    // stacking context — reparenting a live WebGL canvas on every page toggle
+    // is a context-loss risk for a CSS-only fault.
+    elPaper.style.clipPath =
+      `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ` +
+      `${v.x}px ${v.y}px, ${v.x}px ${v.y + v.h}px, ${v.x + v.w}px ${v.y + v.h}px, ${v.x + v.w}px ${v.y}px, ${v.x}px ${v.y}px)`;
     // The canvas is inset to the panel rather than the renderer being
     // scissored. Same result, and it means the drawing buffer is exactly the
     // panel — so a golden of the panel is not a golden of a window with a hole.
