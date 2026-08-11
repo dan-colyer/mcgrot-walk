@@ -534,7 +534,54 @@ project exists is that the street was allowed to keep going at 80%.
 
 ---
 
-## 10. Still open
+## 10. Known faults — carried, not blocking
+
+Things that are wrong, deliberately left, with enough detail to pick up cold.
+Distinct from § 11, which is undecided questions rather than broken work.
+
+### F1 — The seated pose is wrong (G1, open)
+
+**Severity: high.** The player sits near the van and listens; this is the
+posture the game is mostly in.
+
+Fixed so far (commit `f0982fc`): the figure no longer folds double, the coat no
+longer binds to the leg bones, and the seat drop is derived rather than picked.
+What remains wrong, from the 2026-08-11 review capture:
+
+- The figure sits **in front of** the ledge rather than on it, and lower than
+  its top surface. The anchor position and the ledge position are set
+  independently (`anchors.js` places the ledge 0.3 m behind the standing spot),
+  so nothing guarantees the hip lands over the seat.
+- The legs read as folding **under** the body — a kneel — rather than forward
+  off the edge. Worth checking the sign of `rotation.x` on the thigh against
+  the actor's facing: positive reads as forward in the walk, so if it reads as
+  backward when seated, the two are not in the same frame.
+- The torso still pitches forward into a huddle.
+
+What it needs, and why it was not done now: a pelvis that rotates back
+independently of the spine, and a ledge height fixed by **G3's real dressing**
+rather than a placeholder box. Tuning a pose against a guessed wall height is
+work that gets thrown away. **Do this in G3, with the real wall.**
+
+Boot it with `npm run dev:mcgrots`, `?body=skinned`, then press 2.
+
+### F2 — Feet slide (G1, open)
+
+No foot IK on any candidate, so the feet slip rather than plant. Whether it
+reads at the game's actual camera distances is unjudged — the G1 review camera
+is closer than any anchor shot. Revisit once G3 fixes the shots.
+
+### F3 — Only one archetype rendered (G1, open)
+
+Everything in G1 was measured on `rab`. The cast varies: the adaptive neck
+lands between 0.75 and 0.89, and `runt`'s head is 1,055 triangles against
+`slab`'s 232. Run `scripts/rig-glb.mjs` and the bake-off across the rest before
+the rig is relied on. Pomplé is excluded by design — a quadruped is not a biped
+and G6 gives him his own treatment.
+
+---
+
+## 11. Still open
 
 1. **Which six to eight comics.** The readings vary a lot in quality and the
    selection wants Dan's eye rather than a script's.
