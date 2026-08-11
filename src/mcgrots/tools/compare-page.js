@@ -100,7 +100,18 @@ const boot = (async () => {
     cam.position.set(holder.position.x + 2.6, 1.24, 2.6);
     cam.lookAt(holder.position.x, 0.82, 0);
 
-    panels.push({ ...spec, body, holder, cam, ready: body.ready });
+    // A ledge per panel, shown only in the sit pose. A seated figure with
+    // nothing under it reads as a crouch however good the pose is — which is
+    // exactly why sitting looked bad in all four arms at first review.
+    const ledge = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 0.45, 0.5),
+      new THREE.MeshLambertMaterial({ color: 0x5a5344, flatShading: true }),
+    );
+    ledge.position.set(holder.position.x, 0.225, -0.24);
+    ledge.visible = false;
+    scene.add(ledge);
+
+    panels.push({ ...spec, body, holder, cam, ledge, ready: body.ready });
   }
   const results = await Promise.allSettled(panels.map((p) => p.ready || Promise.resolve()));
   results.forEach((r, i) => {
@@ -154,6 +165,7 @@ function advance(dt) {
 
   for (const p of panels) {
     if (p.failed) continue;
+    if (p.ledge) p.ledge.visible = mode === 'sit';
     p.body.pose(mode === 'look' ? 'idle' : mode, phase, scaled || 1e-6);
     // A slow sweep rather than a fixed angle: a lean and a turn look alike at
     // one pose and quite different in motion, which is the whole question.
@@ -197,6 +209,26 @@ function tick(now) {
   }
   requestAnimationFrame(tick);
 }
+
+// Measurement hook. This is a review tool, so "does the figure actually sit ON
+// the ledge" has to be answerable with a number rather than by squinting at a
+// screenshot — which is how the seat drop came to be wrong in the first place.
+window.__cmp = {
+  THREE, scene, panels,
+  measure() {
+    return panels.filter((p) => !p.failed).map((p) => {
+      const box = new THREE.Box3().setFromObject(p.body.group);
+      return {
+        id: p.id,
+        feetY: +box.min.y.toFixed(3),
+        headY: +box.max.y.toFixed(3),
+        ledgeTopY: p.ledge ? +(p.ledge.position.y + 0.225).toFixed(3) : null,
+        ledgeVisible: p.ledge ? p.ledge.visible : null,
+      };
+    });
+  },
+  setMode,
+};
 
 boot.then(() => {
   document.getElementById('labels').innerHTML = panels.map((p) =>

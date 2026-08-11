@@ -28,6 +28,16 @@ const ARM_SWING = 0.38;
 const TORSO_SWAY = 0.05;
 const BOB = 0.018;
 const ALBEDO_MULTIPLY = 0.42;
+// How far the hip drops when seated, in unit-figure units. DERIVED, not
+// picked: with the thigh horizontal and the shin vertical, the foot sits one
+// shin-length below the hip. Shin runs KNEE_Y(0.24) to 0, so the hip must land
+// at 0.24 for the boots to stay ON THE GROUND — a drop of 0.46 - 0.24 = 0.22.
+//
+// The first value here was 0.26, which put the hip at 0.20 and sank the figure
+// through the very ledge it was meant to be perched on. Sitting is the posture
+// this whole game is about, so it is worth getting from the numbers rather
+// than from the eye.
+const SEAT_DROP = 0.22;
 
 export function makeSkinnedBody({ assets, archetype = 'rab' }) {
   const group = new THREE.Group();
@@ -124,16 +134,33 @@ export function makeSkinnedBody({ assets, archetype = 'rab' }) {
       const counter = walking ? Math.sin(t + Math.PI) : 0;
       const sitSplay = sit * 0.14;
 
-      if (bones.legL) bones.legL.rotation.x = swing * LEG_SWING * (1 - sit) + sitSplay;
-      if (bones.legR) bones.legR.rotation.x = counter * LEG_SWING * (1 - sit) + sitSplay;
-      if (bones.armL) bones.armL.rotation.x = counter * ARM_SWING;
-      if (bones.armR) bones.armR.rotation.x = swing * ARM_SWING;
+      // THE KNEE IS WHAT MAKES SITTING WORK. Thigh swings forward to roughly
+      // horizontal, shin drops back to vertical beneath it — the shape a person
+      // makes on a low wall. Without the second joint the leg can only hang and
+      // the pose reads as a crouch, which is what G1 showed on all three
+      // candidates before A1 gained this bone.
+      //
+      // SEAT_DROP is the height of the thing being sat on. It has to agree with
+      // the ledge at the sitting anchors (src/mcgrots/anchors.js) or the figure
+      // hovers over it or sinks into it.
+      const thigh = sit * (Math.PI / 2) * 0.80;
+      const shin = -sit * (Math.PI / 2) * 0.74;
+      // While walking, the shin trails the thigh slightly — a straight leg
+      // swinging from the hip is the stiff-legged march the strips showed.
+      const shinTrail = walking ? -Math.max(0, Math.sin(t)) * 0.30 : 0;
+
+      if (bones.thighL) bones.thighL.rotation.x = swing * LEG_SWING * (1 - sit) + sitSplay + thigh;
+      if (bones.thighR) bones.thighR.rotation.x = counter * LEG_SWING * (1 - sit) + sitSplay + thigh;
+      if (bones.shinL) bones.shinL.rotation.x = shin + shinTrail * (1 - sit);
+      if (bones.shinR) bones.shinR.rotation.x = shin + (walking ? -Math.max(0, Math.sin(t + Math.PI)) * 0.30 : 0) * (1 - sit);
+      if (bones.armL) bones.armL.rotation.x = counter * ARM_SWING * (1 - sit);
+      if (bones.armR) bones.armR.rotation.x = swing * ARM_SWING * (1 - sit);
       if (bones.spine) {
         bones.spine.rotation.z = walking ? Math.sin(t * 2) * TORSO_SWAY : 0;
-        bones.spine.rotation.x = sit * 0.22;
+        bones.spine.rotation.x = sit * 0.10;
       }
 
-      group.position.y = (walking ? Math.abs(Math.sin(t)) * BOB : 0) - sit * 0.26;
+      group.position.y = (walking ? Math.abs(Math.sin(t)) * BOB : 0) - sit * SEAT_DROP;
     },
 
     lookAt(yaw) {

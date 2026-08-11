@@ -24,6 +24,12 @@ import { toWorld } from './site.js';
 const STAND_LOOK = 1.35;
 const SIT_LOOK = 0.95;
 
+// Height of the ledge a sitting anchor sits on, in metres. Must agree with
+// SEAT_DROP in actors/skinned.js (0.26 of a 1.72 m figure) or the figure
+// hovers above the wall or sinks into it. 0.45 m is a low wall — the height
+// you perch on rather than the height you sit back into.
+export const SEAT_HEIGHT = 0.45;
+
 // THE SHOTS ARE DERIVED, NOT HAND-PLACED, and that is a correction rather than
 // a preference. The first version authored five eye positions by hand in local
 // coordinates. Four of them were wrong and one was badly wrong: the

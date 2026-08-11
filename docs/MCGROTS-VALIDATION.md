@@ -86,7 +86,11 @@ node scripts/glb-anatomy.mjs assets/characters/rab-form.glb
 Strips land in `docs/smoke/captures/mcgrots/g1/` — `<id>-walk.png` is eight
 frames across one stride, `<id>-poses.png` is idle / sit / head-turn.
 
-**All four candidates run.** Measured on `rab`, chromium/metal:
+**A1 skinned is the chosen candidate** (Dan, 2026-08-11), on the walk and the
+head-turn. Sitting was bad in all three arms; see § "Sitting is still the weak
+pose" below for why, and for what the choice bought.
+
+Measured on `rab`, chromium/metal:
 
 | | draws | tris | asset KB | ms/frame | runtime LOC | offline LOC |
 |---|---|---|---|---|---|---|
@@ -125,6 +129,40 @@ draw-call figure of the three, because skinning keeps the character one mesh.
 carrying 12 triangles against 5254. Transparency, alpha-test and the billboard
 update cost more than the geometry they replace. Triangle count did not predict
 frame cost here.
+
+### Sitting is still the weak pose
+
+Dan's verdict on first review: the walk and head-turn favour A1, and **sitting
+was bad in all three**. The cause is structural — no candidate had a knee, so
+`sit` could only drop the body and hang the legs, which reads as a crouch. It
+was also being judged with nothing under the figure to sit on.
+
+**Only A1 could be fixed.** A bone subdivides a leg wherever it likes and the
+surface follows; A2 and A3 have no thigh *geometry* to rotate, because
+everything between hem and hip is coat. That is the one thing skinning bought
+here that the anatomy measurement had not already made cheap, and it is why the
+choice matters beyond the walk.
+
+Three fixes landed, each from a measurement rather than an eye:
+
+1. **A knee.** The rig went from seven bones to nine — `thighL/R` and
+   `shinL/R` replacing one rigid leg each, hinged at `KNEE_Y` 0.24, just under
+   the hem so the fold happens inside the garment.
+2. **The coat no longer binds to the leg bones.** Above the hem the leg bones
+   are not weight candidates at all. Without this, everything between hem and
+   hip was nearest a thigh, so folding to sit dragged the whole lower coat
+   forward and the figure doubled over into a face-plant.
+3. **The drop is derived, not picked.** With the thigh horizontal and the shin
+   vertical, the foot sits one shin-length below the hip, so the hip must land
+   at 0.24 for the boots to stay on the ground — a drop of 0.22, not the 0.26
+   first used, which sank the figure through the ledge it was meant to be on.
+
+**It is still not good.** The pose no longer folds double, but it reads as a
+huddle on the front edge rather than someone settled on a wall. Getting it
+right needs a pelvis that rotates back independently of the spine, and a ledge
+height fixed by G3's real dressing rather than a placeholder box. Sitting is
+the posture this whole game is about — the player sits near the van and listens
+— so this is a known open fault, not a detail.
 
 ### What G1 does not settle
 

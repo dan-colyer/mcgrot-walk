@@ -95,14 +95,32 @@ function rig(name) {
   const shoulderY = 0.74;
 
   // Bone segments, in rest pose. Index order IS the bone order in the sidecar.
+  //
+  // THE LEG HAS A KNEE, and that is the whole reason A1 won G1. The first rig
+  // gave each leg one rigid bone, so "sit" could only drop the body and hang
+  // the legs — it read as a crouch, and Dan called it out across all three
+  // candidates (2026-08-10). A2 and A3 cannot be fixed: there is no thigh
+  // GEOMETRY to rotate, because everything between hem and hip is coat.
+  //
+  // Skinning does not need the geometry. A bone can subdivide the leg wherever
+  // it likes and the surface follows, so the coat drapes over the thigh as it
+  // folds. That is the one thing skinning buys here that the anatomy
+  // measurement did not already make cheap.
+  //
+  // KNEE_Y sits just above the boot, at the top of the visible lower leg — the
+  // hem is where the coat stops, and the knee has to be under it or the fold
+  // happens outside the garment.
+  const KNEE_Y = 0.24;
   const BONES = [
     { name: 'hips', parent: -1, head: [0, HIP_Y, 0], tail: [0, (HIP_Y + neckY) / 2, 0] },
     { name: 'spine', parent: 0, head: [0, (HIP_Y + neckY) / 2, 0], tail: [0, neckY, 0] },
     { name: 'head', parent: 1, head: [0, neckY, 0], tail: [0, 1.0, 0] },
     { name: 'armL', parent: 1, head: [-shoulderX * 0.7, shoulderY, 0], tail: [-shoulderX, shoulderY - 0.26, 0] },
     { name: 'armR', parent: 1, head: [shoulderX * 0.7, shoulderY, 0], tail: [shoulderX, shoulderY - 0.26, 0] },
-    { name: 'legL', parent: 0, head: [legLx, HIP_Y, 0], tail: [legLx, 0, 0] },
-    { name: 'legR', parent: 0, head: [legRx, HIP_Y, 0], tail: [legRx, 0, 0] },
+    { name: 'thighL', parent: 0, head: [legLx, HIP_Y, 0], tail: [legLx, KNEE_Y, 0] },
+    { name: 'thighR', parent: 0, head: [legRx, HIP_Y, 0], tail: [legRx, KNEE_Y, 0] },
+    { name: 'shinL', parent: 5, head: [legLx, KNEE_Y, 0], tail: [legLx, 0, 0] },
+    { name: 'shinR', parent: 6, head: [legRx, KNEE_Y, 0], tail: [legRx, 0, 0] },
   ];
 
   // Weights: the two nearest bones, inverse-distance blended. Two rather than
@@ -110,9 +128,24 @@ function rig(name) {
   // onto a shoulder and smears the whole figure.
   const skinIndex = new Uint8Array(vcount * 4);
   const skinWeight = new Uint8Array(vcount * 4);
+  // THE COAT DOES NOT BIND TO THE LEGS, and this is what makes sitting work.
+  //
+  // Without it, everything between hem and hip is nearest a thigh bone, so
+  // folding the thigh to sit dragged the entire lower coat forward with it and
+  // the figure doubled over — a face-plant, not a sit. A heavy dockside coat
+  // hangs from the body; it does not fold flat along the femur.
+  //
+  // So above the hem, the leg bones are simply not candidates. Only the
+  // visible lower leg and boot follow the knee, which is exactly the part a
+  // coat leaves showing.
+  const LEG_BONES = new Set(['thighL', 'thighR', 'shinL', 'shinR']);
+  const COAT_Y = HEM_Y + 0.06;
   for (let i = 0; i < vcount; i++) {
     const p = [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]];
-    const d = BONES.map((b, bi) => ({ bi, d: segDist(p, b.head, b.tail) }));
+    const aboveHem = p[1] > COAT_Y;
+    const d = BONES
+      .map((b, bi) => ({ bi, name: b.name, d: segDist(p, b.head, b.tail) }))
+      .filter((c) => !(aboveHem && LEG_BONES.has(c.name)));
     d.sort((a, b) => a.d - b.d);
     const [a, b] = d;
     const wa = 1 / (a.d + 1e-4), wb = 1 / (b.d + 1e-4);

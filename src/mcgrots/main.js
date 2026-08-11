@@ -17,7 +17,7 @@
 import * as THREE from 'three';
 import { LIGHT, PITCH, PITCH_YAW, toWorld } from './site.js';
 import { loadFoot, buildFoot } from './foot.js';
-import { ANCHORS, anchorById, nearestAnchor } from './anchors.js';
+import { ANCHORS, anchorById, nearestAnchor, SEAT_HEIGHT } from './anchors.js';
 import { makeActor } from './actor.js';
 import { makeCapsuleBody } from './actors/capsule.js';
 import { makeSegmentedBody } from './actors/segmented.js';
@@ -108,6 +108,31 @@ for (const a of ANCHORS) {
   markers.add(m);
 }
 scene.add(markers);
+
+// A ledge at every sitting anchor. G3 dresses the pitch properly; this exists
+// now because a sit pose with nothing under it reads as a crouch no matter how
+// good the pose is, so the posture cannot be judged without it. The game is
+// largely about sitting near the van and listening, which makes this the most
+// load-bearing posture in the piece rather than a detail.
+const seats = new THREE.Group();
+seats.name = 'seats';
+for (const a of ANCHORS) {
+  if (!a.sit) continue;
+  const ledge = new THREE.Mesh(
+    new THREE.BoxGeometry(2.6, SEAT_HEIGHT, 0.55),
+    new THREE.MeshLambertMaterial({ color: 0x5a5344, flatShading: true }),
+  );
+  // Behind the figure, not under it: you perch on the front edge of a wall.
+  ledge.position.set(
+    a.pos.x - Math.sin(a.yaw) * 0.3,
+    SEAT_HEIGHT / 2,
+    a.pos.z - Math.cos(a.yaw) * 0.3,
+  );
+  ledge.rotation.y = a.yaw;
+  ledge.name = `seat:${a.id}`;
+  seats.add(ledge);
+}
+scene.add(seats);
 
 let footData = null;
 let current = null;          // the anchor the actor is parked at or heading to
