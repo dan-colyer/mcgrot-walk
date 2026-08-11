@@ -23,6 +23,7 @@ import { makeCapsuleBody } from './actors/capsule.js';
 import { makeSegmentedBody } from './actors/segmented.js';
 import { makeFlatsBody } from './actors/flats.js';
 import { makeSkinnedBody } from './actors/skinned.js';
+import { createStyle, STYLES } from './style.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -36,6 +37,8 @@ const BODIES = {
 const params = new URLSearchParams(location.search);
 const BODY_KIND = params.get('body') || 'capsule';
 const BODY_ARCHETYPE = params.get('archetype') || 'rab';
+// G2's bake-off lever, the same shape as G1's `?body=`.
+const STYLE_KIND = params.get('style') || 'none';
 
 const FIXED_DT = 1 / 60;
 
@@ -46,6 +49,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = LIGHT.exposure;
 
+const style = createStyle(renderer);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(LIGHT.skyColor);
 // Enough fog to give the massing depth without hiding the far side of the
@@ -188,7 +192,7 @@ function frame(dt) {
   // Park state resolves on arrival, so a sitting spot only sits once reached.
   if (current && !actor.walking && actor.state !== 'sit' && current.sit) actor.setState('sit');
   placeCamera();
-  renderer.render(scene, camera);
+  style.render(scene, camera);
 }
 
 function resize() {
@@ -250,6 +254,7 @@ window.addEventListener('keydown', (e) => {
     bodyError = err.message;
   }
 
+  style.setStyle(STYLE_KIND);
   goTo('back', { snap: true });
   resize();
   placeCamera();
@@ -277,6 +282,10 @@ window.addEventListener('keydown', (e) => {
       // reportable rather than an unexplained blank frame.
       body: BODY_KIND,
       archetype: BODY_ARCHETYPE,
+      style: () => style.style,
+      styleIds: () => STYLES.map((s) => s.id),
+      setStyle: (id) => style.setStyle(id),
+      setStyleStrength: (v) => style.setStrength(v),
       get bodyError() { return bodyError; },
       bodyStats: () => actor.stats(),
       setActorState: (s) => actor.setState(s),
