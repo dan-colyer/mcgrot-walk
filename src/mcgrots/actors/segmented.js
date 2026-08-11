@@ -21,6 +21,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from '../../assets.js';
+import { liftMap } from './texture.js';
 import { countStats } from '../actor.js';
 
 const PARTS = ['torso', 'head', 'armL', 'armR', 'legL', 'legR'];
@@ -63,7 +64,9 @@ export function makeSegmentedBody({ assets, archetype = 'rab' }) {
 
     const srcGeo = src.geometry;
     const material = new THREE.MeshLambertMaterial({
-      map: src.material?.map || null,
+      // Same lift as the skinned arm — see actors/texture.js. Both arms must
+      // apply it or a bake-off between them compares albedo as much as motion.
+      map: liftMap(src.material?.map) || null,
       color: (src.material?.color ? src.material.color.clone() : new THREE.Color(0xffffff))
         .multiplyScalar(ALBEDO_MULTIPLY),
     });

@@ -20,6 +20,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from '../../assets.js';
+import { liftMap } from './texture.js';
 import { countStats } from '../actor.js';
 
 const STRIDE = 0.72;
@@ -101,7 +102,11 @@ export function makeSkinnedBody({ assets, archetype = 'rab' }) {
 
     const skeleton = new THREE.Skeleton(list);
     const material = new THREE.MeshLambertMaterial({
-      map: src.material?.map || null,
+      // See actors/texture.js: the glbs are authored at roughly half the
+      // reflectance of the world they stand in, and no light setting reaches
+      // them. Lifted here rather than in the file, because the paused street
+      // loads the same seven glbs.
+      map: liftMap(src.material?.map) || null,
       color: (src.material?.color ? src.material.color.clone() : new THREE.Color(0xffffff))
         .multiplyScalar(ALBEDO_MULTIPLY),
     });
