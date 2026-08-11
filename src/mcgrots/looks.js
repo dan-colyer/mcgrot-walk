@@ -341,6 +341,20 @@ export function createLooks(scene) {
 
     for (const mesh of targets) {
       if (look.cel && mesh.material && !Array.isArray(mesh.material)) {
+        // F4: MeshLambertMaterial (and Phong/Standard/Physical) silently fall
+        // back to derivative-computed flat normals when a geometry has none —
+        // three.js's own auto-flatShading rule, gated on those four material
+        // types by name. MeshToonMaterial is not on that list, so a geometry
+        // with no `normal` attribute compiles a shader that still DECLARES
+        // one; WebGL feeds the missing attribute its default value, (0,0,0),
+        // and every dot(N,L) is zero — direct AND indirect diffuse both
+        // vanish, which is why the figure was black under every light and
+        // every colour tried. Measured: the skinned actor's geometry
+        // (actors/skinned.js) has position/uv/skinIndex/skinWeight and no
+        // normal; the capsule and every other cel-shaded mesh does. Toon
+        // needs what Lambert was hiding, so give it the same normals Lambert
+        // computed for itself, ONCE, rather than special-casing this mesh.
+        if (!mesh.geometry.attributes.normal) mesh.geometry.computeVertexNormals();
         swapped.push({ mesh, material: mesh.material });
         mesh.material = celFor(mesh.material);
       }
