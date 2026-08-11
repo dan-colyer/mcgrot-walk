@@ -12,6 +12,7 @@
     "compare:mcgrots": "esbuild src/mcgrots/tools/compare-page.js --bundle --outfile=src/mcgrots-compare-bundle.js && cd src && python3 ../scripts/serve.py ${PORT:-5176}",
     "smoke:mcgrots": "node scripts/smoke-mcgrots.mjs",
     "styleshots:mcgrots": "node scripts/mcgrots-styleshots.mjs",
+    "sun:mcgrots": "node scripts/mcgrots-sun.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:par": "node scripts/smoke.mjs --shards",
     "probe": "node scripts/probe.mjs",

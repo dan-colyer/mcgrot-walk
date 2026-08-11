@@ -316,6 +316,64 @@ deliberately does not rank the styles, compute a metric, or gate the visual
 quality of a candidate. No acceptance gate was added, so no fault injection
 applies.
 
+### G2 sun investigation (2026-08-11)
+
+The existing grade sweep chose the shipped `sun 6 / hemi 3` pair using only
+whole-frame mean/stddev/crushed/blown numbers. Its recorded result was mean
+76.7, stddev 51.4 and 0.0% black; the actor occupies only a few percent of
+that frame, so those numbers never measured whether the cast could be read.
+
+`npm run sun:mcgrots` is the actor-aware investigation tool. It boots S2
+(`?look=aerial`) with the real skinned `rab`, reports the horizontal angle
+between each anchor's actor-to-camera vector and actor-to-sun vector, then
+sweeps 48 runtime sun settings (12 azimuths × 4 altitudes). For every setting
+it prints whole-frame mean/stddev/dark/blown beside actor-only torso-patch
+mean/stddev/max/pixel count. The actor control reuses F4's geometry-derived
+torso patch: bind-pose skinned-mesh width, scaled by `actor.height`, with the
+vertical band from 35% to 62% of actor height. It hides the actor for a paired
+image and keeps only changed pixels inside that patch, so the luma is not a
+whole-frame proxy. `sun-report.json` retains every row of the run.
+
+The shipped geometry has these camera/sun separations: counter 54.0°, wall
+51.4°, back 35.4°, far 31.3° and kerb 26.9°. Counter is the largest separation,
+with wall close behind. The shipped `-2.1 rad / 0.34 rad` setting ranked 7th of
+48 by `rab` actor mean: frame mean 106.4 and actor mean/stddev/max 6.9/12.8/85.0
+(2,915 changed torso pixels averaged over the five anchors).
+
+The top measured settings were:
+
+| setting (azimuth / altitude) | frame mean | actor mean / stddev / max |
+|---|---:|---:|
+| `-2.62 / 0.75 rad` | 105.2 | 7.0 / 12.8 / 83.5 |
+| `-2.10 / 0.50 rad` | 106.4 | 6.9 / 13.1 / 85.0 |
+| `-2.62 / 0.22 rad` | 105.1 | 6.9 / 12.2 / 76.4 |
+| `-2.10 / 0.75 rad` | 106.4 | 6.9 / 13.1 / 85.0 |
+| `-2.62 / 0.34 rad` | 105.2 | 6.9 / 12.2 / 76.4 |
+
+The complete 48-row side-by-side table is emitted by the tool; the frame
+objective and actor objective disagree strongly away from the current
+azimuth. The best `rab` candidates were rendered as contact sheets and opened:
+
+- `sun-shipped.png` — the five rear-facing actor views remain mostly dark,
+  with cap/skin and narrow warm edge highlights visible.
+- `sun-best-1.png` (`-2.62 / 0.75`) — the same scene remains coherent, with
+  warmer jacket and arm/leg edge highlights, but it is still a back-lit rear
+  view rather than a fully tan jacket.
+- `sun-best-2.png` (`-2.10 / 0.50`) — visually close to shipped, with modestly
+  clearer warm edge light on the actor.
+- `sun-best-3.png` (`-2.62 / 0.22`) — also close to the first candidate; the
+  actor stays dark at rest, with slightly more readable warm contours than
+  shipped.
+
+The sheets are 2-column contact sheets in anchor order `counter`, `wall`,
+`kerb`, `far`, `back`; the fifth cell is bottom-left. A `morag` cross-check
+held the same candidate region: shipped actor mean 55.2, versus 56.0 for
+`-2.62 / 0.75`, 54.5 for `-2.10 / 0.50`, and 57.9 for `-2.62 / 0.22`.
+This is a measured recommendation, not a shipped lighting change: preserve
+`src/mcgrots/site.js` while Dan ranks the existing sheets, and consider
+`-2.62 / 0.75 rad` first if the hour is reopened. No acceptance gate was
+added, so no fault injection applies.
+
 ### The candidates came from reading the comics, not from a list of techniques
 
 The first G2 scaffold offered posterise / riso / PS1 / clay / stop-motion —
