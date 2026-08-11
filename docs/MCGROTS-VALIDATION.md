@@ -272,10 +272,49 @@ in the grid that crushes nothing: sun 6, hemi 3 → mean 76.7, stddev 51.4,
 npm run smoke:mcgrots -- --only=style      # 12 checks
 npm run dev:mcgrots                        # /mcgrots.html?look=aerial&style=key&page=on
 node scripts/mcgrots-grade.mjs             # now reports the CAST, not just the frame
+node scripts/mcgrots-styleshots.mjs        # five labelled motion sheets
+node scripts/mcgrots-styleshots.mjs --archetype=morag
 node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg --k=5
 ```
 
 Captures land in `docs/smoke/captures/mcgrots/g2/` (gitignored).
+
+### G2 capture-review rig (2026-08-11)
+
+`npm run styleshots:mcgrots` boots the shipped page on the skinned `rab` body,
+turns markers off, and writes `counter.png`, `wall.png`, `kerb.png`, `far.png`
+and `back.png`. Each sheet has six candidate rows — baseline, S1 inked, S2
+aerial, S3 key, the posterise control, and S4 page — with the exact URL printed
+in the row label. The three columns are approach, mid-stride and arrived at a
+fixed anchor camera. `--archetype=` re-runs the same sheets on another real
+cast member; `--hour=` is carried as sheet metadata while the current page keeps
+its fixed `LIGHT` setup.
+
+The successful Chromium/Metal run captured 15 frames per candidate and all five
+sheets. Opening the sheets showed S1/S2 figures with visible silhouettes,
+highlights and S1 ink rather than the former featureless black blob; S2's
+distance flattening was visible but subtle at these anchor views. S3 key's
+five-tone dither visibly differed from its posterise control. S4's paper and
+panel rule survived every column, but the 3D scene was fully occluded inside
+the panel in all five sheets. This S4 row is a faithful capture of a broken
+candidate, not a limitation of the rig. Dan independently reproduced the same
+product fault with both
+`node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --page=on
+--anchor=counter --frames=600` and
+`node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --page=on
+--anchor=far --frames=600`: cream paper, panel rule, caption, and an empty
+panel in each case.
+
+The existing S4 gates were green throughout: **S4 insets the render into a
+panel** reported 70.9% of the window, and **S4 renders at the panel size**
+reported a 1190x549 buffer. Both measure the panel's geometry and neither
+looks inside it; the capture-review sheet is what exposes the missing 3D scene.
+
+This rig proves that the candidates can be compared at the same three motion
+phases and fixed camera, and puts the human-readable URL beside every row. It
+deliberately does not rank the styles, compute a metric, or gate the visual
+quality of a candidate. No acceptance gate was added, so no fault injection
+applies.
 
 ### The candidates came from reading the comics, not from a list of techniques
 
@@ -380,7 +419,7 @@ together, so neither is carrying the other. The material-leak injection is the
 one worth keeping in mind — it is invisible in a still, and only the frame hash
 catches it.
 
-**The F4 gate itself needed two redesigns before it discriminated anything.**
+**The F4 gate itself needed three redesigns before it discriminated anything.**
 A chest-height single-pixel sample read "black" whether the fix was present or
 not — the cast wears near-black coats by design (measured luma 1-5 on the
 jacket in a *known-good* render). A bounding box around the whole seated
@@ -391,6 +430,21 @@ that never touch the actor. The version that discriminates is a patch
 confined to the torso band only — above the leg-splay, below the collar,
 verified row-by-row to be inside the silhouette at every y — where the fault
 reads exactly `(0,0,0)` and the fix reads real variance.
+
+**The patch's half-width was a third false-pass waiting to happen, caught
+before it shipped.** It was first a hand-tuned constant (45px, sized for
+`rab`'s on-screen torso at `kerb`). F3 landed five more archetypes the same
+day, and the style region's `archetype` is not pinned against that — re-running
+it on `morag` (on-screen torso roughly half rab's width) would let a 45px
+half-width reach her arms and the bench beside her, the same false-pass this
+gate exists to avoid, on the other axis. Half-width is now derived from the
+actor's own bind-pose geometry bounding box (a per-archetype proxy for
+shoulder width — skinning deforms only on the GPU, so this reads rest pose,
+not the live animated frame), scaled by `actor.height` and shrunk by a
+calibrated `SAFETY` factor so the derived value for `rab` lands within a
+pixel of the constant it replaced. `morag` and `rab` both rendered correctly
+under the fix (`/tmp/rv-morag-kerb.png`, `s1-inked.png`) — the fix holds
+across archetypes, not just the one this region happens to run.
 
 ### The cast was unreadable, and it was the asset — FIXED
 
