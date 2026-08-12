@@ -1481,3 +1481,163 @@ frame-1 jump" question**, only this one specific repro. A future retargeting
 path with different timing (e.g. interrupting a snap rather than a walk, which
 `goTo`'s snap branch structurally cannot reach because it is a deliberate cut)
 would need its own check if one is ever added.
+
+## G4a — the rota, silent
+
+New module `src/mcgrots/rota.js`: who is at the pitch, `whoIsHere(now)` and
+`whatTheyAreDoing(now)`, pure functions of a wall-clock timestamp in seconds,
+plus a `createReader({ scene })` factory that drives a placeholder-cast
+capsule actor through arrive/read/leave against that schedule. No audio (G4b),
+no dialogue (G5). `main.js` gets exactly the call site the brief asked for:
+`const reader = createReader({ scene })` at module scope and
+`reader.update(dt, rotaNow())` in `frame()` — the schedule, the reader's
+positions and its state machine all live in `rota.js`.
+
+**The pool is `readings.json`'s 125 entries, not the 136 comics with an
+`audio` field.** The brief named 136 as the drawable pool, but only 125 of
+those have a `readings.json` duration — the timing source this unit must
+schedule against. Intersecting the two, rather than trusting the catalog's
+`audio` field alone, is also the "check rather than trust" `CLAUDE.md` asks
+for: `readings.json`'s durations are extracted from the rendered mp3 after the
+fact, so a comic with a claimed-but-unrendered `audio` field (the
+`daily-tts.sh` bug `CLAUDE.md` records) has no `readings.json` entry and is
+excluded with no filesystem check needed at runtime. 125 also happens to
+match the roadmap's own sizing math (82.8 min / 125 readings ≈ 39.7s
+average), which is corroborating, not by design.
+
+**Schedule:** one Fisher-Yates shuffle of the 125 ids, this module's own
+seeded generator (`0x6c6f7473`), taken once at load. Each visit is
+`duration` seconds of reading plus a fixed 45s gap; the cycle repeats after
+~10,591s (~176.5 min). `whoIsHere`/`whatTheyAreDoing` map an absolute
+timestamp onto that cycle by `now mod cycleLength` — no session-relative
+state, no accumulating counter. Sizing check: 600s / (39.7 + 45) ≈ 7.1
+readings per ten minutes, inside the brief's six-to-eight budget.
+
+**The reader is a capsule** (`actors/capsule.js`, G1's zero-network-cost
+control), not one of the five skinned archetypes. This unit is about the
+schedule, not the cast — "the rota runs on the placeholder cast; G8 replaces
+them" — and a capsule needs no glb fetch per visit.
+
+### The camera-independence gate — the load-bearing one
+
+Dan's ruling, 2026-08-12: **actors must not affect the camera.** Enforced
+three ways, only the third of which is enforceable by a suite:
+
+1. **Structurally.** `rota.js` never imports the camera and its pure
+   functions return plain data — no THREE object crosses that boundary.
+   `createReader()` is never passed a camera (contrast the player's own actor,
+   which gets one for billboard candidates). `reader.update()` moves only
+   `reader.group`.
+2. **By construction of the call site.** `main.js`'s `frame()` calls
+   `reader.update(dt, rotaNow())` and `placeCamera()` as two independent
+   statements; nothing threads a value from one into the other.
+3. **By measurement**, which is the one that can catch a mistake in (1) or
+   (2) that still compiles.
+
+**The gate, `rota` region:** two boots of the identical page, one scripted
+anchor sequence (`snapTo('back')`, `goTo('far')`, `goTo('counter')`,
+`goTo('wall')`, 271 sampled frames total) run on both. The "on" arm is the
+plain page — the rota loads normally. The "off" arm is `?rota=off`, which
+skips `loadRota()` entirely, so `whatTheyAreDoing` returns `null` forever and
+`createReader()`'s actor is never even instantiated. The two arms otherwise
+share every line of `boot()`. The rota's own wall clock is advanced 2s per
+sampled frame (`d.rota.setClock`) — independent of the render dt by design
+(the schedule clock and the physics clock are already two different clocks,
+see `rota.js`'s header) — so the ~5s of stepped render frames sweeps several
+arrive/read/leave cycles rather than one. Verified the "on" arm actually has
+a reader visible at some sampled frame before trusting the comparison — an
+empty "on" arm would make the check pass vacuously.
+
+**Compares position AND orientation.** The first version of this gate
+compared `camera.position` only. A `lookAt` bias that leaves the eye in place
+— the realistic version of the mistake the ruling forbids — is invisible to
+a position-only diff; the gate now also samples `camera.quaternion` and both
+must match to `< 1e-9`.
+
+**Fault-injected, confirmed red, restored.** Added a 6%-lerp `lookAt` bias
+toward the reader's position whenever it is visible, in `frame()` right after
+`placeCamera()` — deliberately the "realistic mistake" the brief names, not
+an absurd one. Re-ran `--only=rota`: 8/9, the camera-independence check
+failing at **7.35e-2m** combined position+orientation delta, frame 44 of 271.
+Every other check in the region — including "the on arm actually has a
+reader visible", which shares the same run — stayed green, which is the
+control: the injection changes only the camera's output, not the schedule or
+the reader's own position. Restored, 9/9.
+
+### The schedule is a pure function of the clock
+
+Gate: `whoIsHere(42)` called twice returns the same id both times; the
+control is `whoIsHere(42 + cycleSeconds()/2)`, which must differ — without
+the control, "same timestamp, same result" would also pass for a schedule
+that ignores its argument entirely and always returns the same thing.
+
+**Fault-injected the control specifically**, since it is the check doing the
+real work: hardcoded `now = 0` inside `whoIsHere`. Re-ran `--only=rota`: the
+"same timestamp" check still passed (trivially — a constant function agrees
+with itself), the control failed as intended (`t=42` and `t=42+half` both
+returned the same id). This is the case the plain "purity" check cannot
+catch on its own; restored and reconfirmed both green.
+
+### One reader at a time
+
+`whoIsHere`/`whatTheyAreDoing` return the FIRST visit `findVisit` walks into,
+so a scheduling bug that let two windows overlap would be invisible to
+them — they would silently return one of the two. Gated instead against
+`overlapCount(now)`, which counts every visit whose arrive-to-depart window
+contains `now`, scanned every 2s across one full `cycleSeconds()` (~10,591s,
+~5,296 samples) rather than a spot-check.
+
+**Fault-injected** by shrinking `GAP_S` to 2 (below `ARRIVE_LEAD_S +
+DEPART_LEAD_S = 14`, guaranteeing adjacent visits' arrival/departure windows
+overlap). Re-ran `--only=rota`: failed with 2 concurrent visits at t=0, every
+other check unaffected. Restored `GAP_S = 45`, reconfirmed green.
+
+### Rejected: the first two approach-point layouts
+
+Both found by opening the sequence capture, not by a number — every gate
+above stayed green through both.
+
+**`[-3.6, 8.4]` / `[3.6, 8.4]`, local.** Chosen only for walk-timing (roughly
+`ARRIVE_LEAD_S` at `WALK_SPEED`), with no check against camera geometry. The
+`[-3.6, 8.4]` point landed 2.24m from the `counter` shot's eye — close enough
+to sit outside its view frustum — so the "arriving" capture showed no reader
+at all through most of the arrival, and the reader's actual world position at
+that moment (measured via `dbg.rota.reader()` / `dbg.state().reader`) was
+barely off the camera's own position.
+
+**`[-4.5, 12.5]` / `[4.5, 12.5]`, local.** Fixed the endpoint problem — both
+approach points cleared every anchor eye by 3m or more — but checking only
+the two endpoints missed that the LINE between the `-4.5` point and
+`SPOT_LOCAL` passes within 0.53m of the `counter` eye partway along the walk.
+The capture showed a reader walking almost through the lens before
+reappearing on the far side.
+
+**Fix:** `[-8, 2.1]` / `[8, 2.1]`, chosen with a proper point-to-segment
+distance (minimised over the whole walk, not the two ends) against all five
+anchor eyes — nearest approach 4.73m. `ARRIVE_LEAD_S`/`DEPART_LEAD_S` moved
+from 6s to 7s to match the resulting ~7.7-8.4m walk distance. Re-captured;
+the "arriving" and "leaving" frames both show the reader mid-walk,
+recognisably approaching or departing the counter, not teleporting.
+
+### What was captured, and what it showed
+
+`docs/smoke/captures/mcgrots/g0/rota-{1-empty,2-arriving,3-reading,4-leaving,
+5-empty}.png`, all from the `counter` anchor (the closest shot to the reading
+spot), stepping real render frames so the walk itself animates rather than
+using the fast schedule-clock trick the camera-independence gate uses.
+
+**Opened and inspected.** 1-empty and 5-empty show the pitch with only the
+player's own actor — no reader, no teleport-in artefact, reads as quiet
+rather than broken. 3-reading shows the reader standing at the counter
+opening, mostly occluded by the player's own back from this angle (the two
+are close together by design — the reading spot sits between the van and the
+player's viewing anchor). 2-arriving and 4-leaving both show the reader
+recognisably mid-walk, approaching or departing the counter along a plausible
+line, not popping in or out.
+
+**Not captured or gated: the ambient feel of a full ten-minute visit.**
+These five frames are one visit's four beats at one anchor. Whether the
+cadence across many visits — six to eight readings and the ~33s of empty
+pitch between each one's departure and the next's arrival — reads as a busy
+stall or a dead one is a G4b-or-later judgement, once there is audio to
+listen to while watching it.

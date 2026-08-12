@@ -29,6 +29,7 @@ import { createPage } from './page.js';
 import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
+import { loadRota, createReader, whoIsHere, whatTheyAreDoing, overlapCount, cycleSeconds } from './rota.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -61,6 +62,11 @@ const STYLE_KIND = params.get('style') || 'none';
 const LOOK_KIND = params.get('look') || 'none';
 const PAGE_ON = params.get('page') === 'on';
 const KEY_KIND = params.get('key') || null;
+// G4a's control arm for the camera-independence gate: boot with the rota
+// never loaded, so `whatTheyAreDoing` returns null forever and the reader
+// never appears. The two arms otherwise share every line of boot() — the
+// gate's whole point is that they differ in nothing else.
+const ROTA_OFF = params.get('rota') === 'off';
 
 const FIXED_DT = 1 / 60;
 
@@ -117,6 +123,11 @@ buildVan(scene);
 // Built in boot(), once the assets object exists — a segmented body needs the
 // glb and its sidecar, and assetUrl is the only sanctioned way to reach them.
 let actor = null;
+
+// G4a: the rota's own actor (readers arriving/reading/leaving), created
+// immediately rather than in boot() — its body is the capsule (no glb fetch)
+// and it stays invisible until `loadRota()` resolves and a visit is active.
+const reader = createReader({ scene });
 
 // Ground-plane raycast target for click-to-walk, and the anchor markers.
 const raycaster = new THREE.Raycaster();
@@ -218,6 +229,7 @@ let previous = null;
 let lastLook = { x: 0, y: 0, z: 0 }; // F11: the look point placeCamera() last used
 let clock = 0;               // seconds of game time; wall-clock in G4
 let bodyError = null;        // a candidate that failed to load — reported, not thrown
+let rotaError = null;        // G4a: catalog.json/readings.json failed — reported, not thrown
 
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
@@ -342,11 +354,26 @@ function placeCamera() {
   lastLook = { x: c.look.x, y: c.look.y, z: c.look.z };
 }
 
+// G4a: wall-clock seconds, never `clock` (session-relative — see its own
+// declaration above). `rotaClockOverride` exists only for the gate suite and
+// the debug API, to drive a scripted sequence of timestamps deterministically
+// (dbg.setRotaClock / dbg.clearRotaClock) — real play always reads the
+// system clock.
+let rotaClockOverride = null;
+const rotaNow = () => rotaClockOverride ?? Date.now() / 1000;
+
 function frame(dt) {
   clock += dt;
   actor.update(dt, clock);
   // Park state resolves on arrival, so a sitting spot only sits once reached.
   if (current && !actor.walking && actor.state !== 'sit' && current.sit) actor.setState('sit');
+  // G4a: the reader's own actor, driven from the wall clock. This call and
+  // the `const reader = createReader(...)` below are the ONLY things main.js
+  // does for the rota — rota.js owns the schedule, the reader's positions and
+  // its walk/read/leave state machine. `reader.update` never receives the
+  // camera and cannot move it; see rota.js's header for why that is
+  // structural rather than a promise.
+  reader.update(dt, rotaNow());
   placeCamera();
   style.render(scene, camera);
 }
@@ -433,6 +460,17 @@ window.addEventListener('keydown', (e) => {
     bodyError = err.message;
   }
 
+  if (!ROTA_OFF) {
+    try {
+      await loadRota();
+    } catch (err) {
+      // Same discipline as the body candidate above: a rota that fails to
+      // load is a reportable result (empty pitch, forever), not a crash.
+      console.warn('[mcgrots] rota failed to load:', err.message);
+      rotaError = err.message;
+    }
+  }
+
   style.setStyle(STYLE_KIND);
   if (KEY_KIND) style.setKey(KEY_KIND);
   // AFTER the actor and the massing are in the scene. looks.js traverses once
@@ -513,6 +551,20 @@ window.addEventListener('keydown', (e) => {
       setPageCaption: (t) => page.setCaption(t),
       pageStats: () => page.stats(),
       get bodyError() { return bodyError; },
+      get rotaError() { return rotaError; },
+      // G4a. `whoIsHere`/`whatTheyAreDoing` are re-exported directly, not
+      // wrapped — the gate calls the SAME pure functions the game itself
+      // does, against an injected clock (`setRotaClock`), so a purity check
+      // exercises the shipped product rather than a copy of it.
+      rota: {
+        whoIsHere,
+        whatTheyAreDoing,
+        overlapCount,
+        cycleSeconds,
+        reader: () => reader.state,
+        setClock(seconds) { rotaClockOverride = seconds; },
+        clearClock() { rotaClockOverride = null; },
+      },
       bodyStats: () => actor.stats(),
       setActorState: (s) => actor.setState(s),
       lookAt: (yaw) => actor.lookAt(yaw),
@@ -537,6 +589,11 @@ window.addEventListener('keydown', (e) => {
         clock: +clock.toFixed(3),
         drawCalls: renderer.info.render.calls,
         triangles: renderer.info.render.triangles,
+        reader: reader.group ? {
+          visible: reader.group.visible,
+          x: +reader.group.position.x.toFixed(3),
+          z: +reader.group.position.z.toFixed(3),
+        } : null,
       }),
     };
   }

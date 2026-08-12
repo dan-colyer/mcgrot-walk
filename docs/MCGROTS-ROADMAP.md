@@ -28,6 +28,9 @@ below and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c", "G3d". **G3g
 (2026-08-12) closed F12**: `mcgrots-grade.mjs` had been sweeping the unstyled
 look and not S2, so the recorded 6/3 numbers did not reproduce; the tool now
 takes `--look=<id>` and the corrected S2 sweep keeps the same 6/3 decision.**
+**F11 (the interrupted-walk camera cut) is CLOSED, and G4a (2026-08-12) landed
+the rota — the schedule and the walk, silent, no audio yet — with the
+camera-independence gate as its load-bearing check.**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run `npm run
 smoke:mcgrots` for the full suite; boot the game with `npm run dev:mcgrots`
@@ -656,6 +659,38 @@ and the gaps between. That is the content budget for the prototype — not the
 "dozen comics" this document assumed before the kill criterion was set.
 
 Runs on the placeholder cast. See the ordering rule above.
+
+**G4a (2026-08-12) landed the schedule and the walk, silent.** Split from G4
+because McGrot's has no audio module at all yet — playback is G4b, on top of
+this. New module `src/mcgrots/rota.js`: `whoIsHere(now)`/`whatTheyAreDoing(now)`,
+pure functions of a wall-clock timestamp, scheduling the `readings.json` ∩
+audio-on-disk pool of 125 (not the raw 136 — see `MCGROTS-VALIDATION.md` §
+G4a for why the intersection is the correct, already-verified pool) through a
+one-time seeded shuffle and a fixed 45s gap. A capsule-bodied reader (the
+placeholder cast) walks in, stands at the counter, and walks off, driven by a
+`createReader({ scene })` factory `main.js` calls once and updates once per
+frame — nothing else in `main.js` changed to add this.
+
+**F11 landed as a separate commit in the same session** — see § 10, now
+closed.
+
+**The camera-independence gate is the one that matters** (Dan's ruling, this
+document's top of § "The ruling that shapes this unit" in the brief): two
+boots, rota populated vs. `?rota=off`, identical scripted anchor sequence,
+camera position AND orientation sampled at 271 frames and required
+bit-identical. Fault-injected with a realistic mistake (a small `lookAt` bias
+toward the reader) and confirmed red before restoring. Full account, including
+the schedule-purity and one-reader-at-a-time gates and their own fault
+injections: `MCGROTS-VALIDATION.md` § G4a.
+
+**Two approach-point layouts were tried and rejected before the sequence
+capture read as a walk rather than a glitch** — both caught by opening the
+capture, neither by a gate. Numbers and the fix: `MCGROTS-VALIDATION.md` §
+G4a "Rejected: the first two approach-point layouts".
+
+**Not yet built:** audio playback (G4b), McGrot's own interjections (G6),
+generated dialogue (G5). The reader stands silently at the counter for its
+`readings.json` duration and leaves; nothing plays.
 
 ### G5 — The voices
 
