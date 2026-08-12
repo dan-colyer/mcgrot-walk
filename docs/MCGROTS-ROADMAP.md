@@ -1313,3 +1313,73 @@ instead.
 5. **Whether the Foot's real buildings help or hurt.** 41 footprints within
    80 m is reference, not obligation; a stylised pitch may want less of it.
    G0 blocks them out precisely so this can be judged rather than assumed.
+
+---
+
+## 12. Parked ideas — Dan's list, not planned and not scheduled
+
+Ideas dropped in ad hoc, kept here so they are not lost and not silently
+promoted into work. **Nothing in this section is committed to.** An entry
+graduates by being written up as a milestone in § 5 with a brief behind it;
+until then it is a note, and the notes below deliberately record the first
+obstacle rather than a plan.
+
+Add to this list freely. Do not reorder it into priority — the order is
+arrival, and pretending otherwise invents a decision nobody made.
+
+### 12.1 An AI-generated soundtrack, derived from the comics' transcriptions
+
+**Added 2026-08-12 (Dan).**
+
+Music generated from the McGrot comics' transcribed text, so the score comes
+out of the same source material as the readings rather than being laid over
+the top of them.
+
+What it touches: nothing that exists yet. McGrot's has **no audio at all** —
+`src/ambience.js` is the street's and is not in this game's bundle. So this is
+a new module, not a change to one.
+
+First questions, none answered:
+
+- **What generates it, and does the output license permit shipping?** This is
+  the blocker, not the integration. Worth establishing before any design work.
+- **Ambient bed, or per-station?** A single bed is far cheaper and does not
+  compete with the readings. Per-station music and a voice reading at the same
+  station will fight unless one ducks.
+- **Does the verbatim rule reach the lyrics?** Yes, if any comic text is sung
+  or spoken — quoted fragments are sacred, wrapper phrasing is not. A purely
+  instrumental piece *derived* from the text does not engage the rule.
+- **Budget.** The street's ~8 MB ceiling is a single-file-artifact constraint
+  and McGrot's has no build or deploy path yet, so there is no number to hold
+  to. That is a gap, not a licence to be careless.
+
+### 12.2 Player control of the camera direction
+
+**Added 2026-08-12 (Dan).** Wants to rotate the view around the character;
+notes himself that boundaries would be needed.
+
+What it touches: `anchors.js` and `placeCamera()` in `main.js` — and it is in
+real tension with how this game is built, which is the interesting part.
+
+**The five shots are composed, not generated.** G3d spent a unit deciding what
+the player looks at from each anchor, and `anchors.js`'s header records that a
+hand-authored version was already tried and replaced by a rule. Free rotation
+does not extend that system; it partly replaces it. Both can coexist — an
+authored default with a limited arc either side is the obvious shape — but the
+size of that arc is the whole design question.
+
+**Two known findings say what free rotation would expose**, and both are
+already measured, so neither needs re-deriving:
+
+- **The cast is dark from the unlit side.** `rab`'s texture averages RGB
+  (44, 37, 31) and no lighting multiplier lifts it — built, swept and
+  rejected, see `MCGROTS-VALIDATION.md`. The composed shots avoid the worst
+  angles. A free camera finds them immediately. This is G8's asset problem and
+  a free camera raises its priority rather than creating a new fault.
+- **The middle distance is empty.** G3d recorded that the `back` wide has the
+  van left, the statue right and bare ground between. A rotating camera crosses
+  that gap at every anchor.
+
+Also unresolved: how rotation interacts with F6's and F11's camera easing —
+the camera currently belongs to the anchor system, and a player-owned yaw is a
+second thing moving it. F11 is already open on exactly that kind of conflict.
