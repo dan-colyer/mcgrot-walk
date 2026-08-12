@@ -143,24 +143,38 @@ scene.add(markers);
 // statue do; this is dressing consistent with `van.js`'s kerb/pavement
 // stone tones, not a researched feature.
 //
-// OFFSET BEHIND THE ANCHOR, along the actor's facing (G3e, F1/F8). G3c
-// measured that the rig's `hips` bone has ZERO local x/z offset from the
-// actor's group origin in any pose, and used that to delete G1's 0.3 m
-// offset — correct measurement, wrong conclusion. The hip's own offset was
-// never what the number was for: the thighs swing forward from the hip as
-// the actor sits, and with the ledge centred on the anchor those thighs swing
-// straight into the block's front half, buried in the stone up to the
-// capstone. The offset's job is to put the seat's FRONT edge under the
-// buttocks so the thighs swing clear over the top — that derives from the
-// seat's DEPTH, not the hip. `SEAT_ALONG_FACING_OFFSET` below is exactly
-// that: half the depth plus the capstone's overhang, applied along local -z
-// (the holder's local +z maps to `(sin yaw, cos yaw)`, the actor's own
-// facing per `AGENTS.md` § invariants — so -z is behind).
+// OFFSET BEHIND THE ANCHOR, along the actor's facing (G3e, F1/F8; value
+// re-derived G3f). G3c measured that the rig's `hips` bone has ZERO local
+// x/z offset from the actor's group origin in any pose, and used that to
+// delete G1's 0.3 m offset — correct measurement, wrong conclusion. The
+// hip's own offset was never what the number was for: the thighs swing
+// forward from the hip as the actor sits, and with the ledge centred on the
+// anchor those thighs swing straight into the block's front half, buried in
+// the stone up to the capstone. The offset's job is to keep the thighs
+// swinging clear of the stone, applied along local -z (the holder's local
+// +z maps to `(sin yaw, cos yaw)`, the actor's own facing per `AGENTS.md` §
+// invariants — so -z is behind).
+//
+// G3e set this to `SEAT_DEPTH/2 + CAP_OVERHANG` (0.325 m) — the seat's FRONT
+// edge exactly under the buttocks, the minimum offset that clears the
+// thighs. That reads as PERCHED on the corner (G3f, Dan's posture call):
+// measured with the whole seat's depth in front of the hip and none behind,
+// against a rendered three-quarter view. G3f moved the hip further onto the
+// seat by REDUCING this offset — less of the seat is required to be behind
+// the hip once the thigh angle itself is deeper (see `SEAT_DROP`'s sibling
+// comment in `actors/skinned.js`) — and re-verified clearance for the new
+// pose by skinning every leg vertex into this holder's local frame (G3e's
+// method): zero intersections with either the wall or cap boxes at 0.20 m,
+// both sitting anchors. 0.15 m was tried first and re-introduced contact
+// (a visible clip through the cap's front-right corner in the three-quarter
+// render); 0.20 m is the value that cleared it with margin. Not re-derived
+// from a formula the way 0.325 m was — this is a posture choice, verified by
+// measurement rather than computed from one.
 const SEAT_WIDTH = 1.8;    // across — one person, with margin either side
 const SEAT_DEPTH = 0.55;   // front-to-back, along the actor's facing
 const CAP_H = 0.06;
 const CAP_OVERHANG = 0.05;
-const SEAT_ALONG_FACING_OFFSET = SEAT_DEPTH / 2 + CAP_OVERHANG; // 0.325 m, behind
+const SEAT_ALONG_FACING_OFFSET = 0.20;
 const WALL_STONE = 0x5f594c;
 const WALL_CAP = 0x716a58;
 const seats = new THREE.Group();

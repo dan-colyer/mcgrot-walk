@@ -547,6 +547,91 @@ stayed green throughout both the faulty and the fixed injection runs.
 there, sensibly sized, and actually rendered at three of the five anchors it
 should be visible from. Composition judgement is G3b/G3d's, unchanged here.
 
+### G3f — the seated posture, propped read fixed
+
+**Landed 2026-08-12, its own commit, deliberately separate from F9's** (the
+brief's instruction — a judgement Dan may reject should not force reverting a
+mechanical gate fix alongside it).
+
+**Baseline, measured on this session's tree** (G3e's fix already landed):
+`thighL.rotation.x = -0.9666` rad at full sit, 35° below horizontal rather
+than at it; a body-over-seat depth measurement (vertices within 0.15 m of the
+cap's height band, filtered to the seat's lateral footprint) of 0.766 m, and
+90 vertices in contact with the cap surface within a tight band. (The brief's
+own figures — 0.359 m depth, 40 contact vertices — were measured with a
+narrower method; this session's numbers are its own before/after pair, not a
+claim of reproducing the brief's exact technique.) Rendered a three-quarter
+elevated view, a front view and a true side profile at both `wall` and
+`kerb` — clearing the wall deliberately, after the brief's note that G3e's
+own side profile was misread as floating because the near half of the wall
+sat between lens and figure. Seen: the hip sits right at the seat's front
+edge with almost none of the seat's depth visible behind it, torso near
+vertical — the figure reads as perched on the corner, not settled onto the
+wall.
+
+**No number was computed to choose between poses** — per the rule carried
+from G3d's brief, options were rendered and looked at.
+
+**Tried, kept:** deepened both leg coefficients in `actors/skinned.js`
+(`thigh`: 0.80→0.95, `shin`: 0.74→0.85 — thigh closer to horizontal, shin
+closer to vertical beneath it) and reduced `main.js`'s
+`SEAT_ALONG_FACING_OFFSET` from 0.325 m to 0.20 m, moving the hip further
+onto the seat rather than leaving it pinned at the very front edge. Judged
+by re-rendering the same three shots at both anchors: visibly more seat
+depth in front of and behind the body, the torso now sits over the block
+rather than at its lip. `docs/smoke/captures/mcgrots/g3f/` is not populated —
+these are throwaway judgement renders, regenerate with
+`node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --anchor=wall
+--frames=600 --shot=/tmp/x.png` for the real-distance view, or park a camera
+by hand (three-quarter: eye at `pos + facing*1.8 + perp*1.6`, height 1.7,
+look at `pos` height 0.4) for the close judgement view.
+
+**Tried, rejected: `SEAT_ALONG_FACING_OFFSET = 0.15`.** Read slightly better
+than 0.20 (marginally more seat visible behind the hip) but a three-quarter
+render showed the knee clipping through the cap's front-right corner —
+confirmed by eye, not by the leg-intersection measurement alone. 0.20 m was
+the value where the vertex-skinning check (G3e's method) first read zero
+intersections again at both anchors.
+
+**Not tried this session:** torso lean and the pelvis-tilt compensation
+(`PELVIS_TILT`, `actors/skinned.js`) were left exactly as G3c set them. The
+leg change alone read as enough of an improvement over the propped baseline
+to land; torso lean remains the "somewhat better, not dramatically" state
+recorded at G3c and was not re-evaluated here. A future unit revisiting
+posture should look at it before assuming the current read is final.
+
+**Re-verified against all three hard constraints named in the brief:**
+
+- **F10's knee check stays positive.** `wall`/`kerb` knee-along-facing =
+  0.369 m at the new coefficients (was 0.340 m before this change — deeper
+  thigh swings the knee further forward too), against the gate's 0.15 m
+  floor. Fault-injected the sign flip again with the NEW coefficients
+  (`thigh`/`shin` mirrored): the check correctly went red. Restored, 44/44.
+- **Seat contact re-verified, not assumed.** G3e's vertex-skinning method
+  (skin every leg vertex into the ledge holder's local frame, test against
+  the wall and cap boxes) re-run against the new pose and the new offset:
+  zero intersections, both boxes, both anchors, 1010 leg vertices checked
+  per anchor — same result as G3e, re-measured rather than carried over.
+- **F4's torso-patch threshold untouched.** Re-checked after landing: stddev
+  reads 1.8, identical to the value G3c already lowered it to accommodate —
+  this leg-only change did not move it, so there was nothing to decide about
+  touching the threshold a second time.
+
+**At the real anchor camera distance the improvement is marginal.** 600-frame
+S2 renders of `wall` and `kerb` (the distance the game actually plays at)
+show the figure occupying few enough pixels that the before/after difference
+is difficult to see at a glance — closer to F2's own "does not read at this
+distance" finding than to G3e's clearly-visible fix. Landed anyway: the
+close-up read is a genuine, measured improvement, it costs nothing at the
+anchors where it doesn't show, and a future camera or interior view closer
+to the figure would benefit from it.
+
+**What this does not prove:** that the pose is settled. The rig has nine
+bones and no feet; a fully convincing seated pose may not be reachable
+without more of either, and this unit did not attempt to establish that
+ceiling — it only fixed the specific "propped, not sat" read the brief
+named.
+
 ### Faults in the G3 GATES, found by the phase gate
 
 Logged 2026-08-12 from `.herdr/gate3.md`, audit of `7ed2a4e..4c3286d`. These

@@ -16,8 +16,11 @@ backwards and the thighs buried in the capstone, and is **now closed again by
 G3e (2026-08-12)** — the leg sign and the ledge offset landed together with
 F10's replacement gate (§ 10 F1, F7, F8, F10). **G3f (2026-08-12) closed F9**
 (the statue region gated existence, not visibility) with a real
-projection+content gate; the posture half of G3f's brief is tracked
-separately below.
+projection+content gate, in its own commit, and separately deepened the
+seated pose's leg angle and ledge offset so the figure reads as settled on
+the wall rather than perched on its corner — landed as its own commit too,
+re-verified against F10's knee check and G3e's seat-contact measurement.
+Full account: `docs/MCGROTS-VALIDATION.md` § "G3f".
 **G3c turned out narrower than originally planned**: the composed shots and
 the fixed hour were deliberately not in it (a posture whose ledge did not yet
 exist could not be composed around), and landed as G3d on 2026-08-12. See § G3

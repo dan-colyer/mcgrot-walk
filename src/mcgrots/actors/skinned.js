@@ -148,8 +148,29 @@ export function makeSkinnedBody({ assets, archetype = 'rab' }) {
       // SEAT_DROP is the height of the thing being sat on. It has to agree with
       // the ledge at the sitting anchors (src/mcgrots/anchors.js) or the figure
       // hovers over it or sinks into it.
-      const thigh = -sit * (Math.PI / 2) * 0.80;
-      const shin = sit * (Math.PI / 2) * 0.74;
+      //
+      // G3f, Dan's posture call: F7's fix (G3e) got the DIRECTION right but
+      // the figure still read as PROPPED against the wall rather than sat
+      // back on it — measured at the 0.80/0.74 coefficients, `thighL.rotation.x`
+      // was 35° below horizontal, and a three-quarter render showed almost no
+      // seat depth behind the hip. Deepened both coefficients (0.80→0.95,
+      // 0.74→0.85: thigh closer to horizontal, shin closer to vertical
+      // beneath it) and moved the hip further onto the seat by reducing the
+      // ledge's along-facing offset (`SEAT_ALONG_FACING_OFFSET`, `main.js`).
+      // Judged by rendering three-quarter, front and side views at both
+      // sitting anchors and looking, per this brief's own rule: a number was
+      // never computed to pick between poses. Re-verified: the F10 knee
+      // check stays positive (required — a pose that fails it has
+      // reintroduced F1), and re-measuring seat contact (G3e's
+      // vertex-skinning method) shows zero leg-geometry intersection with
+      // either the wall or cap boxes at the new offset, both anchors. Torso
+      // lean and the pelvis tilt below are UNCHANGED this session — the leg
+      // change alone read as enough of an improvement to land; torso lean is
+      // still the "somewhat better, not dramatically" state from G3c. See
+      // `docs/MCGROTS-VALIDATION.md` § "G3f" for what was tried and the
+      // renders it was judged against.
+      const thigh = -sit * (Math.PI / 2) * 0.95;
+      const shin = sit * (Math.PI / 2) * 0.85;
       // While walking, the shin trails the thigh slightly — a straight leg
       // swinging from the hip is the stiff-legged march the strips showed.
       const shinTrail = walking ? -Math.max(0, Math.sin(t)) * 0.30 : 0;
