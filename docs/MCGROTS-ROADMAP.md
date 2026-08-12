@@ -542,7 +542,10 @@ the five shipped camera sightlines. It preserves the prior exact minimum of
 10.160m, 11.328m, 8.283m, 12.186m and 10.800m for counter, wall, kerb, far and
 back. The control is the camera-ray distance, not a scene-node count. The
 authored statue replaces `statue-placeholder` in the product scene as a second
-check.
+check. The landed full smoke is `35/35 passed in 2.0s` under Chromium/Metal;
+fault-injecting the product centre to `(10,-5)` made the statue region fail
+`1/2` (distances 0.562m / 1.359m / 1.297m / 1.035m / 0.380m), and restoring
+`(0,0)` returned it to `2/2`.
 
 ### G4 — The rota
 

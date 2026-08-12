@@ -554,17 +554,17 @@ styleshot timing fix.
 
 The first combined-tree smoke before Sonnet's G3a commit was `33/35 passed`
 because the in-flight van visibility/content checks were red; that result was
-not attributed to G3b. The final combined verification belongs after G3a's
-landing. No acceptance gate was added without a control: the statue sightline
-check has the named camera-ray control and is fault-injected after the landing.
+not attributed to G3b. After G3a landed, commit `9723f60` was bundled to a
+1.9 MB output and the full `npm run smoke:mcgrots` completed **35/35 passed in
+2.0s** under Chromium/Metal. Both `main.js` build hooks are present in the
+landed tree; the G3b commit itself touched only the statue, site and docs.
 
-Verification for this investigation: `node --check scripts/mcgrots-sun.mjs` and
-`git diff --check` passed. After control cleared the shared render commands,
-`npm run bundle:mcgrots` completed with a 1.9 MB bundle and
-`npm run smoke:mcgrots` completed **27/27 passed in 1.2s** under Chromium/Metal.
-That bundle included Sonnet's in-flight `src/mcgrots/page.js`; the smoke result
-is repository verification, not evidence for this sun change, and the S4/page
-result in particular is not attributed here.
+The gate was fault-injected after that commit by changing the product's
+`STATUE` centre to `(10,-5)` and rerunning
+`npm run smoke:mcgrots -- --only=statue`: it went red at **1/2**, with
+counter 0.562m, wall 1.359m, kerb 1.297m, far 1.035m and back 0.380m. The
+source was restored to `(0,0)`, bundled again, and the isolated control returned
+to **2/2 passed in 0.6s**, with the exact distances above.
 
 ### The candidates came from reading the comics, not from a list of techniques
 
