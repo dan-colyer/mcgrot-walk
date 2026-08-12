@@ -526,6 +526,33 @@ try {
     check('the eased camera arrives exactly at the destination anchor',
       cameraWalk.endDelta < 0.01,
       `${cameraWalk.endDelta.toFixed(4)}m from the far anchor's eye once arrived`);
+
+    // F11. The check above only ever drives parked -> walk, which is exactly
+    // why it never caught this: interrupting an IN-PROGRESS walk (`onPick`
+    // and the number-key handler both call `goTo` with no guard on
+    // `actor.walking`) used to ease from the anchor being ABANDONED, not from
+    // the camera's live mid-ease position. Repro named in the brief: parked
+    // at `back`, `goTo('far')`, 30 frames, then `goTo('counter')` — measured
+    // before the fix at 2.442m of a 10.324m move, 23.7%, against the same 10%
+    // ceiling the walk-vs-snap check above uses.
+    const interrupted = await page.evaluate(() => {
+      const d = window.__mcgrotsDebug;
+      d.snapTo('back');
+      d.goTo('far');
+      d.stepFrames(30);
+      const before = d.state().camera;
+      const to = d.anchors.find((a) => a.id === 'counter').camera.eye;
+      const total = Math.hypot(to.x - before.x, to.y - before.y, to.z - before.z);
+      d.goTo('counter');
+      d.stepFrames(1);
+      const after = d.state().camera;
+      const frame1 = Math.hypot(after.x - before.x, after.y - before.y, after.z - before.z);
+      return { total, frame1 };
+    });
+    const interruptedFrac = interrupted.total > 0 ? interrupted.frame1 / interrupted.total : 0;
+    check('interrupting an in-progress walk still eases, not cuts (F11)',
+      interruptedFrac < 0.1,
+      `frame-1 ${interrupted.frame1.toFixed(3)}m of ${interrupted.total.toFixed(3)}m total (${(interruptedFrac * 100).toFixed(1)}%)`);
   }
 
   // ------------------------------------------------------------------ van ---

@@ -1437,3 +1437,47 @@ that is literally what sits behind it, and a real render fills the panel
 with sky, ground and massing, none of which is close to it. Fault-injected
 (the `clip-path` assignment disabled) and confirmed red — 98.4% of sampled
 panel pixels matched the paper colour, against 0.0% fixed — then restored.
+
+## G4a — F11, the interrupted-walk camera cut, FIXED
+
+**Resolved 2026-08-12.** Full write-up of the bug: `MCGROTS-ROADMAP.md` § F11.
+Summary of the measurement, for a reader of this file only: `goTo()` set
+`previous = from` where `from` was `current` before reassignment — the anchor
+the actor was walking TO, not where the camera visually was. Interrupting an
+in-progress walk (retargeting `goTo` before the first walk finished, which
+`onPick` and the number-key handler both allow unconditionally) eased the
+camera FROM that abandoned anchor's own eye/look, which can be anywhere —
+measured at 2.442m of a 10.324m move, 23.7% of the total, against the
+region's own 10% ceiling.
+
+**Fix:** `previous` is now a snapshot of `camera.position` and `lastLook` (a
+new module-level variable holding the look point the most recent
+`placeCamera()` call used), captured live in `goTo()` at the instant a walk
+starts. For a fresh walk from a parked anchor this is a no-op change — the
+live camera pose already equals that anchor's own eye/look — so F6's original
+gate ("a walk eases the camera") is unaffected by construction, not by
+coincidence: re-ran unchanged and still passes at 0.0%. For an interrupted
+walk it is the fix: the ease now starts from wherever the camera actually was,
+never from an anchor reference.
+
+**Gate:** `anchors` region, "interrupting an in-progress walk still eases, not
+cuts (F11)" — same repro as the measurement above (`snapTo('back')`,
+`goTo('far')`, 30 frames, `goTo('counter')`), same < 10% ceiling as the
+existing walk-vs-snap check it sits beside. Re-measured post-fix: **0.001m of
+10.553m, 0.01%.**
+
+**Fault-injected and confirmed red.** Reintroduced the exact original bug
+(`const from = current` ahead of the reassignment, `previous =
+from?.camera ?? null`), re-ran `--only=boot,camera,anchors`: 16/17, the new
+check failing at **23.1% of the total move** — matching the 23.7% recorded in
+the roadmap to within measurement noise (a different frame-30 position along
+the ease curve). Every other check in the region — the F6 walk/snap pair, the
+picture checks, the anchor-arrival checks — stayed green throughout, which is
+the control: the injection touches only the interrupted-walk path. Restored
+and reconfirmed 17/17.
+
+**Not gated: the general "does any `goTo` sequence ever produce a large
+frame-1 jump" question**, only this one specific repro. A future retargeting
+path with different timing (e.g. interrupting a snap rather than a walk, which
+`goTo`'s snap branch structurally cannot reach because it is a deliberate cut)
+would need its own check if one is ever added.

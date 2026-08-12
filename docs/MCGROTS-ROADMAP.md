@@ -1247,12 +1247,13 @@ standing control can still fall outside of. Every new/changed assert was
 fault-injected and confirmed red; full derivations in
 `docs/MCGROTS-VALIDATION.md` § "G3e".
 
-### F11 — the camera cuts when a walk is interrupted (G3 gate, OPEN)
+### F11 — the camera cuts when a walk is interrupted (G3 gate, CLOSED 2026-08-12 by G4a)
 
 **Severity: medium**, and reachable on the shipped path. F6 eases the camera
 only when a walk starts from rest; re-target mid-walk and it cuts.
 
-Measured — parked at `back`, `goTo('far')`, 30 frames, then `goTo('counter')`:
+Measured before the fix — parked at `back`, `goTo('far')`, 30 frames, then
+`goTo('counter')`:
 
 | | |
 |---|---|
@@ -1260,17 +1261,33 @@ Measured — parked at `back`, `goTo('far')`, 30 frames, then `goTo('counter')`:
 | `far` → `counter` total | 10.324 m |
 | fraction on frame 1 | **23.7%** — the region's own gate asserts < 10% |
 
-`goTo` sets `previous = from`, where `from` is `current` — the anchor being
-*abandoned*, not where the camera actually is. Mid-walk the camera sits between
-two shots, is snapped to the abandoned destination's eye, and eases from there.
-`onPick` (bound to `pointerdown`) and the number-key handler both call `goTo`
-with no guard on `actor.walking`, so a player clicking a second spot before the
-first walk finishes is ordinary use. The `camera` region only ever tests parked
-→ walk, so it never enters this state.
+`goTo` set `previous = from`, where `from` was `current` — the anchor being
+*abandoned*, not where the camera actually was. Mid-walk the camera sat between
+two shots, was snapped to the abandoned destination's eye, and eased from
+there. `onPick` (bound to `pointerdown`) and the number-key handler both call
+`goTo` with no guard on `actor.walking`, so a player clicking a second spot
+before the first walk finishes is ordinary use. The `camera` region only ever
+tested parked → walk, so it never entered this state.
 
-Suggested fix: ease from the camera's LIVE position rather than from an anchor,
-which also deletes the `previous === null` special case. **Not yet briefed —
-Dan's staging call on when this lands** (§ 11).
+**FIXED, G4a (2026-08-12), taking the suggested fix.** `previous` is now a
+snapshot of `camera.position` and the look point `placeCamera()` last used
+(`lastLook`, updated at the end of every `placeCamera()` call), captured in
+`goTo()` at the instant a walk starts — not a reference to any anchor. This
+also deletes the old `previous === null` special case: previous is always the
+camera's live pose now, so there is nothing left to be null once the boot snap
+has run (the `&& previous` guard in `placeCamera()` survives regardless, for
+the debug API's raw `actor.walkTo()`, which bypasses `goTo` entirely — every
+caller of that pairs it with `setReviewCamera()`, which returns before this
+branch is reached, so the guard is dead in practice and only stops an
+unpaired raw `walkTo()` from crashing).
+
+Re-measured, same repro: frame-1 jump **0.001m of 10.553m (0.01%)**, against
+the same < 10% gate. New gate, `anchors` region: "interrupting an
+in-progress walk still eases, not cuts (F11)". Fault-injected by
+reintroducing the exact bug (`const from = current` before reassignment,
+`previous = from?.camera`) and re-running `--only=boot,camera,anchors`: 16/17,
+frame-1 23.1% of the total move (matches the 23.7% recorded above), every
+other check in the region unaffected. Restored and reconfirmed 17/17.
 
 ### F12 — G3d's grade numbers do not reproduce (G3 gate, CLOSED 2026-08-12 by G3g)
 
@@ -1354,10 +1371,6 @@ camera at the actor's facing — the anchor shots cannot show it.
 
 ## 11. Still open
 
-0. **When F11 lands.** The interrupted-walk camera cut is real, reachable and
-   understood, and the fix is small. Whether it goes in before G4 or waits is
-   Dan's staging call, not the orchestrator's — it competes with the rota for
-   the same session. Unasked as of 2026-08-12.
 0.5 **McGrot's voice — Dan curates this one.** Added 2026-08-12 on his call:
    a placeholder is fine for now, the real choice is his and comes later.
 
@@ -1470,4 +1483,7 @@ already measured, so neither needs re-deriving:
 
 Also unresolved: how rotation interacts with F6's and F11's camera easing —
 the camera currently belongs to the anchor system, and a player-owned yaw is a
-second thing moving it. F11 is already open on exactly that kind of conflict.
+second thing moving it. F11 (closed 2026-08-12) was exactly that kind of
+conflict, between two anchors rather than a free yaw; the fix there — ease
+from the camera's own live pose, never an anchor reference — is the shape a
+rotation feature would need too.

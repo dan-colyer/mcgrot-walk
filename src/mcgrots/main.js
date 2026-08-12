@@ -210,14 +210,18 @@ scene.add(seats);
 
 let footData = null;
 let current = null;          // the anchor the actor is parked at or heading to
-let previous = null;         // F6: the anchor the camera is easing FROM during a walk
+// F6, fixed under F11: `{ eye: {x,y,z}, look: {x,y,z} }` the camera is easing
+// FROM during a walk — a snapshot of where the camera actually IS at the
+// moment the walk starts, not a reference to the anchor being abandoned. See
+// F11's comment below `goTo` for why that distinction is the whole fix.
+let previous = null;
+let lastLook = { x: 0, y: 0, z: 0 }; // F11: the look point placeCamera() last used
 let clock = 0;               // seconds of game time; wall-clock in G4
 let bodyError = null;        // a candidate that failed to load — reported, not thrown
 
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
   if (!a) return false;
-  const from = current;
   current = a;
   if (snap) {
     // A SNAP is a panel change: the actor is somewhere else on the next frame
@@ -233,11 +237,39 @@ function goTo(id, { snap = false } = {}) {
       placeCamera();
     });
   } else {
-    // `from` is whatever anchor the camera was AT (or last eased to) before
-    // this call — null only if a walk is somehow requested before the boot
-    // snap has ever run, in which case placeCamera() below falls back to a
-    // cut for this one transition, having nothing to ease from.
-    previous = from;
+    // F11, fixed 2026-08-12. The bug: this used to read `previous = from`,
+    // where `from` was `current` before reassignment — the anchor the actor
+    // was walking TO, not where the camera actually was. Interrupting a walk
+    // (goTo called again with `actor.walking` already true — `onPick` and the
+    // number-key handler both call `goTo` with no guard on it) made the next
+    // ease start from that abandoned anchor's eye, which is nowhere near the
+    // camera's live mid-ease position: a 10.324 m move opened with a 2.442 m
+    // jump, 23.7% of the move, against the gate's 10% ceiling.
+    //
+    // The fix takes the phase gate's own suggestion: ease from the camera's
+    // LIVE position instead of from an anchor. `previous` is now a snapshot
+    // of `camera.position` and the look point placeCamera() last used
+    // (`lastLook`, updated at the end of every placeCamera() call), captured
+    // right here at the instant the walk starts — whether that is a fresh
+    // walk from a parked anchor (where live position already equals that
+    // anchor's own eye/look, so this is a no-op change for that case) or an
+    // interruption mid-ease (where it is not, and is exactly the fix).
+    //
+    // This also deletes the old `previous === null` special case: previous
+    // is always the camera's actual current pose now, never an anchor
+    // reference, so there is nothing left to be null once the boot snap has
+    // run. `placeCamera()` keeps the `&& previous` guard below regardless —
+    // not for this path, but because the debug API's raw `actor.walkTo()`
+    // (`dbg.walkTo`) can start a walk without ever calling `goTo`, and every
+    // caller of that (`scripts/mcgrots-bakeoff.mjs`) pairs it with
+    // `setReviewCamera()`, which returns out of this function before this
+    // branch is ever reached — so the guard is dead in practice, kept only
+    // so an unpaired raw `walkTo()` degrades to the old static-cut behaviour
+    // instead of a crash.
+    previous = {
+      eye: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+      look: { x: lastLook.x, y: lastLook.y, z: lastLook.z },
+    };
     actor.walkTo(a.pos.x, a.pos.z, a.yaw);
   }
   page.setCaption(a.label);
@@ -279,30 +311,35 @@ function placeCamera() {
   if (reviewMode && actor) {
     const r = REVIEW[reviewMode] || REVIEW.side;
     const p = actor.group.position;
+    const lx = p.x + r.look[0], ly = r.look[1], lz = p.z + r.look[2];
     camera.position.set(p.x + r.off[0], r.off[1], p.z + r.off[2]);
-    camera.lookAt(p.x + r.look[0], r.look[1], p.z + r.look[2]);
+    camera.lookAt(lx, ly, lz);
+    lastLook = { x: lx, y: ly, z: lz };
     return;
   }
   if (!current) return;
   if (actor.walking && previous) {
+    // F11: eases from `previous.eye`/`previous.look` — the camera's OWN live
+    // pose at the moment this walk started, captured in `goTo` — to the new
+    // anchor's shot. Not from an anchor's own eye/look, which is the bug this
+    // fixed; see `goTo`'s comment.
     const t = easeCamera(actor.progress);
-    const pe = previous.camera.eye, ce = current.camera.eye;
-    const pl = previous.camera.look, cl = current.camera.look;
+    const pe = previous.eye, ce = current.camera.eye;
+    const pl = previous.look, cl = current.camera.look;
+    const lx = pl.x + (cl.x - pl.x) * t, ly = pl.y + (cl.y - pl.y) * t, lz = pl.z + (cl.z - pl.z) * t;
     camera.position.set(
       pe.x + (ce.x - pe.x) * t,
       pe.y + (ce.y - pe.y) * t,
       pe.z + (ce.z - pe.z) * t,
     );
-    camera.lookAt(
-      pl.x + (cl.x - pl.x) * t,
-      pl.y + (cl.y - pl.y) * t,
-      pl.z + (cl.z - pl.z) * t,
-    );
+    camera.lookAt(lx, ly, lz);
+    lastLook = { x: lx, y: ly, z: lz };
     return;
   }
   const c = current.camera;
   camera.position.set(c.eye.x, c.eye.y, c.eye.z);
   camera.lookAt(c.look.x, c.look.y, c.look.z);
+  lastLook = { x: c.look.x, y: c.look.y, z: c.look.z };
 }
 
 function frame(dt) {
