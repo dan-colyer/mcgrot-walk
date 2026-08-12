@@ -1296,6 +1296,41 @@ script a `--look` flag, re-derive, and correct the three documents. Commit
 `4c3286d`'s subject line cannot be amended — note the correction in the docs
 instead.
 
+### F13 — the seated figure's feet do not reach the ground (G3f, PARKED)
+
+**Severity: low as shipped, and deliberately not fixed.** Dan's call
+2026-08-12: this needs its own phase rather than a quick patch.
+
+G3f's posture change put the body properly back on the seat and lifted the feet
+off the ground doing it. Measured across the change, `wall` and `kerb`
+identical:
+
+| | G3e | G3f |
+|---|---|---|
+| body depth on the 0.65 m seat | 0.3587 m | 0.4837 m |
+| vertices touching the cap | 40 | 79 |
+| knee ahead of hip | 0.340 m | 0.369 m |
+| **lowest point of the model** | **−0.0142 m** (planted) | **+0.0743 m** (in the air) |
+
+A 1.72 m figure on a 0.57 m wall should plant its feet comfortably, so this is
+wrong rather than stylised. Deepening the thigh shortened the leg's vertical
+reach without the shin compensating, so the naive fix is the same two
+coefficients G3f moved — but the constraints interact, which is why it is
+parked rather than attempted: lengthening the leg pushes the knee further
+forward, `SEAT_DROP` moves the hip off the seat it was just placed on, and both
+are gated now.
+
+**Not visible on the shipped path.** The `wall` and `kerb` anchor cameras show
+the figure from behind with the wall across him; the feet are out of frame.
+This is the same ground F2 was closed on — a real defect the game never points
+a camera at.
+
+**What un-parks it: § 12.2, player-controlled camera rotation.** A free camera
+finds this angle immediately, along with the two findings § 12.2 already names.
+If that idea graduates, this fault comes with it and the phase should cover
+both. Judged from `2-feet-off-the-ground.png`, regenerable with a low front
+camera at the actor's facing — the anchor shots cannot show it.
+
 ---
 
 ## 11. Still open
@@ -1357,6 +1392,9 @@ First questions, none answered:
   to. That is a gap, not a licence to be careless.
 
 ### 12.2 Player control of the camera direction
+
+**Carries § 10 F13 with it.** The seated figure's feet do not reach the ground;
+the composed shots never show it and a free camera would.
 
 **Added 2026-08-12 (Dan).** Wants to rotate the view around the character;
 notes himself that boundaries would be needed.
