@@ -534,14 +534,24 @@ try {
       rows.push({ id, seated: await measure(id, true), standing: await measure(id, false) });
     }
 
-    // 3cm of footprint slack (the coat/pose is not pixel-precise) and 6cm of
+    // MEASURED AS DISTANCE TO THE LEDGE'S CENTRE, not footprint containment —
+    // the first version of this check asserted only "hip is somewhere inside
+    // the ledge's box" and it did NOT go red under the fault injection below:
+    // the ledge is 0.55m deep plus a 0.05m capstone overhang each side, so
+    // the old independent 0.3m offset shifts the box's centre by 0.3m but
+    // still leaves the (unmoved) hip inside its now off-centre footprint.
+    // Containment is generous by design — a seat you can be anywhere on — so
+    // it cannot also be the test for "roughly centred on it", which is the
+    // actual claim. Distance to centre is directly the thing F1 diagnosed
+    // ("nothing guarantees the hip lands over the seat"): 10cm of tolerance
+    // in each horizontal axis (the coat/pose is not pixel-precise) and 6cm of
     // height tolerance against the ledge's TOP (the cap, per the Box3 — the
-    // wall's own overhanging capstone, not the base course under it).
-    const MARGIN = 0.03;
+    // overhanging capstone, not the base course under it).
+    const CENTRE_TOL = 0.10;
     const HEIGHT_TOL = 0.06;
     const overSeat = (hip, box) => !!box
-      && hip.x >= box.min.x - MARGIN && hip.x <= box.max.x + MARGIN
-      && hip.z >= box.min.z - MARGIN && hip.z <= box.max.z + MARGIN
+      && Math.abs(hip.x - (box.min.x + box.max.x) / 2) <= CENTRE_TOL
+      && Math.abs(hip.z - (box.min.z + box.max.z) / 2) <= CENTRE_TOL
       && Math.abs(hip.y - box.max.y) <= HEIGHT_TOL;
 
     const bad = rows.filter((r) => !overSeat(r.seated.hip, r.seated.box));
