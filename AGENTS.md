@@ -17,7 +17,7 @@
 
 ```bash
 npm run bundle:mcgrots   # esbuild + stamps the html — run before any smoke
-npm run smoke:mcgrots    # 27 checks, ~1.2s warm. The gate.
+npm run smoke:mcgrots    # 30 checks, ~1.4s warm. The gate.
 npm run smoke:mcgrots -- --only=style
 npm run dev:mcgrots      # :5175, then /mcgrots.html?body=skinned&look=aerial
 
