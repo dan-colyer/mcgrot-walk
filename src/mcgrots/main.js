@@ -175,30 +175,48 @@ scene.add(seats);
 
 let footData = null;
 let current = null;          // the anchor the actor is parked at or heading to
+let previous = null;         // F6: the anchor the camera is easing FROM during a walk
 let clock = 0;               // seconds of game time; wall-clock in G4
 let bodyError = null;        // a candidate that failed to load — reported, not thrown
 
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
   if (!a) return false;
+  const from = current;
   current = a;
   if (snap) {
     // A SNAP is a panel change: the actor is somewhere else on the next frame
     // and so is the camera. Under S4 that gets the gutter hold, which is what
     // the whole candidate is testing. A WALK is not — the walk between anchors
     // is the thing Dan asked to be able to watch (roadmap § decisions), and
-    // cutting away from it would be cutting away from the game.
+    // cutting away from it would be cutting away from the game. F6: only the
+    // snap branch is a cut, so `previous` is left alone here — the walk
+    // branch is the only reader of it.
     page.cut(() => {
       actor.snapTo(a.pos.x, a.pos.z, a.yaw);
       actor.setState(a.sit ? 'sit' : 'idle');
       placeCamera();
     });
   } else {
+    // `from` is whatever anchor the camera was AT (or last eased to) before
+    // this call — null only if a walk is somehow requested before the boot
+    // snap has ever run, in which case placeCamera() below falls back to a
+    // cut for this one transition, having nothing to ease from.
+    previous = from;
     actor.walkTo(a.pos.x, a.pos.z, a.yaw);
   }
   page.setCaption(a.label);
   return true;
 }
+
+// Cubic Hermite / smoothstep: 3t² − 2t³. Zero derivative at both ends, so the
+// camera leaves and arrives at rest rather than at a constant speed that
+// starts and stops on a hard corner — the thing that reads as a glide rather
+// than a slide. Chosen over linear for exactly that softness, and over
+// anything higher-order (e.g. quintic smootherstep) because F6 has no
+// evidence either way that the extra derivative continuity is visible at
+// these distances and durations; this is the cheapest curve with soft ends.
+const easeCamera = (t) => t * t * (3 - 2 * t);
 
 // G1's review camera: a fixed offset from the actor rather than a fixed point
 // in the world, so a walking figure stays centred and the same size in every
@@ -213,9 +231,15 @@ const REVIEW = {
   threequarter: { off: [1.9, 1.15, 1.9], look: [0, 0.85, 0] },
 };
 
-// The camera cuts rather than flies. A fixed shot per anchor is the whole
-// staging model (anchors.js) — interpolating between them would reintroduce
-// the arbitrary angles the model exists to avoid.
+// F6, Dan 2026-08-12: "let's just try and make any camera cuts smooth." The
+// shots are still fixed per anchor (anchors.js) — nothing here invents a new
+// angle — but a WALK now eases the camera from the anchor it left to the one
+// it is headed for, tied to `actor.progress` rather than a timer of its own
+// (constraint: a duplicate clock drifts out of step with the actor and the
+// camera lands early or late). A SNAP still cuts: `page.cut(...)`'s callback
+// calls this directly, `current.camera` on its own with `actor.walking`
+// false, same as before this fix — the parked and snapped poses are
+// untouched by construction, not by a special case.
 function placeCamera() {
   if (reviewMode && actor) {
     const r = REVIEW[reviewMode] || REVIEW.side;
@@ -225,6 +249,22 @@ function placeCamera() {
     return;
   }
   if (!current) return;
+  if (actor.walking && previous) {
+    const t = easeCamera(actor.progress);
+    const pe = previous.camera.eye, ce = current.camera.eye;
+    const pl = previous.camera.look, cl = current.camera.look;
+    camera.position.set(
+      pe.x + (ce.x - pe.x) * t,
+      pe.y + (ce.y - pe.y) * t,
+      pe.z + (ce.z - pe.z) * t,
+    );
+    camera.lookAt(
+      pl.x + (cl.x - pl.x) * t,
+      pl.y + (cl.y - pl.y) * t,
+      pl.z + (cl.z - pl.z) * t,
+    );
+    return;
+  }
   const c = current.camera;
   camera.position.set(c.eye.x, c.eye.y, c.eye.z);
   camera.lookAt(c.look.x, c.look.y, c.look.z);

@@ -252,6 +252,60 @@ try {
 
     check('console still clean after driving the anchors',
       consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+
+    // F6: the camera used to CUT to the destination shot the instant a walk
+    // began — `current = a` was assigned before the walk started, and
+    // `placeCamera()` read `current.camera` every frame regardless of
+    // whether the actor had gone anywhere yet. Measured before the fix:
+    // camera moved 10.324m on frame 1 of one `goTo('far')` from `counter`
+    // while the actor moved 0.020m.
+    //
+    // GATED AS A FRACTION OF THE TOTAL CAMERA TRAVEL, not an absolute
+    // distance — anchors sit at different separations, and a fixed-metre
+    // threshold would be tuned to one pair and silently wrong for another.
+    //
+    // THE CONTROL IS THE SNAP PATH, not the walk arm with the fix toggled
+    // off through the same code path. `goTo(id, { snap: true })` is a real,
+    // separate branch that must stay a hard cut — the boot call and S4's
+    // gutter cut both depend on it — so measuring it alongside the walk arm
+    // is on-vs-off across two branches that genuinely differ, not a
+    // calculation checked against itself.
+    const cameraTravel = async (mode) => page.evaluate((m) => {
+      const d = window.__mcgrotsDebug;
+      d.snapTo('back');
+      const from = d.anchors.find((a) => a.id === 'back').camera.eye;
+      const to = d.anchors.find((a) => a.id === 'far').camera.eye;
+      const total = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+      if (m === 'snap') d.snapTo('far'); else d.goTo('far');
+      d.stepFrames(1);
+      const c1 = d.state().camera;
+      const frame1 = Math.hypot(c1.x - from.x, c1.y - from.y, c1.z - from.z);
+      // Long enough to arrive from any anchor pair at 1.35 m/s.
+      d.stepFrames(600);
+      const end = d.state().camera;
+      const endDelta = Math.hypot(end.x - to.x, end.y - to.y, end.z - to.z);
+      return { total, frame1, endDelta };
+    }, mode);
+
+    const cameraWalk = await cameraTravel('walk');
+    const cameraSnap = await cameraTravel('snap');
+    const walkFrac = cameraWalk.total > 0 ? cameraWalk.frame1 / cameraWalk.total : 0;
+    const snapFrac = cameraSnap.total > 0 ? cameraSnap.frame1 / cameraSnap.total : 0;
+
+    check('a walk eases the camera — frame 1 is a small fraction of the total move',
+      walkFrac < 0.1,
+      `frame-1 ${cameraWalk.frame1.toFixed(3)}m of ${cameraWalk.total.toFixed(3)}m total (${(walkFrac * 100).toFixed(1)}%)`);
+
+    check('the snap control still cuts the camera on frame 1',
+      snapFrac > 0.95,
+      `frame-1 ${cameraSnap.frame1.toFixed(3)}m of ${cameraSnap.total.toFixed(3)}m total (${(snapFrac * 100).toFixed(1)}%)`);
+
+    // A camera that eases but never quite lands is still wrong — this is the
+    // check that catches an easing curve which asymptotes instead of
+    // resolving, or a `progress` that never reaches exactly 1.
+    check('the eased camera arrives exactly at the destination anchor',
+      cameraWalk.endDelta < 0.01,
+      `${cameraWalk.endDelta.toFixed(4)}m from the far anchor's eye once arrived`);
   }
 
   // --------------------------------------------------------------- style ---

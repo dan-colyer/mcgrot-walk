@@ -42,6 +42,7 @@ export function makeActor({ body, height = 1.72, camera = null }) {
   let targetYaw = 0;
   let phase = 0;              // metres walked, monotonic
   let headYaw = 0;
+  let walkDist = 0;           // straight-line distance for the CURRENT walkTo, metres
 
   const api = {
     group,
@@ -52,6 +53,20 @@ export function makeActor({ body, height = 1.72, camera = null }) {
     get state() { return state; },
     get walking() { return target !== null; },
     get phase() { return phase; },
+
+    // F6: 0 at the start of the current walkTo, 1 once arrived (target is
+    // null again, per `walking`'s own definition). Read-only and derived from
+    // the SAME target/position walkTo and update() already track — never a
+    // second copy of the pathing, which would drift out of step with it. A
+    // caller with no walk in flight (target === null) gets 1: "there is
+    // nothing left to travel", which is also the correct value the instant
+    // arrival lands, so a consumer never has to special-case that frame.
+    get progress() {
+      if (!target) return 1;
+      const dx = target.x - group.position.x, dz = target.z - group.position.z;
+      const remaining = Math.hypot(dx, dz);
+      return walkDist > 0 ? Math.max(0, Math.min(1, 1 - remaining / walkDist)) : 1;
+    },
 
     setState(name) { state = name; },
 
@@ -68,6 +83,7 @@ export function makeActor({ body, height = 1.72, camera = null }) {
     },
 
     walkTo(x, z, yaw) {
+      walkDist = Math.hypot(x - group.position.x, z - group.position.z);
       target = { x, z, yaw };
       state = 'walk';
     },
