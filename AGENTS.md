@@ -127,6 +127,20 @@ everything the answer does not block. A question is not a reason to idle.
 
 ## Project invariants
 
+- **McGrot's actor faces `(+sin yaw, +cos yaw)` — the OPPOSITE of the street.**
+  `CLAUDE.md` documents the street's forward as `(-sin yaw, -cos yaw)`; that is
+  right there and wrong here. Copying the street's formula mirrors every
+  direction you derive from it, **including where you park a review camera** —
+  which is how G3c rendered a shot of the seated figure, opened it, and read
+  backwards as forwards. Where you can, derive direction from travel instead:
+  walk the actor and watch where it goes. That needs no convention and cannot
+  be inverted.
+- **Authored scene content gets a rendered-frame check, never a scene-graph
+  one.** `getObjectByName(...)` being non-null proves a function ran.
+  `statue.visible = false` passed the statue region 2/2 and the full suite
+  38/38 with nothing drawn at all. Project the AABB into screen space and
+  require luminance variance inside it, against a control patch — the `van`
+  region has the working example.
 - **Determinism:** never add or reorder a PRNG draw in an existing sequence. A
   feature needing randomness owns its own seeded generator.
 - **The comics are verbatim.** The garbled AI text is never corrected, anywhere,

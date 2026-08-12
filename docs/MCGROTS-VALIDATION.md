@@ -43,7 +43,7 @@ documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 | van | occupies a sensible fraction of the frame (G3a) | 0.3%-70% of the window at every one of the five anchors |
 | van | holds rendered content, not flat background | Luminance stddev exceeds the flattest of four corner patches by >10 |
 | van | console clean after driving the van region | No errors from the five snaps |
-| seat | the seated hip lands over the ledge (F1) | Hip within 10cm (horizontal) / 6cm (vertical) of the ledge's own `Box3` centre/top, `wall` and `kerb` |
+| seat | the seated hip lands over the ledge — **NOT the pose; blind to F1, see F10** | Hip within 10cm (horizontal) / 6cm (vertical) of the ledge's own `Box3` centre/top, `wall` and `kerb` |
 | seat | standing does not read as seated (control) | The same measurement, standing, misses by design (~0.79m hip vs ~0.57m ledge) |
 | seat | console clean after driving the seat region | No errors from the four snaps |
 
@@ -177,6 +177,12 @@ per G3c's own scope — left alone here.
 
 ### G3c — the real ledge, and the seated pose that stands on it
 
+> **The pose half of this entry did not hold.** The ledge is real and
+> `SEAT_HEIGHT`'s derivation was a genuine catch. But F1 was reopened by the G3
+> phase gate on 2026-08-12 — the legs extend backwards and the thighs are
+> buried in the capstone. The refutation below is kept, corrected in place,
+> because how it failed is the useful part.
+
 **Landed 2026-08-12.** Closed the gap the G3 plan missed: neither G3a nor
 G3b replaced G1's placeholder sitting box (`main.js:143`), so F1's seated
 pose still had no real wall to be tuned against — the entire reason it was
@@ -206,17 +212,36 @@ are in the same space are not. Measuring the live bone was the only way to
 the real number: `getWorldPosition` on `hips` at full sit reads **0.5712m**,
 now `SEAT_HEIGHT`.
 
-**F1's second defect (legs read as folding under, not forward) was measured
-and REFUTED, per the brief's own explicit warning that the diagnosis was
-reasoned rather than checked.** Rendered the walk cycle from a true side
-profile (a review camera positioned along the actor's direction of travel
-gives a front view, not a side one — had to walk the actor perpendicular to
+**F1's second defect (legs read as folding under, not forward) was recorded
+here as measured and REFUTED. That was wrong, and the refutation is kept
+because the way it failed is the instructive part.**
+
+What G3c did, per the brief's explicit warning that the diagnosis was reasoned
+rather than checked: rendered the walk cycle from what it took to be a true
+side profile (a review camera positioned along the actor's direction of travel
+gives a front view, not a side one — so the actor was walked perpendicular to
 the offset axis to get a genuine profile) at the thigh's peak swing
-(`rotation.x` = `LEG_SWING`, 0.55 rad): the leg swings visibly FORWARD, in
-the direction of travel. So positive `rotation.x` already means forward, and
-the sit pose's `thigh` term was already positive — correct by the same
-convention. **No sign flip was made.** The crouch reading came from the
-ledge-position defect above, not this one.
+(`rotation.x` = `LEG_SWING`, 0.55 rad), read the leg as swinging FORWARD, and
+made no sign flip.
+
+**The camera was on the wrong side of the figure.** It was placed with the
+STREET's facing formula, `(-sin yaw, -cos yaw)`, which `CLAUDE.md` documents
+and which is correct for the street. McGrot's actor faces `(+sin yaw, +cos
+yaw)`. The shot believed to be of the figure's left was of its right, so
+forward read as backward and the check confirmed the opposite of the truth.
+
+Re-measured by the G3 phase gate against DIRECTION OF TRAVEL, which needs no
+convention: correlation between `thighL.rotation.x` and the knee's along-travel
+offset is **−1.000**; positive swings the leg backward. Independently
+re-confirmed by the orchestrator on 2026-08-12 — travel direction dotted with
+`(+sin yaw, +cos yaw)` gives exactly **1.0000**, and at full sit
+`thighL.rotation.x = +1.5466` puts the knee **0.3727 m behind** the hip.
+**F1 is reopened.** See `docs/MCGROTS-ROADMAP.md` § 10 F1.
+
+**The lesson worth keeping:** a rendered check is only as good as the frame of
+reference that placed its camera, and this project has two opposite ones. A
+direction derived from travel is self-verifying; one derived from a yaw formula
+copied out of the other game is not.
 
 **F1's third defect (torso huddle).** The bone hierarchy has no separate
 pelvis: `hips` is the root, and is the direct parent of BOTH `spine` and the
@@ -317,7 +342,17 @@ The motion rows agree with the still judgement: close anchors are close, while
 new panel or capture fault appeared.
 
 The fixed hour remains `LIGHT.sunIntensity=6`, `hemiIntensity=3`,
-`sunAzimuth=-2.1`, `sunAltitude=0.34`. `node scripts/mcgrots-grade.mjs` was
+`sunAzimuth=-2.1`, `sunAltitude=0.34`.
+
+> **The numbers in the next paragraph do not reproduce and are under
+> correction — see § "Faults in the G3 GATES" below, F12.** The committed
+> `mcgrots-grade.mjs` has no `--look` flag and never calls `setLook`, so it
+> sweeps the UNSTYLED look, not S2. The re-run gives frame mean 72.2–72.5 at
+> 6/3, not 105.1. **The decision — keep 6/3 — survives independently**; the
+> record of how it was reached does not. Left in place rather than deleted so
+> the correction has something to point at.
+
+`node scripts/mcgrots-grade.mjs` was
 rerun against the dressed pitch under S2. Its 27-row sweep reports current
 6/3 at frame mean 105.1, cast mean 17.2 and 0.00% blown; the pictured
 `sun 12 / hemi 3` experiment raised frame mean to 134.5 and still left the
@@ -328,6 +363,46 @@ This is the best-available fixed grade, not a claim that the asset is solved.
 The existing contrast-floor picture gate and G3a van-fraction gate are the
 named controls. Composition is a judgement and remains deliberately ungated;
 no numeric ranking or taste gate was added, so no fault injection applies.
+
+### Faults in the G3 GATES, found by the phase gate
+
+Logged 2026-08-12 from `.herdr/gate3.md`, audit of `7ed2a4e..4c3286d`. These
+are faults in the checks, not in the game, which is the half of the discipline
+that a green suite cannot report on itself. Full entries in
+`docs/MCGROTS-ROADMAP.md` § 10.
+
+**F9 — the statue region gates existence, not visibility.** `statue.visible =
+false` leaves `--only=statue` at 2/2 and the full suite at **38/38**, with
+nothing rendered at the Foot. One check reads `getObjectByName` and the absence
+of the placeholder; the other projects the authored centre against the five
+camera rays. Both are true of a hidden object. G3a's validation entry names
+this exact gap in writing and G3b, landing concurrently the same day, did not
+inherit it — now § 8's second project invariant. The off-sightline check stays:
+it guards a real regression and its `(10,-5)` injection is sound. It is simply
+not a visibility gate.
+
+**F10 — the seat region cannot see F1's defect.** Injecting F1's thigh sign
+flip, the entire content of the fault, leaves the suite at **38/38**. The
+region measures the hip, and the hip has zero horizontal offset in any pose, so
+it reports the actor's group placement and nothing about the legs. The
+seated/standing control separates 0.57 m from 0.79 m, which is `SEAT_DROP`.
+Its vertical assert is worse than blind: `Math.abs(hip.y - box.max.y) <=
+HEIGHT_TOL` **requires** the hip bone to sit at the stone surface, encoding
+F1's second defect as the specification, and passes with zero margin used.
+
+What both have in common is that each region's own fault injection was honest
+and did go red. Neither injected the fault the region was *believed* to cover.
+A gate proved red against the fault its author had in mind, and the entry then
+claimed the broader thing.
+
+**The check that would have caught F1:** knee offset from hip, projected on the
+actor's facing, required positive, at both sitting anchors, with the standing
+pose at the same anchor as the control. Not yet built.
+
+**F11 — the camera region only ever tests parked → walk.** So it never enters
+the state where a walk is re-targeted mid-flight, which still cuts at 23.7% of
+total travel on frame 1 against its own < 10% assert. The fault is in the game
+as well as the gate; see § 10 F11.
 
 ### What G0 deliberately does not prove
 

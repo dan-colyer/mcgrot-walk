@@ -10,7 +10,10 @@ and gated (2026-08-11). The cast-albedo fault, F4, F5 and F6 are all FIXED
 against the regenerated review sheets. G3a (the van, price board, ground) and
 G3b (Queen Victoria) landed 2026-08-12, concurrently on different files. G3c
 (the real ledge, F1's seated pose, F2 judged) landed 2026-08-12 too, once G3a
-and G3b existed for it to sit against — F1 and F2 are both now CLOSED (§ 10).
+and G3b existed for it to sit against — F2 is closed; **F1 was recorded closed
+and has been REOPENED** by the G3 phase gate, which found the seated legs
+extend backwards and the thighs are buried in the capstone (§ 10 F1, and F7–F12
+for the gate's own findings).
 **G3c turned out narrower than originally planned**: the composed shots and
 the fixed hour were deliberately not in it (a posture whose ledge did not yet
 exist could not be composed around), and landed as G3d on 2026-08-12. See § G3
@@ -572,11 +575,16 @@ fault-injecting the product centre to `(10,-5)` made the statue region fail
 #### G3c — the real ledge, F1's seated pose, F2 judged — implemented 2026-08-12
 
 Closed the gap G3a/G3b left: neither replaced G1's placeholder sitting box
-(`main.js:143`), so F1 still had no real wall to be tuned against. Full
-account of both fixes, the measurements behind them, and where the brief's
-own suggested diagnosis (the thigh's rotation sign) was checked and refuted,
-is in § 10 F1 (closed) and F2 (judged, closed) above — kept there rather than
-duplicated here, since that is where the acceptance-list structure lives.
+(`main.js:143`), so F1 still had no real wall to be tuned against.
+
+**The pose half of this unit did not hold.** The ledge is real and
+`SEAT_HEIGHT`'s derivation was a genuine catch, but the phase gate reopened F1
+the same day: the thigh sign was checked against the STREET's facing formula
+rather than this game's, so "refuted" was itself inverted, and the seat's
+along-facing offset was deleted on a measurement that had no bearing on it.
+Full account in § 10 F1 (reopened) and F2 (judged, closed) above — kept there
+rather than duplicated here, since that is where the acceptance-list structure
+lives.
 
 New `seat` region in `smoke-mcgrots.mjs`: the seated hip's world position
 against the ledge's actual `Box3`, at both sitting anchors, against a
@@ -746,6 +754,23 @@ should stay green and untouched.
 
 ## 8. What must not break
 
+- **McGrot's actor faces `(+sin yaw, +cos yaw)` — the OPPOSITE of the street.**
+  `CLAUDE.md` documents the street's forward as `(-sin yaw, -cos yaw)`, and
+  that is correct there and wrong here. Measured, not assumed: walk the actor
+  toward `+x` and `group.rotation.y` settles at `1.5708`, giving
+  `(sin, cos) = (1, 0)`; re-confirmed 2026-08-12 by sampling travel direction
+  against `(+sin, +cos)` for a dot product of exactly `1.0000`. **Any
+  derivation copied from the street's formula comes out mirrored**, including
+  where a review camera is placed — which is how G3c rendered a shot, looked at
+  it, and read backwards as forwards (§ 10 F1). Derive a direction from travel
+  where you can; it needs no convention at all.
+- **Authored scene content gets a RENDERED-FRAME check, never a scene-graph
+  one.** A check that asks the scene graph whether something exists passes
+  while the thing is invisible, unlit, off-camera, or behind another object —
+  `statue.visible = false` left the statue region 2/2 and the suite 38/38
+  (§ 10 F9). G3a's van region has the technique that works: project the AABB
+  into screen space and require luminance variance inside it, against a
+  corner-patch control.
 - **The street is paused.** `src/main.js` and the street modules are not to be
   edited. Any change to a *shared* module must be additive, and the street's
   own `npm run smoke:par` must be run to prove its goldens did not move. That
@@ -790,19 +815,36 @@ project exists is that the street was allowed to keep going at 80%.
 Things that are wrong, deliberately left, with enough detail to pick up cold.
 Distinct from § 11, which is undecided questions rather than broken work.
 
-### F1 — The seated pose is wrong (G1, CLOSED 2026-08-12 — G3c)
+### F1 — The seated pose is wrong (G1; REOPENED 2026-08-12 by the G3 phase gate)
 
 **Severity: high.** The player sits near the van and listens; this is the
 posture the game is mostly in.
+
+**Status: OPEN.** G3c recorded this CLOSED on 2026-08-12 and it was not. The G3
+phase gate re-measured it the same day and found two live defects: the legs
+extend BACKWARDS, and the thighs are buried in the capstone. Both are below.
+Re-confirmed independently before this entry was rewritten — walking the actor
+and sampling travel direction gives `facingAgreesWithPlusSinCos = 1.0000`, and
+at full sit `thighL.rotation.x = +1.5466` puts the knee **0.3727 m behind** the
+hip along that measured facing. What G3c genuinely did fix — `SEAT_HEIGHT`'s
+derivation and the pelvis tilt — stands, and is kept below.
 
 **Root cause of the first defect, measured rather than assumed** (`hips`
 bone, `getWorldPosition`, both sitting anchors): the rig's hip joint has
 **zero local x/z offset** from the actor's group origin, seated or standing —
 the thighs swing the knee and foot forward as children, but the hip itself
 never moves horizontally. G1's placeholder ledge was offset 0.3 m behind the
-standing spot, a number chosen independently of this. **Fixed:** the ledge
-(`main.js`) is now centred exactly on the anchor, no offset — there was
-nothing else to derive it from once the rig was measured.
+standing spot, a number chosen independently of this. G3c centred the ledge
+exactly on the anchor, no offset.
+
+**That removal was itself wrong**, and is part of the second open defect below.
+The hip's own horizontal offset was never what the 0.3 m was for: its job was
+to put the seat's FRONT EDGE under the buttocks so the thighs swing clear of
+the stone, which derives from the seat's DEPTH (`SEAT_DEPTH/2 + CAP_OVERHANG` =
+0.325 m), not from the hip. A correct rig measurement was used to delete a
+number it had no bearing on — the trap being that the measurement really was
+right, and really did refute the reason the code gave for the offset, while
+saying nothing about the reason the offset was needed.
 
 `anchors.js`'s `SEAT_HEIGHT` was stale twice over: its comment cited
 `SEAT_DROP` as 0.26 (corrected to 0.22 in `f0982fc`, comment never revisited),
@@ -812,13 +854,51 @@ metres) while the `hips` bone's own rest position is one level deeper and
 does get the ×1.72 height scale. Measuring the live bone at full sit was the
 only way to the real number: **0.5712 m**, now `SEAT_HEIGHT`.
 
-**Second defect (legs read as folding under, not forward): measured, not
-assumed, per this brief's own warning that the diagnosis was reasoned rather
-than checked.** Rendered the walk cycle from a true side profile at max
-thigh-swing: positive `rotation.x` swings the leg FORWARD, confirmed
-visually. The existing sit pose's `thigh` value was already positive — so
-this diagnosis was **wrong**, and no sign flip was made. The pose read as a
-crouch for the reason above (ledge position), not this one.
+**First open defect — the legs extend backwards.** G3c's brief warned that the
+suggested diagnosis (the thigh's rotation sign) was reasoned rather than
+checked, and G3c did check it: it rendered the walk cycle from a side profile,
+read positive `rotation.x` as swinging the leg FORWARD, and made no sign flip.
+
+**That reading was inverted, and why is worth keeping.** The profile camera was
+placed using the STREET's facing formula, `(-sin yaw, -cos yaw)` — the one
+`CLAUDE.md` documents — but McGrot's actor faces the opposite way, `(+sin yaw,
++cos yaw)` (§ 8). Every derivation from the street's formula
+comes out mirrored, so a shot believed to be of the figure's left side was of
+its right, and forward read as backward. The check was real, was rendered, and
+was looked at; the frame of reference under it was wrong.
+
+Measured against direction of travel, which needs no convention at all: the
+correlation between `thighL.rotation.x` and the knee's along-travel offset is
+**−1.000**; at `+0.55` the knee is 0.1978 m behind, at `−0.55` 0.1978 m ahead.
+Positive swings the leg BACKWARD. The sit pose uses a positive thigh term, so
+at full sit both thighs point behind the figure. Rendered confirmation: a
+camera on the figure's true front shows the face and NO LEGS — from the front
+the figure reads as standing in a booth behind a wall.
+
+**The fix, demonstrated by the phase gate but deliberately not landed by it**
+(it needs the second defect fixed alongside, since the sit pose can only be
+judged once):
+
+```js
+const thigh = -sit * (Math.PI / 2) * 0.80;
+const shin  =  sit * (Math.PI / 2) * 0.74;
+```
+
+Both signs are the mirror of the intent the code comment already states.
+Flipping `thigh` alone puts the legs forward but hovering — the shin then
+continues forward instead of dropping, so it must flip too.
+
+**Second open defect — the thighs pass through the capstone.** A consequence of
+how `SEAT_HEIGHT` was derived, so it survives the sign fix rather than being
+cured by it. `SEAT_HEIGHT` is the HIP BONE's measured world height, 0.5712 m,
+and the ledge's cap top is built at exactly that. Someone sitting on a wall
+rests the thigh's UNDERSIDE on the surface, so the hip bone sits above the
+stone by roughly the thigh's radius, not level with it. The thigh drops only
+0.065 m over its 0.373 m run (re-measured here: `kneeBelowHip = −0.0656`),
+leaving the cap's rear face at y = 0.5144, still inside the cap's 0.5112–0.5712
+range. **The whole 0.325 m of thigh inside the ledge is buried in stone**, both
+sides, both anchors. The along-facing offset struck above comes back with this
+fix.
 
 **Third defect (torso huddle).** This rig has no separate pelvis bone —
 `hips` IS the pelvis, and is also the parent of `spine` and both thighs.
@@ -827,19 +907,31 @@ world-space angle (already confirmed correct) is unchanged; only the spine's
 world angle moves. **Modest improvement on re-render, not a dramatic one** —
 recorded honestly rather than claimed as fixed outright.
 
-Gate: `docs/MCGROTS-VALIDATION.md` § "G3c", new `seat` region — the seated
-hip's position against the ledge's actual `Box3`, at both `wall` and `kerb`,
-against a standing-at-the-same-anchor control. Fault-injected (the old
-independent `-0.3` offset restored) and confirmed red at both anchors, the
-control staying green throughout; the first version of the check did NOT
-catch this fault (footprint containment is generous enough that a 0.3 m
-mislocation still lands inside the box) and was redesigned to distance-from-
-centre before it did. Restored.
+Gate: `docs/MCGROTS-VALIDATION.md` § "G3c", `seat` region — the seated hip's
+position against the ledge's actual `Box3`, at both `wall` and `kerb`, against
+a standing-at-the-same-anchor control. Fault-injected (the old independent
+`-0.3` offset restored) and confirmed red at both anchors, the control staying
+green throughout; the first version of the check did NOT catch that fault
+(footprint containment is generous enough that a 0.3 m mislocation still lands
+inside the box) and was redesigned to distance-from-centre before it did.
 
-Captures opened: `wall.png`/`kerb.png` (`docs/smoke/captures/mcgrots/g2/`),
-`arrived` column, under S2. The seated hip now visibly rests ON the ledge's
-capstone; legs extend forward and down to the ground rather than folding
-back underneath.
+**That gate is blind to both open defects** (§ F10). It measures the HIP, which
+has zero horizontal offset in any pose, so flipping the thigh sign leaves the
+suite 38/38 green. Worse, its vertical assert `Math.abs(hip.y - box.max.y) <=
+HEIGHT_TOL` actively REQUIRES the bone to sit at the stone surface — it encodes
+the second defect as the specification, and passes with zero margin used. The
+check the phase gate names as the one that would have caught it: **knee offset
+from hip, projected on the actor's facing, required positive**, at both sitting
+anchors, standing at the same anchor as the control.
+
+Captures opened by G3c: `wall.png`/`kerb.png`
+(`docs/smoke/captures/mcgrots/g2/`), `arrived` column, under S2. G3c read the
+seated hip as resting on the capstone and the legs as extending forward — the
+first is true, the second is not. **An image was opened and the fault was still
+missed**: at those anchor distances the legs are a few pixels and the figure
+was read as plausible rather than examined. Opening a capture is necessary and
+is not sufficient. What made it unmissable was the phase gate deliberately
+parking a camera on the figure's front, which is not one of the five shots.
 
 ### F2 — Feet slide (G1, judged 2026-08-12 — does not read, closed)
 
@@ -1042,10 +1134,105 @@ collapsing the walk branch to the old cut) and confirmed red — frame-1 camera
 move back to 100% of the total — while the snap control stayed green
 throughout. Restored.
 
+**F6 is closed only for a walk that starts from rest.** Re-targeting mid-walk
+still cuts — see F11.
+
+### F9 — the statue region gates existence, not visibility (G3 gate, OPEN)
+
+**Severity: medium, and it is a fault in a GATE rather than in the game.**
+Injecting `statue.visible = false` in `buildStatue` leaves `--only=statue` at
+2/2 and the full suite at **38/38**. Nothing is rendered at the Foot and every
+check is green.
+
+Both statue checks are blind by construction. One reads
+`getObjectByName('statue:queen-victoria')` and the absence of
+`statue-placeholder` — the scene graph, not the frame. The other projects the
+authored centre against the five camera rays, a distance between two numbers
+that a hidden object still has.
+
+G3a's own validation entry names this gap in writing, and G3b landed the same
+day, concurrently, without inheriting the rule. That is why it is now § 8's
+second invariant. The off-sightline check is worth keeping — it guards a real
+regression, the landmark becoming the subject — it is simply not a visibility
+gate. Fix: G3a's AABB-projection plus luminance-stddev technique, which
+transfers almost unchanged.
+
+### F10 — the seat region cannot see F1's defect (G3 gate, OPEN)
+
+**Severity: medium, a gate fault.** Injecting F1's thigh sign flip — the entire
+content of the fault — leaves the suite at **38/38**.
+
+The region measures the hip and only the hip, and by G3c's own headline
+measurement the hip has zero horizontal offset in any pose, so its position is
+a function of the actor's group placement alone. The seated/standing control
+separates 0.57 m from 0.79 m, which is `SEAT_DROP` — again not the legs.
+
+The region does prove two true things: the ledge is built at the anchor, and
+the sit state applies its drop. Its own fault injection is honest and does go
+red. The gap is between what it proves and what F1 claimed on the strength of
+it. Fix: knee offset from hip projected on the actor's facing, required
+positive, both sitting anchors, standing as the control.
+
+### F11 — the camera cuts when a walk is interrupted (G3 gate, OPEN)
+
+**Severity: medium**, and reachable on the shipped path. F6 eases the camera
+only when a walk starts from rest; re-target mid-walk and it cuts.
+
+Measured — parked at `back`, `goTo('far')`, 30 frames, then `goTo('counter')`:
+
+| | |
+|---|---|
+| frame-1 camera jump | 2.442 m |
+| `far` → `counter` total | 10.324 m |
+| fraction on frame 1 | **23.7%** — the region's own gate asserts < 10% |
+
+`goTo` sets `previous = from`, where `from` is `current` — the anchor being
+*abandoned*, not where the camera actually is. Mid-walk the camera sits between
+two shots, is snapped to the abandoned destination's eye, and eases from there.
+`onPick` (bound to `pointerdown`) and the number-key handler both call `goTo`
+with no guard on `actor.walking`, so a player clicking a second spot before the
+first walk finishes is ordinary use. The `camera` region only ever tests parked
+→ walk, so it never enters this state.
+
+Suggested fix: ease from the camera's LIVE position rather than from an anchor,
+which also deletes the `previous === null` special case. **Not yet briefed —
+Dan's staging call on when this lands** (§ 11).
+
+### F12 — G3d's grade numbers do not reproduce (G3 gate, OPEN)
+
+**Severity: medium, record integrity.** This document, `MCGROTS-VALIDATION.md`
+and commit `4c3286d`'s subject line all carry "S2 6/3 mean 105.1, cast 17.2;
+12/3 rejected at 134.5". Re-running the committed `scripts/mcgrots-grade.mjs`
+unmodified gives 27 rows, which matches, and values that do not:
+
+| setting | recorded | measured (albedo 0.7 / 1 / 1.35) |
+|---|---|---|
+| sun 6 hemi 3, frame mean | 105.1 | 72.2 / 72.3 / 72.5 |
+| sun 6 hemi 3, cast mean | 17.2 | 10.8 / 21.4 / 24.0 |
+| sun 12 hemi 3, frame mean | 134.5 | 92.9 / 93.1 / 93.2 |
+
+The docs say the sweep was re-run "against the dressed pitch under S2". **The
+script cannot do that**: it boots `mcgrots.html?body=skinned&archetype=rab`,
+has no `--look` flag, and never calls `setLook`, and `main.js:61` defaults
+`LOOK_KIND` to `'none'`. So the committed tool sweeps the UNSTYLED look.
+`mcgrots-grade.mjs` is unchanged across the commit range, so it is the same
+script throughout — most likely a local modification that was never committed.
+
+**The decision survives and the hour does not change.** The phase gate's own
+sweep has 0.00% blown at all 27 rows and 6/3 remains the darkest coherent
+grade in the grid. What is wrong is the record, not the choice. Fix: give the
+script a `--look` flag, re-derive, and correct the three documents. Commit
+`4c3286d`'s subject line cannot be amended — note the correction in the docs
+instead.
+
 ---
 
 ## 11. Still open
 
+0. **When F11 lands.** The interrupted-walk camera cut is real, reachable and
+   understood, and the fix is small. Whether it goes in before G4 or waits is
+   Dan's staging call, not the orchestrator's — it competes with the rota for
+   the same session. Unasked as of 2026-08-12.
 1. **Which six to eight comics.** The readings vary a lot in quality and the
    selection wants Dan's eye rather than a script's.
 2. **Does the player pick their own body**, or is one assigned? E7b's ruling
