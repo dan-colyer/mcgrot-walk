@@ -269,7 +269,7 @@ in the grid that crushes nothing: sun 6, hemi 3 → mean 76.7, stddev 51.4,
 ## G2 — the style bake-off
 
 ```bash
-npm run smoke:mcgrots -- --only=style      # 12 checks
+npm run smoke:mcgrots -- --only=style      # 14 checks
 npm run dev:mcgrots                        # /mcgrots.html?look=aerial&style=key&page=on
 node scripts/mcgrots-grade.mjs             # now reports the CAST, not just the frame
 node scripts/mcgrots-styleshots.mjs        # five labelled motion sheets
@@ -299,6 +299,27 @@ and mid-stride cells were empty because the rig waited a fixed 160ms: that was
 shorter than the combined page hold and stepped opacity transition, so it was
 a capture timing artefact. `waitForPageCut()` now waits for both
 `pageStats().cutting === false` and computed `.page-cut` opacity `0`.
+
+**The phase gate found the harder half of this, 2026-08-12: five of the ten
+motion cells across the five sheets contain no actor.** Not a timing artefact
+and not fixable in the rig — the camera cuts to the destination anchor on the
+first frame of a walk, so the figure is still at the source anchor and outside
+the shot. Measured by projecting the actor's chest into the target camera at
+the exact frame counts the rig captures at (2 and 47):
+
+| sheet | approach | mid-stride | arrived |
+|---|---|---|---|
+| `counter.png` | no actor | no actor | actor |
+| `wall.png` | no actor | no actor | actor |
+| `kerb.png` | no actor | actor | actor |
+| `far.png` | actor | actor | actor |
+| `back.png` | actor | actor | actor |
+
+So the G2 ranking was made on five stills plus three anchors of motion, not on
+five anchors of motion. See § F6 in the roadmap; re-run the sheets once the
+departure-cut decision is settled. This is what "numeric gates cannot see a bad
+picture" looks like one level up: the rig's own reported numbers — 15 frames per
+candidate, all five sheets — were correct, and nobody asked what was in them.
 
 The rerun captured the same 15 frames per candidate. Opening the corrected
 `counter.png` and `far.png` showed an S4 scene in all three columns — approach,
@@ -714,15 +735,20 @@ frame`, `.page-title`, `.page-caption` and `.page-cut` are untouched and
 still belong to `#page`'s stacking group, painting above the canvas exactly
 as before — which is what the cut still relies on to hide the swap.
 
-**`npm run styleshots:mcgrots`'s own sheets still show two empty S4 columns
-per anchor** (approach, mid-stride; arrived is clear) — this is not F5
-recurring. That rig already carries its own `waitForPageCut()` helper for
-exactly this concern (`scripts/mcgrots-styleshots.mjs`, owned by the Codex
-session that built it), waiting 160ms — roughly 30ms short of the ~190ms a
-capture needs to land clear of both the hold and the steps-transition lag
-measured above. Out of scope to fix here: that file was explicitly off
-limits for this brief. Flagged for whoever owns it next rather than patched
-around.
+**Closed by `7ce2fc1`, and verified by the G2 phase gate 2026-08-12.** The
+sheets briefly showed two empty S4 columns per anchor because
+`scripts/mcgrots-styleshots.mjs`'s `waitForPageCut()` waited a fixed 160ms —
+roughly 30ms short of the ~190ms a capture needs to clear both the hold and
+the steps-transition lag measured above. It now waits on the observable
+conditions instead (`pageStats().cutting` false, then computed `.page-cut`
+opacity `0`). The gate re-ran the rig on a clean tree and confirmed all three
+S4 columns carry a rendered scene in `counter.png` and `far.png`.
+
+**What remains empty in those sheets is the ACTOR, not the panel, and it is a
+different fault** — see § F6 in `docs/MCGROTS-ROADMAP.md`. The camera cuts to
+the destination anchor on the first frame of a walk, so at `counter` and `wall`
+the figure is outside the frame for both motion columns. That is a product
+staging fault, not a capture-timing one, and no amount of waiting fixes it.
 
 Gate: `docs/MCGROTS-VALIDATION.md` (this file) § G2's style-region table,
 "S4 holds a scene in the panel, not empty paper." Control: `PAGE.paper`'s

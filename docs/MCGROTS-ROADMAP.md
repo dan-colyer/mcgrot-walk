@@ -6,12 +6,16 @@ permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
 and gated (2026-08-11). The cast-albedo fault, F4 (the cel look rendering the
-character black) and F5 (S4's panel rendering empty) are all FIXED — all four
-candidates can now be ranked. Dan's provisional ranking after the first sheets
-is S2 ahead. See § G2 and § 10 faults F4, F5 (both closed).**
+character black) and F5 (S4's panel rendering empty) are all FIXED. Dan's
+provisional ranking after the first sheets is S2 ahead. Phase-gated 2026-08-12:
+the three fixes verified independently and both new gates confirmed falsifiable,
+with one new fault found — F6, the camera cutting to the destination on frame 1
+of a walk, which is why half the ranking sheets' motion cells are empty. Next
+milestone is G3, with F6's staging decision at the front of it. See § G2 and
+§ 10 faults F4, F5 (closed) and F6 (open).**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (27 checks, 1.3s); boot the game with
+`npm run smoke:mcgrots` (27 checks, ~1.2s warm); boot the game with
 `npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
@@ -377,7 +381,14 @@ Ranked from the capture-review rig, `npm run styleshots:mcgrots` — five contac
 sheets, one per anchor, six rows (four candidates plus the baseline and S3's
 posterise control) and three columns (approach, mid-stride, arrived). Building
 that rig is what made a ranking possible at all; nothing before it let the four
-be seen side by side in motion.
+be seen side by side.
+
+**The phase gate qualified this on 2026-08-12: the ranking was made on five
+stills plus three anchors of motion, not five.** Five of the ten motion cells
+across the sheets contain no actor, because the camera cuts to the destination on
+the first frame of a walk — F6 below. That does not overturn S2, which was
+already provisional, but the second pass should re-run the sheets after F6 is
+settled rather than treat the existing ones as a motion comparison.
 
 Done: all four candidates built, isolated and gated, four fault injections
 recorded, and three blocking faults fixed — the **cast-albedo fault**
@@ -759,18 +770,72 @@ covered by the gutter paper, same as a real player's eye would be for that
 beat. `scripts/mcgrots-shot.mjs` now waits for both before shooting or
 evaluating; test-tooling only, no product change.
 
-**`npm run styleshots:mcgrots`'s own sheets still show two empty S4
-columns per anchor** (approach, mid-stride; arrived is fine) — not this
-fault. That rig (`scripts/mcgrots-styleshots.mjs`, Codex's) already has its
-own `waitForPageCut()` helper for exactly this concern, waiting 160ms — 30ms
-short of the ~190ms (130 hold + 60 steps-lag) a capture actually needs to
-land clear of the veil. Out of scope to fix here (Codex's file, off-limits
-per the brief); flagged rather than patched.
+**The styleshots sheets' two empty S4 columns per anchor were a separate,
+now-closed capture-timing fault** (`7ce2fc1`): that rig's own
+`waitForPageCut()` waited a fixed 160ms, 30ms short of the ~190ms (130 hold +
+60 steps-lag) a capture needs to land clear of the veil. It now waits on the
+observable conditions, and the phase gate confirmed all three S4 columns carry
+a scene. What is still empty in those sheets is the **actor**, at two anchors,
+for a different reason entirely — see F6 below.
 
 Gate: `docs/MCGROTS-VALIDATION.md` § G2, "S4 holds a scene in the panel, not
 empty paper." Fault-injected (the `clip-path` assignment disabled) and
 confirmed red — 98.4% of sampled panel pixels matched the paper colour —
 then restored.
+
+### F6 — the camera cuts to the destination on frame 1 of a walk (G2/G3, open)
+
+**Found by the G2 phase gate, 2026-08-12. Not introduced by G2 — it has been
+true since G0 — but it is in front of everything G2 was judging, which is why it
+surfaced now.**
+
+`goTo()` sets `current` to the destination before the walk starts
+(`main.js:184`), and `placeCamera()` runs every frame off `current.camera`
+(`main.js:238`). So the shot changes instantly and the player watches the walk
+from the shot they are arriving at. Measured on one `goTo('far')` from
+`counter`:
+
+```
+camera moved on frame 1:  10.324 m
+actor  moved on frame 1:   0.020 m
+page cut active:           false (throughout)
+```
+
+Three consequences:
+
+- **Half the capture-review rig's motion cells contain no actor** — three of
+  five anchors at approach, two of five at mid-stride. The table is in
+  `docs/MCGROTS-VALIDATION.md` § "G2 capture-review rig". The G2 ranking was
+  therefore made on five stills plus three anchors of motion.
+- **S4's gutter-hold cut never fires on a player action.** `page.cut()` is
+  called only from the `snap` branch, and the only snap in the product is
+  `goTo('back', { snap: true })` at boot. Every tap and every 1–5 keypress takes
+  the walk branch. The code comment defends this deliberately and its reasoning
+  is right — cutting away from the walk would be cutting away from the game —
+  but the same code then hard-cuts the camera at that exact moment with no
+  gutter. The beat the gutter was designed for is the one beat it is not applied
+  to.
+- **§ G2 above describes S4 as "a gutter-hold cut on anchor change".** There is
+  no anchor change that cuts with a gutter.
+
+This is a **staging decision and Dan's call**, not a fix to make quietly. His G0
+ruling was "you watch your character walk between them… the walk is the point";
+at `counter` and `wall` you currently watch it from the far end or not at all.
+The options:
+
+1. **Cut on departure, with the gutter** — wrap the camera change in
+   `page.cut()`. Truest to the panel grammar; costs the walk.
+2. **Cut on arrival** — hold the departing shot until the actor is nearly there.
+   Truest to "the walk is the point"; the walk then plays at whatever distance
+   the old shot gives.
+3. **Leave it** — accept that a tap changes the shot instantly. Cheapest, and it
+   is what has been judged so far, but then S4's cut is a boot transition and
+   the rig's columns need renaming.
+
+**This belongs at the front of G3**, which already owns "the composed shots
+finalised against the chosen style" — where the camera sits during a walk is the
+same decision as where it sits at rest. Re-run `npm run styleshots:mcgrots`
+once it is settled.
 
 ---
 

@@ -17,7 +17,7 @@
 
 ```bash
 npm run bundle:mcgrots   # esbuild + stamps the html — run before any smoke
-npm run smoke:mcgrots    # 25 checks, ~1.9s. The gate.
+npm run smoke:mcgrots    # 27 checks, ~1.2s warm. The gate.
 npm run smoke:mcgrots -- --only=style
 npm run dev:mcgrots      # :5175, then /mcgrots.html?body=skinned&look=aerial
 
@@ -69,7 +69,7 @@ Assuming for now that S1 without the ramp is the right control; carrying on.
 
 ## DONE 15:20
 Files: src/mcgrots/looks.js
-Ran: npm run smoke:mcgrots -> 25/25 in 1.9s  (paste the actual tail)
+Ran: npm run smoke:mcgrots -> 27/27 in 1.2s  (paste the actual tail)
 Fault injection: set uThickness back to 0 -> "S1 puts visible ink" went red. Restored.
 Captures inspected: /tmp/a.png, /tmp/b.png — describe what you SAW, not what you concluded.
 ```
