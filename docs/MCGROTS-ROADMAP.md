@@ -392,6 +392,15 @@ should re-run the sheets (now regenerated, actor present in all ten motion
 cells at the two anchors previously worst-affected) rather than treat the
 original ones as a motion comparison.
 
+**Dan re-confirmed S2 on 2026-08-12, on the regenerated sheets** — "stick with
+S2 and continue with G3", after F6 was fixed and `counter.png` and `wall.png`
+were re-opened with the actor visible in all three columns. So the ranking no
+longer rests on the weaker evidence the gate flagged; the qualification above
+is now a record of how it got here, not a caveat on the choice. **The second
+pass still stands**, on his original grounds — none of the four were
+interesting enough — and is a G7-or-later question, not a G3 one. G3 finalises
+the composed shots against S2 as chosen.
+
 Done: all four candidates built, isolated and gated, four fault injections
 recorded, and three blocking faults fixed — the **cast-albedo fault**
 (`src/mcgrots/actors/texture.js` lifts the character textures at load), **F4**
@@ -453,6 +462,31 @@ exists and already decides whether he is in — 3 days in 8 — and it is
 Queen Victoria has to be authored (§ 3). `docs/LEITH.md` § 2 carries the
 PERSEVERE signage, the boundary plaque and the Central Bar; the real-geometry
 rule applies — never "correct" something real that looks wrong.
+
+**Sequenced in three units, planned 2026-08-12.** Most of G3 depends on the
+dressing existing: a seated pose tuned against a placeholder ledge is thrown
+away (F1's own conclusion), a shot composed against a blockout is composed
+against nothing, and the fixed hour cannot be judged on an empty pitch. So the
+two units that need nothing land first and in parallel, and everything that
+requires something to look at follows them.
+
+| Unit | Owns | Depends on |
+|---|---|---|
+| **G3a** — the van, the price board, the ground | `van.js` (new), `main.js` | nothing |
+| **G3b** — Queen Victoria and the Foot's landmarks | `statue.js` (new), `site.js` § STATUE | nothing |
+| **G3c** — F1's pose on the real ledge, the composed shots, the fixed hour | `anchors.js`, `actor.js`, `site.js` § LIGHT | both above |
+
+G3a and G3b run concurrently on different files. Each adds **one line** to
+`main.js` to build itself; that is the only shared file and a one-line
+addition in two different places is a merge git handles. Anything larger in
+`main.js` belongs to G3c, which runs alone.
+
+G3c is the judgement unit and carries the three things G2 handed forward: F1
+(the seated pose, which is why it waited for a real ledge), F2 (foot slide,
+to be re-judged at the finished shot distances rather than G1's closer review
+camera), and the **fixed hour** — re-run `scripts/mcgrots-grade.mjs` against
+the dressed pitch under S2, not against the blockout the current sun/hemi pair
+was swept on.
 
 ### G4 — The rota
 
