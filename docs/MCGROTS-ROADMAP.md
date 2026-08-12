@@ -5,18 +5,18 @@ characters arriving and leaving, read aloud. Third person, anchored spots, a
 permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
-and gated (2026-08-11). The cast-albedo fault, F4 (the cel look rendering the
-character black), F5 (S4's panel rendering empty) and F6 (the camera cutting
-to the destination on frame 1 of a walk) are all FIXED. Dan's provisional
-ranking after the first sheets is S2 ahead; F6 fixed the motion cells that
-ranking was thin on, so the sheets are worth re-opening before treating it as
-settled. Phase-gated 2026-08-12, with F6 found and fixed the same day, Dan's
-call: "let's just try and make any camera cuts smooth." See § G2 and § 10
-faults F4, F5, F6 (all closed).**
+and gated (2026-08-11). The cast-albedo fault, F4, F5 and F6 are all FIXED
+(§ 10). Style is settled: S2 aerial flatten (Dan, 2026-08-12), re-confirmed
+against the regenerated review sheets. G3a landed 2026-08-12 — the real van,
+price board and ground dressing, replacing the G0 blockout box; see § G3
+below and `docs/MCGROTS-VALIDATION.md` § "G3a". G3b (Queen Victoria) landed
+concurrently on a different file. G3c (F1's seated pose, the composed shots,
+the fixed hour) is next, and depends on both.**
 
-Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (30 checks, ~1.3s warm); boot the game with
-`npm run dev:mcgrots` and open `/mcgrots.html`.
+Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run `npm run
+smoke:mcgrots` for the full suite, or `-- --only=van` while other G3 units are
+still landing on the same shared tree; boot the game with `npm run
+dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
 memory of the conversation that produced it (Dan and Opus, 2026-08-10). Read
@@ -487,6 +487,62 @@ to be re-judged at the finished shot distances rather than G1's closer review
 camera), and the **fixed hour** — re-run `scripts/mcgrots-grade.mjs` against
 the dressed pitch under S2, not against the blockout the current sun/hemi pair
 was swept on.
+
+#### G3a — the van, the price board, the ground — implemented 2026-08-12
+
+`src/mcgrots/van.js` replaces the G0 blockout box with the real subject.
+Style is settled at S2 (aerial flatten, Dan, re-confirmed against the
+regenerated sheets), and nothing here is tuned against a different look.
+
+Reused from `src/gullet.js` (read, not imported): the six-panel shell around
+a real serving opening — a solid box put the figure who stands at the hatch
+entirely inside it, per that module's own record — the interior liner, the
+opening sill/top numbers, the canon palette, the price-board canvas
+technique. Not reused: collision registration (this game has none — anchored
+staging never needs it), McGrot/Pomplé and `mcgrotIsIn()` (G4/G6's), the
+leaned hoarding and shut sign (cut for scope). Price board text is authored
+fresh — a price board is not a comic, so the verbatim rule does not bind it —
+in the same hand-lettered register as `gullet.js`'s.
+
+Ground: a kerb + pavement patch in pitch-local space via `toWorld`, added as
+a scene sibling to `foot.js`'s raycast ground plane (untouched) rather than
+replacing it, sized to 16 m so its bounding sphere clears `looks.js`'s 12 m
+ink threshold by construction — a compact patch would read as a boxed
+rectangle on the tarmac, the "surroundings drawn as an object" mistake the
+corpus rule exists to avoid.
+
+New `van` region in `smoke-mcgrots.mjs`: the van's projected screen footprint
+is a sensible fraction of the frame (0.3%–70%) and holds real rendered
+content against a control, at all five anchors. Full account, including the
+control's own redesign and the fault injection, in
+`docs/MCGROTS-VALIDATION.md` § "G3a".
+
+**Opened the review sheets, all five anchors, under S2.** The van reads
+clearly with legible price-board text at `counter`, `wall`, `kerb`, and
+`back`'s approach/mid-stride columns. At `far` (every column) and `back`'s
+arrived column it is smaller — a recognisable box-with-hatch-and-sign
+silhouette, but the price text is not legible there. F1's known bad seated
+pose is visible at `wall`/`kerb`, left alone — G3c's.
+
+#### G3b — Queen Victoria and the Foot's landmarks — implemented 2026-08-12
+
+`src/mcgrots/statue.js` replaces the G0 cylinder with authored low-poly scene
+geometry: a circular granite base, chamfered sandstone pedestal with four dark
+bas-relief placeholder plaques, and a compact seated bronze Victoria with robe,
+throne back, arms, legs, head and crown. The repository documents the Foot as
+the statue's place but carries no survey bearing or dimensions, so the exact
+origin and footprint remain the measured `STATUE` values (`x=0`, `z=0`,
+`radius=1.6m`, `plinth=2.4m`); `yaw=0` and the figure proportions are authored
+assumptions, not a claim of survey accuracy. PERSEVERE signage and the boundary
+plaque remain deferred bonus dressing.
+
+The new statue smoke region measures the actual authored statue centre against
+the five shipped camera sightlines. It preserves the prior exact minimum of
+8.283m at `kerb` (the roadmap's 8.3m is rounded): the measured rows are
+10.160m, 11.328m, 8.283m, 12.186m and 10.800m for counter, wall, kerb, far and
+back. The control is the camera-ray distance, not a scene-node count. The
+authored statue replaces `statue-placeholder` in the product scene as a second
+check.
 
 ### G4 — The rota
 

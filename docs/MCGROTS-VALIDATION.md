@@ -17,7 +17,9 @@ uses, shared deliberately so the two games' captures are comparable.
 
 ## G0 — scaffold
 
-16 checks, ~1.3s. Captures land in `docs/smoke/captures/mcgrots/g0/`
+19 checks in the regions below (`npm run smoke:mcgrots -- --only=boot,camera,anchors,van`);
+the full suite also carries a `statue` region landed concurrently with G3a,
+documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 (gitignored, regenerated every run).
 
 | Region | Check | What it proves |
@@ -38,6 +40,9 @@ uses, shared deliberately so the two games' captures are comparable.
 | anchors | a walk eases the camera (F6) | Frame-1 camera move is <10% of the total, against a snap-path control |
 | anchors | the snap control still cuts | Frame-1 camera move is >95% of the total on the snap path |
 | anchors | the eased camera arrives exactly | <0.01m from the destination anchor's eye once the actor stops |
+| van | occupies a sensible fraction of the frame (G3a) | 0.3%-70% of the window at every one of the five anchors |
+| van | holds rendered content, not flat background | Luminance stddev exceeds the flattest of four corner patches by >10 |
+| van | console clean after driving the van region | No errors from the five snaps |
 
 ### The crush gate, and why it exists
 
@@ -108,6 +113,64 @@ ends. That judgement is Dan's, from opening the re-run
 motion columns at `counter` and `wall`, the two anchors the phase gate found
 worst (previously missing the actor in two or three of three columns at
 each).
+
+### G3a — the van, the price board and the ground, and how visibility is gated
+
+**Landed 2026-08-12.** `src/mcgrots/van.js` replaces the G0 blockout box with
+the real van (a six-panel shell around a real serving opening, reused from
+`src/gullet.js`'s proven proportions — read, not imported, per the coupling
+rule between the two games), a price board with freshly authored text (a
+price board is not a comic, so the verbatim rule does not bind it), and a
+kerb/pavement ground patch. Style is settled at S2 (Dan, 2026-08-12); nothing
+here is tuned against a different look.
+
+**The claim that matters is visibility, not existence.** A check that
+`scene.getObjectByName('van')` is non-null tests that a function ran, the
+same shape of gap F4 and F5 both slipped through — F4 shipped a fully green
+style suite while the actor rendered solid black, and F5 shipped two fully
+green S4 checks while the panel held nothing. So the `van` region measures
+the actual rendered frame at each of the five anchors, not the scene graph.
+
+**Method:** the van's world-space AABB (`THREE.Box3().setFromObject`) is
+projected through each anchor's LIVE camera (after a real `snapTo`, not a
+hand-computed ray) to get a screen rect, clamped to the viewport. Two things
+are then measured inside that rect, on the real screenshot: its area as a
+fraction of the frame (0.3%–70% at every anchor — measured: `counter` 57.6%,
+`wall` 14.3%, `kerb` 12.2%, `far` 6.5%, `back` 7.5%), and its luminance
+stddev, which must exceed a control by a margin of 10.
+
+**The control went through one redesign before it was trustworthy.** The
+first version used a fixed sky strip across the top 8% of the window — flat
+by construction, since `scene.background` is one colour and nothing stands
+in it, or so the reasoning went. Measured, it was wrong at three of five
+anchors: the massing's roofline crosses that strip at `counter`/`wall`/`kerb`
+(the closer anchors, where the buildings fill more of the frame), so the
+"sky" patch was actually half sky and half building edge, and a hard edge
+reads as high variance under this exact metric — 41–45 stddev, the same
+order of magnitude as the van itself, which would have made the check pass
+for the wrong reason everywhere it mattered. Fixed by not assuming where the
+flat region is: four small corner patches (6%×5%) are sampled per shot and
+the flattest of the four is taken as the control. It reads 0.0 at every
+anchor once mis-measurement is ruled out, against a van reading 40.3–53.1.
+
+**Falsified 2026-08-12.** `scene.add(group)` commented out for the van's own
+group (leaving the ground dressing in place, since that is a separate scene
+child). Both checks went red — area 0.0% and content 0.0 at all five
+anchors — while the `statue`, `anchors`, `camera` and `boot` regions and the
+van's own console-clean check stayed green, confirming the injection reached
+only what it targeted. Restored from the commit immediately after.
+
+**What this does not prove:** that the van looks GOOD, or that the price
+board is legible at every distance. Opened `docs/smoke/captures/mcgrots/g2/`
+sheets myself, all five anchors, under S2: the van reads clearly with
+legible price-board text at `counter`, `wall`, `kerb`, and `back`'s approach
+and mid-stride columns. At `far` (every column) and `back`'s arrived column
+it is smaller — still a recognisable box-with-hatch-and-sign silhouette, but
+the price text is not legible at that distance. That is Dan's judgement to
+make, not this gate's; the AABB-fraction check would pass either way, since
+"a sensible fraction of the frame" and "the price board is readable" are not
+the same claim. F1's known bad seated pose is visible at `wall` and `kerb`,
+per G3c's own scope — left alone here.
 
 ### What G0 deliberately does not prove
 
@@ -455,6 +518,45 @@ This is a measured recommendation, not a shipped lighting change: preserve
 `src/mcgrots/site.js` while Dan ranks the existing sheets, and consider
 `-2.62 / 0.75 rad` first if the hour is reopened. No acceptance gate was
 added, so no fault injection applies.
+
+## G3b — Queen Victoria at the Foot
+
+`src/mcgrots/statue.js` replaces the G0 placeholder cylinder after `buildFoot()`
+with authored low-poly geometry: a circular granite base, chamfered sandstone
+pedestal, four dark plaque panels, and a compact seated bronze figure with a
+robe, throne back, arms, legs, head and crown. The brief and repository
+document the landmark's place and history but do not provide a survey bearing
+or dimensions. The implementation therefore keeps the measured origin and
+footprint (`STATUE.x=0`, `z=0`, `radius=1.6m`, `plinth=2.4m`) and records `yaw=0`
+and the figure proportions as authored assumptions rather than researched
+geometry. PERSEVERE and the boundary plaque were left for a later dressing
+pass; they were bonus scope, not allowed to displace the statue.
+
+The `statue` smoke region is the named control for the composition constraint:
+it reads the authored group's actual world-space centre from the product scene,
+then measures its perpendicular distance to every shipped camera sightline.
+It also checks that `statue:queen-victoria` exists and
+`statue-placeholder` does not. The isolated run was `2/2 passed in 0.6s` on
+Chromium/Metal. Exact distances were counter 10.160m, wall 11.328m, kerb
+8.283m, far 12.186m and back 10.800m. The documented 8.3m minimum is rounded;
+the gate uses the exact 8.28m prior floor, so the authored statue does not
+regress the quarter-turn composition.
+
+The regenerated Chromium/Metal S2 sheets (`npm run styleshots:mcgrots`) were
+opened at all five anchors. In `counter`, `wall`, `kerb`, `far` and `back`, the
+statue reads as a small seated figure on a tall pale plinth at the edge of the
+shot, rather than as the old cylinder or an unstructured lump. It is most
+legible in the wider `far` and `back` views, remains visible at the right edge
+of the nearer views, and does not pull the eye from Sonnet's central van. The
+known F1 seated-actor defect is still visible at `wall` and `kerb`; it was left
+untouched for G3c. S4 has scene content in all three columns after the earlier
+styleshot timing fix.
+
+The first combined-tree smoke before Sonnet's G3a commit was `33/35 passed`
+because the in-flight van visibility/content checks were red; that result was
+not attributed to G3b. The final combined verification belongs after G3a's
+landing. No acceptance gate was added without a control: the statue sightline
+check has the named camera-ray control and is fault-injected after the landing.
 
 Verification for this investigation: `node --check scripts/mcgrots-sun.mjs` and
 `git diff --check` passed. After control cleared the shared render commands,

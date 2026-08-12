@@ -36,16 +36,18 @@ export const MASSING_RADIUS = 80;
 // here would make the two games disagree about the same buildings.
 export const LEVEL_HEIGHT = 3.2;
 
-// The Queen Victoria statue is NOT in leith.json and cannot be: the Overpass
-// query fetches `way["building"]` and the Leith Walk highway way, and a
-// memorial is a node. This is a placeholder plinth at a plausible position in
-// the junction until G3 authors her. See docs/MCGROTS-ROADMAP.md § 10.4.
-// Placed AT the Foot's own origin, which is the northernmost node of the Leith
-// Walk way — the junction centre. That is the most defensible position for a
-// placeholder: the meeting point goes at the meeting point. It is not a claim
-// about where the real statue stands, and G3 should check it against reference
-// rather than inherit this number.
-export const STATUE = { x: 0, z: 0, plinth: 2.4, radius: 1.6 };
+// Queen Victoria is not in leith.json: the Overpass query fetches building and
+// street ways, while the memorial is a node. The Foot is documented as her
+// meeting point, so the authored statue remains at the junction origin. The
+// repo carries no bearing or survey dimensions; G3b keeps the measured
+// placeholder footprint and uses a defensible low-poly seated interpretation.
+export const STATUE = {
+  x: 0,
+  z: 0,
+  plinth: 2.4,
+  radius: 1.6,
+  yaw: 0,
+};
 
 // ONE FIXED HOUR, ALWAYS (Dan, 2026-08-10). Time is a single authored lighting
 // setup: no clock, no weather, no atmosphere.js. G2 chooses the real hour as
