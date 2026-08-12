@@ -61,8 +61,11 @@ export const SEAT_HEIGHT = 0.5712;
 //   height  eye height, metres
 //   lateral sideways offset, metres — positive is the actor's right
 //
-// G3 finalises these against the chosen style. G0 only has to produce five
-// frames that read.
+// G3d judgement (2026-08-12) retained this rule after opening all five
+// 600-frame S2 shots: `counter` is the intentional close service view,
+// `wall`/`kerb` are the seated views, and `far`/`back` carry the establishing
+// wides. Hand-authoring a new set to flatten the van's scale spread would
+// erase those distinct jobs without fixing a pictured fault.
 
 // id       — stable, used by the gate suite and the debug API
 // label    — what a player would call it

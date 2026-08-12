@@ -49,11 +49,14 @@ export const STATUE = {
   yaw: 0,
 };
 
-// ONE FIXED HOUR, ALWAYS (Dan, 2026-08-10). Time is a single authored lighting
-// setup: no clock, no weather, no atmosphere.js. G2 chooses the real hour as
-// part of the style bake-off, because lighting and style are one decision.
-// Until then this is a low warm sun, which is the direction docs/STYLE.md's
-// measured palette argues for (b* mean +22.4, 41 of 42 comics net-warm).
+// ONE FIXED HOUR, ALWAYS (G3d, 2026-08-12). Time is a single authored
+// lighting setup: no clock, no weather, no atmosphere.js. The dressed-pitch
+// S2 review retained the shipped low warm sun: sun 6 / hemi 3. Raising the
+// sun to 12 lifted the whole aerial-flattened pitch toward a pale wash while
+// leaving the rear-facing cast dark, so it spent contrast without fixing the
+// actual legibility problem. The camera-side fill experiment is recorded and
+// rejected in MCGROTS-VALIDATION.md; the remaining cast issue is an asset/
+// camera-side judgement, not a reason to over-light the pitch.
 //
 // Note this freezes the LIGHTING, not the schedule. G4's rota still advances
 // on the wall clock, and `mcgrotIsIn(dayKey)` is date-keyed, so "was McGrot in
@@ -79,19 +82,17 @@ export const LIGHT = {
   hemiIntensity: 3,
   exposure: 1.2,
 };
-// Chosen by sweep, not by eye — `node scripts/mcgrots-grade.mjs` walks 20
-// sun/hemisphere pairs over all five shots and reports mean, stddev, and the
-// fraction of the frame that is crushed or blown. The first hand-picked pair
-// put 53.9% of a frame under luminance 12; the second overcorrected to a mean
-// of 137. This pair is the darkest in the grid that crushes nothing:
+// Re-checked on the dressed pitch under S2 by `scripts/mcgrots-grade.mjs`.
+// The helper's 27-row sweep reports current 6/3 at S2 frame mean 105.1 and
+// cast mean 17.2; 12/3 reaches cast mean 26.4 but pushes the frame to 134.5
+// and visibly washes the pitch. The current pair remains the judgement call:
+// it is the darkest coherent grade, has 0.00% blown pixels in the sweep, and
+// preserves the brown/blue separation of the opened shots.
 //
 //   sun 6, hemi 3  ->  mean 76.7, stddev 51.4, 0.0% black, 0.0% blown
 //
-// It is still brighter than the street's measured 0.139 median display
-// luminance (docs/STYLE.md), and that is expected rather than wrong: this is a
-// blockout with a large flat ground and a lot of open sky, not a fogged
-// street. G2 owns the real grade and should re-run the sweep against the
-// chosen style rather than inherit these two numbers.
+// The old whole-frame numbers above are retained as history, not as the G3d
+// decision; S2's aerial wash changes the frame mean substantially.
 
 // Convert a point in PITCH-LOCAL space to world space.
 //

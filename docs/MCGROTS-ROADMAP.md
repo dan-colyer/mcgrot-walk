@@ -12,9 +12,9 @@ G3b (Queen Victoria) landed 2026-08-12, concurrently on different files. G3c
 (the real ledge, F1's seated pose, F2 judged) landed 2026-08-12 too, once G3a
 and G3b existed for it to sit against — F1 and F2 are both now CLOSED (§ 10).
 **G3c turned out narrower than originally planned**: the composed shots and
-the fixed hour are deliberately not in it (a posture whose ledge did not yet
-exist could not be composed around), and are now G3d, next. See § G3 below
-and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c".**
+the fixed hour were deliberately not in it (a posture whose ledge did not yet
+exist could not be composed around), and landed as G3d on 2026-08-12. See § G3
+below and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c", "G3d".**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run `npm run
 smoke:mcgrots` for the full suite; boot the game with `npm run dev:mcgrots`
@@ -593,6 +593,34 @@ F4 fault itself is pose-independent and still reads exactly 0.0 under the new
 threshold, re-verified by injecting it again after this change.
 
 `npm run smoke:mcgrots` → **38/38**.
+
+#### G3d — the five composed shots and the fixed hour — implemented 2026-08-12
+
+This was a judgement pass, not a camera rewrite. After G3c landed, all five
+anchors were rendered at 600 stepped frames under S2 and opened individually,
+then `npm run styleshots:mcgrots` regenerated the five 15-frame review sheets.
+The existing derived camera rule was retained: `counter` is the deliberately
+close service view, `wall` and `kerb` are the seated views, and `far` and `back`
+are the establishing wides. The opened final shots show the van/actor framing
+spread is doing different jobs rather than exposing a broken `back`: `far` is
+the best balanced three-subject wide and `back` is the cleanest establishing
+wide, with no empty middle. `counter` is intentionally van-dominant; `kerb`
+keeps the actor and van readable but Victoria leaves the frame.
+
+The fixed hour remains `LIGHT.sunIntensity=6`, `hemiIntensity=3`, with the
+shipped `sunAzimuth=-2.1` and `sunAltitude=0.34`. The dressed-pitch S2 grade
+was rerun across 27 sun/hemi/albedo rows: current 6/3 gave frame mean 105.1,
+cast mean 17.2 and 0.00% blown; 12/3 improved cast mean to 26.4 but raised
+frame mean to 134.5 and visibly washed the pitch without making the
+rear-facing actor readable. The old camera-side fill experiment is recorded
+as 8.3→11.0 cast luminance and rejected. The hour is therefore a measured
+best-available result, not a claim that the asset is legible at rest.
+
+The existing picture-safety contrast floor and G3a van-fraction check remain
+the named controls. Composition is deliberately not converted into a numeric
+ranking: no new acceptance gate was added, and there is no fault injection for
+taste. Full verification after the source comments landed is recorded in the
+validation entry.
 
 ### G4 — The rota
 

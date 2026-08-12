@@ -294,6 +294,41 @@ and down toward the ground rather than folding back underneath — both a
 genuine improvement over the pre-G3c capture. The torso lean is somewhat
 better, not dramatically so; said plainly rather than rounded up.
 
+### G3d — the five composed shots and the fixed hour
+
+After G3c landed, the final S2 review rendered each anchor with
+`node scripts/mcgrots-shot.mjs --body=skinned --archetype=rab --look=aerial
+--anchor=<id> --frames=600 --shot=/tmp/g3d-final-<id>.png`; all five PNGs were
+opened. The derived camera rule was retained. `counter` is a deliberately
+close service shot: the van dominates, but its price board is legible and the
+actor is present. `wall` is a readable seated-ledge composition with the van
+in the middle distance and Victoria at right. `kerb` is another readable
+seated composition with the van carrying the frame; Victoria is out of view.
+`far` is the best balanced three-subject wide, with the actor foreground, van
+centre and Victoria right. `back` is the cleanest establishing wide: the van
+and statue are separated and the former empty middle is gone. The actor's
+rear remains very dark at rest in all five; the known forward hunch is still
+visible but was not worsened by these framings.
+
+`npm run styleshots:mcgrots` then regenerated the five S2 review sheets, and
+`counter.png`, `wall.png`, `kerb.png`, `far.png` and `back.png` were opened.
+The motion rows agree with the still judgement: close anchors are close, while
+`far` and `back` provide the useful wides. The S4 panels contain scenes; no
+new panel or capture fault appeared.
+
+The fixed hour remains `LIGHT.sunIntensity=6`, `hemiIntensity=3`,
+`sunAzimuth=-2.1`, `sunAltitude=0.34`. `node scripts/mcgrots-grade.mjs` was
+rerun against the dressed pitch under S2. Its 27-row sweep reports current
+6/3 at frame mean 105.1, cast mean 17.2 and 0.00% blown; the pictured
+`sun 12 / hemi 3` experiment raised frame mean to 134.5 and still left the
+rear-facing cast dark, so it was rejected as a pale wash. The previously
+measured camera-side fill moved cast mean only 8.3→11.0 and remains rejected.
+This is the best-available fixed grade, not a claim that the asset is solved.
+
+The existing contrast-floor picture gate and G3a van-fraction gate are the
+named controls. Composition is a judgement and remains deliberately ungated;
+no numeric ranking or taste gate was added, so no fault injection applies.
+
 ### What G0 deliberately does not prove
 
 - **Nothing about animation.** The actor is a capsule that slides between
