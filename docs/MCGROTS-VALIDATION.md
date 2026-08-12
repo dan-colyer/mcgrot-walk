@@ -17,7 +17,7 @@ uses, shared deliberately so the two games' captures are comparable.
 
 ## G0 — scaffold
 
-13 checks, 1.3s. Captures land in `docs/smoke/captures/mcgrots/g0/`
+16 checks, ~1.3s. Captures land in `docs/smoke/captures/mcgrots/g0/`
 (gitignored, regenerated every run).
 
 | Region | Check | What it proves |
@@ -35,6 +35,9 @@ uses, shared deliberately so the two games' captures are comparable.
 | anchors | walk is not a teleport | Sampled mid-walk positions are between endpoints |
 | anchors | sitting anchors sit | `wall` ends in the `sit` state |
 | anchors | console clean after driving | No errors from the anchor transitions |
+| anchors | a walk eases the camera (F6) | Frame-1 camera move is <10% of the total, against a snap-path control |
+| anchors | the snap control still cuts | Frame-1 camera move is >95% of the total on the snap path |
+| anchors | the eased camera arrives exactly | <0.01m from the destination anchor's eye once the actor stops |
 
 ### The crush gate, and why it exists
 
@@ -54,6 +57,57 @@ thing that actually went wrong.
 turned it red while the contrast floor stayed green — which is the point, and
 is the evidence that it catches something the older check cannot. Restored
 from the commit immediately after.
+
+### F6 — the camera eases instead of cutting, and how that is gated
+
+**Found by the G2 phase gate 2026-08-12, fixed same day.** `goTo()` used to
+set the destination anchor as `current` before the walk began, and
+`placeCamera()` read `current.camera` every frame regardless of whether the
+actor had moved — so the camera cut to the destination shot on frame 1 of a
+walk while the actor was still leaving the source. Measured before the fix,
+one `goTo('far')` from `counter`: camera moved 10.324m on frame 1, actor
+moved 0.020m. Fixed by lerping the camera between the source and destination
+anchors' `eye`/`look`, weighted by `smoothstep(actor.progress)` — see
+`docs/MCGROTS-ROADMAP.md` § 10 F6 for the full account.
+
+**Gated as a fraction of total camera travel, not an absolute distance.**
+Anchor pairs sit at different separations (`back`→`far` measures 2.666m of
+camera travel; another pair would measure something else entirely), so a
+fixed-metre threshold would be tuned to one pair and silently wrong for
+another. The walk arm asserts frame-1 movement is under 10% of the total.
+
+**The control is the snap path, not the walk arm with the fix disabled
+through the same code.** `goTo(id, { snap: true })` is a genuinely separate
+branch — the boot placement and any future panel-change cut depend on it
+staying a hard cut — so measuring it alongside the walk arm is on-vs-off
+across two branches that actually differ, the isolation the street's
+acceptance gates got wrong twice (their flag gates booted twice and
+attributed a difference to the flag, sound only because nothing else
+differed). Here the snap arm asserts frame-1 movement is over 95% of the
+total, matching pre-fix behaviour exactly — because for the snap path,
+nothing changed.
+
+**A third check asserts arrival, not just motion.** A camera that eases
+smoothly but never quite resolves — an easing curve that asymptotes, or a
+`progress` that stalls short of 1 — would pass the first two checks and
+still be wrong. This one requires the camera to land within 0.01m of the
+destination anchor's `eye` once the actor has stopped walking.
+
+**Falsified 2026-08-12.** `previous = from` (the line that lets
+`placeCamera()` find an anchor to ease from) forced to `previous = null`,
+collapsing the walk branch back to the pre-fix cut. The walk-arm check went
+red (frame-1 movement back to 100% of the total, identical to the un-fixed
+measurement); the snap-arm check and the arrival check both stayed green
+throughout, confirming the injection touched only the branch it targeted.
+Restored from the commit immediately after.
+
+**What this does not prove:** that the eased motion looks good, or that
+`smoothstep` is the right curve rather than merely a reasonable one with soft
+ends. That judgement is Dan's, from opening the re-run
+`npm run styleshots:mcgrots` sheets — which now carry the actor in all three
+motion columns at `counter` and `wall`, the two anchors the phase gate found
+worst (previously missing the actor in two or three of three columns at
+each).
 
 ### What G0 deliberately does not prove
 

@@ -6,16 +6,16 @@ permanent world you drop into.
 
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
 and gated (2026-08-11). The cast-albedo fault, F4 (the cel look rendering the
-character black) and F5 (S4's panel rendering empty) are all FIXED. Dan's
-provisional ranking after the first sheets is S2 ahead. Phase-gated 2026-08-12:
-the three fixes verified independently and both new gates confirmed falsifiable,
-with one new fault found — F6, the camera cutting to the destination on frame 1
-of a walk, which is why half the ranking sheets' motion cells are empty. Next
-milestone is G3, with F6's staging decision at the front of it. See § G2 and
-§ 10 faults F4, F5 (closed) and F6 (open).**
+character black), F5 (S4's panel rendering empty) and F6 (the camera cutting
+to the destination on frame 1 of a walk) are all FIXED. Dan's provisional
+ranking after the first sheets is S2 ahead; F6 fixed the motion cells that
+ranking was thin on, so the sheets are worth re-opening before treating it as
+settled. Phase-gated 2026-08-12, with F6 found and fixed the same day, Dan's
+call: "let's just try and make any camera cuts smooth." See § G2 and § 10
+faults F4, F5, F6 (all closed).**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run it with
-`npm run smoke:mcgrots` (27 checks, ~1.2s warm); boot the game with
+`npm run smoke:mcgrots` (30 checks, ~1.3s warm); boot the game with
 `npm run dev:mcgrots` and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
@@ -385,10 +385,12 @@ be seen side by side.
 
 **The phase gate qualified this on 2026-08-12: the ranking was made on five
 stills plus three anchors of motion, not five.** Five of the ten motion cells
-across the sheets contain no actor, because the camera cuts to the destination on
-the first frame of a walk — F6 below. That does not overturn S2, which was
-already provisional, but the second pass should re-run the sheets after F6 is
-settled rather than treat the existing ones as a motion comparison.
+across the sheets contained no actor, because the camera cut to the
+destination on the first frame of a walk — F6 below, **fixed same day**. That
+does not overturn S2, which was already provisional, but the second pass
+should re-run the sheets (now regenerated, actor present in all ten motion
+cells at the two anchors previously worst-affected) rather than treat the
+original ones as a motion comparison.
 
 Done: all four candidates built, isolated and gated, four fault injections
 recorded, and three blocking faults fixed — the **cast-albedo fault**
@@ -775,67 +777,71 @@ now-closed capture-timing fault** (`7ce2fc1`): that rig's own
 `waitForPageCut()` waited a fixed 160ms, 30ms short of the ~190ms (130 hold +
 60 steps-lag) a capture needs to land clear of the veil. It now waits on the
 observable conditions, and the phase gate confirmed all three S4 columns carry
-a scene. What is still empty in those sheets is the **actor**, at two anchors,
-for a different reason entirely — see F6 below.
+a scene. What was still empty in those sheets was the **actor**, at two
+anchors, for a different reason entirely — F6 below, now also closed.
 
 Gate: `docs/MCGROTS-VALIDATION.md` § G2, "S4 holds a scene in the panel, not
 empty paper." Fault-injected (the `clip-path` assignment disabled) and
 confirmed red — 98.4% of sampled panel pixels matched the paper colour —
 then restored.
 
-### F6 — the camera cuts to the destination on frame 1 of a walk (G2/G3, open)
+### F6 — the camera cut to the destination on frame 1 of a walk (G2, CLOSED 2026-08-12)
 
 **Found by the G2 phase gate, 2026-08-12. Not introduced by G2 — it has been
-true since G0 — but it is in front of everything G2 was judging, which is why it
-surfaced now.**
-
-`goTo()` sets `current` to the destination before the walk starts
-(`main.js:184`), and `placeCamera()` runs every frame off `current.camera`
-(`main.js:238`). So the shot changes instantly and the player watches the walk
-from the shot they are arriving at. Measured on one `goTo('far')` from
-`counter`:
+true since G0 — but it was in front of everything G2 was judging, which is why
+it surfaced there.** `goTo()` set `current` to the destination before the walk
+started, and `placeCamera()` ran every frame off `current.camera`. So the shot
+changed instantly and the player watched the walk from the shot they were
+arriving at. Measured on one `goTo('far')` from `counter`, before the fix:
 
 ```
 camera moved on frame 1:  10.324 m
 actor  moved on frame 1:   0.020 m
-page cut active:           false (throughout)
 ```
 
-Three consequences:
+The gate offered three staging options — cut on departure with the gutter,
+cut on arrival, or leave it — and deliberately did not pick one, since G3 owns
+composed shots. **Dan's call, same day, took a fourth option the gate didn't
+offer: "let's just try and make any camera cuts smooth."** Not a cut on either
+end — a glide, tied to the walk itself.
 
-- **Half the capture-review rig's motion cells contain no actor** — three of
-  five anchors at approach, two of five at mid-stride. The table is in
-  `docs/MCGROTS-VALIDATION.md` § "G2 capture-review rig". The G2 ranking was
-  therefore made on five stills plus three anchors of motion.
-- **S4's gutter-hold cut never fires on a player action.** `page.cut()` is
-  called only from the `snap` branch, and the only snap in the product is
-  `goTo('back', { snap: true })` at boot. Every tap and every 1–5 keypress takes
-  the walk branch. The code comment defends this deliberately and its reasoning
-  is right — cutting away from the walk would be cutting away from the game —
-  but the same code then hard-cuts the camera at that exact moment with no
-  gutter. The beat the gutter was designed for is the one beat it is not applied
-  to.
-- **§ G2 above describes S4 as "a gutter-hold cut on anchor change".** There is
-  no anchor change that cuts with a gutter.
+**Fix:** `actor.js` gained a read-only `progress` getter (0 at the start of
+the current `walkTo`, 1 once arrived), derived from the same
+target/position state `walkTo`/`update()` already track. `main.js`'s
+`placeCamera()` now lerps camera eye and look from the anchor the walk left
+to the one it's headed for, weighted by `smoothstep(actor.progress)` — zero
+derivative at both ends, so the camera leaves and arrives at rest rather than
+on a hard corner. The snap branch (`goTo(id, { snap: true })`) is untouched —
+same code path as before this fix, `current.camera` assigned directly,
+`actor.walking` false — so the boot call and S4's gutter cut are unaffected.
 
-This is a **staging decision and Dan's call**, not a fix to make quietly. His G0
-ruling was "you watch your character walk between them… the walk is the point";
-at `counter` and `wall` you currently watch it from the far end or not at all.
-The options:
+Consequences resolved by the fix, not separately:
 
-1. **Cut on departure, with the gutter** — wrap the camera change in
-   `page.cut()`. Truest to the panel grammar; costs the walk.
-2. **Cut on arrival** — hold the departing shot until the actor is nearly there.
-   Truest to "the walk is the point"; the walk then plays at whatever distance
-   the old shot gives.
-3. **Leave it** — accept that a tap changes the shot instantly. Cheapest, and it
-   is what has been judged so far, but then S4's cut is a boot transition and
-   the rig's columns need renaming.
+- **The capture-review rig's motion cells now carry the actor.** Re-ran
+  `npm run styleshots:mcgrots` and opened `counter.png` and `wall.png` — the
+  two anchors the gate found worst (three of three columns missing the actor
+  at `counter`, two of three at `wall`) now show it in all three columns,
+  every row, at both.
+- **S4's gutter-hold cut still never fires on a walk**, which is now simply
+  correct rather than an oversight: a walk is no longer a cut of any kind, so
+  there is nothing for a gutter to hold across. The cut remains exactly what
+  it always was for the snap branch (the boot placement, and any future
+  panel change that is genuinely a cut).
+- **§ G2's "a gutter-hold cut on anchor change" is still not what the product
+  does** — anchor changes glide now, they do not cut — but this is no longer
+  a doc/product mismatch to flag, since gliding is the actual, chosen design.
 
-**This belongs at the front of G3**, which already owns "the composed shots
-finalised against the chosen style" — where the camera sits during a walk is the
-same decision as where it sits at rest. Re-run `npm run styleshots:mcgrots`
-once it is settled.
+**Dan's provisional S2-ahead ranking rested on five stills plus three anchors
+of motion; two of five anchors now have real motion for the first time.**
+Worth a second look before treating the ranking as settled, though re-judging
+it is not this fix's job.
+
+Gate: `docs/MCGROTS-VALIDATION.md` § G2, "a walk eases the camera — frame 1
+is a small fraction of the total move", with the snap path as its control and
+a third check on arrival. Fault-injected (`previous` forced to `null`,
+collapsing the walk branch to the old cut) and confirmed red — frame-1 camera
+move back to 100% of the total — while the snap control stayed green
+throughout. Restored.
 
 ---
 
