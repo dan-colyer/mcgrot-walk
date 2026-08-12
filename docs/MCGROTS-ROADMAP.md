@@ -14,7 +14,10 @@ and G3b existed for it to sit against — F2 is closed; F1 was recorded closed,
 was REOPENED by the G3 phase gate, which found the seated legs extending
 backwards and the thighs buried in the capstone, and is **now closed again by
 G3e (2026-08-12)** — the leg sign and the ledge offset landed together with
-F10's replacement gate (§ 10 F1, F7, F8, F10).
+F10's replacement gate (§ 10 F1, F7, F8, F10). **G3f (2026-08-12) closed F9**
+(the statue region gated existence, not visibility) with a real
+projection+content gate; the posture half of G3f's brief is tracked
+separately below.
 **G3c turned out narrower than originally planned**: the composed shots and
 the fixed hour were deliberately not in it (a posture whose ledge did not yet
 exist could not be composed around), and landed as G3d on 2026-08-12. See § G3
@@ -1186,25 +1189,32 @@ throughout. Restored.
 **F6 is closed only for a walk that starts from rest.** Re-targeting mid-walk
 still cuts — see F11.
 
-### F9 — the statue region gates existence, not visibility (G3 gate, OPEN)
+### F9 — the statue region gates existence, not visibility (G3 gate, CLOSED 2026-08-12 by G3f)
 
 **Severity: medium, and it is a fault in a GATE rather than in the game.**
-Injecting `statue.visible = false` in `buildStatue` leaves `--only=statue` at
-2/2 and the full suite at **38/38**. Nothing is rendered at the Foot and every
-check is green.
+Injecting `statue.visible = false` in `buildStatue` left `--only=statue` at
+2/2 and the full suite at **38/38**. Nothing was rendered at the Foot and every
+check was green.
 
-Both statue checks are blind by construction. One reads
+Both statue checks were blind by construction. One reads
 `getObjectByName('statue:queen-victoria')` and the absence of
 `statue-placeholder` — the scene graph, not the frame. The other projects the
 authored centre against the five camera rays, a distance between two numbers
 that a hidden object still has.
 
 G3a's own validation entry names this gap in writing, and G3b landed the same
-day, concurrently, without inheriting the rule. That is why it is now § 8's
-second invariant. The off-sightline check is worth keeping — it guards a real
+day, concurrently, without inheriting the rule. That is why it is § 8's
+second invariant. The off-sightline check was kept — it guards a real
 regression, the landmark becoming the subject — it is simply not a visibility
-gate. Fix: G3a's AABB-projection plus luminance-stddev technique, which
-transfers almost unchanged.
+gate.
+
+**Fixed, G3f.** The van region's AABB-projection technique transferred for the
+AREA half but NOT for the CONTENT half — measured, not assumed: the statue's
+projected rect overlaps the massing behind it at these anchors, and the van's
+own corner-flatness control read the BUILDING as content, passing even with
+`statue.visible = false` (`back` read statue=51.5 vs flat=0.0 with the statue
+OFF). Replaced with a live on/off toggle in the same boot — the exact
+technique and every number: `docs/MCGROTS-VALIDATION.md` § "G3f".
 
 ### F10 — the seat region cannot see F1's defect (G3 gate, CLOSED 2026-08-12 by G3e)
 

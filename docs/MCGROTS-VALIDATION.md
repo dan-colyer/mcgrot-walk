@@ -461,6 +461,92 @@ right; neither is a claim that the pose reads as anatomically natural, only
 that F1's two open defects — legs backward, thighs buried — are gone. The
 torso lean noted since G3c (§ G3c above) is untouched by this unit.
 
+### G3f — a real visibility gate for the statue
+
+**Landed 2026-08-12 (F9 half; the posture half is tracked separately in
+`docs/MCGROTS-ROADMAP.md` § 10 F1's follow-on, kept unlanded pending its own
+commit — see the brief's "two commits" instruction).**
+
+The statue region's two original checks (`getObjectByName` presence, and
+distance from the authored centre to the five camera rays) were both blind to
+`statue.visible = false`, exactly as F9 diagnosed. The off-sightline check was
+kept — renamed to say plainly it is not a visibility gate — since it guards
+the real, separate regression G3b measured (the landmark becoming the
+subject).
+
+**Started from the `van` region's shape** (project the object's world Box3
+through the live camera at each anchor after a real `snapTo`, clamp to
+viewport, require sensible area, require real content) and it transferred
+for the AREA half without change. It did NOT transfer for the CONTENT half,
+and that was measured, not assumed: the van's technique compares the
+object's rect to the flattest of four corner patches, which works because
+the van's rect sits against flat ground and sky. The statue's rect at these
+anchors overlaps the massing behind it. Running the van's own technique
+against `statue.visible = false` left it green — `back` read statue-rect
+stddev 51.5 against a flat-corner control of 0.0, comfortably "passing" a
+content check with the statue OFF, because what the check actually measured
+was the building's own roofline and colour-band edge sitting inside the
+statue's rect, unchanged by the statue's visibility.
+
+**Replaced with a live A/B in the same boot**, not a corner-flatness
+comparison: render each anchor once with the statue on, once with it toggled
+off (`d.scene.getObjectByName('statue').visible = false`, forced via
+`stepFrames(1)`) — then restored before the next anchor — and diff the two
+frames' luminance inside the SAME rect. Whatever sits behind the statue is
+identical in both frames and cancels out of the diff; only the statue's own
+pixels survive it. Threshold `>3` rules out anti-aliasing noise (two renders
+of an unchanged, statue-off scene read <0.5 in a dry run); measured range
+with the statue genuinely toggling, at the three covered anchors, is
+27.6–32.0.
+
+**Two anchors excluded from the content check, by name, with their measured
+numbers — not folded into a looser band:**
+
+- `kerb`: the statue's projected box is entirely off the right edge of the
+  frame (raw NDC `x0=1.344`), so there is no rect to diff. Also excluded from
+  the AREA check for the same reason. Still covered by the sightline check,
+  which needs no rect.
+- `counter`: genuinely toggles — confirmed by rendering both frames and
+  looking: a small dark triangle and a corner of the plinth appear and
+  disappear at the frame's right edge — but the diff reads only **1.0**,
+  against a confirmed-broken baseline of exactly **0.0** (measured by
+  injecting `statue.visible = false` at construction, so the "on" capture was
+  already off). Deterministic across three repeat runs, so this is real
+  signal, not noise. But it is signal diluted by averaging over a rect that
+  is >90% empty sky/ground — the statue's own AABB is clipped hard against
+  the frame edge at `counter`, so only a sliver of the box is actual statue.
+  A threshold exists that passes 1.0 and fails 0.0 (`>0.5`), but it would
+  have near-zero margin and would mean little if the pose or camera moved by
+  a few pixels. Per the brief's own instruction, said plainly rather than
+  shaving the threshold to fit — the content check covers `wall`, `far` and
+  `back` (three of five).
+
+**Fault-injected `statue.visible = false` in `buildStatue`, committed first.**
+The AREA check stayed green, exactly as documented above — `Box3().setFromObject`
+does not read `.visible`, so it cannot see this fault; that is a known,
+written-down limit of that check, not a surprise. The CONTENT check is the one
+that has to catch it, and the first run of the injection did not: `wall`,
+`far` and `back` all read their normal working diffs (27.6–32.0), unchanged.
+
+**A bug in the check itself, found by actually reading that output rather than
+trusting the design.** The per-anchor loop captured "on", toggled off,
+captured "off", then unconditionally reset `.visible = true` before moving to
+the next anchor. With the fault injected, the scene starts every anchor at
+`visible = false` — so `counter` (processed first in `anchorIds()` order)
+correctly measured a 0-vs-0 diff, but the unconditional reset then turned the
+statue back ON for every anchor after it, silently repairing the very fault
+under test. `wall`/`far`/`back` were measuring a scene the check had already
+fixed. Fixed by reading and restoring the ACTUAL prior `.visible` value
+instead of hardcoding `true`. Re-ran the same injection: `wall`/`far`/`back`
+now correctly read **0.0**, all below the `>3` floor — the check went red.
+Restored the source, reran clean: 44/44, `wall`/`far`/`back` back to
+27.6–32.0. The sightline check, `console clean`, and every other region
+stayed green throughout both the faulty and the fixed injection runs.
+
+**What this does not prove:** that the statue looks right, only that it is
+there, sensibly sized, and actually rendered at three of the five anchors it
+should be visible from. Composition judgement is G3b/G3d's, unchanged here.
+
 ### Faults in the G3 GATES, found by the phase gate
 
 Logged 2026-08-12 from `.herdr/gate3.md`, audit of `7ed2a4e..4c3286d`. These
