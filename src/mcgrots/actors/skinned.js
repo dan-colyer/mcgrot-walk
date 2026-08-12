@@ -148,8 +148,8 @@ export function makeSkinnedBody({ assets, archetype = 'rab' }) {
       // SEAT_DROP is the height of the thing being sat on. It has to agree with
       // the ledge at the sitting anchors (src/mcgrots/anchors.js) or the figure
       // hovers over it or sinks into it.
-      const thigh = sit * (Math.PI / 2) * 0.80;
-      const shin = -sit * (Math.PI / 2) * 0.74;
+      const thigh = -sit * (Math.PI / 2) * 0.80;
+      const shin = sit * (Math.PI / 2) * 0.74;
       // While walking, the shin trails the thigh slightly — a straight leg
       // swinging from the hip is the stiff-legged march the strips showed.
       const shinTrail = walking ? -Math.max(0, Math.sin(t)) * 0.30 : 0;

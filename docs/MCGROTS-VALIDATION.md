@@ -17,7 +17,7 @@ uses, shared deliberately so the two games' captures are comparable.
 
 ## G0 — scaffold
 
-22 checks in the regions below (`npm run smoke:mcgrots -- --only=boot,camera,anchors,van,seat`);
+25 checks in the regions below (`npm run smoke:mcgrots -- --only=boot,camera,anchors,van,seat`);
 the full suite also carries a `statue` region landed alongside G3a,
 documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 (gitignored, regenerated every run).
@@ -43,9 +43,12 @@ documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 | van | occupies a sensible fraction of the frame (G3a) | 0.3%-70% of the window at every one of the five anchors |
 | van | holds rendered content, not flat background | Luminance stddev exceeds the flattest of four corner patches by >10 |
 | van | console clean after driving the van region | No errors from the five snaps |
-| seat | the seated hip lands over the ledge — **NOT the pose; blind to F1, see F10** | Hip within 10cm (horizontal) / 6cm (vertical) of the ledge's own `Box3` centre/top, `wall` and `kerb` |
-| seat | standing does not read as seated (control) | The same measurement, standing, misses by design (~0.79m hip vs ~0.57m ledge) |
-| seat | console clean after driving the seat region | No errors from the four snaps |
+| seat | the seated knee sits forward of the hip (G3e, F10) | Knee-minus-hip, projected on the actor's facing, > 0.15 m, `wall` and `kerb` — the check that would have caught F1's thigh sign |
+| seat | standing knee stays near the hip (control) | Same projection, standing: within 0.05 m of zero — no thigh swing, distinguishing sit from stand |
+| seat | the ledge is centred laterally and offset behind the anchor (G3e, F8) | Lateral distance to the ledge's own `Box3` centroid ≤ 0.10 m; along-facing distance > 0.15 m (measured ~0.325 m) |
+| seat | the seated hip sits at or just above the ledge top | Hip height minus the ledge's `Box3` top is within [-0.02, 0.15] m, `wall` and `kerb` |
+| seat | standing falls outside the seated height band (control) | Same measurement, standing: outside [-0.02, 0.15] m (SEAT_DROP's ~0.22 m gap) |
+| seat | console clean after driving the seat region | No errors from the eight snaps |
 
 ### The crush gate, and why it exists
 
@@ -364,6 +367,100 @@ The existing contrast-floor picture gate and G3a van-fraction gate are the
 named controls. Composition is a judgement and remains deliberately ungated;
 no numeric ranking or taste gate was added, so no fault injection applies.
 
+### G3e — the seated pose, fixed with the leg sign and the ledge offset together
+
+**Landed 2026-08-12.** F7 and F8 are one unit — the sit pose can only be
+judged once — landed in one commit with F10's replacement gate.
+
+**F7, the leg sign.** `actors/skinned.js`'s thigh/shin terms were mirrored:
+
+```js
+const thigh = -sit * (Math.PI / 2) * 0.80;
+const shin  =  sit * (Math.PI / 2) * 0.74;
+```
+
+Verified by walking the actor and sampling its own movement, not a yaw
+formula — the trap that inverted G3c's reading of the same code (§ G3c
+above): `dx·sin(yaw) + dz·cos(yaw) = 0.9999999999999999` (`node
+scripts/tmp-g3e-review.mjs`, travel-check line). `PELVIS_TILT`'s
+compensation (`+ sit * PELVIS_TILT` on both thighs) needed no change — it
+cancels `hips`' own tilt algebraically (`world = hips.rotation.x +
+thighLocal.rotation.x = -sit·PELVIS_TILT + (thigh + sit·PELVIS_TILT) =
+thigh`), independent of `thigh`'s sign, so it was already correct for
+either direction. Re-derived, not assumed, per the brief's instruction.
+
+**F8, the offset.** `main.js`'s ledge holder now sits `SEAT_ALONG_FACING_OFFSET`
+(`SEAT_DEPTH/2 + CAP_OVERHANG` = 0.325 m) behind the anchor along local `-z`,
+which the holder's own `rotation.y = a.yaw` maps to `-(sin yaw, cos yaw)` —
+the actor's facing, reversed. G3c's centred placement was itself correctly
+measured (the hip has zero horizontal offset in any pose) but wrongly
+concluded from — the offset was never about the hip, it was about clearing
+the thighs, which do move.
+
+**Measured, not guessed: does any leg vertex intersect the ledge's solid
+volume.** Per the brief's explicit instruction not to guess a thigh radius,
+this was checked by manually skinning every vertex weighted ≥50% to
+`thighL`/`thighR`/`shinL`/`shinR` (bind matrix × per-vertex blended bone
+matrices × inverse bind, matching three.js's own vertex shader), transforming
+into the ledge holder's local frame, and testing against the wall's base-course
+box (`y∈[0, SEAT_HEIGHT-CAP_H]`, footprint `SEAT_WIDTH×SEAT_DEPTH`) and the
+cap's box (`y∈[SEAT_HEIGHT-CAP_H, SEAT_HEIGHT]`, footprint plus
+`CAP_OVERHANG`) separately. **Zero hits in either box, at both `wall` and
+`kerb`** (1010 leg vertices checked per anchor). The along-facing offset alone
+resolved F8's item 1 ("the ledge is too tall") as well as item 2: with the
+front edge under the buttocks, no part of the leg geometry reaches into
+either box, so `SEAT_HEIGHT` did not need lowering and the figure was not
+raised via `SEAT_DROP`. Recorded rather than assumed — the brief allowed
+either path, and measurement decided which was necessary.
+
+**What Dan looks at.** Rendered a front view and a true side profile, camera
+parked using measured facing (`(sin yaw, cos yaw)`) rather than a yaw
+formula, at both `wall` and `kerb`, plus 600-frame S2 renders at the real
+anchor distance (`docs/smoke/captures/mcgrots/g3e/`, not committed —
+regenerate with `scripts/tmp-g3e-review.mjs`'s method or
+`mcgrots-shot.mjs --anchor=wall --frames=600`). Seen: legs extend forward
+from the seat and down to the ground, feet planted in front, thighs resting
+above the ledge top rather than passing through it, the seat's front edge
+directly under the buttocks. At the real anchor distance the pose reads
+correctly as sitting, matching G3d's earlier judgement of the composition
+around it.
+
+**F10's gate, rewritten.** The old check measured only the hip, which the
+brief itself proved carries zero information about the legs (`docs/MCGROTS-ROADMAP.md`
+§ F1) — flipping F7's sign left it 38/38. Added the check the phase gate
+named: knee offset from hip, projected on the actor's facing, required
+positive. Fault-injected F7's original sign flip: `wall`/`kerb` knee-along
+read **-0.373** (matches the phase gate's own -0.3727 m measurement),
+correctly failing; the standing control read ~0 throughout, confirming the
+metric reads the SIT pose's thigh swing and not a fixed rig property.
+Restored, back to +0.340 at both anchors, 41/41.
+
+Fault-injected F8's offset directly (`SEAT_ALONG_FACING_OFFSET → 0`): the
+rewritten placement check ("the ledge is centred laterally and offset behind
+the anchor") correctly went red (`along=0.000` at both anchors, failing the
+`>0.15` floor) while every other check, including the new knee check, stayed
+green — proving that check specifically exercises the offset and nothing
+else. Restored, 41/41.
+
+**The old vertical assert — `Math.abs(hip.y - box.max.y) <= HEIGHT_TOL` — is
+gone**, not patched. It required hip and cap top to coincide, which is true
+here by construction (`SEAT_HEIGHT` was itself measured as the hip's own
+sit height) but was never the actually-correct spec; sitting only requires
+the hip not to sink below the seat. Replaced with a one-sided-in-spirit band,
+`[-0.02, +0.15]` around the cap top, generous enough that a future genuine
+raise of the hip (a real anatomical margin for thigh thickness, not built
+here) would still pass, but tight enough that standing's ~0.22 m gap falls
+clearly outside it — the control (`falls outside the seated height band`)
+confirms the band is not so loose it stops meaning anything. Measured
+current value: exactly 0.00 m, both anchors — no margin used, recorded
+honestly rather than padded.
+
+**What this does not settle.** The knee-forward-positive check and the leg/
+ledge-intersection measurement both prove the SIGN and the CLEARANCE are
+right; neither is a claim that the pose reads as anatomically natural, only
+that F1's two open defects — legs backward, thighs buried — are gone. The
+torso lean noted since G3c (§ G3c above) is untouched by this unit.
+
 ### Faults in the G3 GATES, found by the phase gate
 
 Logged 2026-08-12 from `.herdr/gate3.md`, audit of `7ed2a4e..4c3286d`. These
@@ -381,23 +478,21 @@ inherit it — now § 8's second project invariant. The off-sightline check stay
 it guards a real regression and its `(10,-5)` injection is sound. It is simply
 not a visibility gate.
 
-**F10 — the seat region cannot see F1's defect.** Injecting F1's thigh sign
-flip, the entire content of the fault, leaves the suite at **38/38**. The
-region measures the hip, and the hip has zero horizontal offset in any pose, so
-it reports the actor's group placement and nothing about the legs. The
-seated/standing control separates 0.57 m from 0.79 m, which is `SEAT_DROP`.
-Its vertical assert is worse than blind: `Math.abs(hip.y - box.max.y) <=
-HEIGHT_TOL` **requires** the hip bone to sit at the stone surface, encoding
-F1's second defect as the specification, and passes with zero margin used.
+**F10 — the seat region cannot see F1's defect. FIXED, G3e (2026-08-12).** Injecting
+F1's thigh sign flip, the entire content of the fault, left the suite at
+**38/38**. The region measured only the hip, and the hip has zero horizontal
+offset in any pose, so it reported the actor's group placement and nothing
+about the legs. The seated/standing control separated 0.57 m from 0.79 m,
+which is `SEAT_DROP`. Its vertical assert was worse than blind:
+`Math.abs(hip.y - box.max.y) <= HEIGHT_TOL` **required** the hip bone to sit
+at the stone surface, encoding F1's second defect as the specification, and
+passed with zero margin used. Full replacement gate, its fault injections and
+what each new check proves: § G3e above.
 
-What both have in common is that each region's own fault injection was honest
-and did go red. Neither injected the fault the region was *believed* to cover.
-A gate proved red against the fault its author had in mind, and the entry then
-claimed the broader thing.
-
-**The check that would have caught F1:** knee offset from hip, projected on the
-actor's facing, required positive, at both sitting anchors, with the standing
-pose at the same anchor as the control. Not yet built.
+What both F9 and F10 have in common is that each region's own fault injection
+was honest and did go red. Neither injected the fault the region was
+*believed* to cover. A gate proved red against the fault its author had in
+mind, and the entry then claimed the broader thing.
 
 **F11 — the camera region only ever tests parked → walk.** So it never enters
 the state where a walk is re-targeted mid-flight, which still cuts at 23.7% of

@@ -10,10 +10,11 @@ and gated (2026-08-11). The cast-albedo fault, F4, F5 and F6 are all FIXED
 against the regenerated review sheets. G3a (the van, price board, ground) and
 G3b (Queen Victoria) landed 2026-08-12, concurrently on different files. G3c
 (the real ledge, F1's seated pose, F2 judged) landed 2026-08-12 too, once G3a
-and G3b existed for it to sit against — F2 is closed; **F1 was recorded closed
-and has been REOPENED** by the G3 phase gate, which found the seated legs
-extend backwards and the thighs are buried in the capstone (§ 10 F1, and F7–F12
-for the gate's own findings).
+and G3b existed for it to sit against — F2 is closed; F1 was recorded closed,
+was REOPENED by the G3 phase gate, which found the seated legs extending
+backwards and the thighs buried in the capstone, and is **now closed again by
+G3e (2026-08-12)** — the leg sign and the ledge offset landed together with
+F10's replacement gate (§ 10 F1, F7, F8, F10).
 **G3c turned out narrower than originally planned**: the composed shots and
 the fixed hour were deliberately not in it (a posture whose ledge did not yet
 exist could not be composed around), and landed as G3d on 2026-08-12. See § G3
@@ -815,14 +816,17 @@ project exists is that the street was allowed to keep going at 80%.
 Things that are wrong, deliberately left, with enough detail to pick up cold.
 Distinct from § 11, which is undecided questions rather than broken work.
 
-### F1 — The seated pose is wrong (G1; REOPENED 2026-08-12 by the G3 phase gate)
+### F1 — The seated pose is wrong (G1; REOPENED 2026-08-12 by the G3 phase gate, CLOSED 2026-08-12 by G3e)
 
 **Severity: high.** The player sits near the van and listens; this is the
 posture the game is mostly in.
 
-**Status: OPEN.** G3c recorded this CLOSED on 2026-08-12 and it was not. The G3
-phase gate re-measured it the same day and found two live defects: the legs
-extend BACKWARDS, and the thighs are buried in the capstone. Both are below.
+**Status: CLOSED (G3e, 2026-08-12).** G3c recorded this CLOSED on 2026-08-12
+and it was not. The G3 phase gate re-measured it the same day and found two
+live defects: the legs extend BACKWARDS, and the thighs are buried in the
+capstone. Both are below, and both are now fixed together — see "G3e's fix"
+at the end of this entry and `docs/MCGROTS-VALIDATION.md` § "G3e" for the
+measurements, the fault injections, and what the fix does not settle.
 Re-confirmed independently before this entry was rewritten — walking the actor
 and sampling travel direction gives `facingAgreesWithPlusSinCos = 1.0000`, and
 at full sit `thighL.rotation.x = +1.5466` puts the knee **0.3727 m behind** the
@@ -932,6 +936,51 @@ missed**: at those anchor distances the legs are a few pixels and the figure
 was read as plausible rather than examined. Opening a capture is necessary and
 is not sufficient. What made it unmissable was the phase gate deliberately
 parking a camera on the figure's front, which is not one of the five shots.
+
+**G3e's fix (2026-08-12), landed as one commit with F10's replacement gate.**
+
+Signs mirrored exactly as demonstrated above:
+
+```js
+const thigh = -sit * (Math.PI / 2) * 0.80;
+const shin  =  sit * (Math.PI / 2) * 0.74;
+```
+
+Verified against travel, not a yaw formula: walking the actor and sampling its
+own movement gives `dx·sin(yaw) + dz·cos(yaw) = 0.9999999999999999`.
+`PELVIS_TILT`'s compensation needed no change — algebraically it cancels
+`hips`' own tilt (`world = -sit·PELVIS_TILT + (thigh + sit·PELVIS_TILT) =
+thigh`) regardless of `thigh`'s sign.
+
+The along-facing offset came back, exactly as diagnosed: `main.js`'s ledge
+holder is now `SEAT_DEPTH/2 + CAP_OVERHANG` = 0.325 m behind the anchor along
+the holder's local `-z`, which its own `rotation.y = a.yaw` maps to the
+actor's facing, reversed.
+
+**Measured rather than guessed: does any leg vertex intersect the ledge's
+solid volume.** Manually skinned every vertex weighted ≥50% to a thigh or
+shin bone (bind matrix × blended bone matrices × inverse bind, matching
+three.js's own vertex shader), transformed into the ledge's local frame, and
+tested against the wall's base-course box and the cap's box separately: **zero
+hits in either, at both `wall` and `kerb`**, 1010 leg vertices checked per
+anchor. The along-facing offset alone cleared both defects — `SEAT_HEIGHT`
+did not need lowering and the figure was not raised via `SEAT_DROP`; the
+brief allowed either path and measurement decided neither was necessary.
+
+Rendered and opened: a front view and a true side profile at both anchors,
+camera parked from measured facing rather than a yaw formula, plus 600-frame
+S2 renders at the real anchor distance. Seen: legs extend forward and down to
+the ground, feet planted in front, thighs resting above the ledge rather than
+through it, the seat's front edge under the buttocks. At the real anchor
+distance the pose reads as sitting.
+
+F10's gate replaced — knee offset from hip, projected on facing, required
+positive, added; both fault-injected (F7's sign flip read **-0.373** at both
+anchors, matching the phase gate's own -0.3727 m; F8's offset zeroed read
+`along=0.000`, failing its own new check while every other check, including
+the knee one, stayed green) and restored, 41/41. Full account, every check's
+derivation and what the fix does not settle (the torso lean from G3c is
+untouched): `docs/MCGROTS-VALIDATION.md` § "G3e".
 
 ### F2 — Feet slide (G1, judged 2026-08-12 — does not read, closed)
 
@@ -1157,21 +1206,30 @@ regression, the landmark becoming the subject — it is simply not a visibility
 gate. Fix: G3a's AABB-projection plus luminance-stddev technique, which
 transfers almost unchanged.
 
-### F10 — the seat region cannot see F1's defect (G3 gate, OPEN)
+### F10 — the seat region cannot see F1's defect (G3 gate, CLOSED 2026-08-12 by G3e)
 
 **Severity: medium, a gate fault.** Injecting F1's thigh sign flip — the entire
-content of the fault — leaves the suite at **38/38**.
+content of the fault — left the suite at **38/38**.
 
-The region measures the hip and only the hip, and by G3c's own headline
-measurement the hip has zero horizontal offset in any pose, so its position is
-a function of the actor's group placement alone. The seated/standing control
-separates 0.57 m from 0.79 m, which is `SEAT_DROP` — again not the legs.
+The region measured the hip and only the hip, and by G3c's own headline
+measurement the hip has zero horizontal offset in any pose, so its position
+was a function of the actor's group placement alone. The seated/standing
+control separated 0.57 m from 0.79 m, which is `SEAT_DROP` — again not the
+legs.
 
-The region does prove two true things: the ledge is built at the anchor, and
-the sit state applies its drop. Its own fault injection is honest and does go
-red. The gap is between what it proves and what F1 claimed on the strength of
-it. Fix: knee offset from hip projected on the actor's facing, required
-positive, both sitting anchors, standing as the control.
+The region did prove two true things: the ledge is built at the anchor, and
+the sit state applies its drop. Its own fault injection was honest and did go
+red. The gap was between what it proved and what F1 claimed on the strength
+of it.
+
+**Fixed, G3e.** Added: knee offset from hip projected on the actor's facing,
+required positive, both sitting anchors, standing as the control. Also
+rewrote the ledge-placement checks' spec (lateral centring kept, along-facing
+changed from "centred" to "offset behind the anchor" to match F8's real fix)
+and replaced the vertical assert's exact-surface equality with a band that a
+standing control can still fall outside of. Every new/changed assert was
+fault-injected and confirmed red; full derivations in
+`docs/MCGROTS-VALIDATION.md` § "G3e".
 
 ### F11 — the camera cuts when a walk is interrupted (G3 gate, OPEN)
 

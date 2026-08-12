@@ -143,19 +143,24 @@ scene.add(markers);
 // statue do; this is dressing consistent with `van.js`'s kerb/pavement
 // stone tones, not a researched feature.
 //
-// CENTRED EXACTLY ON THE ANCHOR, not offset. The G1 placeholder set the ledge
-// 0.3 m behind the standing spot — a number chosen independently of the pose,
-// which is F1's own diagnosis of why the figure sat in front of the seat
-// rather than on it. Measured (G3c): the rig's `hips` bone has ZERO local
-// x/z offset from the actor's group origin at any point in the sit — the
-// thighs swing the KNEE and FOOT forward as children, but the hip joint
-// itself never moves horizontally, seated or standing. So the seat point is
-// always exactly where the actor stands, and the ledge belongs exactly
-// there — no along-facing offset derives to anything but zero.
+// OFFSET BEHIND THE ANCHOR, along the actor's facing (G3e, F1/F8). G3c
+// measured that the rig's `hips` bone has ZERO local x/z offset from the
+// actor's group origin in any pose, and used that to delete G1's 0.3 m
+// offset — correct measurement, wrong conclusion. The hip's own offset was
+// never what the number was for: the thighs swing forward from the hip as
+// the actor sits, and with the ledge centred on the anchor those thighs swing
+// straight into the block's front half, buried in the stone up to the
+// capstone. The offset's job is to put the seat's FRONT edge under the
+// buttocks so the thighs swing clear over the top — that derives from the
+// seat's DEPTH, not the hip. `SEAT_ALONG_FACING_OFFSET` below is exactly
+// that: half the depth plus the capstone's overhang, applied along local -z
+// (the holder's local +z maps to `(sin yaw, cos yaw)`, the actor's own
+// facing per `AGENTS.md` § invariants — so -z is behind).
 const SEAT_WIDTH = 1.8;    // across — one person, with margin either side
 const SEAT_DEPTH = 0.55;   // front-to-back, along the actor's facing
 const CAP_H = 0.06;
 const CAP_OVERHANG = 0.05;
+const SEAT_ALONG_FACING_OFFSET = SEAT_DEPTH / 2 + CAP_OVERHANG; // 0.325 m, behind
 const WALL_STONE = 0x5f594c;
 const WALL_CAP = 0x716a58;
 const seats = new THREE.Group();
@@ -165,7 +170,11 @@ for (const a of ANCHORS) {
   const base = new THREE.BoxGeometry(SEAT_WIDTH, SEAT_HEIGHT - CAP_H, SEAT_DEPTH);
   base.translate(0, (SEAT_HEIGHT - CAP_H) / 2, 0);
   const holder = new THREE.Group();
-  holder.position.set(a.pos.x, 0, a.pos.z);
+  holder.position.set(
+    a.pos.x - Math.sin(a.yaw) * SEAT_ALONG_FACING_OFFSET,
+    0,
+    a.pos.z - Math.cos(a.yaw) * SEAT_ALONG_FACING_OFFSET,
+  );
   holder.rotation.y = a.yaw;
   holder.name = `seat:${a.id}`;
   const wall = new THREE.Mesh(
