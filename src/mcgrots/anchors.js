@@ -24,11 +24,22 @@ import { toWorld } from './site.js';
 const STAND_LOOK = 1.35;
 const SIT_LOOK = 0.95;
 
-// Height of the ledge a sitting anchor sits on, in metres. Must agree with
-// SEAT_DROP in actors/skinned.js (0.26 of a 1.72 m figure) or the figure
-// hovers above the wall or sinks into it. 0.45 m is a low wall — the height
-// you perch on rather than the height you sit back into.
-export const SEAT_HEIGHT = 0.45;
+// Height of the ledge a sitting anchor sits on, in metres. MEASURED off the
+// shipped rig 2026-08-12 (G3c), not picked: `getWorldPosition` on the `hips`
+// bone at full sit reads 0.5712 m for `rab` (SkinnedMesh, `?body=skinned`).
+// The comment this replaced said 0.45 m "must agree with SEAT_DROP... 0.26 of
+// a 1.72m figure" — both numbers were stale (SEAT_DROP was corrected to 0.22
+// in commit `f0982fc` without this comment or constant being revisited) and,
+// separately, wrong on their own terms: SEAT_DROP's drop is applied to
+// `body.group.position.y`, which is the SAME group `actor.js` scales by
+// `height` — so the drop lands in the PARENT's units (already metres, ~0.22m
+// of real drop) while `hips`'s own rest position (0.46, rig-local) is nested
+// one level DEEPER and DOES get the ×1.72 scale. A hand-derived "0.24 unit ×
+// 1.72" (0.413m) is not what the hierarchy actually produces — measuring the
+// live bone was the only way to get the real number. `SEAT_DROP` itself is
+// untouched: it still keeps the boots on the ground (F2's separate, open
+// concern), and changing it would need re-deriving that too.
+export const SEAT_HEIGHT = 0.5712;
 
 // THE SHOTS ARE DERIVED, NOT HAND-PLACED, and that is a correction rather than
 // a preference. The first version authored five eye positions by hand in local

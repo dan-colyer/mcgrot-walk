@@ -135,28 +135,53 @@ for (const a of ANCHORS) {
 }
 scene.add(markers);
 
-// A ledge at every sitting anchor. G3 dresses the pitch properly; this exists
-// now because a sit pose with nothing under it reads as a crouch no matter how
-// good the pose is, so the posture cannot be judged without it. The game is
-// largely about sitting near the van and listening, which makes this the most
-// load-bearing posture in the piece rather than a detail.
+// G3c: the real ledge at every sitting anchor, replacing G1's placeholder
+// box. A low retaining wall — base course plus a capstone lip, the shape
+// every low boundary wall at a real junction like this one actually has, not
+// a bench dropped in. `docs/LEITH.md` names no specific wall at the Foot, so
+// there is no real geometry to defer to here the way the buildings and the
+// statue do; this is dressing consistent with `van.js`'s kerb/pavement
+// stone tones, not a researched feature.
+//
+// CENTRED EXACTLY ON THE ANCHOR, not offset. The G1 placeholder set the ledge
+// 0.3 m behind the standing spot — a number chosen independently of the pose,
+// which is F1's own diagnosis of why the figure sat in front of the seat
+// rather than on it. Measured (G3c): the rig's `hips` bone has ZERO local
+// x/z offset from the actor's group origin at any point in the sit — the
+// thighs swing the KNEE and FOOT forward as children, but the hip joint
+// itself never moves horizontally, seated or standing. So the seat point is
+// always exactly where the actor stands, and the ledge belongs exactly
+// there — no along-facing offset derives to anything but zero.
+const SEAT_WIDTH = 1.8;    // across — one person, with margin either side
+const SEAT_DEPTH = 0.55;   // front-to-back, along the actor's facing
+const CAP_H = 0.06;
+const CAP_OVERHANG = 0.05;
+const WALL_STONE = 0x5f594c;
+const WALL_CAP = 0x716a58;
 const seats = new THREE.Group();
 seats.name = 'seats';
 for (const a of ANCHORS) {
   if (!a.sit) continue;
-  const ledge = new THREE.Mesh(
-    new THREE.BoxGeometry(2.6, SEAT_HEIGHT, 0.55),
-    new THREE.MeshLambertMaterial({ color: 0x5a5344, flatShading: true }),
+  const base = new THREE.BoxGeometry(SEAT_WIDTH, SEAT_HEIGHT - CAP_H, SEAT_DEPTH);
+  base.translate(0, (SEAT_HEIGHT - CAP_H) / 2, 0);
+  const holder = new THREE.Group();
+  holder.position.set(a.pos.x, 0, a.pos.z);
+  holder.rotation.y = a.yaw;
+  holder.name = `seat:${a.id}`;
+  const wall = new THREE.Mesh(
+    base,
+    new THREE.MeshLambertMaterial({ color: WALL_STONE, flatShading: true }),
   );
-  // Behind the figure, not under it: you perch on the front edge of a wall.
-  ledge.position.set(
-    a.pos.x - Math.sin(a.yaw) * 0.3,
-    SEAT_HEIGHT / 2,
-    a.pos.z - Math.cos(a.yaw) * 0.3,
+  wall.name = `seat:${a.id}:wall`;
+  holder.add(wall);
+  const cap = new THREE.Mesh(
+    new THREE.BoxGeometry(SEAT_WIDTH + CAP_OVERHANG * 2, CAP_H, SEAT_DEPTH + CAP_OVERHANG * 2),
+    new THREE.MeshLambertMaterial({ color: WALL_CAP, flatShading: true }),
   );
-  ledge.rotation.y = a.yaw;
-  ledge.name = `seat:${a.id}`;
-  seats.add(ledge);
+  cap.position.y = SEAT_HEIGHT - CAP_H / 2;
+  cap.name = `seat:${a.id}:cap`;
+  holder.add(cap);
+  seats.add(holder);
 }
 scene.add(seats);
 

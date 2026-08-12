@@ -154,8 +154,24 @@ export function makeSkinnedBody({ assets, archetype = 'rab' }) {
       // swinging from the hip is the stiff-legged march the strips showed.
       const shinTrail = walking ? -Math.max(0, Math.sin(t)) * 0.30 : 0;
 
-      if (bones.thighL) bones.thighL.rotation.x = swing * LEG_SWING * (1 - sit) + sitSplay + thigh;
-      if (bones.thighR) bones.thighR.rotation.x = counter * LEG_SWING * (1 - sit) + sitSplay + thigh;
+      // G3c / F1's third defect: "the torso pitches forward into a huddle",
+      // needing "a pelvis that rotates back independently of the spine". This
+      // rig has no separate pelvis bone — `hips` IS the pelvis, and it is also
+      // the PARENT of both `spine` and the thighs (measured: `hips`, `spine`,
+      // `thighL`, `thighR` are all one level apart in the skeleton, `spine`
+      // and the thighs siblings under `hips`). So rotating `hips` moves the
+      // whole upper body AND re-bases the thighs' own rotation, which is
+      // otherwise set in `hips`-local space. PELVIS_TILT compensates the
+      // thigh angle by the same amount it tips `hips` back, so the leg's
+      // WORLD-space shape (the thing already confirmed correct — see below)
+      // is unchanged; only the spine's world angle moves, since spine's own
+      // local rotation is untouched and is now measured from a pelvis that
+      // has tipped back underneath it.
+      const PELVIS_TILT = 0.15;
+      if (bones.hips) bones.hips.rotation.x = -sit * PELVIS_TILT;
+
+      if (bones.thighL) bones.thighL.rotation.x = swing * LEG_SWING * (1 - sit) + sitSplay + thigh + sit * PELVIS_TILT;
+      if (bones.thighR) bones.thighR.rotation.x = counter * LEG_SWING * (1 - sit) + sitSplay + thigh + sit * PELVIS_TILT;
       if (bones.shinL) bones.shinL.rotation.x = shin + shinTrail * (1 - sit);
       if (bones.shinR) bones.shinR.rotation.x = shin + (walking ? -Math.max(0, Math.sin(t + Math.PI)) * 0.30 : 0) * (1 - sit);
       if (bones.armL) bones.armL.rotation.x = counter * ARM_SWING * (1 - sit);

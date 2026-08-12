@@ -32,7 +32,7 @@ import { LAUNCH_OPTS, LAUNCH_LABEL } from './launch.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'docs/smoke/captures/mcgrots/g0');
 
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'style'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'seat', 'style'];
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
 const wants = (r) => ONLY.size === 0 || ONLY.has(r);
@@ -479,6 +479,95 @@ try {
       consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
   }
 
+  // -------------------------------------------------------------- seat ---
+  // G3c. F1's own diagnosis was "nothing guarantees the hip lands over the
+  // seat" — the ledge and the anchor were positioned independently. Own
+  // navigation (skinned body: the capsule/segmented/flats candidates have no
+  // `hips` bone to measure), so this does not inherit whatever body the
+  // `anchors` region above left the page on.
+  if (wants('seat')) {
+    await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
+      { waitUntil: 'load' });
+    await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+    // Reads the SHIPPED scene, not a helper that recomputes the ledge's own
+    // offsets: the seat's world box comes from `THREE.Box3().setFromObject`
+    // on the actual mesh group `main.js` builds, and the hip comes from
+    // `getWorldPosition` on the actual skeleton bone — same technique as the
+    // van region's AABB-projection check (G3a), for the same reason. A helper
+    // that re-derives "where the ledge should be" from the same constants the
+    // product uses would pass even if the product's own placement code had a
+    // sign error, since it would be checking the constants against
+    // themselves.
+    const measure = (anchorId, sit) => page.evaluate(({ anchorId, sit }) => {
+      const d = window.__mcgrotsDebug;
+      // `d.snapTo` runs `goTo(id, { snap: true })`, which sets `current` to
+      // this anchor — and `frame()` (main.js) re-asserts `'sit'` every frame
+      // whenever `current.sit` is true and the actor isn't walking ("Park
+      // state resolves on arrival, so a sitting spot only sits once
+      // reached"). That auto-resit stomped the very first version of this
+      // control: forcing `'idle'` here looked like it worked for one frame
+      // and then silently reverted, so standing measured the SAME hip height
+      // as seated. Positioning the actor directly (bypassing `goTo`, so
+      // `current` never becomes this anchor) is what makes `'idle'` actually
+      // stick for the control.
+      const a = d.anchors.find((x) => x.id === anchorId);
+      d.actor.snapTo(a.pos.x, a.pos.z, a.yaw);
+      d.setActorState(sit ? 'sit' : 'idle');
+      d.stepFrames(150);
+      let mesh = null;
+      d.scene.traverse((o) => { if (o.isSkinnedMesh) mesh = o; });
+      const hips = mesh.skeleton.bones.find((b) => b.name === 'hips');
+      const wp = new d.THREE.Vector3();
+      hips.getWorldPosition(wp);
+      const seatGroup = d.scene.getObjectByName(`seat:${anchorId}`);
+      const b3 = seatGroup ? new d.THREE.Box3().setFromObject(seatGroup) : null;
+      return {
+        hip: { x: wp.x, y: wp.y, z: wp.z },
+        box: b3 ? { min: { x: b3.min.x, y: b3.min.y, z: b3.min.z }, max: { x: b3.max.x, y: b3.max.y, z: b3.max.z } } : null,
+      };
+    }, { anchorId, sit });
+
+    const rows = [];
+    for (const id of ['wall', 'kerb']) {
+      rows.push({ id, seated: await measure(id, true), standing: await measure(id, false) });
+    }
+
+    // 3cm of footprint slack (the coat/pose is not pixel-precise) and 6cm of
+    // height tolerance against the ledge's TOP (the cap, per the Box3 — the
+    // wall's own overhanging capstone, not the base course under it).
+    const MARGIN = 0.03;
+    const HEIGHT_TOL = 0.06;
+    const overSeat = (hip, box) => !!box
+      && hip.x >= box.min.x - MARGIN && hip.x <= box.max.x + MARGIN
+      && hip.z >= box.min.z - MARGIN && hip.z <= box.max.z + MARGIN
+      && Math.abs(hip.y - box.max.y) <= HEIGHT_TOL;
+
+    const bad = rows.filter((r) => !overSeat(r.seated.hip, r.seated.box));
+    check('the seated hip lands over the ledge, at both sitting anchors',
+      bad.length === 0,
+      rows.map((r) => `${r.id} hip(${r.seated.hip.x.toFixed(2)},${r.seated.hip.y.toFixed(2)},${r.seated.hip.z.toFixed(2)}) ` +
+        `ledge-top ${r.seated.box ? r.seated.box.max.y.toFixed(2) : 'missing'}`).join(' / '));
+
+    // THE CONTROL: standing at the SAME anchor, same ledge, same measurement.
+    // Standing hip height is roughly the rest pose (~0.46 unit x 1.72m
+    // height ~ 0.79m) — well above the ~0.57m ledge top — so if this ALSO
+    // read as "on the seat" the check would be proving nothing about the
+    // pose, only that the actor exists near the ledge regardless of what
+    // they are doing. A real, separate branch: `setActorState('idle')`
+    // instead of `'sit'`, not the sit arm with the fix toggled off through
+    // the same code.
+    const controlBad = rows.filter((r) => overSeat(r.standing.hip, r.standing.box));
+    check('standing at the same anchor does not read as seated (control)',
+      controlBad.length === 0,
+      rows.map((r) => `${r.id} standing hip y=${r.standing.hip.y.toFixed(2)} vs ledge top ` +
+        `${r.standing.box ? r.standing.box.max.y.toFixed(2) : 'missing'}`).join(' / '));
+
+    check('console clean after driving the seat region',
+      consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+  }
+
   // --------------------------------------------------------------- style ---
   // G2's four candidates. Every check here boots ONCE and switches arms in
   // place, which is a stronger control than the street's flag gates get: those
@@ -720,8 +809,16 @@ try {
       return { mean, stddev: n ? Math.sqrt(Math.max(0, sumSq / n - mean * mean)) : 0, max, n };
     };
     const actorStats = boxStats(inkedShot, actorBox);
+    // Threshold lowered 2 -> 1 in G3c: the pose fix (pelvis tilt, actors/
+    // skinned.js) shifted what this fixed height-fraction window samples on
+    // `kerb` — measured 3.0 before G3c, 1.8 after, both with a real, lit,
+    // cel-shaded figure (opened the capture, not just the number). The F4
+    // fault this guards against is unrelated to pose — it zeroes the
+    // geometry's normals — and reads exactly 0.0 regardless of which pose is
+    // on screen, so 1 still keeps a clear multiple of margin above the fault
+    // while accepting the legitimate reading.
     check('S1 does not render the skinned actor as a flat black silhouette',
-      actorStats.stddev > 2 && actorStats.max > CRUSH_LUMA,
+      actorStats.stddev > 1 && actorStats.max > CRUSH_LUMA,
       `torso patch stddev ${actorStats.stddev.toFixed(1)}, max ${actorStats.max.toFixed(1)}, n=${actorStats.n}`);
 
     // --- S2: the depth ramp, with S1 as the control -----------------------
