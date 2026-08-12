@@ -474,19 +474,39 @@ requires something to look at follows them.
 |---|---|---|
 | **G3a** — the van, the price board, the ground | `van.js` (new), `main.js` | nothing |
 | **G3b** — Queen Victoria and the Foot's landmarks | `statue.js` (new), `site.js` § STATUE | nothing |
-| **G3c** — F1's pose on the real ledge, the composed shots, the fixed hour | `anchors.js`, `actor.js`, `site.js` § LIGHT | both above |
+| **G3c** — the real ledge, F1's seated pose, F2 judged | the ledge in `main.js`, `actor.js` | G3a, G3b |
+| **G3d** — the composed shots and the fixed hour | `anchors.js`, `site.js` § LIGHT | G3c |
 
-G3a and G3b run concurrently on different files. Each adds **one line** to
-`main.js` to build itself; that is the only shared file and a one-line
-addition in two different places is a merge git handles. Anything larger in
-`main.js` belongs to G3c, which runs alone.
+G3a and G3b ran concurrently on different files. The plan said each adds one
+line to `main.js` and "git will merge that" — **which was wrong, and is
+recorded in `AGENTS.md` § Landing.** There are no per-worker branches: both
+workers share one working tree, so there is no merge, only interleaving.
+G3b's commit swept up G3a's uncommitted doc edits. Nothing was lost and the
+code commits stayed correctly attributed, but that was luck. Concurrent units
+now commit by explicit pathspec.
 
-G3c is the judgement unit and carries the three things G2 handed forward: F1
-(the seated pose, which is why it waited for a real ledge), F2 (foot slide,
-to be re-judged at the finished shot distances rather than G1's closer review
-camera), and the **fixed hour** — re-run `scripts/mcgrots-grade.mjs` against
-the dressed pitch under S2, not against the blockout the current sun/hemi pair
-was swept on.
+**The ledge fell between the two briefs, and that is an orchestration miss
+worth recording.** G3a covered the van, the board and the ground; G3b covered
+the statue. Neither replaced the placeholder `BoxGeometry` seat at `main.js:143`
+— the one G1 dropped in so the pose could be looked at at all. So F1 still had
+no real wall to be tuned against, which was the entire reason it was deferred
+to G3. Caught before G3c was briefed, by checking rather than by assuming the
+plan had covered it.
+
+G3c and G3d split what the original plan called one unit. The pose has to be
+right before the shots are composed around it, or the shots get composed
+twice — and the fixed hour is judged on the finished shots, so it comes last:
+
+- **G3c** — the real ledge, then F1's seated pose standing on it, then F2
+  (foot slide) *judged* at the real shot distances rather than fixed. "It does
+  not read at these distances, close F2" is a good and cheap result.
+- **G3d** — the five composed shots and the **fixed hour**. Re-run
+  `scripts/mcgrots-grade.mjs` against the dressed pitch under S2, not against
+  the blockout the current sun/hemi pair was swept on. Two observations from
+  the 2026-08-12 review are its starting material: the van occupies 57.6% of
+  the frame at `counter` and 6.5% at `far`, a tenfold spread across five
+  shots; and the `back` wide has an empty middle distance, with the van left,
+  the statue right and bare ground between them.
 
 #### G3a — the van, the price board, the ground — implemented 2026-08-12
 
