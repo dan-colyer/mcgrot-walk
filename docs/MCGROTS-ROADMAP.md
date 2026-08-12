@@ -7,16 +7,18 @@ permanent world you drop into.
 **Status: G0 and G1 landed 2026-08-10. G2's four candidates are BUILT, isolated
 and gated (2026-08-11). The cast-albedo fault, F4, F5 and F6 are all FIXED
 (§ 10). Style is settled: S2 aerial flatten (Dan, 2026-08-12), re-confirmed
-against the regenerated review sheets. G3a landed 2026-08-12 — the real van,
-price board and ground dressing, replacing the G0 blockout box; see § G3
-below and `docs/MCGROTS-VALIDATION.md` § "G3a". G3b (Queen Victoria) landed
-concurrently on a different file. G3c (F1's seated pose, the composed shots,
-the fixed hour) is next, and depends on both.**
+against the regenerated review sheets. G3a (the van, price board, ground) and
+G3b (Queen Victoria) landed 2026-08-12, concurrently on different files. G3c
+(the real ledge, F1's seated pose, F2 judged) landed 2026-08-12 too, once G3a
+and G3b existed for it to sit against — F1 and F2 are both now CLOSED (§ 10).
+**G3c turned out narrower than originally planned**: the composed shots and
+the fixed hour are deliberately not in it (a posture whose ledge did not yet
+exist could not be composed around), and are now G3d, next. See § G3 below
+and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c".**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run `npm run
-smoke:mcgrots` for the full suite, or `-- --only=van` while other G3 units are
-still landing on the same shared tree; boot the game with `npm run
-dev:mcgrots` and open `/mcgrots.html`.
+smoke:mcgrots` for the full suite; boot the game with `npm run dev:mcgrots`
+and open `/mcgrots.html`.
 
 This document is the brief. It is written to be picked up by a session with no
 memory of the conversation that produced it (Dan and Opus, 2026-08-10). Read
@@ -567,6 +569,31 @@ fault-injecting the product centre to `(10,-5)` made the statue region fail
 `1/2` (distances 0.562m / 1.359m / 1.297m / 1.035m / 0.380m), and restoring
 `(0,0)` returned it to `2/2`.
 
+#### G3c — the real ledge, F1's seated pose, F2 judged — implemented 2026-08-12
+
+Closed the gap G3a/G3b left: neither replaced G1's placeholder sitting box
+(`main.js:143`), so F1 still had no real wall to be tuned against. Full
+account of both fixes, the measurements behind them, and where the brief's
+own suggested diagnosis (the thigh's rotation sign) was checked and refuted,
+is in § 10 F1 (closed) and F2 (judged, closed) above — kept there rather than
+duplicated here, since that is where the acceptance-list structure lives.
+
+New `seat` region in `smoke-mcgrots.mjs`: the seated hip's world position
+against the ledge's actual `Box3`, at both sitting anchors, against a
+standing-at-the-same-anchor control. Needed a redesign before its own fault
+injection worked — footprint containment did not catch the 0.3 m mislocation
+fault it was meant to, since the ledge is deep enough that the shift still
+left the (unmoved) hip inside the box, just off-centre. Distance-to-centre
+does. Full account in `docs/MCGROTS-VALIDATION.md` § "G3c".
+
+Also lowered the F4 torso-patch gate's stddev floor (2 → 1): the pelvis fix
+shifted what that fixed height-fraction window samples on `kerb` (3.0 before,
+1.8 after, both a real lit figure — capture opened, not just the number). The
+F4 fault itself is pose-independent and still reads exactly 0.0 under the new
+threshold, re-verified by injecting it again after this change.
+
+`npm run smoke:mcgrots` → **38/38**.
+
 ### G4 — The rota
 
 Arrivals as a pure function of **wall-clock time** (§ 6). Note that a fixed
@@ -735,37 +762,68 @@ project exists is that the street was allowed to keep going at 80%.
 Things that are wrong, deliberately left, with enough detail to pick up cold.
 Distinct from § 11, which is undecided questions rather than broken work.
 
-### F1 — The seated pose is wrong (G1, open)
+### F1 — The seated pose is wrong (G1, CLOSED 2026-08-12 — G3c)
 
 **Severity: high.** The player sits near the van and listens; this is the
 posture the game is mostly in.
 
-Fixed so far (commit `f0982fc`): the figure no longer folds double, the coat no
-longer binds to the leg bones, and the seat drop is derived rather than picked.
-What remains wrong, from the 2026-08-11 review capture:
+**Root cause of the first defect, measured rather than assumed** (`hips`
+bone, `getWorldPosition`, both sitting anchors): the rig's hip joint has
+**zero local x/z offset** from the actor's group origin, seated or standing —
+the thighs swing the knee and foot forward as children, but the hip itself
+never moves horizontally. G1's placeholder ledge was offset 0.3 m behind the
+standing spot, a number chosen independently of this. **Fixed:** the ledge
+(`main.js`) is now centred exactly on the anchor, no offset — there was
+nothing else to derive it from once the rig was measured.
 
-- The figure sits **in front of** the ledge rather than on it, and lower than
-  its top surface. The anchor position and the ledge position are set
-  independently (`anchors.js` places the ledge 0.3 m behind the standing spot),
-  so nothing guarantees the hip lands over the seat.
-- The legs read as folding **under** the body — a kneel — rather than forward
-  off the edge. Worth checking the sign of `rotation.x` on the thigh against
-  the actor's facing: positive reads as forward in the walk, so if it reads as
-  backward when seated, the two are not in the same frame.
-- The torso still pitches forward into a huddle.
+`anchors.js`'s `SEAT_HEIGHT` was stale twice over: its comment cited
+`SEAT_DROP` as 0.26 (corrected to 0.22 in `f0982fc`, comment never revisited),
+and even that derivation didn't match how the group hierarchy actually
+composes — `SEAT_DROP`'s translation lands in the PARENT's units (already
+metres) while the `hips` bone's own rest position is one level deeper and
+does get the ×1.72 height scale. Measuring the live bone at full sit was the
+only way to the real number: **0.5712 m**, now `SEAT_HEIGHT`.
 
-What it needs, and why it was not done now: a pelvis that rotates back
-independently of the spine, and a ledge height fixed by **G3's real dressing**
-rather than a placeholder box. Tuning a pose against a guessed wall height is
-work that gets thrown away. **Do this in G3, with the real wall.**
+**Second defect (legs read as folding under, not forward): measured, not
+assumed, per this brief's own warning that the diagnosis was reasoned rather
+than checked.** Rendered the walk cycle from a true side profile at max
+thigh-swing: positive `rotation.x` swings the leg FORWARD, confirmed
+visually. The existing sit pose's `thigh` value was already positive — so
+this diagnosis was **wrong**, and no sign flip was made. The pose read as a
+crouch for the reason above (ledge position), not this one.
 
-Boot it with `npm run dev:mcgrots`, `?body=skinned`, then press 2.
+**Third defect (torso huddle).** This rig has no separate pelvis bone —
+`hips` IS the pelvis, and is also the parent of `spine` and both thighs.
+Added `hips.rotation.x = -sit * 0.15`, compensated on both thighs so their
+world-space angle (already confirmed correct) is unchanged; only the spine's
+world angle moves. **Modest improvement on re-render, not a dramatic one** —
+recorded honestly rather than claimed as fixed outright.
 
-### F2 — Feet slide (G1, open)
+Gate: `docs/MCGROTS-VALIDATION.md` § "G3c", new `seat` region — the seated
+hip's position against the ledge's actual `Box3`, at both `wall` and `kerb`,
+against a standing-at-the-same-anchor control. Fault-injected (the old
+independent `-0.3` offset restored) and confirmed red at both anchors, the
+control staying green throughout; the first version of the check did NOT
+catch this fault (footprint containment is generous enough that a 0.3 m
+mislocation still lands inside the box) and was redesigned to distance-from-
+centre before it did. Restored.
 
-No foot IK on any candidate, so the feet slip rather than plant. Whether it
-reads at the game's actual camera distances is unjudged — the G1 review camera
-is closer than any anchor shot. Revisit once G3 fixes the shots.
+Captures opened: `wall.png`/`kerb.png` (`docs/smoke/captures/mcgrots/g2/`),
+`arrived` column, under S2. The seated hip now visibly rests ON the ledge's
+capstone; legs extend forward and down to the ground rather than folding
+back underneath.
+
+### F2 — Feet slide (G1, judged 2026-08-12 — does not read, closed)
+
+**Judged at the game's real anchor distances, not fixed — the brief's own
+suggested and cheapest-possible good outcome.** Compared consecutive walk
+frames approaching `wall` at its real camera distance: the actor's legs
+occupy roughly 15–20 px there, and no sliding artefact is distinguishable
+from ordinary stride motion at that scale — G1's review camera was
+considerably closer, which is why this read as a problem there and does not
+here. No foot IK built. If a future unit moves the camera markedly closer
+than the current five anchors, this judgement should be re-taken, not
+assumed to still hold.
 
 ### F3 — Only one archetype rendered (G1, complete 2026-08-11)
 

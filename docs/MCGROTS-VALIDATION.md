@@ -17,8 +17,8 @@ uses, shared deliberately so the two games' captures are comparable.
 
 ## G0 — scaffold
 
-19 checks in the regions below (`npm run smoke:mcgrots -- --only=boot,camera,anchors,van`);
-the full suite also carries a `statue` region landed concurrently with G3a,
+22 checks in the regions below (`npm run smoke:mcgrots -- --only=boot,camera,anchors,van,seat`);
+the full suite also carries a `statue` region landed alongside G3a,
 documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 (gitignored, regenerated every run).
 
@@ -43,6 +43,9 @@ documented separately. Captures land in `docs/smoke/captures/mcgrots/g0/`
 | van | occupies a sensible fraction of the frame (G3a) | 0.3%-70% of the window at every one of the five anchors |
 | van | holds rendered content, not flat background | Luminance stddev exceeds the flattest of four corner patches by >10 |
 | van | console clean after driving the van region | No errors from the five snaps |
+| seat | the seated hip lands over the ledge (F1) | Hip within 10cm (horizontal) / 6cm (vertical) of the ledge's own `Box3` centre/top, `wall` and `kerb` |
+| seat | standing does not read as seated (control) | The same measurement, standing, misses by design (~0.79m hip vs ~0.57m ledge) |
+| seat | console clean after driving the seat region | No errors from the four snaps |
 
 ### The crush gate, and why it exists
 
@@ -171,6 +174,125 @@ make, not this gate's; the AABB-fraction check would pass either way, since
 "a sensible fraction of the frame" and "the price board is readable" are not
 the same claim. F1's known bad seated pose is visible at `wall` and `kerb`,
 per G3c's own scope — left alone here.
+
+### G3c — the real ledge, and the seated pose that stands on it
+
+**Landed 2026-08-12.** Closed the gap the G3 plan missed: neither G3a nor
+G3b replaced G1's placeholder sitting box (`main.js:143`), so F1's seated
+pose still had no real wall to be tuned against — the entire reason it was
+deferred to G3 in the first place.
+
+**Root cause of F1's first defect ("nothing guarantees the hip lands over
+the seat"), measured, not assumed: the rig's `hips` bone has ZERO local x/z
+offset from the actor's group origin, in any pose.** `getWorldPosition` on
+`hips` at full sit and at rest reports the same `x`/`z` as the actor's group
+position, always — the thighs swing the knee and foot forward as children,
+but the hip joint itself never translates. G1's placeholder ledge was set
+0.3m behind the standing spot, a number chosen independently of this and
+therefore wrong by construction. Fixed: the ledge is now centred exactly on
+the anchor.
+
+**`SEAT_HEIGHT` was stale twice over, and the second error is the more
+instructive one.** Its comment cited `SEAT_DROP` as 0.26 — corrected to 0.22
+in `f0982fc`, comment never revisited. But even a corrected hand-derivation
+("0.24 unit × 1.72m height" = 0.413m) does not match what the rig produces,
+because of how the group hierarchy actually composes: `actors/skinned.js`'s
+`SEAT_DROP` offset is applied to `body.group.position.y`, and that SAME
+group is the one `actor.js` scales by `height` — so the offset lands in the
+PARENT's units (already metres: a real 0.22m of drop) while the `hips`
+bone's own rest position (0.46, rig-local) is nested one level DEEPER inside
+that scaled group, and DOES get the ×1.72. Two numbers that look like they
+are in the same space are not. Measuring the live bone was the only way to
+the real number: `getWorldPosition` on `hips` at full sit reads **0.5712m**,
+now `SEAT_HEIGHT`.
+
+**F1's second defect (legs read as folding under, not forward) was measured
+and REFUTED, per the brief's own explicit warning that the diagnosis was
+reasoned rather than checked.** Rendered the walk cycle from a true side
+profile (a review camera positioned along the actor's direction of travel
+gives a front view, not a side one — had to walk the actor perpendicular to
+the offset axis to get a genuine profile) at the thigh's peak swing
+(`rotation.x` = `LEG_SWING`, 0.55 rad): the leg swings visibly FORWARD, in
+the direction of travel. So positive `rotation.x` already means forward, and
+the sit pose's `thigh` term was already positive — correct by the same
+convention. **No sign flip was made.** The crouch reading came from the
+ledge-position defect above, not this one.
+
+**F1's third defect (torso huddle).** The bone hierarchy has no separate
+pelvis: `hips` is the root, and is the direct parent of BOTH `spine` and the
+two thighs (measured via the live skeleton's parent chain, not assumed from
+naming). Rotating `hips` therefore moves the whole upper body AND re-bases
+the thighs' own already-correct rotation, which is set relative to `hips`.
+Added `hips.rotation.x = -sit * 0.15` and compensated both thighs by
+`+ sit * 0.15` so their WORLD-space angle is unchanged; only the spine's
+world angle moves, since its own local rotation is untouched and is now
+measured from a pelvis that has tipped back underneath it. Re-rendered and
+compared: a real but modest improvement in torso uprightness, not a dramatic
+one — recorded as such rather than claimed as a full fix, per the
+"half-fixed reported as fixed" failure the brief named explicitly.
+
+**Gate: the seated hip's position against the ledge's own `Box3`, at both
+`wall` and `kerb`, from the shipped scene** — `THREE.Box3().setFromObject`
+on the actual mesh group `main.js` builds and `getWorldPosition` on the
+actual skeleton bone, the same technique the `van` region (G3a) uses for the
+same reason: a helper that recomputes "where the ledge should be" from the
+same constants the product uses would pass even if the product's own
+placement code had a sign error, since it would be checking the constants
+against themselves.
+
+**The control is standing at the same anchor** — a real, separate branch
+(`setActorState('idle')` instead of `'sit'`), not the sit arm with the fix
+toggled off through shared code. It needed one fix before it worked at all:
+`d.snapTo()` runs the full `goTo(id, { snap: true })`, which sets `current`
+to the anchor — and `main.js`'s `frame()` re-asserts `'sit'` on every single
+frame while `current.sit` is true and the actor isn't walking ("Park state
+resolves on arrival, so a sitting spot only sits once reached"). That
+silently stomped a forced `'idle'` in the first version of this control,
+which measured the SAME hip height for "standing" as for "seated". Fixed by
+positioning the actor directly (`actor.snapTo(x, z, yaw)`, bypassing `goTo`
+so `current` never becomes the anchor) — after which the control correctly
+reads the rest-pose hip height (~0.79m) against the ~0.57m ledge.
+
+**The check itself needed a redesign before its own fault injection worked.**
+The first version asserted footprint containment: is the hip's x/z anywhere
+inside the ledge's box. Restoring the old independent `-0.3` offset did NOT
+turn it red — the ledge is 0.55m deep plus a 0.05m capstone overhang each
+side, generous by design (a seat you can be anywhere along), so a 0.3m
+mislocation shifts the box's centre by 0.3m but still leaves the (unmoved)
+hip inside the now off-centre box. Containment proved "somewhere on the
+ledge", a weaker claim than F1's own diagnosis. Redesigned as distance to
+the ledge's CENTRE (10cm horizontal tolerance, 6cm vertical against the
+cap): the same injection now goes red at both anchors, 0.3m clearly
+exceeding 10cm, while the standing control stays green throughout. Restored.
+
+**F4's torso-patch gate needed a threshold adjustment, not a redesign, as a
+side effect of this pose change.** The `kerb` sit pose's fixed height-fraction
+sampling window now catches slightly less internal contrast — measured 3.0
+before this unit, 1.8 after, both against a real, lit, correctly cel-shaded
+figure (the capture was opened, not just the number read). The F4 fault
+itself is unrelated to pose (it zeroes the geometry's normals) and reads
+exactly 0.0 regardless of which pose is on screen — re-verified by injecting
+it again after lowering the floor from 2 to 1: still exactly 0.0, comfortable
+margin preserved, restored.
+
+**F2 (feet slide), judged rather than fixed, per the brief's own suggested
+cheap-and-good outcome.** Compared consecutive walk frames approaching `wall`
+at the anchor's real camera distance: the actor's legs occupy roughly 15-20
+pixels there, and no sliding artefact is distinguishable from ordinary stride
+motion at that scale. G1's review camera, where this fault was originally
+found, sits considerably closer than any of the five anchors. Closed as "does
+not read at these distances" — no IK built. This is a judgement, not a
+measurement, and should be re-taken if a future unit moves the camera
+markedly closer.
+
+**What this does not prove:** that the pose looks like a person sitting
+naturally, only that its numeric hip/ledge relationship is now correct.
+Opened `wall.png` and `kerb.png` (`docs/smoke/captures/mcgrots/g2/`,
+`arrived` column, S2) myself: the seated hip visibly rests ON the wall's
+capstone rather than hovering in front of it, and the legs extend forward
+and down toward the ground rather than folding back underneath — both a
+genuine improvement over the pre-G3c capture. The torso lean is somewhat
+better, not dramatically so; said plainly rather than rounded up.
 
 ### What G0 deliberately does not prove
 
