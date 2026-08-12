@@ -1339,6 +1339,34 @@ camera at the actor's facing — the anchor shots cannot show it.
    understood, and the fix is small. Whether it goes in before G4 or waits is
    Dan's staging call, not the orchestrator's — it competes with the rota for
    the same session. Unasked as of 2026-08-12.
+0.5 **McGrot's voice — Dan curates this one.** Added 2026-08-12 on his call:
+   a placeholder is fine for now, the real choice is his and comes later.
+
+   He is the one voice that carries the visit, so a merely adequate pick is a
+   worse outcome here than anywhere else in the cast. Everything else can run
+   on a default.
+
+   **Where it lives:** `scripts/generate-tts.mjs` reads
+   `comic.npc.voiceName` and falls back to `'Algenib'`. 30 distinct Gemini
+   prebuilt voices are already in use across the 156 vendor entries, so a
+   principal wants one that is *not* among them or the street's crowd will
+   echo him.
+
+   **Placeholder, chosen not auditioned:** `Charon` — lowest usage of the
+   deep-register prebuilts already in the catalog (5 entries), and the
+   register suits `docs/CANON.md`'s McGrot: late 50s–60s, work-worn,
+   grizzled, confrontational. **This has not been listened to.** It is a
+   value to start from, not a recommendation.
+
+   **One constraint on the eventual pick, and it is not negotiable:** do not
+   clone or imitate a specific real person's voice. A generated voice styled
+   on a *register* — Leith, sixties, roughened by work — is the goal; a
+   recognisable impression of a named performer is not, whatever the tooling
+   makes possible. Same reasoning as `docs/LEITH.md`'s sensitivity rules.
+
+   Decide during G5, which is where the principals' dialogue is generated.
+   Auditioning is cheap: `scripts/generate-tts.mjs` against one known line
+   per candidate is a few minutes and a few cents.
 1. **Which six to eight comics.** The readings vary a lot in quality and the
    selection wants Dan's eye rather than a script's.
 2. **Does the player pick their own body**, or is one assigned? E7b's ruling
