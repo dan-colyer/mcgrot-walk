@@ -15,7 +15,7 @@
 // cannot be used to explain the gate.
 
 import * as THREE from 'three';
-import { LIGHT, PITCH, PITCH_YAW, toWorld } from './site.js';
+import { LIGHT, PITCH } from './site.js';
 import { loadFoot, buildFoot } from './foot.js';
 import { ANCHORS, anchorById, nearestAnchor, SEAT_HEIGHT } from './anchors.js';
 import { makeActor } from './actor.js';
@@ -27,6 +27,8 @@ import { createStyle, STYLES } from './style.js';
 import { createLooks, LOOKS } from './looks.js';
 import { createPage } from './page.js';
 import { KEYS } from './keys.js';
+import { buildStatue } from './statue.js';
+import { buildVan } from './van.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -109,23 +111,8 @@ scene.add(sun, sun.target);
 // multiplier can lift a map that dark. See docs/MCGROTS-VALIDATION § "The cast
 // is unreadable" for the full table and what it means for G3.
 
-// The van's footprint, as a box. gullet.js builds the real one and G3 brings
-// it in; G0 needs something the shots can be composed against.
-const vanPlaceholder = (() => {
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(5.2, 2.4, 2.6),
-    new THREE.MeshLambertMaterial({ color: 0x7a5a3a, flatShading: true }),
-  );
-  body.position.y = 1.2;   // half of 2.4 — sits ON the ground, not above it
-  g.add(body);
-  const w = toWorld(0, 0);
-  g.position.set(w.x, 0, w.z);
-  g.rotation.y = PITCH_YAW;
-  g.name = 'van-placeholder';
-  return g;
-})();
-scene.add(vanPlaceholder);
+// G3a: the real van, price board and ground dressing — replaces the G0 box.
+buildVan(scene);
 
 // Built in boot(), once the assets object exists — a segmented body needs the
 // glb and its sidecar, and assetUrl is the only sanctioned way to reach them.
@@ -343,6 +330,7 @@ window.addEventListener('keydown', (e) => {
   const leith = await loadFoot();
   footData = buildFoot(leith);
   scene.add(footData.group);
+  buildStatue(scene);
 
   // The bake-off body. An unknown ?body= falls back to the control rather than
   // failing to boot — a typo in a capture script should produce a comparable
