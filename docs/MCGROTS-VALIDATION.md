@@ -347,21 +347,30 @@ new panel or capture fault appeared.
 The fixed hour remains `LIGHT.sunIntensity=6`, `hemiIntensity=3`,
 `sunAzimuth=-2.1`, `sunAltitude=0.34`.
 
-> **The numbers in the next paragraph do not reproduce and are under
-> correction — see § "Faults in the G3 GATES" below, F12.** The committed
-> `mcgrots-grade.mjs` has no `--look` flag and never calls `setLook`, so it
-> sweeps the UNSTYLED look, not S2. The re-run gives frame mean 72.2–72.5 at
-> 6/3, not 105.1. **The decision — keep 6/3 — survives independently**; the
-> record of how it was reached does not. Left in place rather than deleted so
-> the correction has something to point at.
+> **The numbers in the next paragraph did not reproduce, root-caused and
+> corrected 2026-08-12 — F12, closed below.** The committed `mcgrots-grade.mjs`
+> had no `--look` flag and never called `setLook`, so it swept the UNSTYLED
+> look, not S2, giving frame mean 72.2–72.5 at 6/3 instead of the recorded
+> 105.1. The script now takes `--look=<id>` (printed in its own header) and the
+> paragraph below is the S2 re-run under it. **The decision — keep 6/3 —
+> survives**; the old numbers are left in place with this note rather than
+> deleted, so the correction has something to point at.
 
-`node scripts/mcgrots-grade.mjs` was
-rerun against the dressed pitch under S2. Its 27-row sweep reports current
-6/3 at frame mean 105.1, cast mean 17.2 and 0.00% blown; the pictured
-`sun 12 / hemi 3` experiment raised frame mean to 134.5 and still left the
-rear-facing cast dark, so it was rejected as a pale wash. The previously
-measured camera-side fill moved cast mean only 8.3→11.0 and remains rejected.
-This is the best-available fixed grade, not a claim that the asset is solved.
+`node scripts/mcgrots-grade.mjs --look=aerial` was re-run against the dressed
+pitch under S2, on the current pitch — the statue, the seated pose and the
+ledge offset have all changed since G3d, so this is not the same scene the
+original number described. Its 27-row sweep reports current 6/3 (albedo 1) at
+frame mean 105.6, cast mean 32.3 and 0.00% blown (range across albedo
+0.7/1/1.35: mean 105.4/105.6/105.8, cast 15.8/32.3/32.6); the pictured
+`sun 12 / hemi 3` experiment raised frame mean to 135.3 at the same albedo
+while cast mean (32.2) came out essentially unchanged from 6/3 — no readability
+gain for a substantially brighter, washed-out frame — so it was rejected on
+the same grounds as before. The frame-mean figures land close to the original 105.1/134.5 despite the
+pitch changes; the 6/3 cast figure does not (17.2→32.3), which the brief
+anticipated as expected drift, not a discrepancy to chase. The previously
+measured camera-side fill moved cast mean only
+8.3→11.0 and remains rejected. This is the best-available fixed grade, not a
+claim that the asset is solved.
 
 The existing contrast-floor picture gate and G3a van-fraction gate are the
 named controls. Composition is a judgement and remains deliberately ungated;
@@ -669,6 +678,23 @@ mind, and the entry then claimed the broader thing.
 the state where a walk is re-targeted mid-flight, which still cuts at 23.7% of
 total travel on frame 1 against its own < 10% assert. The fault is in the game
 as well as the gate; see § 10 F11.
+
+**F12 — G3d's grade numbers did not reproduce. FIXED, G3g (2026-08-12).**
+`mcgrots-grade.mjs` had no `--look` flag and never called `setLook`, so the
+tool that produced "S2 6/3 mean 105.1, cast 17.2; 12/3 rejected at 134.5" —
+carried in this document, the roadmap, and commit `4c3286d`'s subject line —
+had actually swept the UNSTYLED look. Fix: the script now takes `--look=<id>`
+and prints which look it swept in its own header, so this fault cannot recur
+silently. Re-run as `node scripts/mcgrots-grade.mjs --look=aerial`: see § G3d
+above for the corrected numbers. **The decision does not change** — 6/3
+remains the pick, on the same reasoning as before (12/3 buys no cast
+readability for a substantially brighter frame). Commit `4c3286d`'s subject
+line cannot be amended; this entry and § G3d's inline note are the correction.
+No new smoke gate was added — a grade sweep is a tool, not a product surface,
+and the existing contrast-floor picture gate (`npm run smoke:mcgrots --
+only=camera`, re-confirmed passing: worst stddev 44.5 against the ≥8 floor,
+5/5) already covers the one thing here that is a product claim, that no
+shipped frame goes black or blown.
 
 ### What G0 deliberately does not prove
 

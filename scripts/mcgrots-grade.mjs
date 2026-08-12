@@ -20,9 +20,17 @@ const page = await browser.newPage({viewport:{width:960,height:540}});
 // actor — so the side the player always sees is the side away from the sun.
 // Every whole-frame gate passed the whole time, because one small dark figure
 // moves the frame mean by almost nothing. See the cast column below.
-await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,{waitUntil:'load'});
+// --look=<id> selects the styled look the sweep boots under, matching
+// mcgrots-shot.mjs's URL-flag style. Default 'none' is the UNSTYLED look —
+// the fault this flag exists to fix (F12) is that the sweep silently ran
+// unstyled while the record claimed S2 (look=aerial).
+const arg=(name,fallback=null)=>{const hit=process.argv.find((a)=>a.startsWith(`--${name}=`));return hit?hit.slice(name.length+3):fallback;};
+const look=arg('look','none');
+const qs=`body=skinned&archetype=rab${look&&look!=='none'?`&look=${look}`:''}`;
+await page.goto(`http://127.0.0.1:${port}/mcgrots.html?${qs}`,{waitUntil:'load'});
 await page.waitForFunction(()=>!!window.__mcgrotsDebug);
 await page.evaluate(()=>{window.__mcgrotsDebug.pauseAuto();window.__mcgrotsDebug.setMarkersVisible(false);});
+console.log(`look: ${look}`);
 
 const stats=(buf)=>{const p=PNG.sync.read(buf);let s=0,sq=0,dark=0,blown=0;const n=p.width*p.height;
  for(let i=0;i<n;i++){const o=i*4;const l=0.2126*p.data[o]+0.7152*p.data[o+1]+0.0722*p.data[o+2];s+=l;sq+=l*l;if(l<12)dark++;if(l>245)blown++;}

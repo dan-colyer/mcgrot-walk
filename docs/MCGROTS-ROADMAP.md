@@ -24,7 +24,10 @@ Full account: `docs/MCGROTS-VALIDATION.md` § "G3f".
 **G3c turned out narrower than originally planned**: the composed shots and
 the fixed hour were deliberately not in it (a posture whose ledge did not yet
 exist could not be composed around), and landed as G3d on 2026-08-12. See § G3
-below and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c", "G3d".**
+below and `docs/MCGROTS-VALIDATION.md` §§ "G3a", "G3c", "G3d". **G3g
+(2026-08-12) closed F12**: `mcgrots-grade.mjs` had been sweeping the unstyled
+look and not S2, so the recorded 6/3 numbers did not reproduce; the tool now
+takes `--look=<id>` and the corrected S2 sweep keeps the same 6/3 decision.**
 
 Gates and their limits: `docs/MCGROTS-VALIDATION.md`. Run `npm run
 smoke:mcgrots` for the full suite; boot the game with `npm run dev:mcgrots`
@@ -1269,7 +1272,7 @@ Suggested fix: ease from the camera's LIVE position rather than from an anchor,
 which also deletes the `previous === null` special case. **Not yet briefed —
 Dan's staging call on when this lands** (§ 11).
 
-### F12 — G3d's grade numbers do not reproduce (G3 gate, OPEN)
+### F12 — G3d's grade numbers do not reproduce (G3 gate, CLOSED 2026-08-12 by G3g)
 
 **Severity: medium, record integrity.** This document, `MCGROTS-VALIDATION.md`
 and commit `4c3286d`'s subject line all carry "S2 6/3 mean 105.1, cast 17.2;
@@ -1295,6 +1298,22 @@ grade in the grid. What is wrong is the record, not the choice. Fix: give the
 script a `--look` flag, re-derive, and correct the three documents. Commit
 `4c3286d`'s subject line cannot be amended — note the correction in the docs
 instead.
+
+**FIXED, G3g (2026-08-12).** `mcgrots-grade.mjs` now takes `--look=<id>` and
+prints the swept look in its own output header, so a bare run cannot silently
+sweep the wrong style again. Re-run as `--look=aerial` (S2) against the
+current pitch (statue, seat pose and ledge offset have all moved since G3d):
+27-row sweep gives 6/3 (albedo 1) frame mean 105.6, cast mean 32.3, 0.00%
+blown — the frame mean lands close to the old 105.1 despite the pitch having
+moved; the cast mean does not (17.2→32.3), which is expected drift, not a
+discrepancy. 12/3 at the same albedo: frame mean 135.3 (close to the old
+134.5), cast mean 32.2 — essentially the same cast readability as 6/3 for a
+substantially brighter, washed-out frame, so it stays rejected on the same
+grounds as originally recorded. **6/3 is still the right pick; the hour is
+unchanged.** Full numbers: `docs/MCGROTS-VALIDATION.md` § G3d and § "Faults in
+the G3 GATES" F12. No new smoke gate: the existing contrast-floor picture gate
+already covers the one product claim here (no shipped frame goes black or
+blown) and re-confirmed passing (`--only=camera`, 5/5, worst stddev 44.5).
 
 ### F13 — the seated figure's feet do not reach the ground (G3f, PARKED)
 
