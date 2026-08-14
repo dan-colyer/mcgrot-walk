@@ -1051,11 +1051,25 @@ try {
     const visit = await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.whatTheyAreDoing(t), 1020);
     const freshT = 1020 - visit.elapsed; // this same visit's own readStart
 
-    const waitForPlaying = (id) => audioPage.waitForFunction(
-      (want) => window.__mcgrotsDebug.readerAudio.playingId === want
-        && window.__mcgrotsDebug.readerAudio.currentTime > 0,
-      id, { timeout: 5000 },
-    );
+    // A bounded poll, never waitForFunction — every check in this region has
+    // to degrade to a normal FAIL under a fault (a stuck AudioContext, a
+    // 404'd file that never starts), not crash the process and hide every
+    // other check's result along with it. Returns whatever state it last
+    // saw, playing or not.
+    const pollForPlaying = async (p, id, timeoutMs = 5000) => {
+      let last = { currentTime: 0, currentSrc: null, playingId: null };
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        last = await p.evaluate(() => ({
+          currentTime: window.__mcgrotsDebug.readerAudio.currentTime,
+          currentSrc: window.__mcgrotsDebug.readerAudio.currentSrc,
+          playingId: window.__mcgrotsDebug.readerAudio.playingId,
+        }));
+        if (last.playingId === id && last.currentTime > 0) return last;
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      return last;
+    };
 
     // --- playback position tracks the rota clock -----------------------------
     // Mid-reading arrival: must start near `elapsed`, not near zero. This is
@@ -1064,15 +1078,13 @@ try {
     // a fresh arrival and only diverges here.
     await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), 1020);
     await audioPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
-    await waitForPlaying(visit.id);
-    const midState = await audioPage.evaluate(() => ({
-      currentTime: window.__mcgrotsDebug.readerAudio.currentTime,
-      currentSrc: window.__mcgrotsDebug.readerAudio.currentSrc,
-    }));
+    const midState = await pollForPlaying(audioPage, visit.id);
     const midDelta = Math.abs(midState.currentTime - visit.elapsed);
     check('a mid-reading arrival starts near elapsed, not near zero',
-      midDelta < 2,
-      `elapsed=${visit.elapsed.toFixed(2)}s, playback started at ${midState.currentTime.toFixed(2)}s (delta ${midDelta.toFixed(2)}s)`);
+      midState.playingId === visit.id && midDelta < 2,
+      midState.playingId === visit.id
+        ? `elapsed=${visit.elapsed.toFixed(2)}s, playback started at ${midState.currentTime.toFixed(2)}s (delta ${midDelta.toFixed(2)}s)`
+        : `never started playing id=${visit.id} (playingId=${midState.playingId}, currentTime=${midState.currentTime})`);
 
     // Fresh-arrival control, same visit, same comic — isolates the CLOCK as
     // the only variable. Without this, an implementation that always seeks
@@ -1090,16 +1102,13 @@ try {
     await freshPage.click('#title-card');
     await freshPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), freshT);
     await freshPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
-    await freshPage.waitForFunction(
-      (want) => window.__mcgrotsDebug.readerAudio.playingId === want
-        && window.__mcgrotsDebug.readerAudio.currentTime > 0,
-      visit.id, { timeout: 5000 },
-    );
-    const freshState = await freshPage.evaluate(() => window.__mcgrotsDebug.readerAudio.currentTime);
+    const freshResult = await pollForPlaying(freshPage, visit.id);
     await freshPage.close();
     check('...and a fresh arrival of the SAME reading starts near zero (control)',
-      freshState < 2,
-      `readStart=${freshT.toFixed(2)}s, playback started at ${freshState.toFixed(2)}s`);
+      freshResult.playingId === visit.id && freshResult.currentTime < 2,
+      freshResult.playingId === visit.id
+        ? `readStart=${freshT.toFixed(2)}s, playback started at ${freshResult.currentTime.toFixed(2)}s`
+        : `never started playing id=${visit.id} (playingId=${freshResult.playingId})`);
 
     // --- the file that plays is the comic that is scheduled ------------------
     const scheduled = await audioPage.evaluate(() => ({
@@ -1123,11 +1132,17 @@ try {
     const emptyGapT = readStart + visit.duration + 20;
     await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), emptyGapT);
     await audioPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
-    await audioPage.waitForFunction(() => window.__mcgrotsDebug.readerAudio.paused === true, null, { timeout: 5000 });
-    const afterDepart = await audioPage.evaluate(() => ({
-      paused: window.__mcgrotsDebug.readerAudio.paused,
-      playingId: window.__mcgrotsDebug.readerAudio.playingId,
-    }));
+    // A bounded poll, not waitForFunction — a broken "never stop" fault must
+    // read as a normal FAIL below, not crash the whole suite on a timeout.
+    let afterDepart = { paused: false, playingId: visit.id };
+    for (let i = 0; i < 20; i++) {
+      afterDepart = await audioPage.evaluate(() => ({
+        paused: window.__mcgrotsDebug.readerAudio.paused,
+        playingId: window.__mcgrotsDebug.readerAudio.playingId,
+      }));
+      if (afterDepart.paused) break;
+      await new Promise((r) => setTimeout(r, 250));
+    }
     check('a reader leaving mid-file stops playback outright, not a fade',
       afterDepart.paused && afterDepart.playingId === null,
       `paused=${afterDepart.paused} playingId=${afterDepart.playingId}`);

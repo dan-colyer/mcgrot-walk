@@ -1711,3 +1711,167 @@ if `dismiss()` silently stopped removing the node, every other check would
 already be red (they all sample pixels or DOM state through a card that
 failed to clear). Recorded here rather than built, per the brief's "rejected
 experiments get written down with their numbers too."
+
+## G4b (part 2) — playback
+
+New `src/mcgrots/audio.js`. One shared `<audio>` element wrapped in a
+`PannerNode`; the `AudioContext` is constructed only inside `start()`,
+called from `card.js`'s `onStart`. `main.js`'s `frame()` calls
+`readerAudio.update(whatTheyAreDoing(now), reader.group?.position,
+listenerPose())` every frame, where `listenerPose()` reads `camera.position`
+and `camera.getWorldDirection()` — audio reads the camera, the camera reads
+nothing from audio or the reader, satisfying the brief's ruling by
+construction (the same shape rota.js already uses for the reader's own
+independence from the camera).
+
+### A real bug found before any gate could be written: the dev server had no Range support
+
+Building the seek-to-`elapsed` behaviour, the first working-looking version
+set `mediaEl.currentTime = info.elapsed` immediately after `mediaEl.src =
+...` and called `.play()`. Manual check (`readerAudio.currentTime` read back
+right after assignment): showed `10` as expected. Manual check a moment
+later (after `play()` had actually started): **`0.78`**, climbing from
+roughly 0 — the seek had silently not taken effect; playback started from
+the beginning and the readback that looked like confirmation was reading
+the assignment, not the actual seek.
+
+Reproduced directly with a bare `<audio>` element and event listeners
+(`loadedmetadata`, `seeking`, `seeked`, `canplay`): `el.currentTime = 10`
+followed immediately by `el.currentTime` read `0`; the `seeking`/`seeked`
+events both carried `ct=0`. Measured `el.seekable` after full download:
+`buffered = [[0, 50.8]]` (whole file present), `readyState = 4`
+(`HAVE_ENOUGH_DATA`) — but **`seekable = [[0, 0]]`**. Confirmed the cause
+directly against the server: `curl -I -H "Range: bytes=1000-2000"
+http://127.0.0.1:<port>/assets/audio/<id>.mp3` returned `200 OK`, not `206
+Partial Content` — `scripts/serve.py` (`http.server.SimpleHTTPRequestHandler`)
+has never supported byte ranges. Chromium's media pipeline treats a resource
+with no `Accept-Ranges`/`206` support as **not seekable**, regardless of how
+much of it is already buffered locally.
+
+**Fix:** `scripts/serve.py`'s `NoCacheHandler` gained a `send_head`
+override that answers a `Range: bytes=...` header with a real `206`
+(single range only — every real caller here is a media element, which never
+sends a multi-range request) and an `end_headers` override adding
+`Accept-Ranges: bytes` to every response. Additive: a request carrying no
+`Range` header is byte-for-byte the same `200` response as before.
+Re-tested directly: `curl -I -H "Range: bytes=1000-2000" ...` → `206
+Partial Content`, `Content-Range: bytes 1000-2000/407085`, body length 1001
+bytes exactly. Re-tested `el.seekable` after the fix: `[[0, 50.8]]` once
+`buffered` covers the file — matches `duration`. Re-tested the original
+repro: `el.currentTime = 10` now reads back `10` and holds.
+
+**Re-verified against the street's own suite**, since `serve.py` is shared
+infrastructure (CLAUDE.md: shared-module changes must be additive and
+re-verified against the street's own suite): `npm run smoke:par` — 323
+PASS, 0 FAIL, both shards, no regression. The added header and the new
+`Range`-only branch touch nothing a non-Range request exercises.
+
+This also means the audio module's own seek code did not, in the end, need
+to defer to a `loadedmetadata` event to work correctly — once the server
+advertises Range support, `readyState` reaching `HAVE_METADATA` is already
+sufficient. The deferred-seek version shipped anyway (kept as the safer,
+spec-recommended pattern — setting `.currentTime` before any metadata is
+available is unreliable in general, Range support or not) but the specific
+failure that motivated writing it was actually the server, not the
+ordering. Recorded so a future session does not re-diagnose the same
+symptom against the wrong cause.
+
+### The gate
+
+New `audio` region, its own page (`--only=audio`), five checks. Unlike
+every other region, its boot dismisses the title card with a **real,
+Playwright-synthesised click** (`page.click('#title-card')`) rather than the
+synthetic `card.dismiss()` the other regions use — Chromium's autoplay
+policy requires genuine user activation (CDP input, not a JS-dispatched
+event) before an `AudioContext`/media element will actually play. The other
+regions' synthetic dismiss only needs the DOM node gone, not audio running,
+so it stays as it was in part 1.
+
+Every check polls with a bounded loop rather than `page.waitForFunction`.
+Found why the hard way: the first two fault injections below (seek deleted,
+stop-on-leave deleted) each hit a 5s `waitForFunction` timeout and crashed
+the whole `smoke-mcgrots.mjs` process before it printed a single result —
+a broken feature has to read as one `FAIL` in the report, not take down
+every other check's evidence with it.
+
+**Playback position tracks the rota clock** (t=1020, the same known-reading
+moment the rota region's own sequence capture already uses). Mid-reading:
+`elapsed=21.67s`, playback started at `21.67s` (delta 0.00s). Control —
+fresh arrival of the SAME reading, on a separate page (real wall-clock time
+never rewinds, and rewinding it on the same page leaves `currentId` already
+set so the id-changed branch never re-fires, which would test a scenario
+the product never sees): `readStart=998.33s`, playback started at `0.00s`.
+Fault-injected: deleted `mediaEl.currentTime = info.elapsed`. Mid-reading
+check went red — `elapsed=21.67s, playback started at 0.00s` — control
+check and everything else stayed green. Restored, 7/7.
+
+**One voice at a time.** Clock jumped from inside the reading to
+`readEnd + 20s` — clear of `DEPART_LEAD_S` (7s) so the visit's own window
+has closed, short of the next visit's arrive-lead window
+(`GAP_S - ARRIVE_LEAD_S` = 38s past `readEnd`) so the pitch is genuinely
+empty rather than a different reading having naturally started there.
+Fault-injected: deleted the `stopPlayback()` call on phase exit. Check went
+red (`paused=false`, playing continued past its scheduled departure);
+restored, 7/7.
+
+**The file that plays is the comic that is scheduled.** Fault-injected by
+hardcoding `audioUrl()` to always return a different, real, on-disk
+reading's file — not a missing one, which would block playback entirely via
+the 404 path and mask this check rather than exercise it. Went red;
+restored, 7/7.
+
+**No sound before the gesture.** Checked before any click:
+`started=false`, zero `<audio>` elements. Fault-injected by calling
+`readerAudio.start()` eagerly at module scope in `main.js`, ahead of and
+outside `card.js`'s `onStart`. Went red (`started=true` at boot);
+interestingly, playback still worked correctly once the later real click
+happened — Chromium's autoplay gate turned out to key off any user
+activation on the page rather than permanently penalising an
+already-constructed context, so this check's value is specifically catching
+"constructed before the gesture," not "irrecoverably broken by it." Everything
+else stayed green under this fault; restored, 7/7.
+
+**A missing/blocked file does not throw.** `page.route()` 404s
+`**/assets/audio/*.mp3` on a page that has made no prior audio request of
+its own (a page that already succeeded once could serve a later request
+from cache and mask the route). Asserts zero `pageerror` events and that
+the module recovers to `paused=true` rather than getting stuck. Two things
+found while building this, not just confirmed by it:
+
+1. A **naive eager `play()`** (no `readyState` gate — matching the seek
+   bug's own naive first draft) throws an uncaught `NotSupportedError` on a
+   404. Fault-injected exactly that (removed the `readyState` gate and the
+   `.catch()` together): `pageerrors=1`; restored.
+2. The **shipped code never calls `play()` for a missing file at all** —
+   `loadedmetadata` never fires for a 404, and `play()` is gated behind it.
+   Removing only `.catch()` from the shipped code (leaving the
+   `readyState`/`loadedmetadata` gate in place) produced **zero** pageerrors
+   — proving `.catch()` is not, on its own, what makes the missing-file
+   path safe; the gate is. Not a failed fault injection: a genuine finding
+   about where the actual protection lives, recorded rather than discarded
+   because the first attempt "didn't work."
+
+**Console clean after driving the audio region**: 0 errors, real playback
+only (the missing-file scenario is deliberately a separate page/check, not
+folded into this one — see above for why a 404's own "Failed to load
+resource" console line is a browser-level log this page cannot suppress and
+is not what "silent" means here).
+
+**Full suite**: `npm run smoke:mcgrots` → 61/61 (54 existing + 7 new),
+5.4–5.8s. Style region's numbers (panel 70.9%, buffer 1190×549) unchanged
+from part 1's baseline — the audio module touches no DOM and renders
+nothing, so there was no blast radius to measure here the way there was for
+the card.
+
+### Not gated
+
+Positional accuracy of the panner beyond "set every frame from real
+positions" — no listener has ears in this harness. Loudness/level
+judgement. Whether a departure's stop *sounds* abrupt versus merely *is*
+abrupt in the numbers. The 41MB pool's real network behaviour under a
+sustained ten-minute visit — the preload policy (current file only, one
+`mediaEl.src`) is true by construction, not measured under load. Browser
+autoplay-policy variance outside this Chromium build. Numeric gates cannot
+hear a bad sound, exactly as they cannot see a bad picture — **Dan has not
+yet listened**, on the dev server, per the brief's "What Dan does". This
+unit is not done until he has.

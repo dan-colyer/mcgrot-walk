@@ -723,6 +723,100 @@ unit's file scope, so a `--shot` render still shows the card and needs its
 own `card.dismiss()` call added when someone next touches that script.
 Audio playback is G4b's second dispatch.
 
+**G4b part 2 (2026-08-14) landed audio playback.** New `src/mcgrots/audio.js`:
+`createReaderAudio()`, a single shared `<audio>` element wrapped in a
+`PannerNode`, driven from `main.js`'s `frame()` every frame with
+`whatTheyAreDoing(now)`, the reader group's world position, and a listener
+pose read fresh off `camera` each frame. No `AudioContext` is constructed
+anywhere except inside `start()`, called once from `card.js`'s `onStart` —
+the same pointerdown that dismisses the title card, per part 1's design.
+Preload policy: at most one file loaded at a time, the currently scheduled
+reading; `mediaEl.src` is set once per reading, never a prefetch queue.
+`scripts/mcgrots-shot.mjs` gained the `card.dismiss()` call flagged as owed
+in part 1.
+
+**A real dev-server bug found and fixed, outside this unit's original file
+scope: `scripts/serve.py` never supported HTTP Range requests.** Measured
+directly (`curl -H "Range: bytes=1000-2000"` returned a full `200`, not
+`206`): without `Accept-Ranges`/`206` support, Chromium's media pipeline
+marks a progressively-downloaded `<audio>` element as **not seekable at
+all** — `audio.seekable` stayed `[0, 0]` even once `buffered` covered the
+whole file and `readyState` was `HAVE_ENOUGH_DATA`. Setting `.currentTime`
+on such an element is silently dropped rather than throwing or queuing,
+which is exactly the failure mode this unit's central risk warns about: it
+looked like the seek-to-`elapsed` fix worked (no error, `.currentTime`
+readback showed the assigned value momentarily) while every reading
+actually still started from ~0. `scripts/serve.py` now answers a `Range`
+header with real `206 Partial Content` (additive: a request with no `Range`
+header is byte-for-byte the same response as before); re-verified against
+the street's own suite (`npm run smoke:par`, shared server) — 323 PASS, 0
+FAIL, no regression from the added `Accept-Ranges` header or the new
+`send_head` branch.
+
+**Gated, each with a control and a fault injection (`--only=audio`, its own
+region, a real Playwright-synthesised click on the title card rather than
+the other regions' synthetic `card.dismiss()` — Chromium's autoplay policy
+needs genuine user activation for `AudioContext`/media playback):**
+
+- *A mid-reading arrival starts near `elapsed`, not near zero*, with a
+  fresh-arrival-of-the-SAME-reading control (isolates the clock, on a
+  separate page — real wall-clock time never rewinds, and rewinding it on
+  the same page leaves `currentId` already set, so the id-changed branch
+  never re-fires). Fault-injected by deleting the `mediaEl.currentTime =
+  info.elapsed` line: the mid-reading check went red (`elapsed=21.67s`,
+  played at `0.00s`); everything else stayed green. Restored, 7/7.
+- *A reader leaving mid-file stops playback outright, not a fade.* Jumps
+  the clock from inside a reading to 20s past its `readEnd` — comfortably
+  clear of `DEPART_LEAD_S` (7s) and comfortably short of the next visit's
+  arrive-lead window (`GAP_S - ARRIVE_LEAD_S` = 38s past `readEnd`), a
+  genuinely empty pitch rather than a moment a different reading has
+  naturally started. Fault-injected by deleting the stop call on phase
+  exit: check went red (`paused=false`); restored, 7/7.
+- *The file that plays is the comic that is scheduled* — resolves
+  `readerAudio.currentSrc` and compares its basename to
+  `whatTheyAreDoing(t).id`. Fault-injected by hardcoding `audioUrl()` to
+  always return a different, real, existing reading's file (a genuinely
+  missing file blocks playback entirely via the 404 path below, which masks
+  this check rather than testing it): went red; restored, 7/7.
+- *No sound before the gesture* — `readerAudio.started === false` and zero
+  `<audio>` elements exist at boot, checked before any click. Fault-injected
+  by calling `readerAudio.start()` eagerly at module scope in `main.js`,
+  bypassing `card.js`: went red (`started=true`); restored, 7/7.
+- *A missing/blocked file does not throw* — `page.route()` 404s
+  `**/assets/audio/*.mp3` on a page that has made no prior audio request (a
+  page that had already succeeded once could serve the file from cache,
+  masking the route), then asserts zero `pageerror` events. Two real,
+  distinct bugs found while building this check, not just used to validate
+  it: (1) a naive eager `play()` call (no `readyState` gate, matching the
+  seek fix's own naive-first-draft shape) throws an uncaught
+  `NotSupportedError` on a 404 — confirmed with `pageerrors=1`, restored;
+  (2) the *shipped* code never actually calls `play()` for a missing file
+  at all, because `loadedmetadata` never fires for a 404 and `play()` is
+  gated behind it — so `.catch()` on `play()` turned out not to be the
+  operative protection for this case, the `readyState` gate is. Documented
+  rather than "fixed" further: both are real, the shipped path is safe by
+  construction, not by the `.catch()` alone.
+
+**All five checks use a bounded poll, not `page.waitForFunction`** — a
+broken fault (audio that never starts) must read as one `FAIL` in the
+report, not crash the whole region and hide every other check's result.
+Found this the hard way: the first two fault injections above threw
+`TimeoutError` and killed the process before printing anything.
+
+**Not gated, named rather than built (the brief's own instruction — with
+audio this list is long):** positional accuracy of the panner (only that it
+is set every frame from real positions, never that the stereo image is
+correct — no listener has ears here); loudness/level judgement; whether a
+departure's stop *sounds* abrupt versus merely *is* abrupt in the numbers;
+the 41 MB pool's aggregate network behaviour under a real ten-minute visit
+(the "current file only" policy is asserted by construction — one
+`mediaEl.src` — not measured under load); browser autoplay-policy variance
+outside this Chromium build. Numeric gates cannot hear a bad sound, exactly
+as they cannot see a bad picture (the brief's own framing) — **Dan has not
+yet listened**, on the dev server, per the brief's "What Dan does" section;
+this unit is not done until he has. See the session report for what to run
+and what to expect.
+
 ### G5 — The voices
 
 Generate dialogue for **McGrot and the five principals** from the corpus in
