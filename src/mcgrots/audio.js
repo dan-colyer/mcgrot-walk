@@ -23,6 +23,15 @@
 // time the scheduled id changes, playback starts at `info.elapsed`, which is
 // zero for a fresh arrival and mid-file for a late one, by construction.
 //
+// THAT `elapsed` IS READ LIVE, NOT CAPTURED (F14, G4 phase gate). A cold
+// file's `loadedmetadata` can fire an arbitrary time after `mediaEl.src` was
+// assigned — on 127.0.0.1 that gap is single-digit milliseconds, so the
+// bug was invisible to every gate the harness could run, but on a real
+// connection it is the load latency itself. `update()` keeps the latest
+// schedule info in a closure variable every frame, and the seek reads that
+// at the moment it actually runs, not the value from when the request
+// started.
+//
 // PRELOAD POLICY: at most one file loaded at a time, the currently scheduled
 // reading — never the whole 41MB pool. `mediaEl.src` is set once per
 // reading, when the schedule's id changes; the browser's own network
@@ -56,6 +65,9 @@ export function createReaderAudio() {
   let mediaEl = null;
   let panner = null;
   let currentId = null;
+  // F14 (G4 phase gate): refreshed at the top of every update() call, so a
+  // pending seek always has somewhere live to read from — see below.
+  let latestInfo = null;
 
   function start() {
     if (ctx) return;
@@ -105,6 +117,7 @@ export function createReaderAudio() {
   // anything is playing, never the other way round.
   function update(info, readerPos, listenerPose) {
     if (!ctx) return; // no gesture yet — nothing to drive
+    latestInfo = info; // F14: see seekAndPlay below
 
     if (listenerPose) setListenerPose(listenerPose);
     if (readerPos) setPannerPosition(readerPos);
@@ -118,13 +131,30 @@ export function createReaderAudio() {
       stopPlayback();
       mediaEl.src = audioUrl(info.id);
       currentId = info.id;
+      const wantId = info.id;
       // Setting `.currentTime` before metadata has loaded is unreliable —
       // measured: Chromium silently drops the seek and starts from 0 rather
       // than queuing it. Seek and play once metadata is actually available;
       // `readyState` may already be there for a cached file, so check before
       // waiting on an event that may never fire again.
+      //
+      // F14 (G4 phase gate): on a cold file `loadedmetadata` can fire an
+      // arbitrary time after `src` was assigned — measured 2.5s behind
+      // schedule on a 3s load delay. Seeking to the `elapsed` CAPTURED when
+      // the request started (the original bug) lands on where the reading
+      // WAS, not where it is once playback actually begins, and nothing
+      // afterwards ever corrects the drift. `latestInfo` is refreshed at the
+      // top of every `update()` call, so by the time this callback runs it
+      // holds the CURRENT wall-clock elapsed for this reading rather than a
+      // stale snapshot. Guarded by `wantId`: if the schedule moved on again
+      // before this file finished loading (a second id change reassigned
+      // `mediaEl.src` and `currentId` out from under this still-pending
+      // listener), this must not seek/play into what is now a different
+      // file — `currentId !== wantId` is exactly that supersession.
       const seekAndPlay = () => {
-        mediaEl.currentTime = info.elapsed;
+        if (currentId !== wantId) return;
+        const elapsed = latestInfo?.id === wantId ? latestInfo.elapsed : info.elapsed;
+        mediaEl.currentTime = elapsed;
         mediaEl.play().catch(() => { /* missing/blocked: stay silent */ });
       };
       if (mediaEl.readyState >= 1) seekAndPlay();

@@ -1180,6 +1180,74 @@ try {
       missingPageErrors.length === 0 && missingState === true,
       `pageerrors=${missingPageErrors.length} paused=${missingState}`);
 
+    // --- F14 (G4 phase gate): the seek target tracks the LIVE elapsed -------
+    // A deliberately delayed route on the mp3 — the shape the phase gate
+    // used to find this. On a cold file, the original bug seeked to the
+    // `elapsed` captured when `mediaEl.src` was assigned, not the value once
+    // `loadedmetadata` actually fired; on 127.0.0.1 that gap is single-digit
+    // milliseconds, which is why nothing else in this suite ever saw it.
+    //
+    // Own page per arm, own boot: the clock is advanced in small real-time
+    // steps throughout the wait (`rota.setClock` + `stepFrames`) so it
+    // tracks actual elapsed wall-clock time while the (possibly delayed)
+    // load is in flight, the same way a real player's un-frozen clock would.
+    const measureSeekDrift = async (delayMs) => {
+      const p = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      if (delayMs > 0) {
+        await p.route('**/assets/audio/*.mp3', async (route) => {
+          await new Promise((r) => setTimeout(r, delayMs));
+          await route.continue();
+        });
+      }
+      await p.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+      await p.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await p.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await p.click('#title-card');
+
+      const v = await p.evaluate((t) => window.__mcgrotsDebug.rota.whatTheyAreDoing(t), 1020);
+      const rStart = 1020 - v.elapsed;
+      await p.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), 1020);
+      await p.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+
+      const t0 = Date.now();
+      let last = { playingId: null, currentTime: 0 };
+      let trueElapsedAtDetect = null;
+      while (Date.now() - t0 < delayMs + 4000) {
+        const clock = 1020 + (Date.now() - t0) / 1000;
+        await p.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), clock);
+        await p.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+        last = await p.evaluate(() => ({
+          playingId: window.__mcgrotsDebug.readerAudio.playingId,
+          currentTime: window.__mcgrotsDebug.readerAudio.currentTime,
+        }));
+        if (last.playingId === v.id && last.currentTime > 0) { trueElapsedAtDetect = clock - rStart; break; }
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      await p.close();
+      return {
+        started: last.playingId === v.id,
+        drift: trueElapsedAtDetect !== null ? trueElapsedAtDetect - last.currentTime : null,
+      };
+    };
+
+    const delayed = await measureSeekDrift(3000);
+    check('a delayed load still starts near the LIVE elapsed, not the value captured at request time',
+      delayed.started && delayed.drift !== null && delayed.drift < 1,
+      delayed.started
+        ? `3000ms route delay: drift ${delayed.drift.toFixed(2)}s (must be <1s)`
+        : 'playback never started under the delayed route');
+
+    // The control: identical procedure, no delay. Without this, the check
+    // above would pass equally for an implementation that is simply slow
+    // everywhere — the delayed run alone cannot tell "stale seek target"
+    // apart from "this whole page runs a bit behind under load".
+    const undelayed = await measureSeekDrift(0);
+    check('...and with no delay the drift is near zero (control)',
+      undelayed.started && undelayed.drift !== null && undelayed.drift < 1,
+      undelayed.started
+        ? `no delay: drift ${undelayed.drift.toFixed(2)}s`
+        : 'playback never started under the control');
+
     await audioPage.close();
   }
 
