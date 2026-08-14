@@ -21,18 +21,16 @@ are original line cards". But roadmap § G5 says *"Generate dialogue for McGrot
 and the five principals from the corpus in § 3"*, which reads as model
 generation, and the record should say which thing exists.
 
-**This is a fork and it is Dan's call, not this unit's:**
+**Dan ruled on this, 2026-08-14: stay with the in-house authored cards for
+now.** Model generation is not rejected, it is deferred — proving the register
+is fixable by hand is the cheaper experiment, and the form constraints below
+apply either way. Do not add an API call to this unit.
 
-- **Authored cards.** Predictable, free, no key, and quality is a writing
-  problem. Scaling to hundreds of lines is hand labour.
-- **Model-generated.** Scales, and the plagiarism gate becomes load-bearing
-  rather than a formality, because a model given comic text as style context
-  is exactly what the gate was written to catch.
-
-**Default if Dan has not answered when you start: stay with authored cards.**
-It is the cheaper experiment, the form constraints below apply either way, and
-proving the register is fixable by hand is useful evidence before paying for
-generation. Say in your report which you did.
+The fork itself stays live for later, and the record should keep both sides:
+authored cards are predictable, free and need no key, but scaling to hundreds
+of lines is hand labour; model generation scales, and makes the plagiarism
+gate load-bearing rather than a formality, because a model handed comic text
+as style context is exactly what the gate was written to catch.
 
 ---
 
@@ -110,13 +108,26 @@ touch the threshold — the roadmap fixes it at "more than six words".
 
 ---
 
-## Open, and not yours to settle
+## The seventh character — the Leith Badger is in
 
-**The Leith Badger.** G5a used the brief's "McGrot and the five principals",
-giving six entries. `CANON.md` also has a Leith Badger and the wider roadmap
-calls the Badger one of five regulars. Codex flagged the discrepancy rather
-than guess, correctly. **Dan has not answered.** Do not add the Badger on your
-own initiative; carry the six that exist and note it as still open.
+**Dan ruled on this, 2026-08-14: the Badger stays in the cast.** G5a carried
+six entries and flagged the discrepancy rather than guess, correctly. Add the
+Badger as a seventh, so the sample becomes **7 × 8 = 56 lines**.
+
+`CANON.md`: wildlife undermining the Gullet; low, heavy, muscular; big digging
+claws; props are mud, a stolen food wrapper, a scrap of warning tape.
+Persistent, practical, territorial, unimpressed. *Established:* badgers
+undermining the Gullet. Everything else is design freedom.
+
+**A badger does not speak, and neither does Pomplé.** Pomplé's solution —
+handwritten signs — is his and should not be copied; two silent characters
+using the same device makes both weaker. Work out what a badger's "line" is
+before writing eight of them, and **say what you chose and why** in
+`MCGROTS-DIALOGUE.md`. Evidence found at the burrow, damage as a statement,
+and warning tape read aloud by somebody else are all plausible; so is deciding
+the Badger has no lines at all and reports as such. **That last is a
+legitimate landing** — it is a real finding about how the cast works, not a
+failure to complete the unit.
 
 ## Not yours
 
