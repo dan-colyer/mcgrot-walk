@@ -140,6 +140,60 @@ const PRINCIPALS = [
   },
 ];
 
+// G5c: two-actor exchanges, McGrot opposite the Taxman and the Government
+// Inspector. Turns are appended to their speaker's own `entry.lines` array —
+// never a separate top-level structure — because every gate that protects
+// this corpus (the plagiarism checker and smoke-mcgrots.mjs's three form
+// gates) reaches text through exactly that path. `exchange` + `turn` are
+// additive fields a turn carries to record which conversation it belongs to
+// and where it sits in the order; nothing reads them except the new
+// reachability/shape checks in the `dialogue` region. Exchanges are appended
+// unconditionally, independent of `--count`'s solo-line selection, so they
+// survive at any count and are not subject to the per-principal shuffle.
+const EXCHANGES = [
+  {
+    id: 'taxman',
+    turns: [
+      { key: 'MCGROT', text: 'Every penny’s accounted for, if you’d let me finish a sentence.', delivery: '[defensive, spatula half-raised]' },
+      { key: 'TAXMAN', text: 'Finishing is not a category on this form.', delivery: '[does not look up]' },
+      { key: 'MCGROT', text: 'That’s no an answer, that’s a—', delivery: '[cut off mid-word]' },
+      { key: 'TAXMAN', text: 'Noted, and stamped regardless.', delivery: '[stamps over him]' },
+      { key: 'MCGROT', text: 'Stamped disnae mean answered, pal.', delivery: '[flat, giving up on the point]' },
+      { key: 'TAXMAN', text: 'Your ‘pal’ has been noted. It changes nothing.', delivery: '[files it without expression]' },
+    ],
+  },
+  {
+    id: 'inspector',
+    turns: [
+      { key: 'MCGROT', text: 'Awright, the ladle’s steady, the sauce is safe — what’s shan aboot that?', delivery: '[arms out, appealing to reason]' },
+      { key: 'GOV_INSPECTOR', text: '‘Shan’ isn’t a hazard category. I need the real word.', delivery: '[reads the thermometer again]' },
+      { key: 'MCGROT', text: 'The real word is ‘fine’. You’re welcome.', delivery: '[short, already turning back to the pot]' },
+      { key: 'GOV_INSPECTOR', text: '‘Fine’ is not a temperature either.', delivery: '[unmoved]' },
+      { key: 'MCGROT', text: 'Then gie me a word that works and I’ll say it twice.', delivery: '[weary, spatula down]' },
+      { key: 'GOV_INSPECTOR', text: 'Compliant. Say ‘compliant’.', delivery: '[holds out the tablet like a script]' },
+    ],
+  },
+];
+
+function exchangeLinesFor(principalKey) {
+  const lines = [];
+  for (const exchange of EXCHANGES) {
+    let turnInExchange = 0;
+    exchange.turns.forEach((turn, globalTurn) => {
+      if (turn.key !== principalKey) return;
+      turnInExchange += 1;
+      lines.push({
+        id: `${principalKey.toLowerCase()}-exch-${exchange.id}-${String(turnInExchange).padStart(2, '0')}`,
+        text: turn.text,
+        delivery: turn.delivery,
+        exchange: exchange.id,
+        turn: globalTurn + 1,
+      });
+    });
+  }
+  return lines;
+}
+
 const SENSITIVITY_RULES = [
   { label: 'sectarianism', pattern: /\b(?:orange\s+walk|sectarian|loyalist|unionist|catholic|protestant)\b/i },
   { label: 'addiction pathology', pattern: /\b(?:needle|junkie|heroin|hiv|track\s+marks|shoot\s+up)\b/i },
@@ -264,7 +318,10 @@ function main() {
       return old;
     }
     const selected = selectCards(principal, options.seed, options.count);
-    const lines = old?.lines?.length >= options.count ? old.lines.slice(0, options.count) : selected;
+    const solo = old?.lines?.filter((l) => !l.exchange).length >= options.count
+      ? old.lines.filter((l) => !l.exchange).slice(0, options.count)
+      : selected;
+    const lines = [...solo, ...exchangeLinesFor(principal.key)];
     return buildEntry(principal, lines);
   });
 
@@ -282,7 +339,8 @@ function main() {
   };
   fs.mkdirSync(path.dirname(options.out), { recursive: true });
   fs.writeFileSync(options.out, `${JSON.stringify(output, null, 2)}\n`);
-  console.log(`Wrote ${entries.length} principals × ${options.count} lines = ${entries.length * options.count} lines to ${path.relative(ROOT, options.out) || options.out}`);
+  const totalLines = entries.reduce((sum, entry) => sum + entry.lines.length, 0);
+  console.log(`Wrote ${entries.length} principals, ${options.count} solo lines each, ${totalLines} lines total (incl. exchange turns) to ${path.relative(ROOT, options.out) || options.out}`);
   console.log(`Seed ${options.seed}; source style ${promptCount} director briefs; resumable with --resume`);
 }
 

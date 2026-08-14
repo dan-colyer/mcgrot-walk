@@ -177,6 +177,47 @@ try {
     check('the noun-then-abstract-lift sentence is not the house style',
       balancedTurns.length / dLines.length <= 0.4,
       `${balancedTurns.length}/${dLines.length} lines fit the single-pivot balanced-sentence shape (must be <=40%; some surviving is fine, all of them is the bug)`);
+
+    // G5c: two-actor exchanges. A turn lives in its speaker's own
+    // entry.lines (the reachability constraint above), carrying `exchange`
+    // (id) and `turn` (global 1-based ordinal within that exchange) as
+    // additive fields. Reconstruct each exchange from dLines — the same
+    // array the three form gates above already read — and check what is
+    // mechanically true of a conversation: it has at least four turns, the
+    // ordinals reassemble with no gaps or repeats, and no two consecutive
+    // turns share a speaker. This does not and cannot judge whether the
+    // exchange reads well — that is Dan's read via MCGROTS-DIALOGUE.md.
+    const exchanges = new Map();
+    for (const line of dLines) {
+      if (!line.exchange) continue;
+      if (!exchanges.has(line.exchange)) exchanges.set(line.exchange, []);
+      exchanges.get(line.exchange).push(line);
+    }
+    const exchangeIds = [...exchanges.keys()];
+    const exchangeIssues = [];
+    for (const id of exchangeIds) {
+      const turns = exchanges.get(id).slice().sort((a, b) => a.turn - b.turn);
+      const ordinals = turns.map((t) => t.turn);
+      const expected = turns.map((_, i) => i + 1);
+      if (JSON.stringify(ordinals) !== JSON.stringify(expected)) {
+        exchangeIssues.push(`${id}: turn numbers ${ordinals.join(',')} do not reassemble as 1..${turns.length}`);
+      }
+      if (turns.length < 4) exchangeIssues.push(`${id}: only ${turns.length} turns (need >=4)`);
+      for (let i = 1; i < turns.length; i += 1) {
+        if (turns[i].key === turns[i - 1].key) exchangeIssues.push(`${id}: turn ${turns[i].turn} repeats speaker ${turns[i].key}`);
+      }
+      if (!turns.every((t) => typeof t.text === 'string' && t.text.trim().length > 0)) exchangeIssues.push(`${id}: has an empty turn`);
+    }
+    check('every exchange reassembles into a gapless, alternating-speaker run of at least four real turns',
+      exchangeIds.length >= 1 && exchangeIssues.length === 0,
+      exchangeIssues.length
+        ? exchangeIssues.join('; ')
+        : `${exchangeIds.length} exchange(s): ${exchangeIds.map((id) => `${id} (${exchanges.get(id).length} turns)`).join(', ')}`);
+
+    const mcgrotInEveryExchange = exchangeIds.length > 0 && exchangeIds.every((id) => exchanges.get(id).some((t) => t.key === 'MCGROT'));
+    check('McGrot appears in every exchange (the brief’s two-actor requirement)',
+      mcgrotInEveryExchange,
+      exchangeIds.map((id) => `${id}: ${[...new Set(exchanges.get(id).map((t) => t.key))].join(', ')}`).join(' | '));
   }
 
   if (needsBrowser) {

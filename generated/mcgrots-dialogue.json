@@ -80,6 +80,48 @@
           "id": "mcgrot-12",
           "text": "Chum me doon the fit o’ the Walk and I’ll show ye a queue that means something.",
           "delivery": "[proud, already walking]"
+        },
+        {
+          "id": "mcgrot-exch-taxman-01",
+          "text": "Every penny’s accounted for, if you’d let me finish a sentence.",
+          "delivery": "[defensive, spatula half-raised]",
+          "exchange": "taxman",
+          "turn": 1
+        },
+        {
+          "id": "mcgrot-exch-taxman-02",
+          "text": "That’s no an answer, that’s a—",
+          "delivery": "[cut off mid-word]",
+          "exchange": "taxman",
+          "turn": 3
+        },
+        {
+          "id": "mcgrot-exch-taxman-03",
+          "text": "Stamped disnae mean answered, pal.",
+          "delivery": "[flat, giving up on the point]",
+          "exchange": "taxman",
+          "turn": 5
+        },
+        {
+          "id": "mcgrot-exch-inspector-01",
+          "text": "Awright, the ladle’s steady, the sauce is safe — what’s shan aboot that?",
+          "delivery": "[arms out, appealing to reason]",
+          "exchange": "inspector",
+          "turn": 1
+        },
+        {
+          "id": "mcgrot-exch-inspector-02",
+          "text": "The real word is ‘fine’. You’re welcome.",
+          "delivery": "[short, already turning back to the pot]",
+          "exchange": "inspector",
+          "turn": 3
+        },
+        {
+          "id": "mcgrot-exch-inspector-03",
+          "text": "Then gie me a word that works and I’ll say it twice.",
+          "delivery": "[weary, spatula down]",
+          "exchange": "inspector",
+          "turn": 5
         }
       ]
     },
@@ -356,6 +398,27 @@
           "id": "taxman-12",
           "text": "Denied.",
           "delivery": "[flat, does not look up]"
+        },
+        {
+          "id": "taxman-exch-taxman-01",
+          "text": "Finishing is not a category on this form.",
+          "delivery": "[does not look up]",
+          "exchange": "taxman",
+          "turn": 2
+        },
+        {
+          "id": "taxman-exch-taxman-02",
+          "text": "Noted, and stamped regardless.",
+          "delivery": "[stamps over him]",
+          "exchange": "taxman",
+          "turn": 4
+        },
+        {
+          "id": "taxman-exch-taxman-03",
+          "text": "Your ‘pal’ has been noted. It changes nothing.",
+          "delivery": "[files it without expression]",
+          "exchange": "taxman",
+          "turn": 6
         }
       ]
     },
@@ -425,6 +488,27 @@
           "id": "gov_inspector-12",
           "text": "I am not closing anything today.",
           "delivery": "[stares at the pot]"
+        },
+        {
+          "id": "gov_inspector-exch-inspector-01",
+          "text": "‘Shan’ isn’t a hazard category. I need the real word.",
+          "delivery": "[reads the thermometer again]",
+          "exchange": "inspector",
+          "turn": 2
+        },
+        {
+          "id": "gov_inspector-exch-inspector-02",
+          "text": "‘Fine’ is not a temperature either.",
+          "delivery": "[unmoved]",
+          "exchange": "inspector",
+          "turn": 4
+        },
+        {
+          "id": "gov_inspector-exch-inspector-03",
+          "text": "Compliant. Say ‘compliant’.",
+          "delivery": "[holds out the tablet like a script]",
+          "exchange": "inspector",
+          "turn": 6
         }
       ]
     }
