@@ -2267,3 +2267,114 @@ threshold were never candidates.
 - **The dialect check is presence, not correctness.** `hasDialect` only
   confirms a kit word's characters appear in the line — it does not check
   the word is used with the right sense or grammar.
+
+## G5c — two-actor exchanges
+
+**What they prove.** `docs/briefs/g5c-exchanges.md` wrote two exchanges —
+McGrot vs the Taxman, McGrot vs the Government Inspector, six turns each —
+because `docs/CANON.md` puts both opposite McGrot and G5a/G5b had only ever
+written them alone. 72 lines became 84.
+
+**Reachability, proven by injection before anything else was measured.**
+Every gate that reads this corpus — the plagiarism checker and the three
+G5b form gates — walks exactly `entries[].lines[].text`. A turn stores
+which exchange it belongs to and its position via two additive fields on
+the line object, `exchange` (id) and `turn` (a global 1-based ordinal
+within that exchange); it never leaves the one reachable array. To prove
+that rather than assume it, a genuine `readings.json` line ("This hole's
+opened into three kitchens an' a utility room.") was swapped into
+`mcgrot-exch-taxman-01`:
+
+```
+node scripts/check-mcgrots-dialogue.mjs --file generated/mcgrots-dialogue.json
+Checked: 84 candidate lines
+FAIL: 1 line(s) share a seven-word window with the comic corpus
+- MCGROT:mcgrot-exch-taxman-01: This hole's opened into three kitchens an' a utility room.
+  matched: "this holes opened into three kitchens an"
+  ...
+```
+
+The checker named the exact injected turn. Restored via `cp` from a
+pre-injection backup (the working tree was uncommitted at injection time),
+re-verified clean, 0 violations at 84 lines — before any of the four form
+gates below were touched.
+
+**Two new mechanical checks joined the `dialogue` region**, gating form
+only, never quality:
+
+- **Reassembly.** For each `exchange` id, sort its turns by `turn` and
+  require the ordinals to equal `1..N` with no gap or repeat, `N >= 4`,
+  and no turn with empty text.
+- **Cast.** Consecutive turns never share a speaker (checked as part of
+  reassembly, since a moved turn breaks both at once), and McGrot appears
+  in every exchange — the brief's own two-actor requirement, made
+  mechanical.
+
+```
+node scripts/smoke-mcgrots.mjs --only=dialogue
+PASS  every exchange reassembles into a gapless, alternating-speaker run of at least four real turns
+      2 exchange(s): taxman (6 turns), inspector (6 turns)
+PASS  McGrot appears in every exchange (the brief's two-actor requirement)
+      taxman: MCGROT, TAXMAN | inspector: MCGROT, GOV_INSPECTOR
+[mcgrots] 6/6 passed in 0.0s
+```
+
+**Fault injection, run twice, each in isolation.** Both edits were made to
+the committed 84-line file and reverted with `git checkout --
+generated/mcgrots-dialogue.json` (safe here — the file was committed
+before injecting, unlike the plagiarism-check injection above).
+
+1. **Broken ordinal.** `taxman-exch-taxman-02`'s `turn` field changed from
+   2 to 5, creating both a gap and a duplicate:
+
+   ```
+   FAIL  every exchange reassembles into a gapless, alternating-speaker run of at least four real turns
+         taxman: turn numbers 1,2,3,5,5,6 do not reassemble as 1..6; taxman: turn 5 repeats speaker MCGROT; taxman: turn 6 repeats speaker TAXMAN
+   ```
+
+2. **Wrong speaker.** `mcgrot-exch-inspector-02` (turn 3) moved from the
+   `MCGROT` entry's `lines` into `GOV_INSPECTOR`'s, ordinal unchanged —
+   the same edit a copy-paste mistake would make:
+
+   ```
+   FAIL  every exchange reassembles into a gapless, alternating-speaker run of at least four real turns
+         inspector: turn 3 repeats speaker GOV_INSPECTOR; inspector: turn 4 repeats speaker GOV_INSPECTOR
+   ```
+
+Both went red on the reassembly check alone, independent of each other and
+of the three inherited G5b gates, which stayed green throughout — the
+isolation each fault needs. Restored and reran clean before landing: 6/6.
+
+**Before/after on the four inherited form gates**, all still comfortably
+inside their floors/ceiling:
+
+| Measurement | G5b (72 lines) | G5c (84 lines) |
+|---|---|---|
+| Dialect kit words | 24/72 (33%) | 28/84 (33%) |
+| "the fit o' the Walk" | 3 | 3 |
+| Under seven words | 20/72 (28%) | 25/84 (30%) |
+| Balanced-turn shape | 13/72 (18%) | 14/84 (17%) |
+
+**Both interactions the brief named were watched, not assumed.** Adding
+procedural back-and-forth could drag the 33% overall dialect figure toward
+its 20% floor with nothing regressing in the solo lines — it didn't: the
+fraction held flat, because both exchanges use kit words in their McGrot
+turns and the Taxman's "your 'pal' has been noted" quotes one back. More
+McGrot text sharing more comic vocabulary could raise seven-word
+collisions — the corpus re-run above still shows 0 violations at 84 lines,
+same as at 72; no line needed rewriting.
+
+**Full suite: 71/71** (69 baseline + the 2 new checks above), 10.8s.
+
+**What this deliberately does NOT prove.**
+
+- **Whether the exchanges read well.** Both checks are mechanical shape —
+  turn count, ordinal gaps, speaker alternation. That verdict is Dan's,
+  via `MCGROTS-DIALOGUE.md`'s readable sample.
+- **Whether a turn actually replies to the one before it.** "Not the same
+  speaker" is checked; whether the content is a real rejoinder rather than
+  a non sequitur that happens to alternate speakers is not — and can't be,
+  mechanically.
+- **Anything about Pomplé's absence from both exchanges.** That was a
+  scope call recorded in `MCGROTS-DIALOGUE.md`, not something the gate
+  enforces one way or the other.

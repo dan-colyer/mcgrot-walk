@@ -968,6 +968,40 @@ more likely, not less — watched for rather than assumed, and confirmed: all
 has the three new mechanical gates (dialect quota, length distribution,
 shape cap) and their fault injections.
 
+**G5c (2026-08-14) wrote the two-actor exchanges G5a flagged as missing.**
+Brief: `docs/briefs/g5c-exchanges.md`. `docs/CANON.md` puts the Taxman and
+the Government Inspector opposite McGrot, not solo, and both principals had
+only ever been written alone. Two exchanges, six turns each: McGrot vs the
+Taxman, McGrot vs the Government Inspector. 72 lines became 84; no solo
+line was revised.
+
+**Turns live in their speaker's own `entry.lines`, on purpose.** Every
+gate protecting this corpus reads text through exactly
+`entries[].lines[].text` — a top-level `exchanges` array would have been
+invisible to all four checks while the suite printed a passing count.
+`exchange` (id) and `turn` (global ordinal) are additive fields on the line
+object; nothing about the reachable path changed. Proven, not assumed: a
+genuine `readings.json` line swapped into `mcgrot-exch-taxman-01` made the
+plagiarism checker go red naming that exact turn, before anything else
+was measured.
+
+**Two mechanical gates joined the `dialogue` region**, still browserless at
+0.0s: each exchange reassembles from the full line set into a gapless,
+alternating-speaker run of at least four turns with no empty turn, and
+McGrot appears in both. Both were fault-injected independently — a broken
+turn ordinal, and a turn moved to the wrong speaker's entry — and each
+took the reassembly check red on its own; restored, 6/6 clean. Numbers:
+`MCGROTS-VALIDATION.md` § G5c.
+
+**The two risks the brief named were watched, not assumed, and neither
+regressed.** Procedural back-and-forth is naturally dialect-free and could
+have dragged the 33% overall dialect fraction toward its 20% floor —
+it didn't: both exchanges carry kit words (McGrot's "shan"/"gie", the
+Taxman quoting "pal" back), so the fraction held flat at 28/84 (33%). More
+McGrot text sharing more comic vocabulary could have raised plagiarism
+collisions — the re-run at 84 lines still shows 0 violations, same as at
+72. Full form-gate comparison in `MCGROTS-DIALOGUE.md` § G5c.
+
 **Still G5's, not done:** TTS rendering, voice selection, and wiring any of
 this into the game.
 

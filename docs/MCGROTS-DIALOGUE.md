@@ -54,6 +54,95 @@ sharing more of the comics' own Scots vocabulary raises seven-word collision
 risk. Watched for, not assumed: all 72 rewritten lines were re-checked and
 still pass with 0 violations.
 
+## G5c: two-actor exchanges
+
+G5a and G5b wrote all six principals alone. `docs/CANON.md` puts the Taxman
+and the Government Inspector opposite McGrot, not solo, and G5a's own
+write-up flagged both as untested in that shape. This unit writes the two
+exchanges canon asks for.
+
+**Turns live in their owner's `entry.lines`, never a separate structure.**
+Every gate protecting this corpus — the plagiarism checker and the three
+form gates — reaches text through exactly `entries[].lines[].text`. A turn
+carries two additive fields, `exchange` (id) and `turn` (a global 1-based
+ordinal within that exchange), so the corpus can be reassembled in order
+without leaving that one reachable path. Reachability was proven, not
+assumed: a genuine `readings.json` line ("This hole's opened into three
+kitchens an' a utility room.") swapped into `mcgrot-exch-taxman-01` made
+the plagiarism checker go red, naming that exact turn. Restored before
+anything else was measured.
+
+72 lines became 84. No solo line was revised — none was made redundant by
+the exchanges.
+
+### McGrot vs. the Taxman
+
+> **McGrot:** Every penny's accounted for, if you'd let me finish a
+> sentence.
+> **Taxman:** Finishing is not a category on this form.
+> **McGrot:** That's no an answer, that's a—
+> **Taxman:** Noted, and stamped regardless.
+> **McGrot:** Stamped disnae mean answered, pal.
+> **Taxman:** Your 'pal' has been noted. It changes nothing.
+
+The Taxman never answers "finish a sentence" — he processes it. The
+interruption ("that's a—") is the thing a solo line cannot do, and the
+close hands McGrot's own word back at him as a filed fact rather than an
+address: the running joke that surviving word carries.
+
+### McGrot vs. the Government Inspector
+
+> **McGrot:** Awright, the ladle's steady, the sauce is safe — what's shan
+> aboot that?
+> **Inspector:** 'Shan' isn't a hazard category. I need the real word.
+> **McGrot:** The real word is 'fine'. You're welcome.
+> **Inspector:** 'Fine' is not a temperature either.
+> **McGrot:** Then gie me a word that works and I'll say it twice.
+> **Inspector:** Compliant. Say 'compliant'.
+
+McGrot hands over "shan" and gets it rejected as untranslatable; the
+Inspector hands back "compliant" as if it were the honest equivalent, which
+is the joke — a bureaucratic word standing in for a Leith one, solving
+nothing either of them actually asked. Neither exchange resolves: that is
+the point canon makes about both characters ("arrive with an agenda and a
+register that cannot absorb McGrot's").
+
+Pomplé was not attempted in either exchange — his device is signs, and
+neither scene needed a third voice to make its joke land. That is a
+scope call, not a rejected experiment.
+
+### The gate
+
+Two new mechanical checks in the `dialogue` region, still browserless at
+0.0s. Neither judges quality:
+
+- Each exchange reassembles from all dialogue lines into a gapless,
+  alternating-speaker run of at least four turns, with no empty turn.
+- McGrot appears in every exchange.
+
+Both were fault-injected and went red independently — a broken ordinal
+(gap) and a turn moved to the wrong speaker's entry (consecutive-speaker
+repeat) — then restored. Numbers and injection transcripts:
+`MCGROTS-VALIDATION.md` § G5c.
+
+Before/after on the four inherited form gates, all still well inside their
+floors and ceiling:
+
+| Measurement | G5b (72 lines) | G5c (84 lines) |
+|---|---|---|
+| Dialect kit words | 24/72 (33%) | 28/84 (33%) |
+| "the fit o' the Walk" | 3 | 3 |
+| Under seven words | 20/72 (28%) | 25/84 (30%) |
+| Balanced-turn shape | 13/72 (18%) | 14/84 (17%) |
+
+The brief named a risk — procedural back-and-forth naturally runs
+dialect-free, which could drag the overall fraction toward its 20% floor
+even with nothing regressing in the solo lines. It didn't happen here:
+both exchanges carry kit words in their McGrot turns and the Taxman
+turn quoting "pal" back, so the fraction held flat rather than drifting
+down. The plagiarism gate's own risk — more dialect sharing more comic
+vocabulary — was watched too: 0 violations at 84 lines, same as at 72.
+
 ## The Leith Badger: seven characters, one that doesn't speak
 
 `docs/CANON.md` lists the Badger as one of the roadmap's five regulars; G5a
@@ -252,16 +341,27 @@ was watched for, not assumed, and the clean result above is the answer: 0
 violations at 33% dialect density, against 0 violations at 2% density in
 G5a. `MCGROTS-VALIDATION.md` § G5a still carries the original fault
 injection (a genuine `readings.json` line, three matching windows, exit 1);
-§ G5b re-runs that same control from inside the suite.
+§ G5b re-runs that same control from inside the suite; § G5c re-runs it
+again against the 84-line corpus with the exchange turns added:
+
+```text
+node scripts/check-mcgrots-dialogue.mjs --file generated/mcgrots-dialogue.json
+Corpus: 1475 source lines, 6531 normalized words, 541 unique seven-word windows
+Checked: 84 candidate lines
+PASS: 0 plagiarism violations; 0 lexical sensitivity violations
+```
 
 ## Verification record and outstanding work
 
 - G5a: seed `1511506142`, 48 lines, 205 director briefs verified. G5b:
   same seed, `--count 12` (all cards, not a shuffled subset — the register
   fix needed to be checkable against the whole rewritten pool, not a sample
-  of it), 72 lines, 205 director briefs re-verified.
+  of it), 72 lines, 205 director briefs re-verified. G5c: same seed and
+  count, plus two exchanges (12 turns) appended via `exchange`/`turn`
+  fields, 84 lines, 205 director briefs unaffected (the exchange turns
+  don't touch `scripts/tts-prompts`).
 - No audio was rendered or listened to. Voice selection remains Dan's call.
 - No game module was changed.
-- `MCGROTS-ROADMAP.md` and `MCGROTS-VALIDATION.md` carry the G5b landing
-  numbers; this document is the readable sample and the register/Badger
-  reasoning behind it.
+- `MCGROTS-ROADMAP.md` and `MCGROTS-VALIDATION.md` carry the G5c landing
+  numbers; this document is the readable sample and the register/Badger/
+  exchange reasoning behind it.
