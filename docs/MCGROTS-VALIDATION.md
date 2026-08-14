@@ -1796,7 +1796,10 @@ every other check's evidence with it.
 
 **Playback position tracks the rota clock** (t=1020, the same known-reading
 moment the rota region's own sequence capture already uses). Mid-reading:
-`elapsed=21.67s`, playback started at `21.67s` (delta 0.00s). Control —
+`elapsed=21.67s`, playback started within the check's own `<2s` bound
+(three independent boots measured 0.15–0.20s of delta — see G4c part 3
+below for why this is recorded as a bound, not the point value it used to
+say). Control —
 fresh arrival of the SAME reading, on a separate page (real wall-clock time
 never rewinds, and rewinding it on the same page leaves `currentId` already
 set so the id-changed branch never re-fires, which would test a scenario
@@ -1980,3 +1983,113 @@ is reachable in real play — reasoned as sound by construction, not
 separately fault-injected, since it did not exist as a named finding and
 adding a gate for a mechanism nobody has yet shown is reachable would be
 gating a hypothesis rather than a defect.
+
+## G4c (part 2) — the four gate faults
+
+All four were closed in one commit alongside the audio region's edits. Each
+was fault-injected before and after its own fix; the injections below are
+in addition to the ones already documented in G4b(2)'s own account above.
+
+### F15 — no gate could tell playing from silent
+
+**The one that matters — the check G5 inherits.** Every existing audio
+check read element *state* (`currentTime`, `paused`, `currentSrc`,
+`playingId`), which a silent page satisfies identically to an audible one.
+`mediaEl.volume = 0` left the region 7/7 green with real output at peak
+0.000, RMS 0.000 (phase gate's own measurement, reproduced here).
+
+**Closed with an analyser tap**, not a change to `audio.js`. An
+`addInitScript` on the audio page's `browser.newPage()` wraps
+`AudioContext.prototype.createMediaElementSource` so the same call
+`audio.js` already makes also connects the source to an `AnalyserNode`,
+parked at `window.__mcgrotsAnalyser`. An `AudioNode` fans out to multiple
+destinations without affecting either — this changes nothing about what
+`audio.js` does, it only gives the harness a second tap on the signal
+already flowing to the panner. Two new checks in the `audio` region:
+
+- **"a reading in progress produces real audio output"** — polls the
+  analyser (RMS from `getByteTimeDomainData`, up to 10×150ms, since the
+  media element and the WebAudio graph both run on the real wall clock,
+  decoupled from this harness's frozen rAF, so the first read or two after
+  a seek can still land on silence) — measured `peak=0.047 rms=0.013`
+  against a `>0.005` floor.
+- **"and an empty pitch produces no output" (control)** — same tap, worst
+  of three samples taken 300ms after the departure poll confirms `paused`
+  (the analyser's 2048-sample/~46ms window can still hold the tail of the
+  just-paused element's output on the very first read) — measured
+  `peak=0.000 rms=0.000` against a `<=0.005` ceiling.
+
+**Fault-injected**: `mediaEl.volume = 0` added to `start()`. `--only=audio`
+→ **10/11**: the new audible check went red (`peak=0.000 rms=0.000, must
+be >0.005`), every other check — including the empty-pitch control, which
+should and did stay green regardless — was unaffected. Restored, 11/11.
+
+### F16 — a clause in "no sound before the gesture" could never fail
+
+`document.querySelectorAll('audio').length === 0` was true at boot, true
+mid-playback, true forever — `audio.js` builds its element with `new
+Audio()` and never appends it to the document, so the count never changes.
+Only `!started` did any work in that check. **Dropped, not replaced**: the
+brief allowed either fixing it into something falsifiable or dropping it
+and saying so; F15's analyser tap doesn't exist yet at this point in the
+page's life (no gesture, no `AudioContext`, so no analyser to read), so
+building a pre-gesture silence check would need its own separate
+mechanism for a clause this check never really needed. The remaining
+assertion (`!started`) is unchanged and still genuine — F15's own
+fault injection above is the closer thing to "was anything audible before
+the click" that this suite now has.
+
+### F17 — "stops outright, not a fade" couldn't see a fade
+
+The check polled up to 5s for `paused === true`; anything stopping within
+5s passed, including a fade. Phase gate confirmed: a 3-second linear
+fade-out in place of `pause()` passed 7/7.
+
+**Renamed, not mechanised.** The underlying guarantee — one shared
+`<audio>` element makes two simultaneous voices structurally impossible —
+is real and already argued in `audio.js`'s own header; there was nothing
+to build to make the *name* true without either bounding the poll far
+below any plausible fade (making the check brittle against real network
+jitter for no product reason) or building a specific "isn't fading"
+detector for a fade this module doesn't implement. Renamed to **"a reader
+leaving mid-file eventually stops playback"**, with an inline pointer to
+this section for what it does not prove. This is a landing, not a
+deferral — the brief named this exact outcome as legitimate.
+
+### F18 — the missing-file check had no positive control
+
+`pageerrors === 0 && paused === true` holds equally for "the file 404'd
+and recovered silently" and "nothing ever attempted playback" (a missed
+click, a rota returning null, a constructor failure). Phase gate measured
+today's actual behaviour reaches `started=true, currentSrc` set — but
+nothing pinned that.
+
+**Added**: `currentSrc` must end with the scheduled id. **Fault-injected**
+by gating the entire id-changed branch behind `if (false && ...)` — an
+attempt that genuinely never happens, the exact case F18 is meant to
+catch. Under the old check alone this reads `pageerrors=0, paused=true` —
+**both hold, the old check would have passed**. The new `currentSrc`
+assertion reads `currentSrc=` (empty) against `scheduledId=2d9e0cd9` and
+correctly goes red. (This injection is broad — it also breaks four other
+checks in the region that depend on playback ever starting at all — so it
+demonstrates the specific claim about F18's blind spot rather than
+isolating F18 alone; isolating it further would need a fault that skips
+only the missing-file page's own attempt, which isn't a fault `audio.js`
+itself can express.) Restored, region back to 11/11.
+
+**Full suite**: `npm run smoke:mcgrots` → 65/65 (63 existing + 2 from F15;
+F16 and F18 modified existing checks rather than adding new ones).
+
+## G4c (part 3) — two record corrections
+
+**The mid-reading delta was recorded as exactly `0.00s`.** Fixed above,
+in the G4b(2) account: three independent boots on this machine measured
+0.15–0.20s, never 0.00, because the value depends on where the poll lands
+relative to the seek. The check's actual bound is `<2s`; that is now what
+the record states, per F12's own lesson that a point value that can't be
+re-obtained invites exactly this trap.
+
+**Roadmap § 4's architecture sketch still lists `reader.js — audio +
+readings.json phrase timing`.** The modules that actually landed are
+`rota.js` and `audio.js`; `reader.js` was never built under that name.
+Corrected in `MCGROTS-ROADMAP.md`.

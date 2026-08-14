@@ -196,7 +196,9 @@ src/
     actor.js            the animation interface (§ 5.1)
     actors/             one file per G1 candidate
     rota.js             wall-clock arrival schedule
-    reader.js           audio + readings.json phrase timing
+    audio.js            playback + readings.json phrase timing (landed under
+                         this name in G4b — sketch corrected G4c part 3, the
+                         module was never called reader.js)
     pomple.js
 scripts/
   smoke-mcgrots.mjs     own gate suite, own regions
@@ -835,11 +837,35 @@ the original captured-closure form — went red (`drift 3.01s`), control
 stayed near zero throughout, restored. Full account, including why the
 control matters, in `MCGROTS-VALIDATION.md` § G4c (part 1).
 
-`npm run smoke:mcgrots` → 63/63 (61 + 2 new). **Part 2 (F15–F18, the four
-gate faults, and the two record corrections) is a separate dispatch, not
-started here** — F14 is a product defect and those are test faults, and
-the brief is explicit that a bad fix to F14 changes what a player hears,
-which is why this dispatch touched nothing else.
+`npm run smoke:mcgrots` → 63/63 (61 + 2 new).
+
+**G4c part 2 (2026-08-14) closed all four gate faults.** F15, the one that
+mattered: no check could tell playing from silent (`mediaEl.volume = 0`
+left the region 7/7 green at measured peak 0.000, RMS 0.000). Closed with
+an analyser tapped off the same signal `audio.js` already sends to the
+panner — `AudioNode`s fan out without side effects, so `audio.js` itself
+is untouched. New checks require RMS >0.005 while a reading plays and
+<=0.005 during an empty gap; fault-injected the same volume mute and the
+audible check went red, the control correctly stayed green. F16 (a clause
+that could never fail — `audioElements === 0` is permanently true, since
+`audio.js`'s element is never appended to the document) was dropped, not
+mechanised. F17 ("stops outright, not a fade" could not see a fade —
+a 3s fade passed 7/7) was renamed to "eventually stops playback" with the
+gap admitted inline, per the brief's own ruling that this is a landing,
+not a cop-out. F18 (the missing-file check had no positive control) gained
+a `currentSrc` assertion; fault-injecting a genuine non-attempt showed the
+old check's two conditions both still holding while the new one correctly
+went red. Full account, including every fault injection, in
+`MCGROTS-VALIDATION.md` § G4c (part 2).
+
+**G4c part 3** corrected two records: the mid-reading delta, previously
+logged as exactly `0.00s`, now states the `<2s` bound the check actually
+enforces (three re-measurements on this machine: 0.15–0.20s, never 0.00);
+and this file's architecture sketch above, which named a `reader.js` that
+was never built — the module landed as `audio.js`.
+
+`npm run smoke:mcgrots` → 65/65 (63 + 2 new from F15; F16/F18 changed
+existing checks rather than adding new ones).
 
 ### G5 — The voices
 

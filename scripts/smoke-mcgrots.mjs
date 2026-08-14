@@ -1026,6 +1026,26 @@ try {
     const audioPageErrors = [];
     audioPage.on('console', (m) => { if (m.type() === 'error') audioErrors.push(m.text()); });
     audioPage.on('pageerror', (e) => audioPageErrors.push(String(e)));
+    // F15 (G4 phase gate): element state (currentTime/paused/currentSrc/
+    // playingId) is satisfied equally by silent playback — mediaEl.volume=0
+    // left every existing check green with measured output at peak 0.000,
+    // RMS 0.000. This taps the REAL signal path: wrap createMediaElementSource
+    // so the same source that feeds the panner also feeds an analyser, parked
+    // on window.__mcgrotsAnalyser. An AudioNode fans out to multiple
+    // destinations without affecting either, so this changes nothing audio.js
+    // does — it only gives the harness a second tap on the same signal.
+    await audioPage.addInitScript(() => {
+      const proto = (window.AudioContext || window.webkitAudioContext).prototype;
+      const orig = proto.createMediaElementSource;
+      proto.createMediaElementSource = function (el) {
+        const src = orig.call(this, el);
+        const analyser = this.createAnalyser();
+        analyser.fftSize = 2048;
+        src.connect(analyser);
+        window.__mcgrotsAnalyser = analyser;
+        return src;
+      };
+    });
     await audioPage.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
     await audioPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
     await audioPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
@@ -1033,13 +1053,18 @@ try {
     // --- no sound before the gesture -----------------------------------------
     // Checked BEFORE the click below — this is the one thing in the region
     // that has to be true prior to any interaction.
+    // F16 (G4 phase gate): this used to also require
+    // `document.querySelectorAll('audio').length === 0`, which can never go
+    // false — audio.js builds its element with `new Audio()` and never
+    // appends it to the document, so that count is 0 at boot, mid-playback,
+    // and forever. Only `!started` did any work. Dropped rather than kept
+    // for appearance; see VALIDATION.md.
     const preGesture = await audioPage.evaluate(() => ({
       started: window.__mcgrotsDebug.readerAudio.started,
-      audioElements: document.querySelectorAll('audio').length,
     }));
-    check('no sound before the gesture — no AudioContext, no element, at boot',
-      !preGesture.started && preGesture.audioElements === 0,
-      `started=${preGesture.started} audio-elements=${preGesture.audioElements}`);
+    check('no sound before the gesture — no AudioContext at boot',
+      !preGesture.started,
+      `started=${preGesture.started}`);
 
     await audioPage.click('#title-card'); // the real gesture
     await audioPage.evaluate(() => window.__mcgrotsDebug.card.dismiss()); // idempotent; belt and braces if the click alone left it
@@ -1085,6 +1110,40 @@ try {
       midState.playingId === visit.id
         ? `elapsed=${visit.elapsed.toFixed(2)}s, playback started at ${midState.currentTime.toFixed(2)}s (delta ${midDelta.toFixed(2)}s)`
         : `never started playing id=${visit.id} (playingId=${midState.playingId}, currentTime=${midState.currentTime})`);
+
+    // --- F15: the signal is actually audible, not just element state ---------
+    // Reads the analyser tapped by the init script above. Polled, not a
+    // single sample: the media element's play() and the WebAudio graph both
+    // run on the real wall clock, decoupled from this harness's frozen rAF,
+    // so the first sample or two after a seek can still be silence.
+    const sampleRMS = async (p) => p.evaluate(() => {
+      const a = window.__mcgrotsAnalyser;
+      if (!a) return { peak: 0, rms: 0 };
+      const data = new Uint8Array(a.fftSize);
+      a.getByteTimeDomainData(data);
+      let peak = 0, sumSq = 0;
+      for (let j = 0; j < data.length; j++) {
+        const v = (data[j] - 128) / 128;
+        peak = Math.max(peak, Math.abs(v));
+        sumSq += v * v;
+      }
+      return { peak, rms: Math.sqrt(sumSq / data.length) };
+    });
+    // Waits for audible output — the first sample or two after a seek can
+    // still be silence, since play() and the WebAudio graph run on the real
+    // wall clock, decoupled from this harness's frozen rAF.
+    const waitForAudible = async (p, attempts = 10) => {
+      for (let i = 0; i < attempts; i++) {
+        const r = await sampleRMS(p);
+        if (r.rms > 0.005) return r;
+        await new Promise((res) => setTimeout(res, 150));
+      }
+      return { peak: 0, rms: 0 };
+    };
+    const midAudible = await waitForAudible(audioPage);
+    check('a reading in progress produces real audio output, not just advancing element state',
+      midAudible.rms > 0.005,
+      `peak=${midAudible.peak.toFixed(3)} rms=${midAudible.rms.toFixed(3)} (must be >0.005)`);
 
     // Fresh-arrival control, same visit, same comic — isolates the CLOCK as
     // the only variable. Without this, an implementation that always seeks
@@ -1143,9 +1202,22 @@ try {
       if (afterDepart.paused) break;
       await new Promise((r) => setTimeout(r, 250));
     }
-    check('a reader leaving mid-file stops playback outright, not a fade',
+    check('a reader leaving mid-file eventually stops playback (bounded by the 5s poll; see F17 in VALIDATION.md for what this does not prove)',
       afterDepart.paused && afterDepart.playingId === null,
       `paused=${afterDepart.paused} playingId=${afterDepart.playingId}`);
+
+    // --- F15 control: an empty pitch produces no output --------------------
+    // A brief wait first — the analyser's 2048-sample window (~46ms) can
+    // still hold the tail end of the just-paused element's output on the
+    // very first read after `paused` flips true. Three samples after that,
+    // worst (highest) RMS taken — a single sample landing on silence by luck
+    // would understate the bar a real fault has to clear.
+    await new Promise((r) => setTimeout(r, 300));
+    const gapSamples = [await sampleRMS(audioPage), await sampleRMS(audioPage), await sampleRMS(audioPage)];
+    const gapSilent = gapSamples.reduce((a, b) => (b.rms > a.rms ? b : a));
+    check('...and an empty pitch produces no output (control)',
+      gapSilent.rms <= 0.005,
+      `peak=${gapSilent.peak.toFixed(3)} rms=${gapSilent.rms.toFixed(3)} (must be <=0.005)`);
 
     await audioPage.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
 
@@ -1174,11 +1246,22 @@ try {
     await missingPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), 1020);
     await missingPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
     await new Promise((r) => setTimeout(r, 1500)); // let the 404'd play() settle
-    const missingState = await missingPage.evaluate(() => window.__mcgrotsDebug.readerAudio.paused);
+    const missingState = await missingPage.evaluate(() => ({
+      paused: window.__mcgrotsDebug.readerAudio.paused,
+      currentSrc: window.__mcgrotsDebug.readerAudio.currentSrc,
+      scheduledId: window.__mcgrotsDebug.rota.whatTheyAreDoing(1020).id,
+    }));
     await missingPage.close();
-    check('a missing/blocked file does not throw — the module recovers silently',
-      missingPageErrors.length === 0 && missingState === true,
-      `pageerrors=${missingPageErrors.length} paused=${missingState}`);
+    // F18 (G4 phase gate): pageerrors===0 && paused===true also holds for a
+    // page that never attempted playback at all (a click that missed, a rota
+    // returning null) — nothing pinned that an attempt actually happened.
+    // currentSrc ending in the scheduled id is the positive control: the
+    // module reached the point of trying to play THIS file, not merely doing
+    // nothing.
+    check('a missing/blocked file does not throw — the module recovers silently, having actually tried',
+      missingPageErrors.length === 0 && missingState.paused === true &&
+        missingState.currentSrc?.endsWith(`/${missingState.scheduledId}.mp3`),
+      `pageerrors=${missingPageErrors.length} paused=${missingState.paused} currentSrc=${missingState.currentSrc} scheduledId=${missingState.scheduledId}`);
 
     // --- F14 (G4 phase gate): the seek target tracks the LIVE elapsed -------
     // A deliberately delayed route on the mp3 — the shape the phase gate
