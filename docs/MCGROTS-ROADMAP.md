@@ -891,6 +891,39 @@ by feeding it a known comic line.
 `docs/CANON.md`'s Central Bar test and `docs/LEITH.md`'s sensitivity rules
 apply to every generated line.
 
+**G5a (2026-08-14) landed the text half. No audio, no game wiring.** Split
+from G5 because McGrot's voice is Dan's curation call (§ 11, item 0.5) and the
+placeholder has never been listened to — rendering audio first means paying
+for, and forming an opinion about, a performance of text nobody has judged.
+Brief: `docs/briefs/g5a-dialogue-generation.md`.
+
+Two scripts, both Codex's: `scripts/generate-mcgrots-dialogue.mjs`
+(deterministic, resumable, owns its seed, emits the 205-brief shape) and
+`scripts/check-mcgrots-dialogue.mjs` (the gate). Output is
+`generated/mcgrots-dialogue.json` — **six principals × eight lines = 48
+original lines**, seed `1511506142`. The lines themselves, the scope decision
+and the per-principal read are in **`docs/MCGROTS-DIALOGUE.md`**, which Codex
+owns; this section is the pointer, not a second copy.
+
+**The gate is falsified and holds.** Corpus indexed at 1475 source lines,
+6531 normalised words, 541 unique seven-word windows — seven being "more than
+six", per the rule above. All 48 lines pass with 0 plagiarism and 0 lexical
+sensitivity violations. Fed a genuine comic line pulled from
+`readings.json` rather than the checker author's own choice, it went red with
+three matching windows and **exit 1**; the clean run exits 0. Numbers and the
+exit-code check: `MCGROTS-VALIDATION.md` § G5a.
+
+**Not voice-approved, and Codex said so unprompted** — the finding is that the
+sample is uneven, not that it is good. McGrot is the strongest isolated
+register. Pomplé risks aphorism density. Keth reads as generic prophecy rather
+than Leith. Mike English's "international confidence" line is the weakest in
+the sample. The Taxman and the Government Inspector are written as solo lines
+and have not been tested as a two-actor exchange, which is how they would
+actually appear.
+
+**Still G5's, not done:** TTS rendering, voice selection, and wiring any of
+this into the game.
+
 ### G6 — Pomplé
 
 The relationship. He needs a state you can move — fed, near, watching you,

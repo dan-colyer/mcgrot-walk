@@ -2093,3 +2093,50 @@ re-obtained invites exactly this trap.
 readings.json phrase timing`.** The modules that actually landed are
 `rota.js` and `audio.js`; `reader.js` was never built under that name.
 Corrected in `MCGROTS-ROADMAP.md`.
+
+---
+
+## G5a — the dialogue plagiarism gate
+
+**What it proves.** No line in `generated/mcgrots-dialogue.json` shares a
+run of more than six words with the comic corpus. The rule comes from the
+roadmap's G5 section and the threshold is implemented as seven-word windows,
+seven being the smallest n-gram that is "more than six".
+
+**The corpus it indexes:** 1475 source lines, 6531 normalised words, 541
+unique seven-word windows, drawn from the comic text in `readings.json`.
+
+**Clean run.** 48 candidate lines, 0 plagiarism violations, 0 lexical
+sensitivity violations, exit 0.
+
+```
+node scripts/check-mcgrots-dialogue.mjs --file generated/mcgrots-dialogue.json
+```
+
+**Fault injection, and it was falsified twice.** Codex fed it a comic line of
+its own choosing; the orchestrator re-ran it with a line pulled independently
+from `readings.json` (`"Program it wi a sauce of sof broth logic."`), on the
+principle that a checker tested only against its author's chosen example is
+weaker evidence. It went red with three matching windows.
+
+**The exit code was checked separately, and this is the part worth keeping.**
+A checker that prints FAIL and exits 0 passes silently in any automated
+caller, and a shell pipeline reports the exit status of the last command in
+the pipe, not of the checker — so the first read of the injection showed `0`
+and proved nothing. Measured directly: **fail case exits 1, clean case exits
+0.**
+
+**What it deliberately does NOT prove.**
+
+- **It cannot see a close paraphrase.** A seven-word window catches lifted
+  phrasing, not a line reworded around the same joke. Nothing here gates
+  originality of idea.
+- **It does not judge quality.** All 48 lines pass, and the sample is
+  explicitly not voice-approved — see `MCGROTS-DIALOGUE.md` for the
+  per-principal read, including the ones Codex called weak.
+- **The "lexical sensitivity" check is word-level.** It cannot assess whether
+  a line punches down, which is a judgement `LEITH.md` asks of a reader, not
+  of a matcher. A clean run is not a sensitivity sign-off.
+- **Nothing here is wired into `smoke-mcgrots.mjs`.** It is a standalone
+  script run by hand, kept out of the suite because the suite's region was
+  another worker's file at the time. Folding it in is outstanding.
