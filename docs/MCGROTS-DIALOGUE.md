@@ -169,6 +169,23 @@ PASS: 0 plagiarism violations; 0 lexical sensitivity violations
 The output has not been quoted from the comics. Comic text remains sacred and
 verbatim wherever it is used elsewhere in the project.
 
+The fault injection was run after commit `a2b1f07`, using a known comic line
+as an extra candidate rather than editing the generated file:
+
+```text
+node scripts/check-mcgrots-dialogue.mjs --file generated/mcgrots-dialogue.json --line "I cannae fix life. But I can give it flavour."
+Checked: 49 candidate lines
+FAIL: 1 line(s) share a seven-word window with the comic corpus
+matched: “i cannae fix life but i can”
+matched: “cannae fix life but i can give”
+matched: “fix life but i can give it”
+matched: “life but i can give it flavour”
+process exit: 1
+```
+
+That red control is the required proof that the gate can reject protected text;
+the committed generated file was not modified by the injection.
+
 ## Verification record and outstanding work
 
 - The generator wrote 48 lines from seed `1511506142`, and verified the
