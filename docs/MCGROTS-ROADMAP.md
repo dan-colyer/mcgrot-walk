@@ -817,6 +817,30 @@ yet listened**, on the dev server, per the brief's "What Dan does" section;
 this unit is not done until he has. See the session report for what to run
 and what to expect.
 
+**G4c part 1 (2026-08-14) fixed F14, the G4 phase gate's one real product
+defect (not a gate fault).** `audio.js`'s seek target went stale by the
+file's load latency: the closure that seeks and plays a newly-scheduled
+reading captured `elapsed` at the moment `mediaEl.src` was assigned, not
+the value once `loadedmetadata` actually fired — invisible on the dev
+server (`127.0.0.1`, single-digit-millisecond loads) but the phase gate
+measured 2.5s of drift on a 3s route delay. Matters beyond a fraction of a
+second: § 6's multiplayer design rests on a reading sitting at `now − T`
+for every client, and a permanently-drifting seek target breaks the one
+property that argument needs. Fixed with a `latestInfo` closure variable
+`update()` refreshes every frame, read by the seek instead of the stale
+capture, plus a `wantId` supersession guard for a second id change racing
+the same slow load. New gate: a deliberately delayed route plus an
+undelayed control, drift <1s required on both, fault-injected by restoring
+the original captured-closure form — went red (`drift 3.01s`), control
+stayed near zero throughout, restored. Full account, including why the
+control matters, in `MCGROTS-VALIDATION.md` § G4c (part 1).
+
+`npm run smoke:mcgrots` → 63/63 (61 + 2 new). **Part 2 (F15–F18, the four
+gate faults, and the two record corrections) is a separate dispatch, not
+started here** — F14 is a product defect and those are test faults, and
+the brief is explicit that a bad fix to F14 changes what a player hears,
+which is why this dispatch touched nothing else.
+
 ### G5 — The voices
 
 Generate dialogue for **McGrot and the five principals** from the corpus in

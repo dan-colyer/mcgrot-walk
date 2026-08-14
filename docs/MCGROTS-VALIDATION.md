@@ -1875,3 +1875,108 @@ autoplay-policy variance outside this Chromium build. Numeric gates cannot
 hear a bad sound, exactly as they cannot see a bad picture — **Dan has not
 yet listened**, on the dev server, per the brief's "What Dan does". This
 unit is not done until he has.
+
+## G4c (part 1) — F14: the seek target goes stale and never resyncs
+
+**The G4 phase gate's one real product defect** (`.herdr/gate4.md`,
+`docs/briefs/g4c-gate-findings.md`). `audio.js`'s `seekAndPlay` closed over
+`info.elapsed` — the value read at the moment `mediaEl.src` was assigned.
+On a cold file that closure does not run until `loadedmetadata` fires,
+which can be an arbitrary time later; it then seeks to where the reading
+*was* when the request started, not where it is once the file is actually
+ready to play. Nothing afterwards corrects the drift — the element free-runs
+once playing, and `update()` only acts again when the scheduled id changes.
+
+**Why no existing check saw it.** The harness serves from `127.0.0.1`,
+where `loadedmetadata` arrives in single-digit milliseconds, so the
+captured value and the live value are the same number there. Structural,
+not an oversight — every one of G4b's own seek checks boots against this
+same server.
+
+**Why it matters beyond a fraction of a second.** Roadmap § 6's whole
+multiplayer argument rests on a reading being at `now − T` for every
+client. Two players on different connections would sit at permanently
+different offsets in the same file with no mechanism to converge — the
+single-player cost today is a couple of seconds, the design claim is the
+thing actually being protected.
+
+### The fix
+
+`audio.js` now keeps a `latestInfo` closure variable, refreshed at the top
+of every `update()` call. `seekAndPlay` reads `latestInfo.elapsed` (falling
+back to the originally-captured `info.elapsed` only if `latestInfo` has
+since moved off this reading's id entirely) rather than the value captured
+when the request started. Also guarded by `wantId`: if the schedule moves
+on again before this particular load finishes (a second id change
+reassigns `mediaEl.src` and `currentId` out from under a still-pending
+`loadedmetadata` listener), the stale callback now declines to seek/play
+into what is by then a different file — a related failure mode adjacent to
+F14 that the brief's four-line sketch did not name but the same fix
+naturally closes off.
+
+### Reproduced directly, before writing the gate
+
+Bare `<audio>` element manually driven, not the shipped module: set
+`el.currentTime = 10` immediately after a fresh `src` assignment. Readback
+right after assignment: `10` (looked correct). Readback ~800ms later, once
+`play()` had actually started: **`0.78`**, climbing from ~0 — the seek had
+silently not taken effect and playback had started from the beginning
+despite the earlier readback looking like confirmation. (This specific
+reproduction — from G4b(2)'s own investigation, not new to this unit — was
+originally diagnosed as a dev-server Range-support gap and fixed there;
+F14 is a **second, independent** bug on the same code path, invisible on
+localhost for the same reason but not fixed by the Range patch.)
+
+### The gate
+
+New checks in the `audio` region, `--only=audio`. A deliberately delayed
+route (`page.route` on `**/assets/audio/*.mp3`, `await new Promise(...)`
+before `route.continue()`) — the shape the phase gate used to produce its
+table. The rota clock is advanced in small real-time steps throughout the
+wait (`rota.setClock` + `stepFrames`, polled every 150ms) so it tracks
+actual elapsed wall-clock time while the delayed load is in flight, the
+same way a real player's un-frozen clock would — a frozen test clock would
+never show the drift regardless of which implementation is running.
+
+**Measured, this machine, fixed code:**
+
+| delay | drift |
+|---|---|
+| 3000ms | 0.04s |
+| 0ms (control) | 0.01s |
+
+**Control: identical procedure, no delay.** Without it, the delayed check
+alone cannot distinguish "stale seek target" from "this whole page runs a
+bit behind under load" — a uniformly-slow implementation would fail the
+delayed case for an unrelated reason and the check would still look like
+it caught the right bug. The control's own drift near zero establishes
+that baseline correctness first.
+
+**Fault-injected** by restoring the captured-closure form (`mediaEl
+.currentTime = info.elapsed`, the original bug, with the `wantId` guard
+and `latestInfo` read removed): `--only=audio` → **8/9**. Delayed check
+went red — `3000ms route delay: drift 3.01s (must be <1s)` — matching the
+phase gate's own ~2.5s finding in shape and order of magnitude (mine ran
+slightly higher, plausibly because the injected delay here holds the
+response back before any bytes arrive rather than mid-transfer; not
+reconciled further, the mechanism and the direction both match). The
+no-delay control correctly stayed green throughout (`drift -0.00s`) —
+confirming it isolates the load-latency case specifically rather than
+firing on any drift at all. Every other check in the region, including the
+existing "mid-reading arrival starts near elapsed" check (which only ever
+exercises the fast, undelayed path), stayed green. Restored via `git
+checkout -- src/mcgrots/audio.js` (already staged, safe) and rebuilt: 9/9.
+
+**Full suite**: `npm run smoke:mcgrots` → 63/63 (61 existing + 2 new:
+delayed + control), ~9.5s total, ~7s for `--only=audio` alone (the two new
+checks each run a full page boot plus a 3s wait, the most expensive pair in
+the region).
+
+**Not gated further:** the exact millisecond-level drift on a real network
+connection (this reproduces the mechanism with a synthetic delay, not a
+measurement of any specific real-world latency); whether the `wantId`
+supersession guard's own edge case (two id changes racing one slow load)
+is reachable in real play — reasoned as sound by construction, not
+separately fault-injected, since it did not exist as a named finding and
+adding a gate for a mechanism nobody has yet shown is reachable would be
+gating a hypothesis rather than a defect.
