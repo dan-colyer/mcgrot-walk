@@ -27,6 +27,7 @@ import { createStyle, STYLES } from './style.js';
 import { createLooks, LOOKS } from './looks.js';
 import { createPage } from './page.js';
 import { createTitleCard } from './card.js';
+import { createReaderAudio } from './audio.js';
 import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
@@ -363,6 +364,18 @@ function placeCamera() {
 let rotaClockOverride = null;
 const rotaNow = () => rotaClockOverride ?? Date.now() / 1000;
 
+// G4b: the camera's own position/facing, read fresh every frame — the ONLY
+// thing audio takes from the camera side. See audio.js's header for why the
+// dependency is safe in this direction and not the other.
+const _facing = new THREE.Vector3();
+function listenerPose() {
+  camera.getWorldDirection(_facing);
+  return {
+    x: camera.position.x, y: camera.position.y, z: camera.position.z,
+    fx: _facing.x, fy: _facing.y, fz: _facing.z,
+  };
+}
+
 function frame(dt) {
   clock += dt;
   actor.update(dt, clock);
@@ -374,8 +387,14 @@ function frame(dt) {
   // its walk/read/leave state machine. `reader.update` never receives the
   // camera and cannot move it; see rota.js's header for why that is
   // structural rather than a promise.
-  reader.update(dt, rotaNow());
+  const now = rotaNow();
+  reader.update(dt, now);
   placeCamera();
+  // G4b: same wall clock the reader itself was just driven from, so audio
+  // and the reader's visible arrival/departure never disagree about who is
+  // there. Runs every frame regardless of whether a gesture has happened —
+  // audio.update() is a no-op until start() has been called.
+  readerAudio.update(whatTheyAreDoing(now), reader.group ? reader.group.position : null, listenerPose());
   style.render(scene, camera);
 }
 
@@ -439,11 +458,11 @@ window.addEventListener('keydown', (e) => {
   if (i >= 0 && i < ANCHORS.length) goTo(ANCHORS[i].id);
 });
 
-// G4b (1/2): shown immediately, independent of boot() — the gesture is
-// needed before any sound exists, not before the scene finishes loading.
-// `onStart` is where an AudioContext will be constructed (a later dispatch);
-// nothing here builds one.
-const titleCard = createTitleCard({ onStart() {} });
+// G4b: shown immediately, independent of boot() — the gesture is needed
+// before any sound exists, not before the scene finishes loading. The
+// AudioContext is built here, in onStart, and nowhere else.
+const readerAudio = createReaderAudio();
+const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
 
 (async function boot() {
   const leith = await loadFoot();
@@ -556,6 +575,19 @@ const titleCard = createTitleCard({ onStart() {} });
       // its boot path rather than per check. Idempotent — `card.js`'s remove()
       // is a no-op on a detached node.
       card: { dismiss: () => titleCard.dismiss() },
+      // G4b: read-only, localhost-gated, exactly like every other debug
+      // handle here — the gate calls the SAME instance main.js drives every
+      // frame, not a copy of it. `start()` is exposed so the harness can
+      // trigger it from a real click (autoplay policy needs an actual
+      // gesture, not a synthetic one) without wiring a second title card.
+      readerAudio: {
+        start: () => readerAudio.start(),
+        get started() { return readerAudio.started; },
+        get playingId() { return readerAudio.playingId; },
+        get currentTime() { return readerAudio.currentTime; },
+        get currentSrc() { return readerAudio.currentSrc; },
+        get paused() { return readerAudio.paused; },
+      },
       page: () => page.enabled,
       setPage: (v) => { page.setEnabled(!!v); resize(); },
       setPageTitle: (t) => page.setTitle(t),

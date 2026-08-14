@@ -32,7 +32,7 @@ import { LAUNCH_OPTS, LAUNCH_LABEL } from './launch.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'docs/smoke/captures/mcgrots/g0');
 
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'seat', 'rota', 'style'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'seat', 'rota', 'audio', 'style'];
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
 const wants = (r) => ONLY.size === 0 || ONLY.has(r);
@@ -1010,6 +1010,162 @@ try {
       sequenceShots.length === 5 && visitAt?.phase === 'reading',
       `${sequenceShots.length} frames written to docs/smoke/captures/mcgrots/g0/rota-*.png; ` +
       `t=1020 phase=${visitAt?.phase ?? 'null'}`);
+  }
+
+  // --------------------------------------------------------------- audio ---
+  // G4b (2/2). Its own page, closed at the end of this block — the checks
+  // below need a REAL, Playwright-synthesised click on the title card (CDP
+  // input, not page.evaluate's JS dispatch), because Chromium's autoplay
+  // policy gates AudioContext/media playback on genuine user activation. The
+  // other regions' `card.dismiss()` calls are a synthetic DOM removal and
+  // deliberately do not exercise this — they only need the overlay gone,
+  // not audio actually running.
+  if (wants('audio')) {
+    const audioPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    const audioErrors = [];
+    const audioPageErrors = [];
+    audioPage.on('console', (m) => { if (m.type() === 'error') audioErrors.push(m.text()); });
+    audioPage.on('pageerror', (e) => audioPageErrors.push(String(e)));
+    await audioPage.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+    await audioPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await audioPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+    // --- no sound before the gesture -----------------------------------------
+    // Checked BEFORE the click below — this is the one thing in the region
+    // that has to be true prior to any interaction.
+    const preGesture = await audioPage.evaluate(() => ({
+      started: window.__mcgrotsDebug.readerAudio.started,
+      audioElements: document.querySelectorAll('audio').length,
+    }));
+    check('no sound before the gesture — no AudioContext, no element, at boot',
+      !preGesture.started && preGesture.audioElements === 0,
+      `started=${preGesture.started} audio-elements=${preGesture.audioElements}`);
+
+    await audioPage.click('#title-card'); // the real gesture
+    await audioPage.evaluate(() => window.__mcgrotsDebug.card.dismiss()); // idempotent; belt and braces if the click alone left it
+
+    // t=1020 is the same known-reading moment the rota region's sequence
+    // capture already uses and inspects — reusing it rather than a fresh
+    // sweep keeps this region's fixture identical to a picture Dan has
+    // already opened.
+    const visit = await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.whatTheyAreDoing(t), 1020);
+    const freshT = 1020 - visit.elapsed; // this same visit's own readStart
+
+    const waitForPlaying = (id) => audioPage.waitForFunction(
+      (want) => window.__mcgrotsDebug.readerAudio.playingId === want
+        && window.__mcgrotsDebug.readerAudio.currentTime > 0,
+      id, { timeout: 5000 },
+    );
+
+    // --- playback position tracks the rota clock -----------------------------
+    // Mid-reading arrival: must start near `elapsed`, not near zero. This is
+    // the brief's central risk — the obvious implementation (start from 0
+    // whenever a reading becomes current) looks identical to the right one on
+    // a fresh arrival and only diverges here.
+    await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), 1020);
+    await audioPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+    await waitForPlaying(visit.id);
+    const midState = await audioPage.evaluate(() => ({
+      currentTime: window.__mcgrotsDebug.readerAudio.currentTime,
+      currentSrc: window.__mcgrotsDebug.readerAudio.currentSrc,
+    }));
+    const midDelta = Math.abs(midState.currentTime - visit.elapsed);
+    check('a mid-reading arrival starts near elapsed, not near zero',
+      midDelta < 2,
+      `elapsed=${visit.elapsed.toFixed(2)}s, playback started at ${midState.currentTime.toFixed(2)}s (delta ${midDelta.toFixed(2)}s)`);
+
+    // Fresh-arrival control, same visit, same comic — isolates the CLOCK as
+    // the only variable. Without this, an implementation that always seeks
+    // to the same fixed offset (or that happened to be tested only at this
+    // one t) would pass the check above for the wrong reason. A SEPARATE
+    // page, not a clock rewind on `audioPage`: real wall-clock time never
+    // moves backwards, and rewinding it on the same page leaves the module's
+    // `currentId` already equal to `visit.id` from the mid-reading check
+    // above, so the id-changed branch never re-fires — that would be testing
+    // a scenario the real product never sees, not the fresh-arrival case.
+    const freshPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await freshPage.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+    await freshPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await freshPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+    await freshPage.click('#title-card');
+    await freshPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), freshT);
+    await freshPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+    await freshPage.waitForFunction(
+      (want) => window.__mcgrotsDebug.readerAudio.playingId === want
+        && window.__mcgrotsDebug.readerAudio.currentTime > 0,
+      visit.id, { timeout: 5000 },
+    );
+    const freshState = await freshPage.evaluate(() => window.__mcgrotsDebug.readerAudio.currentTime);
+    await freshPage.close();
+    check('...and a fresh arrival of the SAME reading starts near zero (control)',
+      freshState < 2,
+      `readStart=${freshT.toFixed(2)}s, playback started at ${freshState.toFixed(2)}s`);
+
+    // --- the file that plays is the comic that is scheduled ------------------
+    const scheduled = await audioPage.evaluate(() => ({
+      id: window.__mcgrotsDebug.rota.whatTheyAreDoing(1020).id,
+      src: window.__mcgrotsDebug.readerAudio.currentSrc,
+    }));
+    check('the file that plays is the comic that is scheduled',
+      scheduled.src?.endsWith(`/${scheduled.id}.mp3`),
+      `scheduled id=${scheduled.id}, playing src=${scheduled.src}`);
+
+    // --- one voice at a time: a departure mid-file stops, does not fade ------
+    // Jump the clock straight from inside the reading to well past its
+    // departure window — real time hasn't passed for the media element, so
+    // if nothing stopped it explicitly it would just still be playing.
+    // +20s past readEnd: comfortably clear of DEPART_LEAD_S (7s, so this
+    // visit's own window has definitely closed) and comfortably short of the
+    // NEXT visit's arrive-lead window opening at GAP_S - ARRIVE_LEAD_S = 38s
+    // past readEnd (rota.js's constants) — a genuinely empty pitch, not a
+    // moment when a different reading has naturally started.
+    const readStart = 1020 - visit.elapsed;
+    const emptyGapT = readStart + visit.duration + 20;
+    await audioPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), emptyGapT);
+    await audioPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+    await audioPage.waitForFunction(() => window.__mcgrotsDebug.readerAudio.paused === true, null, { timeout: 5000 });
+    const afterDepart = await audioPage.evaluate(() => ({
+      paused: window.__mcgrotsDebug.readerAudio.paused,
+      playingId: window.__mcgrotsDebug.readerAudio.playingId,
+    }));
+    check('a reader leaving mid-file stops playback outright, not a fade',
+      afterDepart.paused && afterDepart.playingId === null,
+      `paused=${afterDepart.paused} playingId=${afterDepart.playingId}`);
+
+    await audioPage.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
+
+    check('console clean after driving the audio region',
+      audioErrors.length === 0 && audioPageErrors.length === 0,
+      [...audioErrors, ...audioPageErrors].slice(0, 3).join(' | ') || 'no errors');
+
+    // --- a missing file stays silent, not thrown ------------------------------
+    // Own page: once a real mp3 has been requested above, later re-routing
+    // the same URL to a 404 would not necessarily hit the network again (the
+    // browser may already hold it), so this needs a reading this session has
+    // never touched, on a page with no prior successful audio requests to
+    // mask the route. Measures the thing CLAUDE.md's catalog rule actually
+    // asks for — no throw, no unhandled rejection — not whether the network
+    // panel is quiet: a 404's own "Failed to load resource" line is a
+    // browser-level log this page cannot suppress and is not what "silent"
+    // means here.
+    const missingPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    const missingPageErrors = [];
+    missingPage.on('pageerror', (e) => missingPageErrors.push(String(e)));
+    await missingPage.route('**/assets/audio/*.mp3', (route) => route.fulfill({ status: 404, body: 'not found' }));
+    await missingPage.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+    await missingPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await missingPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+    await missingPage.click('#title-card');
+    await missingPage.evaluate((t) => window.__mcgrotsDebug.rota.setClock(t), 1020);
+    await missingPage.evaluate(() => window.__mcgrotsDebug.stepFrames(1));
+    await new Promise((r) => setTimeout(r, 1500)); // let the 404'd play() settle
+    const missingState = await missingPage.evaluate(() => window.__mcgrotsDebug.readerAudio.paused);
+    await missingPage.close();
+    check('a missing/blocked file does not throw — the module recovers silently',
+      missingPageErrors.length === 0 && missingState === true,
+      `pageerrors=${missingPageErrors.length} paused=${missingState}`);
+
+    await audioPage.close();
   }
 
   // --------------------------------------------------------------- style ---

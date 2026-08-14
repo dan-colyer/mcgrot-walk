@@ -105,6 +105,11 @@ try {
 
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+  // G4b: clear the gesture surface — without this every shot is a picture of
+  // the title card, not the scene. A synthetic dismiss only, same as the
+  // gate suite's boot path; it does not start audio (that needs a real
+  // click, which this tool has no reason to fake).
+  await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
   // Freeze rAF, then drive frames by hand — nothing advances that this script
   // did not advance.
   await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
