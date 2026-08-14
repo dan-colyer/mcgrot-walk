@@ -2137,6 +2137,32 @@ and proved nothing. Measured directly: **fail case exits 1, clean case exits
 - **The "lexical sensitivity" check is word-level.** It cannot assess whether
   a line punches down, which is a judgement `LEITH.md` asks of a reader, not
   of a matcher. A clean run is not a sensitivity sign-off.
-- **Nothing here is wired into `smoke-mcgrots.mjs`.** It is a standalone
-  script run by hand, kept out of the suite because the suite's region was
-  another worker's file at the time. Folding it in is outstanding.
+**Wired into the suite.** `smoke-mcgrots.mjs` now has a `dialogue` region
+that shells out to `check-mcgrots-dialogue.mjs --file
+generated/mcgrots-dialogue.json` via `spawnSync` and checks `result.status`
+directly. Not imported: the checker calls `main()` unconditionally at module
+load (no `import.meta.url` guard), so importing its functions would re-run
+its CLI arg parser against the suite's own argv and exit 2. Not piped through
+a shell either, for the reason above — `result.status` is the checker's own
+exit code with nothing between it and the read.
+
+The region needs no browser, so it runs before the suite decides whether to
+boot one: `--only=dialogue` alone completes in ~0.3s with no server, no
+Chromium launch. `npm run smoke:mcgrots -- --only=dialogue`:
+
+```
+PASS  no generated dialogue line shares a seven-word window with the comic corpus (or trips the sensitivity backstop)
+      exit 0
+```
+
+**Fault injection, from the suite this time.** Swapped
+`generated/mcgrots-dialogue.json`'s first candidate line for the same
+`readings.json` line used above ("Program it wi a sauce of sof broth
+logic."). `npm run smoke:mcgrots -- --only=dialogue` went red:
+
+```
+FAIL  no generated dialogue line shares a seven-word window with the comic corpus (or trips the sensitivity backstop)
+      exit 1
+```
+
+Restored from git and reran clean before landing.
