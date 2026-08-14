@@ -141,6 +141,14 @@ everything the answer does not block. A question is not a reason to idle.
   38/38 with nothing drawn at all. Project the AABB into screen space and
   require luminance variance inside it, against a control patch — the `van`
   region has the working example.
+- **The same rule holds for sound, and the suite failed it first.** Element
+  state — `currentTime`, `paused`, `currentSrc` — is the audio equivalent of a
+  non-null `getObjectByName`: it proves a source was wired up, not that
+  anything is audible. `mediaEl.volume = 0` left the audio region 7/7 green
+  with the measured output at peak 0.000, RMS 0.000 (G4 phase gate, F15).
+  Anything the player is meant to HEAR gets a check on the output — tap the
+  graph with an `AnalyserNode` and require non-zero RMS, against a control
+  that must read zero. Check what comes out, never the object producing it.
 - **Determinism:** never add or reorder a PRNG draw in an existing sequence. A
   feature needing randomness owns its own seeded generator.
 - **The comics are verbatim.** The garbled AI text is never corrected, anywhere,
