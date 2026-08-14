@@ -1,7 +1,7 @@
 {
   "schema": "mcgrots-dialogue/v1",
   "seed": 1511506142,
-  "linesPerPrincipal": 8,
+  "linesPerPrincipal": 12,
   "sourceStyle": {
     "directory": "scripts/tts-prompts",
     "directorBriefs": 205,
@@ -12,7 +12,7 @@
       "Performance"
     ]
   },
-  "scope": "McGrot plus the five non-McGrot principals named by the G5a brief: Pomplé, Keth with One Eye, Mike English, the Taxman, and the Government Inspector.",
+  "scope": "McGrot plus the five non-McGrot principals named by the G5a brief: Pomplé, Keth with One Eye, Mike English, the Taxman, and the Government Inspector. The Leith Badger, ruled into the cast for G5b, is deliberately not here — see docs/MCGROTS-DIALOGUE.md for why it has no lines.",
   "entries": [
     {
       "key": "MCGROT",
@@ -23,43 +23,63 @@
       "lines": [
         {
           "id": "mcgrot-01",
-          "text": "Pomplé says the sauce needs mercy, which is why I keep him near it.",
-          "delivery": "[confidential, glancing down]"
+          "text": "Mingin? Come back when your own kitchen’s had a shift like mine.",
+          "delivery": "[flaring, then calmer]"
         },
         {
           "id": "mcgrot-02",
-          "text": "An honest bowl should frighten the cautious and comfort whoever stayed.",
-          "delivery": "[quietly sincere]"
+          "text": "Do not call it scraps.",
+          "delivery": "[offended, flat]"
         },
         {
           "id": "mcgrot-03",
-          "text": "At the Gullet, every ladle earns its keep and every rumour gets reduced.",
-          "delivery": "[grandly, stirring]"
+          "text": "Naw.",
+          "delivery": "[flat, immediate]"
         },
         {
           "id": "mcgrot-04",
-          "text": "Mind the steam, pal; it has opinions about anybody standing between me and lunch.",
-          "delivery": "[warning the pavement, then softer]"
+          "text": "Awright pal. Sauce is extra, opinions are free.",
+          "delivery": "[warning, then softening]"
         },
         {
           "id": "mcgrot-05",
-          "text": "I have buried better plans than this beneath a layer of onions.",
-          "delivery": "[considering the pot]"
+          "text": "Steamboats or stone sober, my queue’s still the longest at the fit o’ the Walk.",
+          "delivery": "[with weary pride]"
         },
         {
           "id": "mcgrot-06",
-          "text": "If the smoke rises straight, somebody important is about to misunderstand it.",
-          "delivery": "[watching the smoke]"
+          "text": "Away and get your messages first — then tell me that’s shan.",
+          "delivery": "[pointing with the spatula]"
         },
         {
           "id": "mcgrot-07",
-          "text": "The council sent another form; I sent it back with gravy on the signature.",
-          "delivery": "[reading the form, satisfied]"
+          "text": "Pomplé says the sauce needs mercy, and I believe the dog.",
+          "delivery": "[confidential, glancing down]"
         },
         {
           "id": "mcgrot-08",
-          "text": "Do not call it scraps; scraps are what the future leaves after dinner.",
-          "delivery": "[offended, then unexpectedly solemn]"
+          "text": "Persevere, it says on the bin. Persevere, I say back.",
+          "delivery": "[reading the bin, then muttering]"
+        },
+        {
+          "id": "mcgrot-09",
+          "text": "Extra sauce, every time. That’s not negotiable, pal.",
+          "delivery": "[flat, final]"
+        },
+        {
+          "id": "mcgrot-10",
+          "text": "Radge, the pair of you — queueing for a smell.",
+          "delivery": "[unimpressed, stirring]"
+        },
+        {
+          "id": "mcgrot-11",
+          "text": "I’ve buried better plans than this under a layer of onions, ken.",
+          "delivery": "[considering the pot]"
+        },
+        {
+          "id": "mcgrot-12",
+          "text": "Chum me doon the fit o’ the Walk and I’ll show ye a queue that means something.",
+          "delivery": "[proud, already walking]"
         }
       ]
     },
@@ -72,43 +92,63 @@
       "lines": [
         {
           "id": "pomple-01",
-          "text": "SIT DOWN, PAL. THE STREET WILL STILL BE HERE.",
-          "delivery": "[nudges the spare stool forward]"
+          "text": "CHUM HIM DOON THE WALK YOURSELF.",
+          "delivery": "[waits beside the heavy box]"
         },
         {
           "id": "pomple-02",
-          "text": "THE BANANA FLATS ARE A LANDMARK. STOP POINTING AT THEM.",
+          "text": "STOP POINTING AT THE FLATS.",
           "delivery": "[plants paws; sign points nowhere]"
         },
         {
           "id": "pomple-03",
-          "text": "THIS IS A DOG’S OPINION, NOT A PUBLIC CONSULTATION.",
-          "delivery": "[looks at the clipboard, then away]"
+          "text": "NO LADLE UNTIL SHE HAS A SEAT.",
+          "delivery": "[holds sign up; does not blink]"
         },
         {
           "id": "pomple-04",
+          "text": "THE QUEUE REMEMBERS WHO WAS KIND.",
+          "delivery": "[slowly turns sign towards McGrot]"
+        },
+        {
+          "id": "pomple-05",
+          "text": "SIT DOWN.",
+          "delivery": "[nudges the spare stool forward]"
+        },
+        {
+          "id": "pomple-06",
+          "text": "THE STUDENT WANTED AUTHENTICITY. I GAVE HIM A NAPKIN.",
+          "delivery": "[sets sign beside the food bowl]"
+        },
+        {
+          "id": "pomple-07",
           "text": "I HAVE HEARD WORSE FROM BETTER DRESSED ANIMALS.",
           "delivery": "[looks at Mike; small tail movement]"
         },
         {
-          "id": "pomple-05",
-          "text": "NO LADLE UNTIL THE OLD WOMAN HAS A SEAT.",
-          "delivery": "[holds sign up; does not blink]"
+          "id": "pomple-08",
+          "text": "PERSEVERE MEANS SOMETHING DIFFERENT WHEN YOU HAVE PAWS.",
+          "delivery": "[long stare]"
         },
         {
-          "id": "pomple-06",
-          "text": "THE HAT IS NOT A LICENSE TO BE DAFT.",
-          "delivery": "[removes hat and places it on the counter]"
+          "id": "pomple-09",
+          "text": "A KINDNESS COSTS NOTHING. TRY ONE.",
+          "delivery": "[quietly makes space]"
         },
         {
-          "id": "pomple-07",
-          "text": "THE STUDENT ASKED FOR AUTHENTICITY. I GAVE HIM A NAPKIN.",
+          "id": "pomple-10",
+          "text": "AWRIGHT. NOW MOVE.",
           "delivery": "[one tired ear twitch]"
         },
         {
-          "id": "pomple-08",
-          "text": "YOU MAY CALL IT A PILGRIMAGE AFTER YOU HAVE HELPED CARRY SOMETHING.",
-          "delivery": "[waits beside the heavy box]"
+          "id": "pomple-11",
+          "text": "THE HAT IS NOT A LICENSE.",
+          "delivery": "[removes hat, places it on the counter]"
+        },
+        {
+          "id": "pomple-12",
+          "text": "THAT IS SHAN, AND YOU KNOW IT.",
+          "delivery": "[looks at the clipboard, then away]"
         }
       ]
     },
@@ -121,43 +161,63 @@
       "lines": [
         {
           "id": "keth-01",
-          "text": "A warning is a kindness with its coat buttoned against the rain.",
-          "delivery": "[offers the thought, then withdraws]"
-        },
-        {
-          "id": "keth-02",
-          "text": "You can cross the Walk safely, provided you stop pretending it is empty.",
+          "text": "Chum ye doon the Walk myself, if you’re the type who listens.",
           "delivery": "[meets the listener’s eye]"
         },
         {
+          "id": "keth-02",
+          "text": "The map’s honest. It’s the ground that’s started improvising.",
+          "delivery": "[folds map along the wrong crease]"
+        },
+        {
           "id": "keth-03",
-          "text": "The sea gives nothing back unchanged, not even a rumour carried inland.",
-          "delivery": "[watching the weather]"
+          "text": "There’s a second shadow at the fit o’ the Walk where your map says none.",
+          "delivery": "[quietly, pointing once]"
         },
         {
           "id": "keth-04",
-          "text": "Do not follow the hinge when it opens; it has learned the shape of visitors.",
-          "delivery": "[without looking at the door]"
+          "text": "The haar’s in early. That’s your first warning, no your last.",
+          "delivery": "[watching the weather]"
         },
         {
           "id": "keth-05",
-          "text": "Under the Walk, the old names keep dry. That is why they sound awake.",
-          "delivery": "[touches the folded map]"
+          "text": "Doon the Walk, aye, but no past the yellow barrier.",
+          "delivery": "[marks the stones with the hook]"
         },
         {
           "id": "keth-06",
-          "text": "If the gulls go quiet, count your footsteps instead of your blessings.",
-          "delivery": "[listens; a long pause]"
+          "text": "Barry, is it, the new bridge? Ask it what it ate to get here.",
+          "delivery": "[almost amused]"
         },
         {
           "id": "keth-07",
-          "text": "Nether Leith keeps a light for strangers who know better than to knock.",
-          "delivery": "[leans towards the sealed way]"
+          "text": "Ken the tramworks? They’ve buried newer things than cables.",
+          "delivery": "[sudden sharp point]"
         },
         {
           "id": "keth-08",
-          "text": "There is haar on the statue, and a second shadow where your map says none.",
-          "delivery": "[quietly, pointing once]"
+          "text": "Watch the hinge.",
+          "delivery": "[flat, without looking at the door]"
+        },
+        {
+          "id": "keth-09",
+          "text": "Naw.",
+          "delivery": "[does not elaborate]"
+        },
+        {
+          "id": "keth-10",
+          "text": "The gulls have gone quiet. Count your footsteps instead of your blessings.",
+          "delivery": "[listens; a long pause]"
+        },
+        {
+          "id": "keth-11",
+          "text": "A warning is a kindness, coat buttoned against the rain.",
+          "delivery": "[offers the thought, then withdraws]"
+        },
+        {
+          "id": "keth-12",
+          "text": "Nether Leith keeps a light for strangers who know better than to knock.",
+          "delivery": "[leans towards the sealed way]"
         }
       ]
     },
@@ -170,28 +230,28 @@
       "lines": [
         {
           "id": "mike_english-01",
-          "text": "Call it rivalry if you like; I call it a shared frontage with excellent tension.",
-          "delivery": "[gestures between the vans]"
+          "text": "Fair play to McGrot; the man can season a queue.",
+          "delivery": "[reluctant admiration]"
         },
         {
           "id": "mike_english-02",
-          "text": "The crowd went east for the match and somehow improved my customer service.",
-          "delivery": "[watching the empty street]"
+          "text": "Your queue has taste, McGrot, though its standards require gentle refurbishment.",
+          "delivery": "[competitive smile]"
         },
         {
           "id": "mike_english-03",
-          "text": "Fine, the Walk has won me over. Please do not put that on the menu.",
-          "delivery": "[surrendering the cue cards]"
+          "text": "Rupert. Never say ‘ken’ again unless a local invites you to survive the sentence.",
+          "delivery": "[stage-whisper to the students]"
         },
         {
           "id": "mike_english-04",
-          "text": "One napkin per portion. We are preserving civilisation in manageable squares.",
-          "delivery": "[placing napkins with ceremony]"
+          "text": "I am not pretending to be English. I am demonstrating a market position.",
+          "delivery": "[too quickly, then composed]"
         },
         {
           "id": "mike_english-05",
-          "text": "A proper menu leaves room for surprise, but not for sauce on the waistcoat.",
-          "delivery": "[checking his reflection]"
+          "text": "I can share a pavement without sharing my branding, surely.",
+          "delivery": "[trying to sound reasonable]"
         },
         {
           "id": "mike_english-06",
@@ -200,13 +260,33 @@
         },
         {
           "id": "mike_english-07",
-          "text": "Your queue has taste, McGrot, though its standards require gentle refurbishment.",
-          "delivery": "[competitive smile]"
+          "text": "Fine. The Walk wins.",
+          "delivery": "[surrendering the cue cards]"
         },
         {
           "id": "mike_english-08",
+          "text": "Napkins first. Always napkins first.",
+          "delivery": "[placing napkins with ceremony]"
+        },
+        {
+          "id": "mike_english-09",
           "text": "Observe the service: brisk, hygienic, and pronounced correctly for international confidence.",
           "delivery": "[demonstrating with tongs]"
+        },
+        {
+          "id": "mike_english-10",
+          "text": "The crowd went east for the match. Somehow it improved my customer service.",
+          "delivery": "[watching the empty street]"
+        },
+        {
+          "id": "mike_english-11",
+          "text": "One napkin per portion. We are preserving civilisation in manageable squares.",
+          "delivery": "[placing napkins with ceremony]"
+        },
+        {
+          "id": "mike_english-12",
+          "text": "The students taught me ‘ken.’ I am still deciding whether to use it.",
+          "delivery": "[stage-whisper to the students]"
         }
       ]
     },
@@ -219,43 +299,63 @@
       "lines": [
         {
           "id": "taxman-01",
-          "text": "The audit will conclude when the numbers stop behaving like folklore.",
-          "delivery": "[closes the folder]"
-        },
-        {
-          "id": "taxman-02",
-          "text": "A cash box is not a philosophy, despite the evidence submitted this morning.",
-          "delivery": "[turns a page]"
-        },
-        {
-          "id": "taxman-03",
-          "text": "Your receipts describe a philosophy, not a taxable transaction.",
-          "delivery": "[reads the first page twice]"
-        },
-        {
-          "id": "taxman-04",
-          "text": "Every missing penny leaves a paper trail, usually damp and faintly savoury.",
-          "delivery": "[follows the trail with a ruler]"
-        },
-        {
-          "id": "taxman-05",
-          "text": "Your business model has more exceptions than my department has patience.",
+          "text": "Your business model has more exceptions than my department has patience, frankly.",
           "delivery": "[calculates in silence]"
         },
         {
-          "id": "taxman-06",
-          "text": "You may appeal this assessment after demonstrating where the money went.",
+          "id": "taxman-02",
+          "text": "Appeal in writing.",
           "delivery": "[points to a very small line]"
         },
         {
-          "id": "taxman-07",
+          "id": "taxman-03",
+          "text": "Stamped.",
+          "delivery": "[stamps once]"
+        },
+        {
+          "id": "taxman-04",
+          "text": "Persevere is not a defence against an audit.",
+          "delivery": "[stamps again, firmer]"
+        },
+        {
+          "id": "taxman-05",
           "text": "This receipt is illegible, but its confidence is unfortunately clear.",
           "delivery": "[holds it to the grey light]"
         },
         {
-          "id": "taxman-08",
+          "id": "taxman-06",
           "text": "I have reviewed the sauce and found three unregistered layers of ambition.",
           "delivery": "[marks a box]"
+        },
+        {
+          "id": "taxman-07",
+          "text": "The audit concludes when the numbers stop behaving like folklore.",
+          "delivery": "[closes the folder]"
+        },
+        {
+          "id": "taxman-08",
+          "text": "This is not a philosophy. It is a receipt.",
+          "delivery": "[reads the first page twice]"
+        },
+        {
+          "id": "taxman-09",
+          "text": "The clipboard is impartial. Your explanation is making it difficult.",
+          "delivery": "[stamps once]"
+        },
+        {
+          "id": "taxman-10",
+          "text": "Every missing penny leaves a trail, usually damp, faintly savoury, and unclaimed.",
+          "delivery": "[follows the trail with a ruler]"
+        },
+        {
+          "id": "taxman-11",
+          "text": "Your books say ‘barry.’ Barry is not a category I recognise.",
+          "delivery": "[marks a box]"
+        },
+        {
+          "id": "taxman-12",
+          "text": "Denied.",
+          "delivery": "[flat, does not look up]"
         }
       ]
     },
@@ -268,43 +368,63 @@
       "lines": [
         {
           "id": "gov_inspector-01",
-          "text": "Please do not call the inspection a conversation until it has passed review.",
-          "delivery": "[nervous, but firm]"
-        },
-        {
-          "id": "gov_inspector-02",
-          "text": "I am not closing anything today. I am merely standing very near the possibility.",
-          "delivery": "[stares at the pot]"
-        },
-        {
-          "id": "gov_inspector-03",
-          "text": "If the sauce moves again, I will record it as an unplanned stakeholder.",
-          "delivery": "[opens a fresh form]"
-        },
-        {
-          "id": "gov_inspector-04",
-          "text": "Please keep the ladle still while I establish whether it is a utensil or witness.",
-          "delivery": "[backs away half a step]"
-        },
-        {
-          "id": "gov_inspector-05",
           "text": "I have brought the correct forms, although none of them anticipated this smell.",
           "delivery": "[checks the folder]"
         },
         {
+          "id": "gov_inspector-02",
+          "text": "Your hygiene plan has diagrams, arrows, and one deeply concerning prophecy.",
+          "delivery": "[scrolls, frowning]"
+        },
+        {
+          "id": "gov_inspector-03",
+          "text": "The van has written its own address on the licence.",
+          "delivery": "[looks at the painted sign]"
+        },
+        {
+          "id": "gov_inspector-04",
+          "text": "Closed. Pending further review, obviously.",
+          "delivery": "[scrolls, frowning]"
+        },
+        {
+          "id": "gov_inspector-05",
+          "text": "Noted.",
+          "delivery": "[flat, records the clause]"
+        },
+        {
           "id": "gov_inspector-06",
-          "text": "This temperature is within tolerance, which is not the same as reassuring.",
-          "delivery": "[reads the thermometer again]"
+          "text": "Please keep the ladle still, ken.",
+          "delivery": "[raises one gloved hand]"
         },
         {
           "id": "gov_inspector-07",
+          "text": "If the sauce moves again, I will record it as an unplanned stakeholder.",
+          "delivery": "[opens a fresh form]"
+        },
+        {
+          "id": "gov_inspector-08",
+          "text": "The form doesn’t recognise ‘ken’ as a temperature.",
+          "delivery": "[reads the thermometer again]"
+        },
+        {
+          "id": "gov_inspector-09",
+          "text": "This temperature is within tolerance. That is not the same as reassuring.",
+          "delivery": "[reads the thermometer again]"
+        },
+        {
+          "id": "gov_inspector-10",
           "text": "The risk assessment is thorough; the risk has declined to participate.",
           "delivery": "[waits for the tablet to update]"
         },
         {
-          "id": "gov_inspector-08",
-          "text": "Your hygiene plan has diagrams, arrows, and one deeply concerning prophecy.",
-          "delivery": "[scrolls, frowning]"
+          "id": "gov_inspector-11",
+          "text": "I require a clear answer, a clean surface, and one minute outside.",
+          "delivery": "[raises one gloved hand]"
+        },
+        {
+          "id": "gov_inspector-12",
+          "text": "I am not closing anything today.",
+          "delivery": "[stares at the pot]"
         }
       ]
     }

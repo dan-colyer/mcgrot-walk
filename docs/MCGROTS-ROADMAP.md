@@ -921,6 +921,53 @@ the sample. The Taxman and the Government Inspector are written as solo lines
 and have not been tested as a two-actor exchange, which is how they would
 actually appear.
 
+**G5b (2026-08-14) fixed the register G5a flagged as uneven.** Brief:
+`docs/briefs/g5b-register.md`. G5a's own write-up named four weak individual
+lines; measured across all 48, the fault was systemic and none of those four
+were the cause — 1 of 15 documented `LEITH.md` dialect-kit words used ("pal",
+twice), "the fit o' the Walk" used 0 times against LEITH.md's "use
+constantly", mean line length 12.1 words, 0 lines under 7. Almost every line
+was one balanced sentence built as a concrete noun then an abstract lift —
+one writer's habit wearing six hats, not six voices.
+
+**Constrained form, not content** — the `CANON.md` characterisations were
+right. `scripts/generate-mcgrots-dialogue.mjs`'s 72 hand-authored line cards
+(12 per principal, unchanged structure) were rewritten against three targets:
+dialect actually present and unevenly distributed (McGrot high, Mike English
+— canonically an outsider — deliberately lower), a real fraction of lines
+under seven words (fragments, interruptions, one-word replies), and the
+noun-then-abstract-lift shape capped rather than default. Measured on the
+rewritten 72-line corpus: dialect kit used in 24/72 lines (33%, up from 2%),
+"the fit o' the Walk" used 3 times, 20/72 lines (28%) under 7 words, and only
+13/72 (18%) still fit the old balanced-sentence shape. Survived unchanged, as
+required: Pomplé's handwritten-sign device, the Government Inspector's "the
+risk has declined to participate", and the plagiarism gate (module
+untouched).
+
+**Stayed with authored cards — no model call.** Dan ruled it on 2026-08-14:
+proving the register is fixable by hand is the cheaper experiment, and the
+fork to model generation stays live for later (recorded in the brief). The
+generator's own comment already said "original line cards"; the roadmap
+wording above ("Generate dialogue... from the corpus") reads as model
+generation and does not match what exists — noted here so the record says
+which thing was actually built.
+
+**The Leith Badger joins the cast, and gets no lines.** Dan ruled the Badger
+into the cast (`CANON.md` lists it as one of the roadmap's five regulars).
+Giving it Pomplé's sign device would duplicate the one silent-character trick
+the corpus has and weaken both; giving it speech has no canon basis (unlike
+Pomplé, canon establishes no prop-holding or literate ability for wildlife).
+No third device was found that wasn't either of those two, so the Badger has
+no lines — a finding about how the cast works, not an unfinished card.
+Reasoning: `docs/MCGROTS-DIALOGUE.md`.
+
+**More dialect raised the plagiarism gate's stakes and it held.** More kit
+words shared with the comics' own Scots means more seven-word collisions are
+more likely, not less — watched for rather than assumed, and confirmed: all
+72 rewritten lines still pass with 0 violations. `MCGROTS-VALIDATION.md` § G5b
+has the three new mechanical gates (dialect quota, length distribution,
+shape cap) and their fault injections.
+
 **Still G5's, not done:** TTS rendering, voice selection, and wiring any of
 this into the game.
 

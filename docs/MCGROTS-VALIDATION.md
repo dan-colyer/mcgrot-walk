@@ -2166,3 +2166,104 @@ FAIL  no generated dialogue line shares a seven-word window with the comic corpu
 ```
 
 Restored from git and reran clean before landing.
+
+## G5b — the register form gates
+
+**What they prove.** `docs/briefs/g5b-register.md` measured G5a's 48 lines
+against `docs/LEITH.md`'s dialect kit and found the fault systemic: 1 of 15
+documented kit words used ("pal", twice), "the fit o' the Walk" used 0
+times, 0/48 lines under 7 words, and almost every line built as one
+balanced sentence (concrete noun, then an abstract lift). Three mechanical
+checks were added to the `dialogue` region, gating form only — never
+quality, which stays Dan's read:
+
+- **Dialect quota.** `hasDialect(text)` — case/apostrophe-normalised
+  substring match against 17 tokens (`DIALECT_KIT` in `smoke-mcgrots.mjs`,
+  quoted from `LEITH.md`'s 14-row table with the two `X / Y` rows split into
+  their own tokens). Passes when ≥20% of lines carry a kit word, "the fit
+  o' the Walk" is used at least once, and Mike English's (outsider) fraction
+  is strictly below McGrot's — the last is `CANON.md` characterisation
+  ("the Walk can win him over") turned into a numeric ordering, not a
+  content judgement.
+- **Length distribution.** Word count via `/[A-Za-z’']+/g`; passes when ≥15%
+  of all lines are under 7 words.
+- **Shape cap.** `isBalancedTurn(text)` approximates the noun-then-lift tic
+  mechanically: exactly one sentence-terminal mark (a period, at the very
+  end — not a question or exclamation, not multiple sentences), exactly one
+  comma/semicolon pivot, and ≥9 words. Passes when ≤40% of lines fit it.
+  This is a proxy for a rhetorical shape, not the shape itself — see
+  "What this deliberately does not prove" below.
+
+**Thresholds were measured, not picked first.** The rewritten 72-line
+corpus (all 12 cards × 6 principals, `--count 12` rather than G5a's `--count
+8` — the register itself is what's under review this time, so the full pool
+is what's gated, not a shuffled sample of it) scores 24/72 (33%) dialect,
+3 uses of "the fit o' the Walk", 20/72 (28%) under 7 words, 13/72 (18%)
+still fitting the balanced-turn shape, and McGrot (75%) well above Mike
+English (17%). Thresholds (20%, 1 use, 15%, 40%) sit with headroom below
+what was actually achieved, matching how other floors in this repo are set.
+
+```
+node scripts/smoke-mcgrots.mjs --only=dialogue
+PASS  no generated dialogue line shares a seven-word window with the comic corpus (or trips the sensitivity backstop)
+PASS  dialect kit is actually used, including "the fit o' the Walk", and Mike English (outsider) uses less of it than McGrot
+      24/72 lines carry a kit word (>=20% required); "the fit o' the Walk" used 3x (baseline: 1/15 words, 0 uses); McGrot 75% vs Mike English 17%
+PASS  a real fraction of lines are fragments or interruptions, under seven words
+      20/72 lines under 7 words (baseline: 0/48)
+PASS  the noun-then-abstract-lift sentence is not the house style
+      13/72 lines fit the single-pivot balanced-sentence shape (must be <=40%; some surviving is fine, all of them is the bug)
+[mcgrots] 4/4 passed in 0.0s
+```
+
+**Fault injection.** Rather than a synthetic edit, the fault input was the
+real G5a baseline: `generated/mcgrots-dialogue.json` was temporarily
+overwritten with the committed pre-G5b 48-line file (`git show
+a2b1f07:generated/mcgrots-dialogue.json`), which the new checks were built
+to reject, while the plagiarism gate — verified clean at G5a — was left as
+an independent control. `node scripts/smoke-mcgrots.mjs --only=dialogue`:
+
+```
+PASS  no generated dialogue line shares a seven-word window with the comic corpus (or trips the sensitivity backstop)
+FAIL  dialect kit is actually used, including "the fit o' the Walk", and Mike English (outsider) uses less of it than McGrot
+      2/48 lines carry a kit word (>=20% required); "the fit o' the Walk" used 0x (baseline: 1/15 words, 0 uses); McGrot 13% vs Mike English 0%
+FAIL  a real fraction of lines are fragments or interruptions, under seven words
+      0/48 lines under 7 words (baseline: 0/48)
+FAIL  the noun-then-abstract-lift sentence is not the house style
+      21/48 lines fit the single-pivot balanced-sentence shape (must be <=40%; some surviving is fine, all of them is the bug)
+[mcgrots] 1/4 passed in 0.0s
+```
+
+All three new gates went red on exactly the corpus they exist to reject,
+while the plagiarism gate — reading the same file, unaffected by the
+register — stayed green: the isolation the earlier gate's own G5a fault
+injection didn't have available (it only had a synthetic single-line swap).
+Restored to the G5b file afterward (copied from a pre-injection backup, not
+`git checkout` — the working tree was uncommitted at injection time, and
+`checkout` would have restored the OLD committed G5a file, not the new
+uncommitted G5b one). Reran clean before landing: 4/4.
+
+**One interaction watched rather than assumed.** More dialect means more
+vocabulary shared with the comics' own Scots, so seven-word plagiarism
+collisions become more likely, not less. The rewritten corpus carries 33%
+dialect density (up from G5a's 2%) and still passes the plagiarism gate
+with 0 violations — confirmed, not assumed, by the same `check-mcgrots-
+dialogue.mjs` run shown above. Had it gone red, the fix would have been to
+rewrite the colliding line; the window, the exception list, and the
+threshold were never candidates.
+
+**What this deliberately does not prove.**
+
+- **The shape gate is a proxy, not a parser.** "One comma/semicolon pivot,
+  ≥9 words, single terminal period" catches the mechanical signature of
+  G5a's tic (measured: it flags 21/48 of the original lines) but will
+  neither catch every noun-then-lift sentence written without that exact
+  punctuation pattern, nor exempt a genuinely good line that happens to
+  match it — Pomplé's "A KINDNESS COSTS NOTHING. TRY ONE." avoids it only
+  because it's two sentences, not because it necessarily reads better than
+  a comma-joined version would.
+- **None of the three checks judge quality.** A corpus could clear all
+  three numeric floors and still read badly; that verdict is Dan's, via
+  `MCGROTS-DIALOGUE.md`'s readable sample.
+- **The dialect check is presence, not correctness.** `hasDialect` only
+  confirms a kit word's characters appear in the line — it does not check
+  the word is used with the right sense or grammar.
