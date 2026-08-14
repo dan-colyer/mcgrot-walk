@@ -692,6 +692,37 @@ G4a "Rejected: the first two approach-point layouts".
 generated dialogue (G5). The reader stands silently at the counter for its
 `readings.json` duration and leaves; nothing plays.
 
+**G4b part 1 (2026-08-14) landed the gesture surface, silent — no audio
+module yet.** New `src/mcgrots/card.js`: a full-window overlay ("McGrot's" /
+"Click anywhere to start"), dismissed on the overlay's own `pointerdown`.
+Created at module scope in `main.js`, independent of `boot()`'s async work —
+the gesture is needed before any sound exists, not before the scene finishes
+loading. `onStart` is currently empty; it is where G4b's second half
+constructs the `AudioContext`, and nothing is constructed there yet.
+
+**Blast radius measured, not reasoned about, per the brief.** Ran the full
+54-check suite before and after: 54/54 both times, and every numeric value
+the suite prints — including the style region's panel fraction (70.9%) and
+buffer size, which the brief flagged as the checks most likely to move —
+was bit-identical across the two runs. The harness dismisses the card once,
+via a new localhost-only `__mcgrotsDebug.card.dismiss()`, immediately after
+each of its four page boots resolve `__mcgrotsDebug`, before anything is
+measured.
+
+**Fault-injected:** removed the dismiss call from the suite's main boot only
+(the other three sub-boots' dismiss calls were left in) and reran. 53/54 —
+"the statue rect changes when toggled off in the same boot" went red, every
+on/off diff reading 0.0 because the black card covered the canvas for every
+capture in that boot. Restored via `git checkout -- scripts/smoke-mcgrots.mjs`
+(safe: the file was already staged) and reran clean at 54/54 before
+continuing.
+
+**Not this dispatch:** the audio module, the `assets/audio/*.mp3` contract,
+and `scripts/mcgrots-shot.mjs` — the one-shot review tool is outside this
+unit's file scope, so a `--shot` render still shows the card and needs its
+own `card.dismiss()` call added when someone next touches that script.
+Audio playback is G4b's second dispatch.
+
 ### G5 — The voices
 
 Generate dialogue for **McGrot and the five principals** from the corpus in

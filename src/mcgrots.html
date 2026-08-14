@@ -20,6 +20,16 @@
   }
   body.booted #hint { opacity: .72; }
 
+  /* G4b — the gesture surface. Plain and unstyled: page.js and G7 own the
+     final look. Only what makes it a full-window click target. */
+  #title-card {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; background: #12110e; color: #e4d5a1; cursor: pointer;
+    font: 15px/1.4 ui-sans-serif, system-ui, sans-serif; text-align: center;
+  }
+  .title-card-name { font-size: clamp(28px, 6vw, 56px); font-weight: 800; }
+
   /* S4 — the page. Furniture only; page.js owns every position, because the
      panel rect is also what the renderer draws into and the two cannot be
      allowed to disagree. Nothing here sets left/top/width/height. */
@@ -67,6 +77,6 @@
 <body>
 <canvas id="scene"></canvas>
 <div id="hint">Tap a ring to walk there &middot; or press 1&ndash;5</div>
-<script src="mcgrots-bundle.js?v=b2c3d6af5a"></script>
+<script src="mcgrots-bundle.js?v=8097b5d683"></script>
 </body>
 </html>

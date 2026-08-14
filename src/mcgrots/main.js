@@ -26,6 +26,7 @@ import { makeSkinnedBody } from './actors/skinned.js';
 import { createStyle, STYLES } from './style.js';
 import { createLooks, LOOKS } from './looks.js';
 import { createPage } from './page.js';
+import { createTitleCard } from './card.js';
 import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
@@ -438,6 +439,12 @@ window.addEventListener('keydown', (e) => {
   if (i >= 0 && i < ANCHORS.length) goTo(ANCHORS[i].id);
 });
 
+// G4b (1/2): shown immediately, independent of boot() — the gesture is
+// needed before any sound exists, not before the scene finishes loading.
+// `onStart` is where an AudioContext will be constructed (a later dispatch);
+// nothing here builds one.
+const titleCard = createTitleCard({ onStart() {} });
+
 (async function boot() {
   const leith = await loadFoot();
   footData = buildFoot(leith);
@@ -545,6 +552,10 @@ window.addEventListener('keydown', (e) => {
       setKey: (id) => style.setKey(id),
       keys: KEYS,
 
+      // G4b: one call so the gate suite can clear the gesture surface once in
+      // its boot path rather than per check. Idempotent — `card.js`'s remove()
+      // is a no-op on a detached node.
+      card: { dismiss: () => titleCard.dismiss() },
       page: () => page.enabled,
       setPage: (v) => { page.setEnabled(!!v); resize(); },
       setPageTitle: (t) => page.setTitle(t),

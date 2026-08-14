@@ -1641,3 +1641,73 @@ cadence across many visits — six to eight readings and the ~33s of empty
 pitch between each one's departure and the next's arrival — reads as a busy
 stall or a dead one is a G4b-or-later judgement, once there is audio to
 listen to while watching it.
+
+## G4b (part 1) — the gesture surface
+
+Every browser refuses to start an `AudioContext` without a user gesture, so
+G4b's second half (audio playback) needs something clicked first. This unit
+builds only that: `src/mcgrots/card.js`, a full-window overlay dismissed on
+its own `pointerdown`. No `AudioContext` is constructed anywhere in this
+unit — `onStart` is a deliberately empty hook. Split from playback per the
+brief's Landing section, so the card's blast radius on the existing 54
+checks could be measured against a clean baseline rather than tangled with
+new audio checks.
+
+**What this does NOT gate, and why:** there is nothing to gate about the
+card itself beyond "it does not silently break every existing check" — it
+carries no claim about sound, timing, or content, so it gets no acceptance
+gate of its own. The one thing worth checking is negative: that the card's
+presence and removal leave the rest of the suite unaffected.
+
+### The blast-radius measurement
+
+The brief named the risk precisely: "all 54 checks boot this page. DOM over
+the canvas can move the style region's panel measurements and any
+pixel-sampling check." Measured rather than reasoned about:
+
+**Before** (`main` at HEAD before this unit, `npm run smoke:mcgrots`):
+54/54 passed in 3.8s. Style region: panel 70.9% of the window, buffer
+1190x549 in a 1280x720 window, S1 ink 1.22% of pixels darkened, S2 mean
+106.8→107.2 / stddev 39.7→39.3, S3 100.0% of pixels on the `dock` key.
+
+**After** (card added, harness dismisses it once per boot):
+54/54 passed in 3.1s. Every one of those numbers — panel fraction, buffer
+size, ink percentage, S2 mean/stddev, S3 swatch coverage — was
+bit-identical to the run before. Zero blast radius, because the card is
+gone before any measurement is taken: the harness calls a new
+localhost-only `__mcgrotsDebug.card.dismiss()` immediately after each of
+its four page boots resolves `__mcgrotsDebug`, once per boot as the brief
+asked, not once per check.
+
+**Fault injection, proving the dismiss call is load-bearing rather than
+decorative:** removed the dismiss call from the harness's *main* boot only
+(the other three sub-boots — `seat`, the rota `off`-arm, `style` — kept
+theirs). Reran: 53/54. Red check: "the statue rect changes when toggled off
+in the same boot" — every on/off diff read `0.0`, because the opaque black
+card covered the canvas for every capture the `statue` region took in that
+boot, so toggling the statue produced no visible difference to sample.
+Restored with `git checkout -- scripts/smoke-mcgrots.mjs` (the file was
+already staged, so this is a safe restore per `AGENTS.md`'s "commit before
+injecting" — no untracked-path gap) and reran clean: 54/54.
+
+### Verified by inspection, not gated
+
+`node scripts/mcgrots-shot.mjs --shot=/tmp/card-before.png --frames=1`
+(this script is outside this unit's file scope and was not modified, so it
+still boots without dismissing the card) — opened the PNG: full-window dark
+overlay, "McGrot's" centred, "Click anywhere to start" beneath it, nothing
+of the pitch visible through it. Then
+`node scripts/mcgrots-shot.mjs -e "(dbg.card.dismiss(), dbg.stepFrames(1), document.getElementById('title-card'))"`
+returned `null` — the node is removed from the DOM, not merely hidden.
+
+### Rejected
+
+Considered gating the card by asserting the DOM node exists at boot and is
+gone after a synthetic pointerdown — decided against adding it as a formal
+acceptance gate. `card.dismiss()` already has to exist for the harness's own
+boot path, and a gate that calls the same one-line helper the harness
+already depends on for all 54 other checks would not be independent of it:
+if `dismiss()` silently stopped removing the node, every other check would
+already be red (they all sample pixels or DOM state through a card that
+failed to clear). Recorded here rather than built, per the brief's "rejected
+experiments get written down with their numbers too."

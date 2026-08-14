@@ -123,6 +123,9 @@ try {
 
   await page.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+  // G4b: clear the gesture surface once, here, rather than per check — every
+  // region below shares this one boot.
+  await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
   // Freeze rAF, then drive frames by hand. Everything below is deterministic
   // because nothing advances that this script did not advance.
   await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
@@ -692,6 +695,7 @@ try {
     await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
       { waitUntil: 'load' });
     await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
     await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
 
     // Reads the SHIPPED scene, not a helper that recomputes the ledge's own
@@ -943,6 +947,7 @@ try {
     offPage.on('pageerror', (e) => offErrors.push(String(e)));
     await offPage.goto(`http://127.0.0.1:${port}/mcgrots.html?rota=off`, { waitUntil: 'load' });
     await offPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await offPage.evaluate(() => window.__mcgrotsDebug.card.dismiss());
     await offPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
     const offRun = await offPage.evaluate(runSequence);
     await offPage.close();
@@ -1030,6 +1035,7 @@ try {
     await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
       { waitUntil: 'load' });
     await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+    await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
     await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
 
     const bodyOk = await page.evaluate(() => window.__mcgrotsDebug.bodyError);
