@@ -1054,6 +1054,32 @@ dog. **His silhouette and head-turn are the load-bearing animation in the whole
 game**, and that should have been a G1 judging criterion; if G1 has already
 run, re-check the winner against a dog before committing.
 
+**There is one Pomplé, and he is McGrot's — not the player's.** Dan ruled this
+2026-08-15, on noticing that a per-player companion does not survive
+multiplayer: several visitors would each own a copy of the same dog. He is an
+independent entity belonging to the pitch, exactly as McGrot is.
+
+**This is § 6's discipline, and G6 is where it first bites.** The rota is
+already a pure function of wall-clock time so no world state goes on the wire.
+A dog whose state the player can *change* is world state, so the design has to
+split his behaviour in two before any of it is built:
+
+- **Per-client presentation, free and needing no wire.** Where he looks, who
+  he tracks, whether he reacts to the nearest visitor. Every client already
+  has peer positions, so "watching you" is computable locally and is correctly
+  different for each viewer — each person sees the dog notice *them*.
+- **Shared state, which is expensive and must be justified.** Anything
+  persistent and mutable — fed, befriended, moved — has to be authoritative
+  somewhere, relayed, and reconciled. It breaks the "world is a function of
+  the clock" property that keeps netcode at ~600 additive lines.
+
+**The unresolved part, deliberately left for G6 rather than guessed now:**
+whether the relationship survives with no shared mutable state at all. A dog
+that reacts richly but remembers nothing may be enough — dogs are legible
+moment to moment, and the emotional beat may live in being noticed rather than
+in a persistent bond. If it is not enough, the cost of the shared-state route
+gets paid deliberately and with the § 6 corollary in view, not by accident.
+
 ### G7 — Judge against the kill criterion
 
 Stop and apply the bar before spending anything on the real cast. The visit
