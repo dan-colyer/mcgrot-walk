@@ -67,16 +67,47 @@ deliberately.
 
 ### The prompt
 
-> A Leith dockworker turned street-food vendor, early fifties, Scottish — hard
-> Edinburgh dockside accent, thickest on local dialect words and a shade
-> clearer on ordinary sentences. Mid-range pitch, not deep and not booming. The
-> voice is rough from two things at once: years of cigarettes and standing over
-> hot oil, and years of cold, salt and wind off the water. Dry rasp with grit
-> under it. Young enough to still be physically capable — the damage is earned
-> by hard use, not by age. He talks fast and restless, cuts in, lands hard on
-> the ends of words and then stops dead. He rarely raises his voice; the
-> aggression is in the clipped pace and the hard stops, not the volume. When he
-> says something sincere he drops in volume and slows down, and the rasp eases.
+**Revised 2026-08-15 after the first audition: accent first, and phonetically
+specific.** Dan's verdict on all three FAL engines was that none of them
+sounded Scottish. The first prompt did say "Scottish — hard Edinburgh dockside
+accent", but buried it inside a character sketch and never said what that
+accent *does*. The Gemini director's briefs that produced the 400+ street
+voices — the ones that work — name it as a instruction of its own with
+phonetic markers: "Accent — thick Leith, glottal stops, hard consonants,
+phlegmy." This prompt now leads the same way. Character comes after, because
+an engine that gets the accent wrong has already failed criterion 3.
+
+> **Accent: Scottish, Edinburgh — thick Leith dockside. Glottal stops, hard
+> consonants, phlegmy. This is the single most important property of the
+> voice.** He must not sound English, Irish, American, or generically
+> Scottish-on-television; he sounds like a man from the docks at the foot of
+> Leith Walk. The accent is thickest on dialect words — "ken", "shan", "radge",
+> "doon the Walk" — and a shade clearer on ordinary sentences.
+>
+> A Leith dockworker turned street-food vendor, early fifties. Mid-range pitch,
+> not deep and not booming. The voice is rough from two things at once: years
+> of cigarettes and standing over hot oil, and years of cold, salt and wind off
+> the water. Dry rasp with grit under it. Young enough to still be physically
+> capable — the damage is earned by hard use, not by age. He talks fast and
+> restless, cuts in, lands hard on the ends of words and then stops dead. He
+> rarely raises his voice; the aggression is in the clipped pace and the hard
+> stops, not the volume. When he says something sincere he drops in volume and
+> slows down, and the rasp eases.
+
+### The short prompt (Maya, and any engine capping the prompt)
+
+Maya rejected all five lines of the first audition: its prompt limit is 500
+characters and the prompt above is longer. This variant keeps the accent
+instruction whole and sheds the character detail, because that is the right
+thing to lose.
+
+> Scottish accent, Edinburgh — thick Leith dockside. Glottal stops, hard
+> consonants, phlegmy. Not English, not Irish, not generic Scottish. A Leith
+> dockworker turned street-food vendor, early fifties. Mid-range pitch. Voice
+> rough from cigarettes, hot oil, and cold salt wind off the water — dry rasp
+> with grit under it. Fast and restless, lands hard on the ends of words then
+> stops dead. Rarely shouts; the aggression is in the clipped pace. Sincere
+> lines drop in volume, slow down, and the rasp eases.
 
 ### The preview line
 
@@ -166,3 +197,43 @@ Dan's.
 The description above is a first draft, not a finished specification. It is
 expected to need two or three passes against real audio — that is what the
 audition is for.
+
+---
+
+## Audition 1, 2026-08-15 — the result, and what it cost the plan
+
+Ran full: 8 ok, 6 failed, 1 skipped, ~$0.0077. **Dan's verdict on every file:
+none of them have a Scottish accent.** That is criterion 3, and nothing else
+matters once it fails, so the character judgements were never reached.
+
+Four findings, in order of how much they cost.
+
+**1. Gemini already does this well, and had done since 8 August.** The 400+
+street NPCs are Gemini TTS and are convincingly Scottish. McGrot's own comic
+(`3c6b637b`) has had a rendered Gemini reading on disk the whole time. The
+G5d/G5e detour into voice-design existed on the reasoning that 30 fixed voices
+could not be McGrot — Dan's ear says a fixed voice plus a good director's brief
+already is. **The roadmap's original §11 item 0.5 was right and superseding it
+was the error.** Gemini is the primary route from here; FAL continues only as a
+comparison.
+
+**2. The FAL engines were never told to do the accent.** Gemini gets a full
+director's brief — Audio Profile, Scene, Director's Notes naming the accent
+phonetically, and inline stage directions (`[flat]`, `[thin, reedy, doing the
+suit]`) threaded through the script. The FAL engines got a character sketch and
+a bare sentence. The prompt above is rewritten accent-first in response; whether
+that closes the gap is unmeasured and is what audition 2 tests.
+
+**3. MiniMax returns a NEW `custom_voice_id` on every call.** Four calls, four
+ids, four different men reading one line each. `voice-design` *designs* a voice;
+it does not speak in one already designed. So criterion 1 ("it is one man")
+could not be judged from the output at all, and the persistence claim that made
+MiniMax the only shippable engine is only true if the id is then reused through
+a separate speech endpoint. The rig does not do that. Neither the brief nor the
+rig said it should.
+
+**4. Maya rendered nothing.** Its prompt cap is 500 characters against a
+759-character prompt — `string_too_long` on all five lines, before any money
+question. Hence the short prompt above.
+
+The run also emptied the FAL balance mid-way, killing the last two renders.
