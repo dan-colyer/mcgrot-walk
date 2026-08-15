@@ -1002,8 +1002,49 @@ McGrot text sharing more comic vocabulary could have raised plagiarism
 collisions — the re-run at 84 lines still shows 0 violations, same as at
 72. Full form-gate comparison in `MCGROTS-DIALOGUE.md` § G5c.
 
-**Still G5's, not done:** TTS rendering, voice selection, and wiring any of
-this into the game.
+**G5d (2026-08-15) designed McGrot's voice and settled the service question.
+Design only — nothing rendered, nothing wired.** The full record is
+`docs/MCGROTS-VOICE.md`; this is the pointer, not a second copy.
+
+**The keys we already hold do more than the roadmap assumed.** Measured by
+real calls rather than read from docs: the Together key returns real MP3s
+(Kokoro, Orpheus), and the FAL key reaches ElevenLabs TTS and produced a 40KB
+44.1kHz file. § 11 item 0.5's assumption that this is a choice among Gemini's
+30 prebuilt voices is superseded — **no new signup is needed**, and a voice
+can be *designed* from a written description rather than picked from a list.
+
+**Persistence decided the engine, not quality.** Of the three voice-design
+models reachable on FAL, only **MiniMax Voice Design** returns a
+`custom_voice_id` that can be called again. Qwen 3 Voice Design and Maya1
+return audio only, rebuilding the voice from the description on every call —
+McGrot would drift between lines, which is disqualifying for a character with
+twelve solo lines plus exchange turns. They stay in the audition as a read on
+whether the *description* works; they cannot ship.
+
+**A probe trap worth not repeating:** FAL's queue reports `COMPLETED` for a
+path that does not exist, with the 404 in the response body. Checking only the
+status code "proved" an ElevenLabs voice-design endpoint existed when it does
+not. Read the payload.
+
+**Seven design questions settled by Dan** — early fifties, wear from both
+smoke/fryer and sea/salt, mid-range and quick rather than deep and slow,
+accent thickest on dialect words and clearer on ordinary sentences, rarely
+shouts, sincerity drops and softens. One internal tension named rather than
+smoothed over: early fifties is young for that much wear, so the description
+earns it through heavy use rather than years.
+
+**Six acceptance criteria, all judged by ear.** There is no numeric gate on a
+voice and inventing one would be the decoration this project keeps deleting —
+the existing RMS check already proves audio came out at all, which is the only
+part a gate can honestly cover. The criterion expected to fail first is that
+McGrot reads the comics' garbled text *verbatim* and it must sound like
+confident speech rather than the model stumbling.
+
+Sent to Andrew, McGrot's creator, for review 2026-08-15. Age and accent
+thickness are the two calls flagged for his view.
+
+**Still G5's, not done:** the audition rig, the voice pick itself, TTS
+rendering of the 84 lines, and wiring any of this into the game.
 
 ### G6 — Pomplé
 
@@ -1698,6 +1739,15 @@ camera at the actor's facing — the anchor shots cannot show it.
 0.5 **McGrot's voice — Dan curates this one.** Added 2026-08-12 on his call:
    a placeholder is fine for now, the real choice is his and comes later.
 
+   **Largely superseded by G5d (2026-08-15) — see `docs/MCGROTS-VOICE.md`.**
+   The description, the engine and six acceptance criteria are settled; what
+   remains open is the pick itself, which still needs the audition and Dan's
+   ear. Two assumptions below were measured and found wrong: this is not a
+   choice among Gemini's 30 prebuilts (a voice can be *designed* from a written
+   description on the FAL key already in `.env.local`), and the settled age is
+   **early fifties**, not late 50s–60s. The paragraphs kept below are the ones
+   that still hold — why he matters, and the constraint on the pick.
+
    He is the one voice that carries the visit, so a merely adequate pick is a
    worse outcome here than anywhere else in the cast. Everything else can run
    on a default.
@@ -1721,8 +1771,9 @@ camera at the actor's facing — the anchor shots cannot show it.
    makes possible. Same reasoning as `docs/LEITH.md`'s sensitivity rules.
 
    Decide during G5, which is where the principals' dialogue is generated.
-   Auditioning is cheap: `scripts/generate-tts.mjs` against one known line
-   per candidate is a few minutes and a few cents.
+   Auditioning is cheap either way — but the route is now MiniMax Voice
+   Design on the FAL key, not `generate-tts.mjs` against Gemini prebuilts.
+   The audition set and the six criteria are in `docs/MCGROTS-VOICE.md`.
 1. **Which six to eight comics.** The readings vary a lot in quality and the
    selection wants Dan's eye rather than a script's.
 2. **Does the player pick their own body**, or is one assigned? E7b's ruling
