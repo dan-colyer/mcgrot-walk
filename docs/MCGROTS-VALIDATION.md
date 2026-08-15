@@ -2442,3 +2442,51 @@ before the fix was line 1 ("Naw.", no wrap), so nothing needed re-recording.
 of the three engines, that the persistence claim about MiniMax's voice ID
 holds across a second real call, or anything about the audio itself. All
 three are Dan's to judge once he has listened.
+
+### Reviewed independently, 2026-08-15 — the injection above tests the calculator
+
+`--self-test` runs `validatePayload()` against two fixtures. That proves the
+function discriminates; it does not prove the paid path calls it. This project
+has shipped exactly that mistake before ("gates test the product, not the
+calculator"), so the review re-ran it against the product.
+
+**Injection:** `ENGINES.minimax.endpoint` pointed at
+`fal-ai/minimax/voice-design-injected-fault`, then a real run,
+`--yes --engines=minimax --lines=2` (line 2 chosen because it was not on disk,
+so the resumability skip could not mask the result):
+
+```
+[02-flare--minimax.mp3] FAILED (3s): no usable audio.url in response body:
+  {"detail":"Path /voice-design-injected-fault not found"}
+0 ok, 1 failed, 0 skipped. Spend this run: ~$0.0000
+```
+
+No mp3 written. The trap fired for real — the queue did report `COMPLETED`.
+
+**Control:** with the endpoint still bad, `validatePayload()` was replaced in
+`renderOne()` by a status-only check. Same command:
+
+```
+[02-flare--minimax.mp3] OK (1s) — 0.0KB
+1 ok, 0 failed, 0 skipped. Spend this run: ~$0.0019
+```
+
+Both files restored by `git checkout`, injection confirmed absent, the
+zero-byte artefact deleted, `manifest.json` clean of the injected endpoint.
+
+**The control failed worse than the offline test suggests, and this is the
+finding.** The naive rig did not merely report success — it wrote a **zero-byte
+mp3**, reported a **$0.0019 spend that never happened**, and left the failure
+cached: resumability skips on `existsSync` alone, so that empty file would be
+skipped on every rerun and the line would never be rendered again. The offline
+self-test cannot show any of this, because none of it lives in
+`validatePayload()`.
+
+**Known gap, not fixed:** the skip check trusts a file's existence, not its
+size or validity. `validatePayload()` makes a zero-byte write unreachable on
+the real path, so this is robustness rather than a live bug — a truncated
+download would still poison the cache silently. A size floor on the skip would
+close it.
+
+Suite after the review, tree restored: **71/71 in 11.9s** — unchanged by
+`cace6b4`, as expected of a script the suite does not run.
