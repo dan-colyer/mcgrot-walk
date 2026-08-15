@@ -1,224 +1,505 @@
 {
-  "description": "A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
-  "descriptionSource": "docs/MCGROTS-VOICE.md",
-  "lines": [
-    {
-      "id": 1,
-      "tag": "naw",
-      "text": "Naw.",
-      "source": "docs/MCGROTS-VOICE.md"
-    },
-    {
-      "id": 2,
-      "tag": "flare",
-      "text": "Mingin? Come back when your own kitchen's had a shift like mine.",
-      "source": "docs/MCGROTS-VOICE.md"
-    },
-    {
-      "id": 3,
-      "tag": "sincerity",
-      "text": "Pomplé says the sauce needs mercy, and I believe the dog.",
-      "source": "docs/MCGROTS-VOICE.md"
-    },
-    {
-      "id": 4,
-      "tag": "exchange-taxman",
-      "text": "Every penny’s accounted for, if you’d let me finish a sentence. ... That’s no an answer, that’s a— ... Stamped disnae mean answered, pal.",
-      "source": "generated/mcgrots-dialogue.json"
-    },
-    {
-      "id": 5,
-      "tag": "comic-passage",
-      "text": "When a nation's stuck, only one beestie can fix it. McGrot, ye sure they're qualified? They solved me binfire sauce leaks. They'll solve ybudget. Zero tolerance. Zero admim. They dinnae debate. They fix. That's the grot.",
-      "source": "scripts/tts-prompts/3c6b637b.txt"
+  "fal": {
+    "description": "A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
+    "descriptionSource": "docs/MCGROTS-VOICE.md",
+    "lines": [
+      {
+        "id": 1,
+        "tag": "naw",
+        "text": "Naw.",
+        "source": "docs/MCGROTS-VOICE.md"
+      },
+      {
+        "id": 2,
+        "tag": "flare",
+        "text": "Mingin? Come back when your own kitchen's had a shift like mine.",
+        "source": "docs/MCGROTS-VOICE.md"
+      },
+      {
+        "id": 3,
+        "tag": "sincerity",
+        "text": "Pomplé says the sauce needs mercy, and I believe the dog.",
+        "source": "docs/MCGROTS-VOICE.md"
+      },
+      {
+        "id": 4,
+        "tag": "exchange-taxman",
+        "text": "Every penny’s accounted for, if you’d let me finish a sentence. ... That’s no an answer, that’s a— ... Stamped disnae mean answered, pal.",
+        "source": "generated/mcgrots-dialogue.json"
+      },
+      {
+        "id": 5,
+        "tag": "comic-passage",
+        "text": "When a nation's stuck, only one beestie can fix it. McGrot, ye sure they're qualified? They solved me binfire sauce leaks. They'll solve ybudget. Zero tolerance. Zero admim. They dinnae debate. They fix. That's the grot.",
+        "source": "scripts/tts-prompts/3c6b637b.txt"
+      }
+    ],
+    "runs": [
+      {
+        "lineId": 1,
+        "line": "naw",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/voice-design",
+        "file": "01-naw--minimax.mp3",
+        "renderedAt": "2026-08-15T09:15:41.828Z",
+        "tookSec": 46,
+        "status": "ok",
+        "bytes": 14161,
+        "durationSec": 0.97525,
+        "customVoiceId": "ttv-voice-2026081517153126-cFGhfIvB"
+      },
+      {
+        "lineId": 1,
+        "line": "naw",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "01-naw--qwen.mp3",
+        "renderedAt": "2026-08-15T09:55:43.384Z",
+        "tookSec": 10,
+        "status": "ok",
+        "bytes": 31735,
+        "durationSec": 4.537958,
+        "customVoiceId": null
+      },
+      {
+        "lineId": 1,
+        "line": "naw",
+        "engine": "maya",
+        "endpoint": "fal-ai/maya",
+        "file": "01-naw--maya.mp3",
+        "renderedAt": "2026-08-15T09:56:52.070Z",
+        "tookSec": 69,
+        "status": "failed",
+        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
+      },
+      {
+        "lineId": 2,
+        "line": "flare",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/voice-design",
+        "file": "02-flare--minimax.mp3",
+        "renderedAt": "2026-08-15T09:57:16.639Z",
+        "tookSec": 25,
+        "status": "ok",
+        "bytes": 55674,
+        "durationSec": 4.435031,
+        "customVoiceId": "ttv-voice-2026081517570526-jvR4dA2g"
+      },
+      {
+        "lineId": 2,
+        "line": "flare",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "02-flare--qwen.mp3",
+        "renderedAt": "2026-08-15T09:57:23.990Z",
+        "tookSec": 7,
+        "status": "ok",
+        "bytes": 28471,
+        "durationSec": 3.736875,
+        "customVoiceId": null
+      },
+      {
+        "lineId": 2,
+        "line": "flare",
+        "engine": "maya",
+        "endpoint": "fal-ai/maya",
+        "file": "02-flare--maya.mp3",
+        "renderedAt": "2026-08-15T09:57:26.549Z",
+        "tookSec": 3,
+        "status": "failed",
+        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
+      },
+      {
+        "lineId": 3,
+        "line": "sincerity",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/voice-design",
+        "file": "03-sincerity--minimax.mp3",
+        "renderedAt": "2026-08-15T09:57:42.486Z",
+        "tookSec": 16,
+        "status": "ok",
+        "bytes": 57836,
+        "durationSec": 4.644,
+        "customVoiceId": "ttv-voice-2026081517573126-FtvNHWfS"
+      },
+      {
+        "lineId": 3,
+        "line": "sincerity",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "03-sincerity--qwen.mp3",
+        "renderedAt": "2026-08-15T09:57:49.998Z",
+        "tookSec": 7,
+        "status": "ok",
+        "bytes": 30103,
+        "durationSec": 4.136875,
+        "customVoiceId": null
+      },
+      {
+        "lineId": 3,
+        "line": "sincerity",
+        "engine": "maya",
+        "endpoint": "fal-ai/maya",
+        "file": "03-sincerity--maya.mp3",
+        "renderedAt": "2026-08-15T09:57:52.562Z",
+        "tookSec": 3,
+        "status": "failed",
+        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
+      },
+      {
+        "lineId": 4,
+        "line": "exchange-taxman",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/voice-design",
+        "file": "04-exchange-taxman--minimax.mp3",
+        "renderedAt": "2026-08-15T09:58:10.872Z",
+        "tookSec": 18,
+        "status": "ok",
+        "bytes": 109728,
+        "durationSec": 8.951313,
+        "customVoiceId": "ttv-voice-2026081517575826-OcfoNViu"
+      },
+      {
+        "lineId": 4,
+        "line": "exchange-taxman",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "04-exchange-taxman--qwen.mp3",
+        "renderedAt": "2026-08-15T09:58:26.848Z",
+        "tookSec": 16,
+        "status": "ok",
+        "bytes": 54391,
+        "durationSec": 10.216875,
+        "customVoiceId": null
+      },
+      {
+        "lineId": 4,
+        "line": "exchange-taxman",
+        "engine": "maya",
+        "endpoint": "fal-ai/maya",
+        "file": "04-exchange-taxman--maya.mp3",
+        "renderedAt": "2026-08-15T09:58:27.029Z",
+        "tookSec": 0,
+        "status": "failed",
+        "reason": "submit failed (HTTP 403): {\"detail\":\"User is locked. Reason: Exhausted balance. Top up your balance at fal.ai/dashboard/billing.\"}"
+      },
+      {
+        "lineId": 5,
+        "line": "comic-passage",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/voice-design",
+        "file": "05-comic-passage--minimax.mp3",
+        "renderedAt": "2026-08-15T09:58:27.411Z",
+        "tookSec": 0,
+        "status": "failed",
+        "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
+      },
+      {
+        "lineId": 5,
+        "line": "comic-passage",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "05-comic-passage--qwen.mp3",
+        "renderedAt": "2026-08-15T09:58:47.706Z",
+        "tookSec": 20,
+        "status": "ok",
+        "bytes": 74551,
+        "durationSec": 15.256875,
+        "customVoiceId": null
+      },
+      {
+        "lineId": 5,
+        "line": "comic-passage",
+        "engine": "maya",
+        "endpoint": "fal-ai/maya",
+        "file": "05-comic-passage--maya.mp3",
+        "renderedAt": "2026-08-15T09:58:48.138Z",
+        "tookSec": 0,
+        "status": "failed",
+        "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
+      }
+    ],
+    "voiceIds": {
+      "minimax": "ttv-voice-2026081517575826-OcfoNViu"
     }
-  ],
-  "runs": [
-    {
-      "lineId": 1,
-      "line": "naw",
-      "engine": "minimax",
-      "endpoint": "fal-ai/minimax/voice-design",
-      "file": "01-naw--minimax.mp3",
-      "renderedAt": "2026-08-15T09:15:41.828Z",
-      "tookSec": 46,
-      "status": "ok",
-      "bytes": 14161,
-      "durationSec": 0.97525,
-      "customVoiceId": "ttv-voice-2026081517153126-cFGhfIvB"
-    },
-    {
-      "lineId": 1,
-      "line": "naw",
-      "engine": "qwen",
-      "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-      "file": "01-naw--qwen.mp3",
-      "renderedAt": "2026-08-15T09:55:43.384Z",
-      "tookSec": 10,
-      "status": "ok",
-      "bytes": 31735,
-      "durationSec": 4.537958,
-      "customVoiceId": null
-    },
-    {
-      "lineId": 1,
-      "line": "naw",
-      "engine": "maya",
-      "endpoint": "fal-ai/maya",
-      "file": "01-naw--maya.mp3",
-      "renderedAt": "2026-08-15T09:56:52.070Z",
-      "tookSec": 69,
-      "status": "failed",
-      "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
-    },
-    {
-      "lineId": 2,
-      "line": "flare",
-      "engine": "minimax",
-      "endpoint": "fal-ai/minimax/voice-design",
-      "file": "02-flare--minimax.mp3",
-      "renderedAt": "2026-08-15T09:57:16.639Z",
-      "tookSec": 25,
-      "status": "ok",
-      "bytes": 55674,
-      "durationSec": 4.435031,
-      "customVoiceId": "ttv-voice-2026081517570526-jvR4dA2g"
-    },
-    {
-      "lineId": 2,
-      "line": "flare",
-      "engine": "qwen",
-      "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-      "file": "02-flare--qwen.mp3",
-      "renderedAt": "2026-08-15T09:57:23.990Z",
-      "tookSec": 7,
-      "status": "ok",
-      "bytes": 28471,
-      "durationSec": 3.736875,
-      "customVoiceId": null
-    },
-    {
-      "lineId": 2,
-      "line": "flare",
-      "engine": "maya",
-      "endpoint": "fal-ai/maya",
-      "file": "02-flare--maya.mp3",
-      "renderedAt": "2026-08-15T09:57:26.549Z",
-      "tookSec": 3,
-      "status": "failed",
-      "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
-    },
-    {
-      "lineId": 3,
-      "line": "sincerity",
-      "engine": "minimax",
-      "endpoint": "fal-ai/minimax/voice-design",
-      "file": "03-sincerity--minimax.mp3",
-      "renderedAt": "2026-08-15T09:57:42.486Z",
-      "tookSec": 16,
-      "status": "ok",
-      "bytes": 57836,
-      "durationSec": 4.644,
-      "customVoiceId": "ttv-voice-2026081517573126-FtvNHWfS"
-    },
-    {
-      "lineId": 3,
-      "line": "sincerity",
-      "engine": "qwen",
-      "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-      "file": "03-sincerity--qwen.mp3",
-      "renderedAt": "2026-08-15T09:57:49.998Z",
-      "tookSec": 7,
-      "status": "ok",
-      "bytes": 30103,
-      "durationSec": 4.136875,
-      "customVoiceId": null
-    },
-    {
-      "lineId": 3,
-      "line": "sincerity",
-      "engine": "maya",
-      "endpoint": "fal-ai/maya",
-      "file": "03-sincerity--maya.mp3",
-      "renderedAt": "2026-08-15T09:57:52.562Z",
-      "tookSec": 3,
-      "status": "failed",
-      "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
-    },
-    {
-      "lineId": 4,
-      "line": "exchange-taxman",
-      "engine": "minimax",
-      "endpoint": "fal-ai/minimax/voice-design",
-      "file": "04-exchange-taxman--minimax.mp3",
-      "renderedAt": "2026-08-15T09:58:10.872Z",
-      "tookSec": 18,
-      "status": "ok",
-      "bytes": 109728,
-      "durationSec": 8.951313,
-      "customVoiceId": "ttv-voice-2026081517575826-OcfoNViu"
-    },
-    {
-      "lineId": 4,
-      "line": "exchange-taxman",
-      "engine": "qwen",
-      "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-      "file": "04-exchange-taxman--qwen.mp3",
-      "renderedAt": "2026-08-15T09:58:26.848Z",
-      "tookSec": 16,
-      "status": "ok",
-      "bytes": 54391,
-      "durationSec": 10.216875,
-      "customVoiceId": null
-    },
-    {
-      "lineId": 4,
-      "line": "exchange-taxman",
-      "engine": "maya",
-      "endpoint": "fal-ai/maya",
-      "file": "04-exchange-taxman--maya.mp3",
-      "renderedAt": "2026-08-15T09:58:27.029Z",
-      "tookSec": 0,
-      "status": "failed",
-      "reason": "submit failed (HTTP 403): {\"detail\":\"User is locked. Reason: Exhausted balance. Top up your balance at fal.ai/dashboard/billing.\"}"
-    },
-    {
-      "lineId": 5,
-      "line": "comic-passage",
-      "engine": "minimax",
-      "endpoint": "fal-ai/minimax/voice-design",
-      "file": "05-comic-passage--minimax.mp3",
-      "renderedAt": "2026-08-15T09:58:27.411Z",
-      "tookSec": 0,
-      "status": "failed",
-      "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
-    },
-    {
-      "lineId": 5,
-      "line": "comic-passage",
-      "engine": "qwen",
-      "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-      "file": "05-comic-passage--qwen.mp3",
-      "renderedAt": "2026-08-15T09:58:47.706Z",
-      "tookSec": 20,
-      "status": "ok",
-      "bytes": 74551,
-      "durationSec": 15.256875,
-      "customVoiceId": null
-    },
-    {
-      "lineId": 5,
-      "line": "comic-passage",
-      "engine": "maya",
-      "endpoint": "fal-ai/maya",
-      "file": "05-comic-passage--maya.mp3",
-      "renderedAt": "2026-08-15T09:58:48.138Z",
-      "tookSec": 0,
-      "status": "failed",
-      "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
-    }
-  ],
-  "voiceIds": {
-    "minimax": "ttv-voice-2026081517575826-OcfoNViu"
+  },
+  "gemini": {
+    "description": "**Accent: Scottish, Edinburgh — thick Leith dockside. Glottal stops, hard consonants, phlegmy. This is the single most important property of the voice.** He must not sound English, Irish, American, or generically Scottish-on-television; he sounds like a man from the docks at the foot of Leith Walk. The accent is thickest on dialect words — \"ken\", \"shan\", \"radge\", \"doon the Walk\" — and a shade clearer on ordinary sentences.  A Leith dockworker turned street-food vendor, early fifties. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
+    "descriptionSource": "docs/MCGROTS-VOICE.md § \"### The prompt\"",
+    "scene": "At the Gullet, with the ladle working and the Walk carrying on around him.",
+    "primaryVoice": "Algenib",
+    "sweepVoices": [
+      "Orus",
+      "Fenrir",
+      "Gacrux"
+    ],
+    "sweepLines": [
+      "mcgrot-03",
+      "mcgrot-01",
+      "mcgrot-07"
+    ],
+    "lines": [
+      {
+        "id": "mcgrot-01",
+        "text": "Mingin? Come back when your own kitchen’s had a shift like mine.",
+        "delivery": "[flaring, then calmer]"
+      },
+      {
+        "id": "mcgrot-02",
+        "text": "Do not call it scraps.",
+        "delivery": "[offended, flat]"
+      },
+      {
+        "id": "mcgrot-03",
+        "text": "Naw.",
+        "delivery": "[flat, immediate]"
+      },
+      {
+        "id": "mcgrot-04",
+        "text": "Awright pal. Sauce is extra, opinions are free.",
+        "delivery": "[warning, then softening]"
+      },
+      {
+        "id": "mcgrot-05",
+        "text": "Steamboats or stone sober, my queue’s still the longest at the fit o’ the Walk.",
+        "delivery": "[with weary pride]"
+      },
+      {
+        "id": "mcgrot-06",
+        "text": "Away and get your messages first — then tell me that’s shan.",
+        "delivery": "[pointing with the spatula]"
+      },
+      {
+        "id": "mcgrot-07",
+        "text": "Pomplé says the sauce needs mercy, and I believe the dog.",
+        "delivery": "[confidential, glancing down]"
+      },
+      {
+        "id": "mcgrot-08",
+        "text": "Persevere, it says on the bin. Persevere, I say back.",
+        "delivery": "[reading the bin, then muttering]"
+      },
+      {
+        "id": "mcgrot-09",
+        "text": "Extra sauce, every time. That’s not negotiable, pal.",
+        "delivery": "[flat, final]"
+      },
+      {
+        "id": "mcgrot-10",
+        "text": "Radge, the pair of you — queueing for a smell.",
+        "delivery": "[unimpressed, stirring]"
+      },
+      {
+        "id": "mcgrot-11",
+        "text": "I’ve buried better plans than this under a layer of onions, ken.",
+        "delivery": "[considering the pot]"
+      },
+      {
+        "id": "mcgrot-12",
+        "text": "Chum me doon the fit o’ the Walk and I’ll show ye a queue that means something.",
+        "delivery": "[proud, already walking]"
+      }
+    ],
+    "runs": [
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Algenib",
+        "file": "mcgrot-01--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:16:51.434Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 34029,
+        "durationSec": 4.170958
+      },
+      {
+        "lineId": "mcgrot-02",
+        "voice": "Algenib",
+        "file": "mcgrot-02--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:16:54.327Z",
+        "tookSec": 3,
+        "status": "ok",
+        "bytes": 18477,
+        "durationSec": 2.210958
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Algenib",
+        "file": "mcgrot-03--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:16:56.112Z",
+        "tookSec": 2,
+        "status": "ok",
+        "bytes": 6957,
+        "durationSec": 0.770958
+      },
+      {
+        "lineId": "mcgrot-04",
+        "voice": "Algenib",
+        "file": "mcgrot-04--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:17:09.066Z",
+        "tookSec": 13,
+        "status": "ok",
+        "bytes": 33453,
+        "durationSec": 4.090958
+      },
+      {
+        "lineId": "mcgrot-08",
+        "voice": "Algenib",
+        "file": "mcgrot-08--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:17:50.586Z",
+        "tookSec": 14,
+        "status": "ok",
+        "bytes": 43437,
+        "durationSec": 5.330958
+      },
+      {
+        "lineId": "mcgrot-09",
+        "voice": "Algenib",
+        "file": "mcgrot-09--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:17:54.428Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 30573,
+        "durationSec": 3.730958
+      },
+      {
+        "lineId": "mcgrot-10",
+        "voice": "Algenib",
+        "file": "mcgrot-10--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:17:57.798Z",
+        "tookSec": 3,
+        "status": "ok",
+        "bytes": 32877,
+        "durationSec": 4.010958
+      },
+      {
+        "lineId": "mcgrot-11",
+        "voice": "Algenib",
+        "file": "mcgrot-11--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:18:01.758Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 32877,
+        "durationSec": 4.010958
+      },
+      {
+        "lineId": "mcgrot-12",
+        "voice": "Algenib",
+        "file": "mcgrot-12--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:18:11.167Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Orus",
+        "file": "mcgrot-03--gemini-orus.mp3",
+        "renderedAt": "2026-08-15T10:18:20.440Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Fenrir",
+        "file": "mcgrot-03--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-15T10:18:29.745Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Gacrux",
+        "file": "mcgrot-03--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-15T10:18:39.031Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Orus",
+        "file": "mcgrot-01--gemini-orus.mp3",
+        "renderedAt": "2026-08-15T10:18:51.944Z",
+        "tookSec": 13,
+        "status": "ok",
+        "bytes": 35949,
+        "durationSec": 4.410958
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Fenrir",
+        "file": "mcgrot-01--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-15T10:19:01.279Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Gacrux",
+        "file": "mcgrot-01--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-15T10:19:10.527Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Orus",
+        "file": "mcgrot-07--gemini-orus.mp3",
+        "renderedAt": "2026-08-15T10:19:19.797Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Fenrir",
+        "file": "mcgrot-07--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-15T10:19:29.050Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Gacrux",
+        "file": "mcgrot-07--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-15T10:19:38.284Z",
+        "tookSec": 9,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-05",
+        "voice": "Algenib",
+        "file": "mcgrot-05--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:24:37.091Z",
+        "tookSec": 5,
+        "status": "ok",
+        "bytes": 51693,
+        "durationSec": 6.370958
+      },
+      {
+        "lineId": "mcgrot-06",
+        "voice": "Algenib",
+        "file": "mcgrot-06--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:26:46.045Z",
+        "tookSec": 121,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Algenib",
+        "file": "mcgrot-07--gemini-algenib.mp3",
+        "renderedAt": "2026-08-15T10:28:54.877Z",
+        "tookSec": 121,
+        "status": "failed",
+        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+      }
+    ]
   }
 }

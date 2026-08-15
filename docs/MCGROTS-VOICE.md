@@ -152,38 +152,61 @@ striking one that does not.
 
 ## The audition, when it is built
 
-Built (G5e, 2026-08-15): `scripts/mcgrots-voice-audition.mjs`.
+Built (G5e, 2026-08-15; extended G5f, 2026-08-15): `scripts/mcgrots-voice-audition.mjs`,
+now three subcommands.
 
 ```bash
 set -a; source .env.local; set +a
-node scripts/mcgrots-voice-audition.mjs --dry-run     # plan + cost estimate, no network
-node scripts/mcgrots-voice-audition.mjs --self-test   # offline fault-injection proof, no key needed
-node scripts/mcgrots-voice-audition.mjs --yes         # the real thing: 3 engines x 5 lines
+node scripts/mcgrots-voice-audition.mjs self-test         # offline fault-injection proof, no key needed
+node scripts/mcgrots-voice-audition.mjs gemini --dry-run  # Part A plan, no network — 12 solo lines + a 3-voice sweep
+node scripts/mcgrots-voice-audition.mjs gemini --yes      # Part A, real: reads scripts/mcgrots-voice-briefs/*.txt
+node scripts/mcgrots-voice-audition.mjs fal --dry-run     # Part B plan, no network — 3 engines x 5 lines
+node scripts/mcgrots-voice-audition.mjs fal --yes         # Part B, real
 ```
 
-- Renders the same lines across MiniMax, Qwen and Maya from the one
-  description above — read from this file at runtime, never copied into the
-  script, so a future pass at the description needs no code change.
-- The audition set stretches the voice deliberately: **"Naw."** (can it carry
-  a one-word line), **"Mingin? Come back when your own kitchen's had a shift
-  like mine."** (flare), **"Pomplé says the sauce needs mercy, and I believe
-  the dog."** (sincerity), **McGrot's half of the Taxman exchange** (his three
-  turns from `generated/mcgrots-dialogue.json`, joined with `...` for the
-  interjections he's talked over), and **one verbatim garbled comic passage**
-  (the quoted spans of his own comic's TTS prompt, `scripts/tts-prompts/3c6b637b.txt`
-  — criterion 5).
-- Output lands in `docs/voice-audition/` (gitignored — money-generated audio
-  is never committed), named `NN-<line>--<engine>.mp3` so the same line across
-  all three engines sits adjacent in `ls`. `manifest.json` alongside it — engine,
-  line, description used, spend, and MiniMax's `custom_voice_id` — is committed,
-  as the record of what was auditioned.
-- Resumable: an mp3 already on disk is never re-rendered, so Ctrl-C or a
-  partial failure never re-pays for what's already there.
-- **Validates the payload, never the queue status** — FAL reports `COMPLETED`
-  for a request whose body is a 404-shaped error, and a status-only check
-  would call that success. `--self-test` proves the difference offline, no
-  key or network needed: a naive check passes the bad body, the real
-  `validatePayload()` fails it and passes a good one.
+**`gemini`** renders McGrot's twelve solo lines (`generated/mcgrots-dialogue.json`,
+`mcgrot-01`…`mcgrot-12`) on Algenib, plus a three-voice sweep (Orus, Fenrir,
+Gacrux — chosen, not defended) on the three that overlap the FAL audition set
+(`mcgrot-03`/`01`/`07` = "Naw." / flare / sincerity), for cross-engine
+comparison on the same content. **The director's brief for each line is
+authored by Dan, one file per line, at `scripts/mcgrots-voice-briefs/mcgrot-NN.txt`
+— read verbatim and sent as-is. The script does not assemble, paraphrase, or
+write any brief text itself** (his ruling, 2026-08-15, after Part A's first
+run used a code-generated brief). A line with no file yet is skipped, not an
+error, and is named in `--dry-run`.
+
+**`fal`** renders the five audition lines — **"Naw."** (a one-word line),
+**"Mingin? Come back when your own kitchen's had a shift like mine."**
+(flare), **"Pomplé says the sauce needs mercy, and I believe the dog."**
+(sincerity), **McGrot's half of the Taxman exchange** (his three turns from
+`generated/mcgrots-dialogue.json`, joined with `...` for the interjections
+he's talked over), and **one verbatim garbled comic passage** (the quoted
+spans of his own comic's TTS prompt, `scripts/tts-prompts/3c6b637b.txt` —
+criterion 5) — across MiniMax, Qwen and Maya, from the accent-first prompt
+above (Maya gets the short variant, its 500-character cap). Runs a single
+cheap probe call before spending on the rest, and stops if it fails rather
+than retrying in a loop.
+
+- Output lands in `docs/voice-audition/` (gitignored — money- or
+  quota-generated audio is never committed), named so the same line sits
+  adjacent across engines/voices in `ls`. `manifest.json` alongside it — one
+  `fal` section, one `gemini` section — is committed, as the record of what
+  was auditioned.
+- Resumable: an mp3 already on disk is never re-rendered, so Ctrl-C, a
+  partial failure, or a daily quota running out never re-pays for what's
+  already there.
+- **FAL: validates the payload, never the queue status** — it reports
+  `COMPLETED` for a request whose body is a 404-shaped error, and a
+  status-only check would call that success. `self-test` proves the
+  difference offline, no key or network needed: a naive check passes the bad
+  body, the real `validatePayload()` fails it and passes a good one.
+- **Gemini: `gemini-2.5-flash-tts`'s free tier is a hard 10 requests/day, per
+  project, per model — shared with the street's own `daily-tts.sh` cron.**
+  Found for real, audition 2 Part A: 9 of 21 planned renders landed before a
+  `RESOURCE_EXHAUSTED` with `quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`,
+  `quotaValue: "10"`. Not a rate limit that backs off and recovers — retrying
+  the same day fails identically. The rig reports this plainly and stops; it
+  does not retry past it.
 - **No numeric gate on the voice, and none was added.** `smoke:mcgrots` does
   not know this rig exists.
 
@@ -237,3 +260,48 @@ rig said it should.
 question. Hence the short prompt above.
 
 The run also emptied the FAL balance mid-way, killing the last two renders.
+
+---
+
+## Audition 2, 2026-08-15 — Part A (Gemini) landed, from Dan's own briefs
+
+`scripts/mcgrots-voice-audition.mjs` now takes a `gemini`/`fal`/`self-test`
+subcommand — G5f (`docs/briefs/g5f-audition-2.md`). Full account:
+`docs/MCGROTS-VALIDATION.md` § G5f.
+
+**Two things happened before any of the twelve briefs existed.** First: an
+early run using a code-assembled brief (VOICE.md's prompt +
+`generated/mcgrots-dialogue.json`'s scene, stitched together per line) hit a
+hard daily quota nine calls in — `gemini-2.5-flash-tts`'s free tier is capped
+at **10 requests per day, per project, per model**
+(`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`, confirmed by
+reading the raw error body, not the summarised message), **shared with the
+street's own `scripts/daily-tts.sh` cron** against the same key. Smaller than
+`generate-tts.mjs`'s own comment suggested ("~14 clips" was measured against
+that job's mixed-model allowance, not this one model alone). Second, before
+any further spend: **Dan ruled the director's briefs are authored by him, not
+generated by this script.** The code-assembled brief was removed outright.
+The rig now reads one file per line from
+`scripts/mcgrots-voice-briefs/mcgrot-NN.txt` (committed `55db0d2`, twelve
+files) — sent verbatim, no code-side assembly. A line with no file is skipped,
+not errored, and named as MISSING in `--dry-run`.
+
+**Landed: 10 of 21 planned renders, from the authored briefs, real spend
+~$0.01** (measured from actual rendered durations: ~$0.0098 audio, text
+input negligible). The other 11 are recorded `failed` with their real 429
+bodies —
+the same daily quota, hit a second time on resume after only two more calls
+succeeded, confirming it is a hard per-day ceiling and not a transient rate
+limit that recovers within a session. Not retried further; the run was
+stopped rather than grinding through guaranteed-red attempts. Resumable
+design means finishing the remaining 11 later needs no new work, only quota:
+`node scripts/mcgrots-voice-audition.mjs gemini --yes` skips everything
+already on disk.
+
+**Rendered:** `mcgrot-01`, `02`, `03`, `04`, `05`, `08`, `09`, `10`, `11` on
+Algenib, plus `mcgrot-01` on Orus (one sweep voice, one line). **Not yet
+rendered:** `mcgrot-06`, `07`, `12` on Algenib, and the rest of the sweep
+(Orus/Fenrir/Gacrux × `mcgrot-03`/`01`/`07`, minus the one Orus/`01` pair
+already done) — 11 pairs, blocked on tomorrow's quota reset, nothing else.
+
+Part B (FAL) has not been started — landing Part A on its own, per the brief.

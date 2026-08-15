@@ -1052,9 +1052,21 @@ manifest. Full account in `docs/MCGROTS-VOICE.md` and
 `ttv-voice-2026081517153126-cFGhfIvB` captured. **Not listened to** — that is
 next, and it is Dan's.
 
-**Still G5's, not done:** the audition itself (the other four lines, all
-three engines), the voice pick, TTS rendering of the 84 lines, and wiring any
-of this into the game.
+**G5f (2026-08-15) found audition 1's FAL result was worthless before it was
+judged — none of the three engines sounded Scottish — and pivoted to
+Gemini, which already did.** Full account `docs/MCGROTS-VOICE.md` §
+"Audition 2" and `docs/MCGROTS-VALIDATION.md` § G5f. Director's briefs for
+the twelve solo lines are authored by Dan, one file per line at
+`scripts/mcgrots-voice-briefs/` (committed `55db0d2`), read verbatim — the
+rig does not write voice-performance text. **Landed: 10 of 21 planned Gemini
+renders**, ~$0.0098; the rest blocked twice by `gemini-2.5-flash-tts`'s free
+tier (10 requests/day/project/model, shared with `daily-tts.sh`'s cron), not
+by anything in the rig. Part B (FAL, accent-first prompt, MiniMax
+design-once-reuse) has not been started.
+
+**Still G5's, not done:** the remaining 11 Gemini renders (quota-blocked, no
+code change pending), Part B, the `INDEX.md` two-listener layout, the voice
+pick, TTS rendering of the 84 lines, and wiring any of this into the game.
 
 ### G6 — Pomplé
 
