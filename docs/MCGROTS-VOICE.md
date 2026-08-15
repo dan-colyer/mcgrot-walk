@@ -121,16 +121,47 @@ striking one that does not.
 
 ## The audition, when it is built
 
-Not built yet. When it is:
+Built (G5e, 2026-08-15): `scripts/mcgrots-voice-audition.mjs`.
 
-- Render the same lines across MiniMax, Qwen and Maya from the one description.
-- The audition set stretches the voice deliberately: **"Naw."** (can it carry a
-  one-word line), **"Mingin? Come back when your own kitchen's had a shift like
-  mine."** (flare), **"Pomplé says the sauce needs mercy, and I believe the
-  dog."** (sincerity), **McGrot's half of the Taxman exchange** (interruption
-  and being talked over), and **one verbatim garbled comic passage** (criterion
-  5).
-- Output to a folder Dan can play through in order, one file per voice per line.
+```bash
+set -a; source .env.local; set +a
+node scripts/mcgrots-voice-audition.mjs --dry-run     # plan + cost estimate, no network
+node scripts/mcgrots-voice-audition.mjs --self-test   # offline fault-injection proof, no key needed
+node scripts/mcgrots-voice-audition.mjs --yes         # the real thing: 3 engines x 5 lines
+```
+
+- Renders the same lines across MiniMax, Qwen and Maya from the one
+  description above — read from this file at runtime, never copied into the
+  script, so a future pass at the description needs no code change.
+- The audition set stretches the voice deliberately: **"Naw."** (can it carry
+  a one-word line), **"Mingin? Come back when your own kitchen's had a shift
+  like mine."** (flare), **"Pomplé says the sauce needs mercy, and I believe
+  the dog."** (sincerity), **McGrot's half of the Taxman exchange** (his three
+  turns from `generated/mcgrots-dialogue.json`, joined with `...` for the
+  interjections he's talked over), and **one verbatim garbled comic passage**
+  (the quoted spans of his own comic's TTS prompt, `scripts/tts-prompts/3c6b637b.txt`
+  — criterion 5).
+- Output lands in `docs/voice-audition/` (gitignored — money-generated audio
+  is never committed), named `NN-<line>--<engine>.mp3` so the same line across
+  all three engines sits adjacent in `ls`. `manifest.json` alongside it — engine,
+  line, description used, spend, and MiniMax's `custom_voice_id` — is committed,
+  as the record of what was auditioned.
+- Resumable: an mp3 already on disk is never re-rendered, so Ctrl-C or a
+  partial failure never re-pays for what's already there.
+- **Validates the payload, never the queue status** — FAL reports `COMPLETED`
+  for a request whose body is a 404-shaped error, and a status-only check
+  would call that success. `--self-test` proves the difference offline, no
+  key or network needed: a naive check passes the bad body, the real
+  `validatePayload()` fails it and passes a good one.
+- **No numeric gate on the voice, and none was added.** `smoke:mcgrots` does
+  not know this rig exists.
+
+**First real render, 2026-08-15: MiniMax, the "Naw." line, one call.** 4
+billed characters, ~$0.0001, 46s round trip, 13.8KB / 0.98s of audio.
+`custom_voice_id`: `ttv-voice-2026081517153126-cFGhfIvB` — recorded in
+`docs/voice-audition/manifest.json` (not committed audio, so not reproducible
+by re-reading this doc; the manifest is the record). Not listened to — that's
+Dan's.
 
 The description above is a first draft, not a finished specification. It is
 expected to need two or three passes against real audio — that is what the

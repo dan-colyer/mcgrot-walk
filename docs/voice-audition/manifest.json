@@ -1,0 +1,54 @@
+{
+  "description": "A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
+  "descriptionSource": "docs/MCGROTS-VOICE.md",
+  "lines": [
+    {
+      "id": 1,
+      "tag": "naw",
+      "text": "Naw.",
+      "source": "docs/MCGROTS-VOICE.md"
+    },
+    {
+      "id": 2,
+      "tag": "flare",
+      "text": "Mingin? Come back when your own kitchen's had a shift like\n  mine.",
+      "source": "docs/MCGROTS-VOICE.md"
+    },
+    {
+      "id": 3,
+      "tag": "sincerity",
+      "text": "Pomplé says the sauce needs mercy, and I believe the\n  dog.",
+      "source": "docs/MCGROTS-VOICE.md"
+    },
+    {
+      "id": 4,
+      "tag": "exchange-taxman",
+      "text": "Every penny’s accounted for, if you’d let me finish a sentence. ... That’s no an answer, that’s a— ... Stamped disnae mean answered, pal.",
+      "source": "generated/mcgrots-dialogue.json"
+    },
+    {
+      "id": 5,
+      "tag": "comic-passage",
+      "text": "When a nation's stuck, only one beestie can fix it. McGrot, ye sure they're qualified? They solved me binfire sauce leaks. They'll solve ybudget. Zero tolerance. Zero admim. They dinnae debate. They fix. That's the grot.",
+      "source": "scripts/tts-prompts/3c6b637b.txt"
+    }
+  ],
+  "runs": [
+    {
+      "lineId": 1,
+      "line": "naw",
+      "engine": "minimax",
+      "endpoint": "fal-ai/minimax/voice-design",
+      "file": "01-naw--minimax.mp3",
+      "renderedAt": "2026-08-15T09:15:41.828Z",
+      "tookSec": 46,
+      "status": "ok",
+      "bytes": 14161,
+      "durationSec": 0.97525,
+      "customVoiceId": "ttv-voice-2026081517153126-cFGhfIvB"
+    }
+  ],
+  "voiceIds": {
+    "minimax": "ttv-voice-2026081517153126-cFGhfIvB"
+  }
+}

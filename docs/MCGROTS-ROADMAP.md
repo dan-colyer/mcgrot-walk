@@ -1043,8 +1043,18 @@ confident speech rather than the model stumbling.
 Sent to Andrew, McGrot's creator, for review 2026-08-15. Age and accent
 thickness are the two calls flagged for his view.
 
-**Still G5's, not done:** the audition rig, the voice pick itself, TTS
-rendering of the 84 lines, and wiring any of this into the game.
+**G5e (2026-08-15) built the audition rig** —
+`scripts/mcgrots-voice-audition.mjs`. Renders the five audition lines through
+MiniMax, Qwen and Maya, resumable, gitignored output with a committed
+manifest. Full account in `docs/MCGROTS-VOICE.md` and
+`docs/MCGROTS-VALIDATION.md` § G5e. Run once for real, smallest possible
+(MiniMax, one line): 46s, ~$0.0001, `custom_voice_id`
+`ttv-voice-2026081517153126-cFGhfIvB` captured. **Not listened to** — that is
+next, and it is Dan's.
+
+**Still G5's, not done:** the audition itself (the other four lines, all
+three engines), the voice pick, TTS rendering of the 84 lines, and wiring any
+of this into the game.
 
 ### G6 — Pomplé
 

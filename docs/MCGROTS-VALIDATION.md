@@ -2378,3 +2378,67 @@ same as at 72; no line needed rewriting.
 - **Anything about Pomplé's absence from both exchanges.** That was a
   scope call recorded in `MCGROTS-DIALOGUE.md`, not something the gate
   enforces one way or the other.
+
+## G5e — the voice audition rig does not join this suite, and here is what stands in for a gate
+
+`scripts/mcgrots-voice-audition.mjs` (2026-08-15) renders McGrot's five
+audition lines through MiniMax, Qwen and Maya on FAL. Full account in
+`docs/MCGROTS-VOICE.md` § "The audition, when it is built" — this entry
+covers only what was verified and how.
+
+**There is no numeric gate on voice quality, deliberately.** The six
+acceptance criteria in `MCGROTS-VOICE.md` are judged by ear; inventing a score
+would be exactly the decoration this project keeps deleting. `smoke:mcgrots`
+does not know this rig exists, and no region was added for it — it is a
+network-and-money step, and the suite is neither.
+
+**What is falsifiable is the one real trap: FAL reports queue status
+`COMPLETED` for a request whose response body is an error.** Hit for real
+while researching the endpoints — a nonexistent model path returned HTTP 200
+with a body shaped like `{"detail":"Not Found"}`, not a clean HTTP 404. A
+status-only check calls that a clean audition having rendered nothing.
+
+**`--self-test` proves the difference, offline, no `FAL_KEY` needed:**
+
+```
+Case 1 — queue status COMPLETED, body is a 404-shaped error:
+  naive status-only check -> PASS (wrong)
+  validatePayload()       -> FAIL (correct) — no usable audio.url in response body: {"detail":"Not Found"}
+Case 2 — a real success body:
+  validatePayload()       -> PASS (correct), voiceId=voice_test_abc123
+```
+
+Two fixtures, no network: the same shape of body a real bad call returns, and
+a representative real MiniMax success body. `validatePayload()` — the exact
+function the paid path calls — is run against both. This is the fault
+injection and its restore in one: a naive `res.ok`/status check is run
+alongside it for contrast and does go wrong on the bad fixture, which is the
+point being proven.
+
+**Real end-to-end, run once, smallest possible: MiniMax, the "Naw." line.**
+`set -a; source .env.local; set +a; node scripts/mcgrots-voice-audition.mjs
+--engines=minimax --lines=1 --yes` — 4 billed characters, ~$0.0001 estimated,
+46s wall time, 13.8KB / 0.98s of audio downloaded and written to disk,
+`custom_voice_id: ttv-voice-2026081517153126-cFGhfIvB` captured into
+`docs/voice-audition/manifest.json` (committed; the audio itself is not).
+**Not listened to — no session running this rig can judge the six criteria,
+only Dan can.**
+
+**Resumability verified, not assumed.** Re-ran the identical command
+immediately after: `0 ok, 0 failed, 1 skipped`, `custom_voice_id` unchanged,
+no second charge. An mp3 already on disk is never re-requested.
+
+**A real bug the smallest run caught.** The first parse of the five audition
+lines from `MCGROTS-VOICE.md`'s markdown pulled two of the three quoted lines
+with an embedded newline and leading indentation — the source soft-wraps
+those bullets at ~80 columns, and the quote-extraction regex captured the raw
+span, wrap and all. Caught by printing the parsed lines before spending
+anything further, not by a check — `manifest.json`'s `lines[].text` showed
+`"...kitchen's had a shift like\n  mine."`. Fixed by collapsing whitespace in
+the extracted quotes. No paid call had used the broken text: the only render
+before the fix was line 1 ("Naw.", no wrap), so nothing needed re-recording.
+
+**What this does not prove:** that the description survives contact with any
+of the three engines, that the persistence claim about MiniMax's voice ID
+holds across a second real call, or anything about the audio itself. All
+three are Dan's to judge once he has listened.

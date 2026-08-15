@@ -41,3 +41,10 @@ scratchpad/
 src/mcgrots-compare-bundle.js
 src/mcgrots-flats-bundle.js
 .herdr/
+
+# G5e voice-audition rig (scripts/mcgrots-voice-audition.mjs): rendered
+# candidate audio costs real money per call and is never committed — only
+# manifest.json (engine, line, description, custom_voice_id, spend) is
+# tracked, as the record of what was auditioned.
+docs/voice-audition/*.mp3
+docs/voice-audition/*.wav
