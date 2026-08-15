@@ -1,6 +1,6 @@
 {
   "fal": {
-    "description": "A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
+    "description": "**Accent: Scottish, Edinburgh — thick Leith dockside. Glottal stops, hard consonants, phlegmy. This is the single most important property of the voice.** He must not sound English, Irish, American, or generically Scottish-on-television; he sounds like a man from the docks at the foot of Leith Walk. The accent is thickest on dialect words — \"ken\", \"shan\", \"radge\", \"doon the Walk\" — and a shade clearer on ordinary sentences.  A Leith dockworker turned street-food vendor, early fifties. Mid-range pitch, not deep and not booming. The voice is rough from two things at once: years of cigarettes and standing over hot oil, and years of cold, salt and wind off the water. Dry rasp with grit under it. Young enough to still be physically capable — the damage is earned by hard use, not by age. He talks fast and restless, cuts in, lands hard on the ends of words and then stops dead. He rarely raises his voice; the aggression is in the clipped pace and the hard stops, not the volume. When he says something sincere he drops in volume and slows down, and the rasp eases.",
     "descriptionSource": "docs/MCGROTS-VOICE.md",
     "lines": [
       {
@@ -41,12 +41,22 @@
         "engine": "minimax",
         "endpoint": "fal-ai/minimax/voice-design",
         "file": "01-naw--minimax.mp3",
-        "renderedAt": "2026-08-15T09:15:41.828Z",
-        "tookSec": 46,
         "status": "ok",
         "bytes": 14161,
         "durationSec": 0.97525,
-        "customVoiceId": "ttv-voice-2026081517153126-cFGhfIvB"
+        "customVoiceId": "ttv-voice-2026081518363626-ZFQUVUyB",
+        "renderedAt": "2026-08-15T10:36:46.935Z"
+      },
+      {
+        "lineId": 2,
+        "line": "flare",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/speech-02-turbo",
+        "file": "02-flare--minimax.mp3",
+        "status": "ok",
+        "bytes": 78449,
+        "durationSec": 4.725281,
+        "renderedAt": "2026-08-15T10:36:53.272Z"
       },
       {
         "lineId": 1,
@@ -54,12 +64,11 @@
         "engine": "qwen",
         "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
         "file": "01-naw--qwen.mp3",
-        "renderedAt": "2026-08-15T09:55:43.384Z",
-        "tookSec": 10,
+        "renderedAt": "2026-08-15T10:38:51.508Z",
+        "tookSec": 118,
         "status": "ok",
-        "bytes": 31735,
-        "durationSec": 4.537958,
-        "customVoiceId": null
+        "bytes": 16663,
+        "durationSec": 0.776875
       },
       {
         "lineId": 1,
@@ -67,23 +76,11 @@
         "engine": "maya",
         "endpoint": "fal-ai/maya",
         "file": "01-naw--maya.mp3",
-        "renderedAt": "2026-08-15T09:56:52.070Z",
-        "tookSec": 69,
-        "status": "failed",
-        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
-      },
-      {
-        "lineId": 2,
-        "line": "flare",
-        "engine": "minimax",
-        "endpoint": "fal-ai/minimax/voice-design",
-        "file": "02-flare--minimax.mp3",
-        "renderedAt": "2026-08-15T09:57:16.639Z",
-        "tookSec": 25,
+        "renderedAt": "2026-08-15T10:40:59.240Z",
+        "tookSec": 128,
         "status": "ok",
-        "bytes": 55674,
-        "durationSec": 4.435031,
-        "customVoiceId": "ttv-voice-2026081517570526-jvR4dA2g"
+        "bytes": 2347798,
+        "durationSec": 24.32
       },
       {
         "lineId": 2,
@@ -91,12 +88,11 @@
         "engine": "qwen",
         "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
         "file": "02-flare--qwen.mp3",
-        "renderedAt": "2026-08-15T09:57:23.990Z",
-        "tookSec": 7,
+        "renderedAt": "2026-08-15T10:41:08.842Z",
+        "tookSec": 10,
         "status": "ok",
-        "bytes": 28471,
-        "durationSec": 3.736875,
-        "customVoiceId": null
+        "bytes": 33271,
+        "durationSec": 4.936875
       },
       {
         "lineId": 2,
@@ -104,23 +100,11 @@
         "engine": "maya",
         "endpoint": "fal-ai/maya",
         "file": "02-flare--maya.mp3",
-        "renderedAt": "2026-08-15T09:57:26.549Z",
-        "tookSec": 3,
-        "status": "failed",
-        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
-      },
-      {
-        "lineId": 3,
-        "line": "sincerity",
-        "engine": "minimax",
-        "endpoint": "fal-ai/minimax/voice-design",
-        "file": "03-sincerity--minimax.mp3",
-        "renderedAt": "2026-08-15T09:57:42.486Z",
-        "tookSec": 16,
+        "renderedAt": "2026-08-15T10:41:16.491Z",
+        "tookSec": 8,
         "status": "ok",
-        "bytes": 57836,
-        "durationSec": 4.644,
-        "customVoiceId": "ttv-voice-2026081517573126-FtvNHWfS"
+        "bytes": 430870,
+        "durationSec": 4.352
       },
       {
         "lineId": 3,
@@ -128,12 +112,11 @@
         "engine": "qwen",
         "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
         "file": "03-sincerity--qwen.mp3",
-        "renderedAt": "2026-08-15T09:57:49.998Z",
+        "renderedAt": "2026-08-15T10:41:24.078Z",
         "tookSec": 7,
         "status": "ok",
-        "bytes": 30103,
-        "durationSec": 4.136875,
-        "customVoiceId": null
+        "bytes": 29143,
+        "durationSec": 3.896875
       },
       {
         "lineId": 3,
@@ -141,36 +124,23 @@
         "engine": "maya",
         "endpoint": "fal-ai/maya",
         "file": "03-sincerity--maya.mp3",
-        "renderedAt": "2026-08-15T09:57:52.562Z",
-        "tookSec": 3,
-        "status": "failed",
-        "reason": "no usable audio.url in response body: {\"detail\":[{\"type\":\"string_too_long\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"String should have at most 500 characters\",\"input\":\"A Leith dockworker turned street-food vendor, early fifties, Scottish — hard Edinburgh dockside accent, thickest on local dialect words and a shade clearer on ordinary sentences. M"
+        "renderedAt": "2026-08-15T10:41:31.880Z",
+        "tookSec": 8,
+        "status": "ok",
+        "bytes": 455446,
+        "durationSec": 4.608
       },
       {
         "lineId": 4,
         "line": "exchange-taxman",
         "engine": "minimax",
-        "endpoint": "fal-ai/minimax/voice-design",
+        "endpoint": "fal-ai/minimax/speech-02-turbo",
         "file": "04-exchange-taxman--minimax.mp3",
-        "renderedAt": "2026-08-15T09:58:10.872Z",
-        "tookSec": 18,
+        "renderedAt": "2026-08-15T10:41:37.450Z",
+        "tookSec": 6,
         "status": "ok",
-        "bytes": 109728,
-        "durationSec": 8.951313,
-        "customVoiceId": "ttv-voice-2026081517575826-OcfoNViu"
-      },
-      {
-        "lineId": 4,
-        "line": "exchange-taxman",
-        "engine": "qwen",
-        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-        "file": "04-exchange-taxman--qwen.mp3",
-        "renderedAt": "2026-08-15T09:58:26.848Z",
-        "tookSec": 16,
-        "status": "ok",
-        "bytes": 54391,
-        "durationSec": 10.216875,
-        "customVoiceId": null
+        "bytes": 167818,
+        "durationSec": 10.321281
       },
       {
         "lineId": 4,
@@ -178,34 +148,23 @@
         "engine": "maya",
         "endpoint": "fal-ai/maya",
         "file": "04-exchange-taxman--maya.mp3",
-        "renderedAt": "2026-08-15T09:58:27.029Z",
-        "tookSec": 0,
-        "status": "failed",
-        "reason": "submit failed (HTTP 403): {\"detail\":\"User is locked. Reason: Exhausted balance. Top up your balance at fal.ai/dashboard/billing.\"}"
+        "renderedAt": "2026-08-15T10:41:45.470Z",
+        "tookSec": 8,
+        "status": "ok",
+        "bytes": 873238,
+        "durationSec": 8.96
       },
       {
         "lineId": 5,
         "line": "comic-passage",
         "engine": "minimax",
-        "endpoint": "fal-ai/minimax/voice-design",
+        "endpoint": "fal-ai/minimax/speech-02-turbo",
         "file": "05-comic-passage--minimax.mp3",
-        "renderedAt": "2026-08-15T09:58:27.411Z",
-        "tookSec": 0,
-        "status": "failed",
-        "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
-      },
-      {
-        "lineId": 5,
-        "line": "comic-passage",
-        "engine": "qwen",
-        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
-        "file": "05-comic-passage--qwen.mp3",
-        "renderedAt": "2026-08-15T09:58:47.706Z",
-        "tookSec": 20,
+        "renderedAt": "2026-08-15T10:42:08.062Z",
+        "tookSec": 23,
         "status": "ok",
-        "bytes": 74551,
-        "durationSec": 15.256875,
-        "customVoiceId": null
+        "bytes": 323494,
+        "durationSec": 20.02275
       },
       {
         "lineId": 5,
@@ -213,14 +172,51 @@
         "engine": "maya",
         "endpoint": "fal-ai/maya",
         "file": "05-comic-passage--maya.mp3",
-        "renderedAt": "2026-08-15T09:58:48.138Z",
-        "tookSec": 0,
-        "status": "failed",
-        "reason": "no usable audio.url in response body: {\"detail\":\"User is locked. Reason: TOP_UP.\"}"
+        "renderedAt": "2026-08-15T10:42:20.352Z",
+        "tookSec": 12,
+        "status": "ok",
+        "bytes": 1766170,
+        "durationSec": 18.261375
+      },
+      {
+        "lineId": 3,
+        "line": "sincerity",
+        "engine": "minimax",
+        "endpoint": "fal-ai/minimax/speech-02-turbo",
+        "file": "03-sincerity--minimax.mp3",
+        "renderedAt": "2026-08-15T10:42:48.123Z",
+        "tookSec": 6,
+        "status": "ok",
+        "bytes": 75566,
+        "durationSec": 4.56275
+      },
+      {
+        "lineId": 4,
+        "line": "exchange-taxman",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "04-exchange-taxman--qwen.mp3",
+        "renderedAt": "2026-08-15T10:43:02.139Z",
+        "tookSec": 14,
+        "status": "ok",
+        "bytes": 49591,
+        "durationSec": 9.016875
+      },
+      {
+        "lineId": 5,
+        "line": "comic-passage",
+        "engine": "qwen",
+        "endpoint": "fal-ai/qwen-3-tts/voice-design/1.7b",
+        "file": "05-comic-passage--qwen.mp3",
+        "renderedAt": "2026-08-15T10:43:24.526Z",
+        "tookSec": 22,
+        "status": "ok",
+        "bytes": 77143,
+        "durationSec": 15.896875
       }
     ],
     "voiceIds": {
-      "minimax": "ttv-voice-2026081517575826-OcfoNViu"
+      "minimax": "ttv-voice-2026081518363626-ZFQUVUyB"
     }
   },
   "gemini": {

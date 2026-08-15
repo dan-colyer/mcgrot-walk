@@ -304,4 +304,39 @@ rendered:** `mcgrot-06`, `07`, `12` on Algenib, and the rest of the sweep
 (Orus/Fenrir/Gacrux × `mcgrot-03`/`01`/`07`, minus the one Orus/`01` pair
 already done) — 11 pairs, blocked on tomorrow's quota reset, nothing else.
 
-Part B (FAL) has not been started — landing Part A on its own, per the brief.
+## Audition 2, 2026-08-15 — Part B (FAL) and Part C (the listening index), landed
+
+**All 15 of the FAL audition set rendered: 5 lines × MiniMax, Qwen, Maya, from
+the rewritten accent-first prompt.** Existing audition-1 files (the ones that
+proved nobody sounded Scottish) were moved to `docs/voice-audition/audition-1/`
+first, so resumability could not silently serve stale audio under audition 2's
+filenames.
+
+**MiniMax design-once-reuse is real, not aspirational — confirmed against a
+live call, not just fal.ai's docs.** Designed the voice once on "Naw." (also
+served as the account-balance probe), captured `custom_voice_id`, then spoke
+the other four lines through `fal-ai/minimax/speech-02-turbo`'s
+`voice_setting.voice_id`, which fal.ai's own voice-design page names as the
+intended reuse path without naming the exact endpoint. One
+`custom_voice_id` (`ttv-voice-2026081518363626-ZFQUVUyB`) now covers all five
+MiniMax clips — audition 1's four different men are gone.
+
+**A real, transient billing lock hit mid-run and cleared on its own.** Three
+calls 403'd with `"User is locked. Reason: Exhausted balance"` — one MiniMax
+speech call, two Qwen — while calls immediately before and after succeeded.
+Not retried in a loop; the run finished the rest and reported the three
+failures plainly. A second, identical command filled exactly those three gaps
+(resumability skipped the twelve already on disk) at near-zero additional
+cost. **15/15 rendered**, real spend ~$0.0248 across both passes (MiniMax
+only priced; Qwen/Maya have no published rate).
+
+**Part C: `docs/voice-audition/INDEX.md`.** Every rendered file, grouped by
+the words spoken rather than by who's speaking them — the three lines common
+to every candidate first, then the two FAL-only harder passages, then the
+nine remaining Gemini-only lines — with the six criteria reproduced in plain
+language and every not-yet-rendered gap named rather than left silent.
+Written for Andrew as much as Dan: no repo jargon, no file-format assumptions,
+plain sentences about what each clip is for.
+
+**Not done:** the listen itself, and getting these files to Andrew — both
+explicitly Dan's, not this unit's.

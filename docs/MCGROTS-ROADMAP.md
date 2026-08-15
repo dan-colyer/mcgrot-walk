@@ -1058,15 +1058,28 @@ Gemini, which already did.** Full account `docs/MCGROTS-VOICE.md` §
 "Audition 2" and `docs/MCGROTS-VALIDATION.md` § G5f. Director's briefs for
 the twelve solo lines are authored by Dan, one file per line at
 `scripts/mcgrots-voice-briefs/` (committed `55db0d2`), read verbatim — the
-rig does not write voice-performance text. **Landed: 10 of 21 planned Gemini
-renders**, ~$0.0098; the rest blocked twice by `gemini-2.5-flash-tts`'s free
-tier (10 requests/day/project/model, shared with `daily-tts.sh`'s cron), not
-by anything in the rig. Part B (FAL, accent-first prompt, MiniMax
-design-once-reuse) has not been started.
+rig does not write voice-performance text. **Part A landed: 10 of 21 planned
+Gemini renders**, ~$0.0098; the rest blocked twice by
+`gemini-2.5-flash-tts`'s free tier (10 requests/day/project/model, shared
+with `daily-tts.sh`'s cron), not by anything in the rig.
+
+**Part B and C landed same day, once FAL was topped up.** All 15 of the FAL
+set rendered (MiniMax, Qwen, Maya × 5 lines, accent-first prompt) across two
+passes — a transient billing lock 403'd three calls mid-run, correctly
+reported and not looped on, and a second identical command filled the gap.
+MiniMax's design-once-reuse is real: one voice id
+(`ttv-voice-2026081518363626-ZFQUVUyB`) covers all five clips, confirmed by
+a live call to `fal-ai/minimax/speech-02-turbo`, not assumed from docs.
+Audition 1's stale files moved to `docs/voice-audition/audition-1/`, not
+deleted. `docs/voice-audition/INDEX.md` groups all 25 rendered clips (15 FAL
++ 10 Gemini) by the words spoken, plain language throughout, six criteria
+reproduced, every gap named.
 
 **Still G5's, not done:** the remaining 11 Gemini renders (quota-blocked, no
-code change pending), Part B, the `INDEX.md` two-listener layout, the voice
-pick, TTS rendering of the 84 lines, and wiring any of this into the game.
+code change pending), the listen itself and the voice pick (Dan's, with
+Andrew), getting the files to him (explicitly not this unit's — no Drive
+upload), TTS rendering of the 84 lines once a voice is picked, and wiring any
+of this into the game.
 
 ### G6 — Pomplé
 

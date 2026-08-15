@@ -2583,7 +2583,67 @@ future truncated-download case, not a verified-red-then-green gate.
 **Suite:** `npm run smoke:mcgrots` — 71/71, unaffected, as expected of a
 script the suite does not run.
 
-**What this does not prove:** anything about how the ten rendered clips
-sound, whether Dan's twelve authored briefs produce a native accent (criterion
-3, the whole reason audition 2 exists), or anything about Part B, which has
-not been started.
+**What Part A does not prove:** anything about how the ten rendered clips
+sound, or whether Dan's twelve authored briefs produce a native accent
+(criterion 3, the whole reason audition 2 exists).
+
+### Part B and Part C, landed same day, FAL topped up
+
+**Existing audition-1 FAL files moved before any new render, not deleted.**
+`docs/voice-audition/audition-1/` now holds the nine mp3s (gitignored) and
+`manifest.json` (committed) from the run that established nobody sounded
+Scottish — kept as the record of a rejected direction, not silently
+discarded, per this project's "rejected experiments get written down with
+their numbers too" rule. `.gitignore` extended (`**/*.mp3`, `**/*.wav`) to
+cover the new subfolder; the flat pattern from G5e did not reach it.
+
+**MiniMax design-once-reuse, confirmed live, not just from docs.**
+`fal-ai/minimax/voice-design`'s own page names the reuse path in prose
+("supports using the generated voice (voice_id) for speech generation in
+Text to Speech API") without naming the endpoint. `fal-ai/minimax/speech-02-turbo`'s
+own schema page was checked before spending (input `voice_setting.voice_id`,
+described there as "predefined" — ambiguous on custom ids) — per the brief's
+explicit instruction, this was then confirmed against a REAL call, not
+assumed from the ambiguous wording: design on "naw", capture
+`custom_voice_id`, immediately speak the "flare" line through the speech
+endpoint with that id. **Confirmed:** one voice id now covers all five
+MiniMax clips, checked directly — `04-exchange-taxman--minimax.mp3` and
+`05-comic-passage--minimax.mp3` both carry `ttv-voice-2026081518363626-ZFQUVUyB`
+in the manifest, the same id the design call minted. Audition 1's defect (four
+calls, four different men) does not reproduce.
+
+**A real fault surfaced mid-batch, correctly reported, correctly not
+retried in a loop, correctly resumable.** `03-sincerity--minimax.mp3`,
+`04-exchange-taxman--qwen.mp3` and `05-comic-passage--qwen.mp3` each 403'd:
+`{"detail":"User is locked. Reason: Exhausted balance."}` — a transient lock,
+since calls immediately before and after each failure succeeded (MiniMax's
+own `04` and `05` lines rendered fine in the same run, after `03` failed).
+The run did not stop on the first 403 — each engine's own failure is isolated
+per the pair loop, matching the design brief's "does not abort the other
+engines' work" rule — and it did not retry inside itself, matching "do not
+retry in a loop." A second, identical `fal --yes` invocation then filled
+exactly the three gaps: `12 skipped, 3 ok, 0 failed`, confirming the size-floor
+resumability fix from Part A's session holds on the FAL path too (no
+zero-byte file was left behind by the 403s to poison the skip check).
+
+**15/15 rendered across two passes.** Pass 1: 10 ok, 3 failed
+(~$0.0214 measured). Pass 2: 3 ok, 0 failed, 12 skipped (~$0.0034). Combined
+spend ~$0.0248, MiniMax only priced.
+
+**Part C — `docs/voice-audition/INDEX.md`, checked against the actual
+filesystem, not assumed correct.** Every filename referenced in the index was
+diffed against `ls docs/voice-audition/*.mp3` in both directions: nothing
+listed is missing from disk, and nothing on disk is unlisted — no file
+silently omitted, no reference to something that was never rendered. Grouped
+by content (the three lines shared by every candidate, then FAL's two harder
+passages, then Gemini's remaining solo lines) rather than by engine, per the
+brief's explicit "comparing one line across engines is the comparison that
+matters." The six criteria are reproduced in plain sentences, and the seven
+still-missing Gemini pairs are named individually rather than left as a
+silent gap.
+
+**Suite:** `npm run smoke:mcgrots` — unaffected; no region added, none should
+be.
+
+**What this does not prove:** anything about how any of these 25 rendered
+clips sound. Nothing in this project's tooling can judge that.

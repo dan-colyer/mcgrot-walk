@@ -123,15 +123,21 @@ function ffprobeDuration(path) {
 // 2026-08-15 — not guessed. All three nest the audio under `audio.url`;
 // MiniMax additionally returns a top-level `custom_voice_id` from its
 // voice-design endpoint. Audition 1 found that id is minted fresh on every
-// voice-design call — persistence only holds if the id is captured once and
-// then reused through a separate speech endpoint. NOT YET BUILT: Part B
-// (G5f) was paused before this — design-once-reuse still calls voice-design
-// on every line, same as audition 1. Do not assume otherwise from this file.
+// voice-design call. Design-once-reuse (built G5f, confirmed against
+// fal-ai/minimax/speech-02-turbo's published API docs before spending, and
+// against a real call — see runFal()): design once on the shortest line via
+// voice-design, capture `custom_voice_id`, then speak every other line
+// through speech-02-turbo's `voice_setting.voice_id`, which fal.ai's own
+// voice-design page documents as the intended reuse path ("supports using
+// the generated voice (voice_id) for speech generation in Text to Speech
+// API") without naming the exact endpoint — confirmed here, not assumed.
+const FAL_MINIMAX_SPEECH_ENDPOINT = 'fal-ai/minimax/speech-02-turbo';
+const FAL_MINIMAX_SPEECH_USD_PER_KCHAR = 0.06; // fal.ai's own published price: "$0.06 per 1000 character"
 const FAL_ENGINES = {
   minimax: {
     endpoint: 'fal-ai/minimax/voice-design',
     persists: true,
-    usdPerMChar: 30, // MiniMax's own docs: "$30 per 1M characters" for the preview audio
+    usdPerMChar: 30, // MiniMax's own docs: "$30 per 1M characters" for the preview audio — the ONE design call only; other lines are billed at FAL_MINIMAX_SPEECH_USD_PER_KCHAR
     buildInput: (description, line) => ({ prompt: description, preview_text: line }),
     billedChars: (line) => line.length,
   },
@@ -258,24 +264,42 @@ async function falRenderOne(endpoint, input) {
   return { success: true, bytes, voiceId: result.voiceId };
 }
 
-async function falProbe() {
+function falMinimaxSpeak(voiceId, text) {
+  return falRenderOne(FAL_MINIMAX_SPEECH_ENDPOINT, { text, voice_setting: { voice_id: voiceId } });
+}
+
+async function falProbe(engineKey) {
   // A single cheap call to confirm the account is actually usable before
   // spending on the rest — audition 1 died mid-run on `Exhausted balance`.
-  console.log('FAL probe: one call, MiniMax, the shortest line ("Naw.")...');
-  const description = loadFalDescription();
+  // Only used when minimax is not in the run; when it is, the design-once
+  // call in runFal() serves as the probe, so the account isn't confirmed
+  // twice.
+  const engine = FAL_ENGINES[engineKey];
+  console.log(`FAL probe: one call, ${engineKey}, the shortest line ("Naw.")...`);
+  const promptText = engineKey === 'maya' ? loadFalShortDescription() : loadFalDescription();
   try {
-    const result = await falRenderOne(FAL_ENGINES.minimax.endpoint, FAL_ENGINES.minimax.buildInput(description, 'Naw.'));
+    const result = await falRenderOne(engine.endpoint, engine.buildInput(promptText, 'Naw.'));
     if (!result.success) {
       console.error(`Probe FAILED: ${result.reason}`);
       return false;
     }
-    console.log(`Probe OK — ${(result.bytes.length / 1024).toFixed(1)}KB, `
-      + `custom_voice_id=${result.voiceId}. Proceeding.`);
+    console.log(`Probe OK — ${(result.bytes.length / 1024).toFixed(1)}KB. Proceeding.`);
     return true;
   } catch (e) {
     console.error(`Probe FAILED: ${e.message}`);
     return false;
   }
+}
+
+// MiniMax cost model: the FIRST minimax line (design-once) is billed at the
+// voice-design rate; every other minimax line reuses that voice through the
+// speech endpoint, billed at its own, different, published rate.
+function falLineCost(engineKey, line, promptText, isDesignLine) {
+  const engine = FAL_ENGINES[engineKey];
+  if (engineKey === 'minimax' && !isDesignLine) {
+    return (line.text.length / 1000) * FAL_MINIMAX_SPEECH_USD_PER_KCHAR;
+  }
+  return engine.usdPerMChar != null ? (engine.billedChars(line.text) / 1e6) * engine.usdPerMChar : null;
 }
 
 async function runFal() {
@@ -288,6 +312,7 @@ async function runFal() {
   const engineArg = opt('engines');
   const wantEngines = engineArg ? engineArg.split(',') : Object.keys(FAL_ENGINES);
   for (const e of wantEngines) if (!FAL_ENGINES[e]) throw new Error(`unknown engine "${e}"`);
+  const designLineId = allLines.find((l) => l.tag === 'naw').id; // shortest line designs the voice
 
   const pairs = [];
   for (const line of lines) for (const engineKey of wantEngines) pairs.push({ line, engineKey });
@@ -295,18 +320,22 @@ async function runFal() {
   console.log(`FAL description: ${description.length} chars (accent-first prompt)`);
   console.log(`Lines: ${lines.length} (${lines.map((l) => l.tag).join(', ')})`);
   console.log(`Engines: ${wantEngines.join(', ')}`);
+  if (wantEngines.includes('minimax')) {
+    console.log(`MiniMax: design once on "naw" via voice-design, reuse the id via `
+      + `${FAL_MINIMAX_SPEECH_ENDPOINT} for the rest`);
+  }
   console.log(`Plan: ${pairs.length} render(s)\n`);
 
   let estUsd = 0, estUnknown = 0;
   for (const { line, engineKey } of pairs) {
-    const engine = FAL_ENGINES[engineKey];
     const promptText = engineKey === 'maya' ? shortDescription : description;
-    const chars = engine.billedChars(line.text);
-    const cost = engine.usdPerMChar != null ? (chars / 1e6) * engine.usdPerMChar : null;
+    const isDesignLine = engineKey === 'minimax' && line.id === designLineId;
+    const cost = falLineCost(engineKey, line, promptText, isDesignLine);
     if (cost != null) estUsd += cost; else estUnknown++;
     const file = `${String(line.id).padStart(2, '0')}-${line.tag}--${engineKey}.mp3`;
-    const status = existsSync(join(OUT_DIR, file)) ? 'on disk, will skip' : 'to render';
-    console.log(`  [${engineKey}] ${line.tag} (prompt ${promptText.length}c, line ${chars}c, `
+    const status = isRendered(join(OUT_DIR, file)) ? 'on disk, will skip' : 'to render';
+    const via = engineKey === 'minimax' ? (isDesignLine ? 'voice-design' : 'speech-02-turbo (reused voice)') : engineKey;
+    console.log(`  [${via}] ${line.tag} (line ${line.text.length}c, `
       + `${cost != null ? '~$' + cost.toFixed(4) : 'rate not published'}) -> ${file} — ${status}`);
   }
   console.log(`\nEstimated spend: ~$${estUsd.toFixed(4)}`
@@ -317,55 +346,117 @@ async function runFal() {
   if (FAL_KEY.length < 20) { console.error('\nFAL_KEY looks truncated or a placeholder.'); process.exit(1); }
   if (!YES) { console.error('\nPass --yes to actually spend money.'); process.exit(1); }
 
-  const probeOk = await falProbe();
-  if (!probeOk) { console.error('\nProbe failed — stopping before spending on the rest.'); process.exit(1); }
-
   mkdirSync(OUT_DIR, { recursive: true });
   const loaded = loadManifest();
   const manifest = loaded.fal || { description, descriptionSource: 'docs/MCGROTS-VOICE.md', lines: [], runs: [], voiceIds: {} };
   manifest.description = description;
   manifest.lines = allLines.map(({ id, tag, text, source }) => ({ id, tag, text, source }));
 
+  function recordRun(run) {
+    manifest.runs = manifest.runs.filter((r) => !(r.lineId === run.lineId && r.engine === run.engine));
+    manifest.runs.push(run);
+    saveManifest({ ...loadManifest(), fal: manifest });
+  }
+
+  // MiniMax design-once-reuse. Also serves as the account-balance probe when
+  // minimax is in the run, so the account isn't confirmed twice.
+  let minimaxVoiceId = manifest.voiceIds.minimax || null;
+  if (wantEngines.includes('minimax')) {
+    const designLine = allLines.find((l) => l.id === designLineId);
+    const designFile = `${String(designLine.id).padStart(2, '0')}-${designLine.tag}--minimax.mp3`;
+    const designPath = join(OUT_DIR, designFile);
+    if (isRendered(designPath) && minimaxVoiceId) {
+      console.log(`MiniMax: reusing already-designed voice ${minimaxVoiceId} (from ${designFile})`);
+    } else {
+      console.log(`MiniMax: designing voice once on "${designLine.tag}" (also serves as the account probe)...`);
+      let result;
+      try { result = await falRenderOne(FAL_ENGINES.minimax.endpoint, FAL_ENGINES.minimax.buildInput(description, designLine.text)); }
+      catch (e) { result = { success: false, reason: e.message }; }
+      if (!result.success) {
+        console.error(`MiniMax design FAILED: ${result.reason}\nStopping FAL entirely — nothing else spent.`);
+        process.exit(1);
+      }
+      if (!result.voiceId) {
+        console.error('MiniMax design call returned no custom_voice_id — cannot reuse it. Stopping rather than substituting per-line design.');
+        process.exit(1);
+      }
+      writeFileSync(designPath, result.bytes);
+      minimaxVoiceId = result.voiceId;
+      manifest.voiceIds.minimax = minimaxVoiceId;
+      const duration = ffprobeDuration(designPath);
+      recordRun({ lineId: designLine.id, line: designLine.tag, engine: 'minimax', endpoint: FAL_ENGINES.minimax.endpoint, file: designFile, status: 'ok', bytes: result.bytes.length, durationSec: duration, customVoiceId: minimaxVoiceId, renderedAt: new Date().toISOString() });
+      console.log(`MiniMax design OK — ${(result.bytes.length / 1024).toFixed(1)}KB, custom_voice_id=${minimaxVoiceId}`);
+
+      // Confirm the speech endpoint actually accepts the reused id before
+      // spending on the remaining lines. Per the brief: if this fails, stop
+      // and report — do not silently fall back to per-line voice-design.
+      const testLine = allLines.find((l) => l.tag === 'flare');
+      const testFile = `${String(testLine.id).padStart(2, '0')}-${testLine.tag}--minimax.mp3`;
+      const testPath = join(OUT_DIR, testFile);
+      if (!isRendered(testPath)) {
+        console.log(`MiniMax: confirming ${FAL_MINIMAX_SPEECH_ENDPOINT} accepts the reused voice id (line "${testLine.tag}")...`);
+        let testResult;
+        try { testResult = await falMinimaxSpeak(minimaxVoiceId, testLine.text); }
+        catch (e) { testResult = { success: false, reason: e.message }; }
+        if (!testResult.success) {
+          console.error(`MiniMax speech-endpoint reuse FAILED: ${testResult.reason}`);
+          console.error('This is the finding, not a bug to route around — stopping rather than substituting per-line voice-design.');
+          process.exit(1);
+        }
+        writeFileSync(testPath, testResult.bytes);
+        const testDuration = ffprobeDuration(testPath);
+        recordRun({ lineId: testLine.id, line: testLine.tag, engine: 'minimax', endpoint: FAL_MINIMAX_SPEECH_ENDPOINT, file: testFile, status: 'ok', bytes: testResult.bytes.length, durationSec: testDuration, renderedAt: new Date().toISOString() });
+        console.log(`MiniMax speech reuse OK — ${(testResult.bytes.length / 1024).toFixed(1)}KB. `
+          + `Voice id ${minimaxVoiceId} confirmed reusable via ${FAL_MINIMAX_SPEECH_ENDPOINT}.`);
+      }
+    }
+  } else {
+    const probeEngine = wantEngines[0];
+    if (probeEngine) {
+      const probeOk = await falProbe(probeEngine);
+      if (!probeOk) { console.error('\nProbe failed — stopping before spending on the rest.'); process.exit(1); }
+    }
+  }
+
   let ok = 0, fail = 0, skipped = 0, spentUsd = 0;
   for (const { line, engineKey } of pairs) {
-    const engine = FAL_ENGINES[engineKey];
-    const promptText = engineKey === 'maya' ? shortDescription : description;
     const file = `${String(line.id).padStart(2, '0')}-${line.tag}--${engineKey}.mp3`;
     const outPath = join(OUT_DIR, file);
     if (isRendered(outPath)) { console.log(`[${file}] skipped — already on disk`); skipped++; continue; }
-    console.log(`[${file}] rendering via ${engine.endpoint}...`);
+
+    const promptText = engineKey === 'maya' ? shortDescription : description;
+    const isDesignLine = engineKey === 'minimax' && line.id === designLineId;
+    const endpoint = engineKey === 'minimax' ? (isDesignLine ? FAL_ENGINES.minimax.endpoint : FAL_MINIMAX_SPEECH_ENDPOINT) : FAL_ENGINES[engineKey].endpoint;
+    console.log(`[${file}] rendering via ${endpoint}...`);
     const t0 = Date.now();
     let result;
-    try { result = await falRenderOne(engine.endpoint, engine.buildInput(promptText, line.text)); }
-    catch (e) { result = { success: false, reason: e.message }; }
+    try {
+      if (engineKey === 'minimax') {
+        result = isDesignLine
+          ? await falRenderOne(endpoint, FAL_ENGINES.minimax.buildInput(description, line.text))
+          : await falMinimaxSpeak(minimaxVoiceId, line.text);
+      } else {
+        result = await falRenderOne(endpoint, FAL_ENGINES[engineKey].buildInput(promptText, line.text));
+      }
+    } catch (e) { result = { success: false, reason: e.message }; }
     const secs = (Date.now() - t0) / 1000;
 
-    const run = { lineId: line.id, line: line.tag, engine: engineKey, endpoint: engine.endpoint, file, renderedAt: new Date().toISOString(), tookSec: Math.round(secs) };
+    const run = { lineId: line.id, line: line.tag, engine: engineKey, endpoint, file, renderedAt: new Date().toISOString(), tookSec: Math.round(secs) };
     if (!result.success) {
       console.error(`[${file}] FAILED (${secs.toFixed(0)}s): ${result.reason}`);
       run.status = 'failed'; run.reason = result.reason; fail++;
     } else {
       writeFileSync(outPath, result.bytes);
       const duration = ffprobeDuration(outPath);
-      const chars = engine.billedChars(line.text);
-      const cost = engine.usdPerMChar != null ? (chars / 1e6) * engine.usdPerMChar : null;
+      const cost = falLineCost(engineKey, line, promptText, isDesignLine);
       if (cost != null) spentUsd += cost;
       console.log(`[${file}] OK (${secs.toFixed(0)}s) — ${(result.bytes.length / 1024).toFixed(1)}KB`
-        + (duration != null ? `, ${duration.toFixed(1)}s audio` : '')
-        + (result.voiceId ? `, custom_voice_id=${result.voiceId}` : ''));
-      run.status = 'ok'; run.bytes = result.bytes.length; run.durationSec = duration; run.customVoiceId = result.voiceId || null;
-      if (result.voiceId) {
-        if (manifest.voiceIds[engineKey] && manifest.voiceIds[engineKey] !== result.voiceId) {
-          console.warn(`[${file}] NOTE: ${engineKey} returned a DIFFERENT custom_voice_id than `
-            + `previously recorded (${manifest.voiceIds[engineKey]} -> ${result.voiceId}).`);
-        }
-        manifest.voiceIds[engineKey] = result.voiceId;
-      }
+        + (duration != null ? `, ${duration.toFixed(1)}s audio` : ''));
+      run.status = 'ok'; run.bytes = result.bytes.length; run.durationSec = duration;
+      if (isDesignLine && result.voiceId) run.customVoiceId = result.voiceId;
       ok++;
     }
-    manifest.runs = manifest.runs.filter((r) => !(r.lineId === line.id && r.engine === engineKey));
-    manifest.runs.push(run);
-    saveManifest({ ...loadManifest(), fal: manifest });
+    recordRun(run);
   }
 
   console.log(`\n${ok} ok, ${fail} failed, ${skipped} skipped. Spend this run: ~$${spentUsd.toFixed(4)} `

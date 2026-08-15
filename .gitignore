@@ -48,3 +48,5 @@ src/mcgrots-flats-bundle.js
 # tracked, as the record of what was auditioned.
 docs/voice-audition/*.mp3
 docs/voice-audition/*.wav
+docs/voice-audition/**/*.mp3
+docs/voice-audition/**/*.wav
