@@ -247,6 +247,28 @@ let clock = 0;               // seconds of game time; wall-clock in G4
 let bodyError = null;        // a candidate that failed to load — reported, not thrown
 let rotaError = null;        // G4a: catalog.json/readings.json failed — reported, not thrown
 
+// F22: at `counter` the player's own body sits between the camera and
+// McGrot and covers roughly his middle third (docs/briefs/g7b-pre-visit-fixes.md
+// § F22) — that shot is authored closer and more centred than any sibling
+// (anchors.js's `counter` has the smallest `dist`), so the actor fills far
+// more of the frame there than anywhere else. This is not McGrot's fault and
+// not an actor's — it is the PLAYER'S OWN body, so hiding it does not cross
+// Dan's "actors must not affect the camera" ruling (2026-08-12).
+//
+// MEASURED, not guessed: real 3D camera-to-actor distance at every anchor
+// (`camera.position.distanceTo(actor.group.position)`, each parked and
+// settled) — counter 4.92m, kerb 5.61m, wall 5.90m, far 6.71m, back 9.27m.
+// A 0.69m gap sits between counter and its nearest sibling; HIDE_DIST sits in
+// that gap, so only counter's shot ever crosses it.
+//
+// HIDES rather than fades — the street's own first-person convention never
+// draws a player mesh at all (src/main.js: no player body, ever), so absence
+// rather than translucency is the precedent this follows, and it is the
+// simplest thing that cannot half-disturb an existing capture at every other
+// anchor, all of which stay comfortably clear of the threshold.
+const SELF_OCCLUDE_HIDE_DIST = 5.2;
+let selfOcclusionEnabled = true; // F22 gate's named control disables this
+
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
   if (!a) return false;
@@ -390,6 +412,15 @@ function listenerPose() {
   };
 }
 
+// F22. Every frame rather than per-anchor, because a WALK eases the camera
+// continuously and the actor is walking too — the distance is live, not a
+// per-anchor constant. `actor.group.visible` is the whole player body (the
+// only child `makeActor` ever adds), so this hides him entirely, not a part.
+function updateSelfOcclusion() {
+  if (!selfOcclusionEnabled) { actor.group.visible = true; return; }
+  actor.group.visible = camera.position.distanceTo(actor.group.position) >= SELF_OCCLUDE_HIDE_DIST;
+}
+
 function frame(dt) {
   clock += dt;
   actor.update(dt, clock);
@@ -411,6 +442,7 @@ function frame(dt) {
   // Dan's ruling that actors must not affect it.
   pomple.update(dt, actor.group.position);
   placeCamera();
+  updateSelfOcclusion();
   // G4b: same wall clock the reader itself was just driven from, so audio
   // and the reader's visible arrival/departure never disagree about who is
   // there. Runs every frame regardless of whether a gesture has happened —
@@ -660,6 +692,13 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         setTracking: (v) => pomple.setTracking(v),
       },
       bodyStats: () => actor.stats(),
+      // F22's named control: the gate measures McGrot's visible pixel count
+      // with this OFF, which must come in materially lower than with it on —
+      // that is what proves the fix's own contribution rather than assuming
+      // "he is visible" (he always was, partly).
+      setSelfOcclusion: (v) => { selfOcclusionEnabled = !!v; updateSelfOcclusion(); },
+      get selfOcclusionEnabled() { return selfOcclusionEnabled; },
+      get actorHiddenBySelfOcclusion() { return !actor.group.visible; },
       setActorState: (s) => actor.setState(s),
       lookAt: (yaw) => actor.lookAt(yaw),
       get phase() { return actor.phase; },

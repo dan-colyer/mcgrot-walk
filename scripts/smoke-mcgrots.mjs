@@ -1173,6 +1173,100 @@ try {
         badBeret.length === 0,
         beretRows.map((v) => v.missing ? `${v.id} MISSING` : `${v.id} diff=${v.diff.toFixed(1)}`).join(' / '));
 
+      // F22: at `counter` the player's own body used to sit between the
+      // camera and McGrot, covering roughly his middle third
+      // (docs/briefs/g7b-pre-visit-fixes.md § F22). main.js now hides the
+      // player's own body when the camera sits far enough behind it
+      // (`SELF_OCCLUDE_HIDE_DIST`, measured per-anchor there).
+      //
+      // COUNTS PIXELS, not a mean diff — the mean-diff toggle above answers
+      // "did something change"; this answers "how much of him is actually
+      // visible", which a mean cannot: a small bright patch and a large dim
+      // one can read the same mean while covering very different fractions of
+      // his own rect. Same on/off toggle technique as the checks above
+      // (mcgrot hidden vs shown, diffed inside his own AABB rect), counting
+      // pixels that cross a luminance threshold rather than averaging them.
+      //
+      // THE CONTROL, named per the brief: the identical measurement with the
+      // fix disabled (`setSelfOcclusion(false)`) — the capsule is a real,
+      // depth-tested object, so with the fix off it occludes him exactly as
+      // it did before this unit, and the SAME on/off-diff technique counts
+      // fewer of his pixels as ever being frontmost. "He is visible" would
+      // pass trivially even occluded (he always was, partly) — this proves
+      // the fix's own contribution instead of assuming it.
+      const countDiffPixels = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+      // MEASURED UNDER THE SHIPPED LOOK, not the region's default `?look=
+      // none` boot — under Lambert (no look installed) McGrot renders as a
+      // near-black silhouette (main.js's own "NO FILL LIGHT" note above), so
+      // his luminance sits close enough to shadow that the diff threshold
+      // undercounts him regardless of occlusion (measured: ~15% at EVERY
+      // anchor, not just counter, so that number was reading the material,
+      // not the fault). Aerial (S2, the settled style) is what Dan actually
+      // sees during the visit and is what separates cleanly — see the floor
+      // comment below.
+      await page.evaluate(() => window.__mcgrotsDebug.setLook('aerial'));
+
+      const counterRow = rows.find((v) => v.id === 'counter');
+      const mcgrotVisiblePixelFraction = async () => {
+        const r = counterRow.rect;
+        await page.evaluate(() => { window.__mcgrotsDebug.snapTo('counter'); window.__mcgrotsDebug.stepFrames(2); });
+        const withOn = await page.screenshot({ type: 'png' });
+        const originalVisible = await page.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const vis = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return vis;
+        });
+        const withOff = await page.screenshot({ type: 'png' });
+        await page.evaluate((vis) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = vis; window.__mcgrotsDebug.stepFrames(1);
+        }, originalVisible);
+        return countDiffPixels(withOn, withOff, r);
+      };
+
+      const fixOnFraction = await mcgrotVisiblePixelFraction();
+      await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(false));
+      const fixOffFraction = await mcgrotVisiblePixelFraction();
+      await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(true));
+      // Back to the region's own default boot (`?look=none`) for whatever
+      // runs after this block.
+      await page.evaluate(() => window.__mcgrotsDebug.setLook('none'));
+
+      // FLOOR MEASURED, not guessed at 50% (the first attempt, which failed
+      // against the fix's own correct output). A humanoid AABB is never
+      // fully filled by its own silhouette — gaps beside the arms, above the
+      // shoulders, between the legs — so even a totally unoccluded figure
+      // never reads close to 100%. Measured at all five anchors with the fix
+      // ON (`scripts/mcgrots-shot.mjs -f`, one-off, not committed): counter
+      // 30.2%, wall 29.1%, kerb 28.8%, far 33.7%, back 30.3% — i.e. counter
+      // WITH THE FIX matches the natural, unoccluded range everywhere else,
+      // not a degraded version of it. Fix disabled measures 15.7%, roughly
+      // half. 20% sits above the occluded reading with margin and below the
+      // natural range with more.
+      check('F22: McGrot is not occluded at counter — his own visible-pixel fraction clears a floor',
+        fixOnFraction > 0.2,
+        `on-arm: ${(fixOnFraction * 100).toFixed(1)}% of his AABB rect is actually his (>20% required, natural unoccluded range ~29-34%)`);
+      check('F22 control: with the fix disabled, the same measurement comes in materially lower',
+        fixOffFraction < fixOnFraction * 0.8,
+        `fix on=${(fixOnFraction * 100).toFixed(1)}% fix off=${(fixOffFraction * 100).toFixed(1)}%`);
+
       check('console still clean after driving the mcgrot region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }
