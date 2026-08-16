@@ -31,6 +31,7 @@ import { createReaderAudio } from './audio.js';
 import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
+import { buildPomple } from './pomple.js';
 import { loadRota, createReader, whoIsHere, whatTheyAreDoing, overlapCount, cycleSeconds } from './rota.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
@@ -121,6 +122,11 @@ scene.add(sun, sun.target);
 
 // G3a: the real van, price board and ground dressing — replaces the G0 box.
 buildVan(scene);
+
+// G6a: Pomplé, presentation only — his own module; G1's rig does not
+// transfer to a quadruped (see pomple.js's header). Module-scope, same as
+// `reader` below: the glb loads lazily and `update()` no-ops until it does.
+const pomple = buildPomple(scene);
 
 // Built in boot(), once the assets object exists — a segmented body needs the
 // glb and its sidecar, and assetUrl is the only sanctioned way to reach them.
@@ -389,6 +395,9 @@ function frame(dt) {
   // structural rather than a promise.
   const now = rotaNow();
   reader.update(dt, now);
+  // G6a: reads the player's own live position only — never the camera, per
+  // Dan's ruling that actors must not affect it.
+  pomple.update(dt, actor.group.position);
   placeCamera();
   // G4b: same wall clock the reader itself was just driven from, so audio
   // and the reader's visible arrival/departure never disagree about who is
@@ -607,6 +616,13 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         reader: () => reader.state,
         setClock(seconds) { rotaClockOverride = seconds; },
         clearClock() { rotaClockOverride = null; },
+      },
+      // G6a. `group` is reached via `scene.getObjectByName('pomple')`, same
+      // as every other prop's gate region (see `van`) — no second handle.
+      pomple: {
+        get headYaw() { return pomple.headYaw; },
+        get attention() { return pomple.attention; },
+        setTracking: (v) => pomple.setTracking(v),
       },
       bodyStats: () => actor.stats(),
       setActorState: (s) => actor.setState(s),
