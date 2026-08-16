@@ -171,7 +171,28 @@ export function whatTheyAreDoing(now) {
 // two can occupy the pitch at once without standing on each other. Between
 // the van's serving opening (van.js, front face at local z ~= 1.3) and the
 // player's spot.
-const SPOT_LOCAL = [0.35, 2.1];
+//
+// x REVISED, F22 follow-up (G7b, 2026-08-16): the original x (0.35) is
+// McGrot's OWN x (`mcgrot.js`'s `MCGROT_LOCAL`), coincidentally — this
+// module predates him (roadmap § G4a: "the rota runs on the placeholder
+// cast; McGrot did not exist yet"), so the original choice was only ever
+// checked against the PLAYER's capsule, never against a real figure at the
+// van. Once McGrot landed (G6b.2) this put the reader almost exactly between
+// him and the `counter` camera: measured on the real wall clock, a
+// featureless capsule covering his torso, apron and right arm — found while
+// chasing the F22 gate's flake (the reader's real-clock presence was the
+// flake's actual cause; see the F22 gate-flake commit). -1.5 was picked by
+// rendering candidates at the pinned 'reading' moment (`rota.setClock(1020)`)
+// from every anchor: 0.35 sits on his own line; +1.5/+2.0 walk the reader
+// into Pomplé's own spot (`pomple.js`'s `POMPLE_LOCAL`, [2.6, 1.15], the
+// same side); -1.0/-1.5 clear him at every anchor tried (`counter`, `wall`,
+// `kerb`, `far`) with -1.5 giving the widest margin. Re-verified against the
+// ORIGINAL corridor design's own constraint immediately below (nearest
+// approach to any anchor eye across a live sampled arrival): the closest
+// point on either arrival walk to any eye is 5.30m (`counter`, from the
+// `995`-clock arrival), still clear of the 4.73m the original pair measured
+// — this move did not reopen the "walks through the lens" rejection above.
+const SPOT_LOCAL = [-1.5, 2.1];
 
 // Two approach corridors, chosen so a walk from either to SPOT_LOCAL at
 // actor.js's WALK_SPEED (1.35 m/s) takes roughly ARRIVE_LEAD_S, AND so the
@@ -187,10 +208,12 @@ const SPOT_LOCAL = [0.35, 2.1];
 //     0.53m of the `counter` eye partway along it — a walk that appears,
 //     crosses almost through the lens, and reappears.
 // This pair's nearest approach to any eye, minimised over the whole segment,
-// is 4.73m (`counter`, from the `-8` side). Alternating them (by a hash of
-// the comic id, not by draw order — this module's schedule must stay
-// reproducible without a second PRNG call) keeps arrivals from all using the
-// same line.
+// was 4.73m (`counter`, from the `-8` side) against the ORIGINAL SPOT_LOCAL
+// (0.35, 2.1) — not re-measured symbolically against the new one above, only
+// re-verified empirically (see that comment) that the live walk still clears
+// it. Alternating them (by a hash of the comic id, not by draw order — this
+// module's schedule must stay reproducible without a second PRNG call) keeps
+// arrivals from all using the same line.
 const APPROACH_LOCAL = [
   [-8, 2.1],
   [8, 2.1],

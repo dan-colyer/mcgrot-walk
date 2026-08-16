@@ -55,9 +55,35 @@ export const MCGROT_LOCAL = [0.35, 1.3];
 // actual lighting and re-picked — ACES plus this scene's exposure (site.js
 // `LIGHT.exposure`) reads a plain material colour noticeably darker and less
 // saturated than the hex suggests (the same effect CLAUDE.md's ACES gotcha
-// records for procedural tones). Landed value, not the first guess: see the
-// landing commit for the render this was judged against.
-const BERET_COLOUR = 0xa22c16;
+// records for procedural tones).
+//
+// REVISED, F23 (G7b, 2026-08-16): Dan flagged the first landing as "a bit
+// bright" on the G6b.2 captures, and it measured out as chroma, not
+// brightness — rendered luma (106) already matched the corpus's own
+// saturated red-orange (107, 60 comics sampled); what diverged was hue and
+// saturation. Checked the two-band ramp FIRST, per the brief
+// (docs/briefs/g7b-pre-visit-fixes.md § F23), before touching this value:
+// the lit band is `(255,255,255)` — unity gain, confirmed by toggling
+// `renderer.toneMapping` and `lights.sun.color` independently and finding
+// neither materially closes the gap. The ramp is not the cause.
+//
+// What actually diverged, measured in proper HSL (not the RGB channel
+// comparison the original G6b.2 table used): the OLD authored value's hue
+// sits at 9.4° (near-pure red); the corpus's own saturated red-orange
+// samples average ~28°, a genuinely different colour, not just a paler
+// version of the same one. A hue shift toward orange raises luma at a fixed
+// S/L (green weighs 0.7152 in luma; more green is more orange), so a
+// candidate matching the corpus's hue and rendered luma (~106) together
+// needs a LOWER authored lightness than the old value — compensating for a
+// pipeline effect would be picking a value to hide what the ramp does; this
+// is compensating for a fixed property of colour itself (an orange is
+// brighter than an equally-saturated red at the same input lightness),
+// which is the same "pick on paper, render, re-pick" process the original
+// value's own comment already documents, run one iteration further.
+// Landed value: rendered (`--look=aerial --anchor=counter`) samples
+// `#c45711`, hue 23.5°, saturation 84%, luma 105.1 — against corpus hue
+// ~28° (30.0/26.7 across the two modal bins), saturation ~82%, luma 107.
+const BERET_COLOUR = 0x753d10;
 
 // Measured off the actual mesh (`node` probe against the live normalised
 // geometry `actors/skinned.js` builds, archetype `mcgrot` — the same

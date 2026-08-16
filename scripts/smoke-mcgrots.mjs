@@ -683,6 +683,62 @@ try {
       check('interrupting an in-progress walk still eases, not cuts (F11)',
         interruptedFrac < 0.1,
         `frame-1 ${interrupted.frame1.toFixed(3)}m of ${interrupted.total.toFixed(3)}m total (${(interruptedFrac * 100).toFixed(1)}%)`);
+
+      // F22 follow-up 2 (Dan, re-measured on a detached worktree, 2026-08-16):
+      // the live-distance version of the player's self-occlusion hide
+      // (main.js's `SELF_OCCLUDE_HIDE_DIST`) flipped mid-walk whenever the
+      // eased camera crossed the threshold, regardless of the actor's own
+      // progress — measured, kerb -> counter: exactly one flip, frame 71 of
+      // 240, `actor.progress` 0.304, the body vanishing in one frame, in
+      // plain view, a third of the way through a walk the player is
+      // watching. Frozen to a per-anchor decision instead
+      // (`ANCHOR_HIDES_ACTOR` / `walkStartHidden`): hidden for the whole walk
+      // if EITHER the anchor being left or the one being arrived at would
+      // hide it, so a flip can only happen at the two boundaries where the
+      // camera is nowhere near the OTHER anchor's own tight framing — the
+      // start of a walk (destination hides) or its completion (departure
+      // hides, held until arrival). Tried "resolve purely from the
+      // destination" first and rejected it after rendering both directions:
+      // it fixed the walk INTO `counter` but produced the same pop, reversed,
+      // walking OUT of it (visible from frame 0, large and centred, in the
+      // frame `counter` was still showing).
+      //
+      // GATED AS "no flip happens strictly mid-transit" — `actor.progress`
+      // in (0, 1) with `walking` still true — covering both directions, not
+      // just the one the bug was found in.
+      const walkVisibilityFlips = async (fromId, toId) => page.evaluate(({ from, to }) => {
+        const d = window.__mcgrotsDebug;
+        d.setMarkersVisible(false);
+        d.snapTo(from);
+        d.stepFrames(2);
+        d.goTo(to);
+        const flips = [];
+        let last = d.actor.group.visible;
+        for (let i = 0; i < 300; i++) {
+          d.stepFrames(1);
+          const vis = d.actor.group.visible;
+          if (vis !== last) {
+            flips.push({ progress: +d.actor.progress.toFixed(3), walking: d.state().walking });
+            last = vis;
+          }
+        }
+        return flips;
+      }, { from: fromId, to: toId });
+
+      const flipsIn = await walkVisibilityFlips('kerb', 'counter');
+      const flipsOut = await walkVisibilityFlips('counter', 'kerb');
+      // 0.02 clears one frame's own progress at the loop's first check (a
+      // "frame 0" flip already reads a small positive progress, having been
+      // stepped once before the first read) without opening the window wide
+      // enough to hide a genuine mid-transit flip — measured mid-transit
+      // flip in the ORIGINAL bug was at progress 0.304, over an order of
+      // magnitude past this margin.
+      const midTransit = (flips) => flips.filter((f) => f.walking && f.progress > 0.02 && f.progress < 0.98);
+      const badFlipsIn = midTransit(flipsIn);
+      const badFlipsOut = midTransit(flipsOut);
+      check('the player\'s own visibility never flips mid-transit, either direction (F22 follow-up 2)',
+        badFlipsIn.length === 0 && badFlipsOut.length === 0,
+        `kerb->counter: ${JSON.stringify(flipsIn)} / counter->kerb: ${JSON.stringify(flipsOut)}`);
     }
 
     // ------------------------------------------------------------------ van ---
@@ -933,6 +989,46 @@ try {
         Math.abs(offA) < 0.01 && Math.abs(offB) < 0.01,
         `tracking off: counter=${offA.toFixed(3)} kerb=${offB.toFixed(3)}`);
 
+      // F21: he was built fire-and-forget at module scope with nothing
+      // awaiting his own readiness, so looks.js's one-time traverse at
+      // install ran before his meshes existed — he stayed a plain, un-inked
+      // MeshLambertMaterial under every look forever. `mcgrot.js` gets the
+      // same claim gated above (his beret toggles); this reads the exact pair
+      // of properties the diagnostic in docs/briefs/g7b-pre-visit-fixes.md
+      // used to confirm the fault, and the fix, directly on the live scene —
+      // material type and the presence of an ink hull, not "install()
+      // returned true" (looks.js's own stats() comment: that only proves the
+      // function ran).
+      //
+      // THE CONTROL, named per the brief: the identical read under
+      // `?look=none`, which must show the plain material and no hull — that
+      // is what isolates the LOOK's contribution from "he has some material
+      // or other", the same isolation the S1 region's zero-width control
+      // uses. Reset to 'none' at the end either way, since that is the
+      // default boot every later region in this file assumes.
+      const pompleMaterials = async () => page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        const at = (name) => g.getObjectByName(name)?.material?.type || null;
+        const hull = (name) => !!g.getObjectByName(`hull:${name}`);
+        return {
+          body: at('pomple:body'), head: at('pomple:head'),
+          hullBody: hull('pomple:body'), hullHead: hull('pomple:head'),
+        };
+      });
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(1); });
+      const inkedRead = await pompleMaterials();
+      check('F21: pomple is cel-shaded and inked under a look (?look=aerial)',
+        inkedRead.body === 'MeshToonMaterial' && inkedRead.head === 'MeshToonMaterial'
+        && inkedRead.hullBody && inkedRead.hullHead,
+        `body=${inkedRead.body} head=${inkedRead.head} hullBody=${inkedRead.hullBody} hullHead=${inkedRead.hullHead}`);
+
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('none'); window.__mcgrotsDebug.stepFrames(1); });
+      const plainRead = await pompleMaterials();
+      check('F21 control: under ?look=none he stays plain, un-inked (isolates the look\'s contribution)',
+        plainRead.body === 'MeshLambertMaterial' && plainRead.head === 'MeshLambertMaterial'
+        && !plainRead.hullBody && !plainRead.hullHead,
+        `body=${plainRead.body} head=${plainRead.head} hullBody=${plainRead.hullBody} hullHead=${plainRead.hullHead}`);
+
       check('console still clean after driving the pomple region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }
@@ -1132,6 +1228,150 @@ try {
       check('the beret is on his head and visible — on/off diff inside the beret\'s own rect, at every anchor (control: same toggle, dry run reads 0.0)',
         badBeret.length === 0,
         beretRows.map((v) => v.missing ? `${v.id} MISSING` : `${v.id} diff=${v.diff.toFixed(1)}`).join(' / '));
+
+      // F22: at `counter` the player's own body used to sit between the
+      // camera and McGrot, covering roughly his middle third
+      // (docs/briefs/g7b-pre-visit-fixes.md § F22). main.js now hides the
+      // player's own body when the camera sits far enough behind it
+      // (`SELF_OCCLUDE_HIDE_DIST`, measured per-anchor there).
+      //
+      // COUNTS PIXELS, not a mean diff — the mean-diff toggle above answers
+      // "did something change"; this answers "how much of him is actually
+      // visible", which a mean cannot: a small bright patch and a large dim
+      // one can read the same mean while covering very different fractions of
+      // his own rect. Same on/off toggle technique as the checks above
+      // (mcgrot hidden vs shown, diffed inside his own AABB rect), counting
+      // pixels that cross a luminance threshold rather than averaging them.
+      //
+      // THE CONTROL, named per the brief: the identical measurement with the
+      // fix disabled (`setSelfOcclusion(false)`) — the capsule is a real,
+      // depth-tested object, so with the fix off it occludes him exactly as
+      // it did before this unit, and the SAME on/off-diff technique counts
+      // fewer of his pixels as ever being frontmost. "He is visible" would
+      // pass trivially even occluded (he always was, partly) — this proves
+      // the fix's own contribution instead of assuming it.
+      const countDiffPixels = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+      // MEASURED UNDER THE SHIPPED LOOK, not the region's default `?look=
+      // none` boot — under Lambert (no look installed) McGrot renders as a
+      // near-black silhouette (main.js's own "NO FILL LIGHT" note above), so
+      // his luminance sits close enough to shadow that the diff threshold
+      // undercounts him regardless of occlusion (measured: ~15% at EVERY
+      // anchor, not just counter, so that number was reading the material,
+      // not the fault). Aerial (S2, the settled style) is what Dan actually
+      // sees during the visit and is what separates cleanly — see the floor
+      // comment below.
+      //
+      // SETTLES 4 FRAMES after install, the style region's own established
+      // number for a fresh cel/hull material (its S1/S2 checks below:
+      // `setLook('inked'); stepFrames(4)`) — a new shader needs a compile.
+      //
+      // CLOCK PINNED TO A KNOWN-EMPTY MOMENT (rota.js: `whatTheyAreDoing(980)`
+      // is null — the same reference point the rota region's own sequence
+      // strip uses for '1-empty'). Without this the region ran on the REAL
+      // wall clock (`rotaNow()`'s fallback), and rota.js's own reader stands
+      // at `SPOT_LOCAL = [0.35, 2.1]` — almost exactly McGrot's own position
+      // ([0.35, 1.3]) and directly between him and the `counter` camera.
+      // Found by opening a failing run's own capture: the "un-inked" 15.5%
+      // reading was not a material or compile race at all — it was a second
+      // figure standing in front of him, present roughly half of any given
+      // real-time window (readings.json's average duration is close to
+      // GAP_S). This is why the fault reproduced in clean bursts (many runs
+      // in a row landing inside the same real-time visit window) rather than
+      // as independent per-run noise, which is what actually ruled out a
+      // rendering race.
+      await page.evaluate(() => window.__mcgrotsDebug.rota.setClock(980));
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(4); });
+
+      const counterRow = rows.find((v) => v.id === 'counter');
+      const mcgrotVisiblePixelFraction = async () => {
+        const r = counterRow.rect;
+        await page.evaluate(() => { window.__mcgrotsDebug.snapTo('counter'); window.__mcgrotsDebug.stepFrames(2); });
+        const withOn = await page.screenshot({ type: 'png' });
+        const originalVisible = await page.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const vis = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return vis;
+        });
+        const withOff = await page.screenshot({ type: 'png' });
+        await page.evaluate((vis) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = vis; window.__mcgrotsDebug.stepFrames(1);
+        }, originalVisible);
+        return countDiffPixels(withOn, withOff, r);
+      };
+
+      const fixOnFraction = await mcgrotVisiblePixelFraction();
+      await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(false));
+      const fixOffFraction = await mcgrotVisiblePixelFraction();
+      await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(true));
+
+      // FLOOR MEASURED, not guessed at 50% (the first attempt, which failed
+      // against the fix's own correct output). A humanoid AABB is never
+      // fully filled by its own silhouette — gaps beside the arms, above the
+      // shoulders, between the legs — so even a totally unoccluded figure
+      // never reads close to 100%. Measured at all five anchors with the fix
+      // ON (`scripts/mcgrots-shot.mjs -f`, one-off, not committed): counter
+      // 30.2%, wall 29.1%, kerb 28.8%, far 33.7%, back 30.3% — i.e. counter
+      // WITH THE FIX matches the natural, unoccluded range everywhere else,
+      // not a degraded version of it. Fix disabled measures 15.7%, roughly
+      // half. 20% sits above the occluded reading with margin and below the
+      // natural range with more.
+      check('F22: McGrot is not occluded at counter — his own visible-pixel fraction clears a floor',
+        fixOnFraction > 0.2,
+        `on-arm: ${(fixOnFraction * 100).toFixed(1)}% of his AABB rect is actually his (>20% required, natural unoccluded range ~29-34%)`);
+      check('F22 control: with the fix disabled, the same measurement comes in materially lower',
+        fixOffFraction < fixOnFraction * 0.8,
+        `fix on=${(fixOnFraction * 100).toFixed(1)}% fix off=${(fixOffFraction * 100).toFixed(1)}%`);
+
+      // F22 FOLLOW-UP (found by Dan on a detached worktree, re-measured here):
+      // the pinned-980 check above proves the PLAYER's own body no longer
+      // occludes him. It says nothing about rota.js's reader, who used to
+      // stand at the same x as McGrot ([0.35, 2.1] vs his own [0.35, 1.3] —
+      // rota.js predates him; see rota.js's own SPOT_LOCAL comment) and read
+      // as a featureless capsule over his torso, apron and right arm on the
+      // real clock. That figure was also the F22 gate's actual flake source
+      // (see the gate-flake commit) — pinning the clock made the gate
+      // deterministic and silently hid this second, real fault behind it.
+      //
+      // rota.js's SPOT_LOCAL is now [-1.5, 2.1] (moved beside the counter,
+      // clear of both McGrot and Pomplé — see that file's own comment for
+      // the candidate renders this was picked from). Gated here on clocks
+      // where a reader IS PRESENT (not the pinned-980 empty moment above),
+      // covering the phases a real visit actually passes through: arriving,
+      // mid-reading, leaving. Same `mcgrotVisiblePixelFraction` measurement
+      // and the same floor as the check above — the claim is "the reader
+      // does not reopen F22", not a new threshold.
+      const readerPresentFractions = {};
+      for (const wc of [995, 1020, 1050]) {
+        await page.evaluate((w) => window.__mcgrotsDebug.rota.setClock(w), wc);
+        readerPresentFractions[wc] = await mcgrotVisiblePixelFraction();
+      }
+      const badReaderPresent = Object.entries(readerPresentFractions).filter(([, f]) => f <= 0.2);
+      check('F22 follow-up: the rota reader does not reopen the counter occlusion, at every phase of a visit',
+        badReaderPresent.length === 0,
+        Object.entries(readerPresentFractions).map(([wc, f]) => `t=${wc} ${(f * 100).toFixed(1)}%`).join(' / ') + ' (>20% required, each)');
+
+      // Back to the region's own default boot (`?look=none`, real wall clock)
+      // for whatever runs after this block.
+      await page.evaluate(() => window.__mcgrotsDebug.setLook('none'));
+      await page.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
 
       check('console still clean after driving the mcgrot region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');

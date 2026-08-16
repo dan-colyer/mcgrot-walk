@@ -247,6 +247,77 @@ let clock = 0;               // seconds of game time; wall-clock in G4
 let bodyError = null;        // a candidate that failed to load — reported, not thrown
 let rotaError = null;        // G4a: catalog.json/readings.json failed — reported, not thrown
 
+// F22: at `counter` the player's own body sits between the camera and
+// McGrot and covers roughly his middle third (docs/briefs/g7b-pre-visit-fixes.md
+// § F22) — that shot is authored closer and more centred than any sibling
+// (anchors.js's `counter` has the smallest `dist`), so the actor fills far
+// more of the frame there than anywhere else. This is not McGrot's fault and
+// not an actor's — it is the PLAYER'S OWN body, so hiding it does not cross
+// Dan's "actors must not affect the camera" ruling (2026-08-12).
+//
+// MEASURED, not guessed: real 3D camera-to-actor distance at every anchor
+// (`camera.position.distanceTo(actor.group.position)`, each parked and
+// settled) — counter 4.92m, kerb 5.61m, wall 5.90m, far 6.71m, back 9.27m.
+// A 0.69m gap sits between counter and its nearest sibling; HIDE_DIST sits in
+// that gap, so only counter's shot ever crosses it.
+//
+// HIDES rather than fades — the street's own first-person convention never
+// draws a player mesh at all (src/main.js: no player body, ever), so absence
+// rather than translucency is the precedent this follows, and it is the
+// simplest thing that cannot half-disturb an existing capture at every other
+// anchor, all of which stay comfortably clear of the threshold.
+const SELF_OCCLUDE_HIDE_DIST = 5.2;
+let selfOcclusionEnabled = true; // F22 gate's named control disables this
+
+// F22 FOLLOW-UP 2/2 (Dan, re-measured on a detached worktree, 2026-08-16):
+// the ORIGINAL version of this recomputed live distance every frame, which
+// flips whenever the eased camera crosses SELF_OCCLUDE_HIDE_DIST — including
+// mid-walk. Measured, kerb -> counter, 240 frames stepped: exactly one flip,
+// frame 71, actor.progress 0.304, at 5.187m (distance range across the whole
+// walk 4.036-5.855m). The body vanished in one frame, in plain view, a third
+// of the way through a walk the player is watching — and at a moment with no
+// relationship to the actor's own stand position, only to where the eased
+// camera happened to be that frame.
+//
+// FROZEN TO A PER-ANCHOR CONSTANT instead of a live distance. This is Dan's
+// "hide for the whole walk" option over a fade: a translucent player body
+// risks interacting with the hull/ink pipeline (`looks.js`'s outline meshes
+// are a second, separately rendered pass keyed to the same materials) in
+// ways nothing in this project has tried yet, where a precomputed boolean
+// touches nothing about how anything renders.
+//
+// NOT PURELY "resolved at goTo time from the destination", though that was
+// tried first: it fixes the walk INTO `counter` (hidden from frame 0, while
+// the actor is still small and far off in the departing anchor's own frame)
+// but breaks the walk OUT of it just as badly in the other direction —
+// visible from frame 0 too, which means the body POPS IN, large and
+// centred, in the frame `counter` was still showing. Rendered and opened
+// both directions before landing on the rule below (see the F22-follow-up-2
+// commit for the captures). The actual rule: hidden for the WHOLE walk if
+// EITHER the anchor being left or the one being arrived at would hide it —
+// `walkStartHidden` (set in `goTo`'s walk branch, from live visibility, not
+// a stored anchor id) carries the departure side; `current.id` below carries
+// the arrival side once `actor.walking` goes false. So a walk into `counter`
+// hides immediately (destination hides) and a walk out of it stays hidden
+// until the walk actually completes (departure hides) — both transitions
+// change state only at a boundary where the camera is far from the OTHER
+// anchor's own tight framing, never mid-ease.
+//
+// REVIEW-MODE GUARD, found while building this: `setReviewCamera` (used only
+// by `scripts/mcgrots-bakeoff.mjs`, G1's body-comparison rig, never by the
+// shipped game or this suite) parks the camera 2.6-2.9m from the actor by
+// design — inside HIDE_DIST at every anchor. The live-distance version hid
+// the actor throughout every review-camera capture ever taken under F22,
+// silently, because nothing in this repo's own gates exercises that mode.
+// `!reviewMode` is the fix; `current` can also be null before the first
+// `goTo` (main.js's own boot calls `goTo('back', { snap: true })` before the
+// first frame, so this is defence, not a path the shipped game takes).
+const ANCHOR_HIDES_ACTOR = new Map(ANCHORS.map((a) => [
+  a.id,
+  Math.hypot(a.camera.eye.x - a.pos.x, a.camera.eye.y, a.camera.eye.z - a.pos.z) < SELF_OCCLUDE_HIDE_DIST,
+]));
+let walkStartHidden = false; // set in goTo's walk branch; read by updateSelfOcclusion
+
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
   if (!a) return false;
@@ -298,6 +369,13 @@ function goTo(id, { snap = false } = {}) {
       eye: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       look: { x: lastLook.x, y: lastLook.y, z: lastLook.z },
     };
+    // F22 follow-up 2: snapshot whether the actor was hidden BEFORE this leg,
+    // read from live visibility rather than a stored anchor id, for the same
+    // reason `previous` above reads the camera's live pose rather than an
+    // anchor reference — it stays correct across an interrupted walk with no
+    // special case. See `updateSelfOcclusion`'s own comment for what this
+    // feeds.
+    walkStartHidden = !actor.group.visible;
     actor.walkTo(a.pos.x, a.pos.z, a.yaw);
   }
   page.setCaption(a.label);
@@ -390,6 +468,19 @@ function listenerPose() {
   };
 }
 
+// F22 / F22 follow-up 2. Runs every frame for parity with every other
+// per-frame updater, but the DECISION is the frozen per-anchor lookup above
+// plus `walkStartHidden` — see that constant's own comment for the "hidden
+// if EITHER endpoint would hide" rule and why. `actor.group.visible` is the
+// whole player body (the only child `makeActor` ever adds), so this hides
+// him entirely, not a part.
+function updateSelfOcclusion() {
+  if (!selfOcclusionEnabled || reviewMode || !current) { actor.group.visible = true; return; }
+  const destinationHides = ANCHOR_HIDES_ACTOR.get(current.id);
+  const hidden = actor.walking ? (walkStartHidden || destinationHides) : destinationHides;
+  actor.group.visible = !hidden;
+}
+
 function frame(dt) {
   clock += dt;
   actor.update(dt, clock);
@@ -411,6 +502,7 @@ function frame(dt) {
   // Dan's ruling that actors must not affect it.
   pomple.update(dt, actor.group.position);
   placeCamera();
+  updateSelfOcclusion();
   // G4b: same wall clock the reader itself was just driven from, so audio
   // and the reader's visible arrival/departure never disagree about who is
   // there. Runs every frame regardless of whether a gesture has happened —
@@ -521,14 +613,24 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
   // G6b.2: awaited for the SAME reason the player's own `actor.ready` is
   // awaited above, and named here rather than left implicit — `looks.js`
   // traverses the scene once, at install, and never again, so a body built
-  // fire-and-forget (Pomplé's own pattern) is invisible to it and stays a
-  // plain, un-inked material under every look forever. Waiting here is what
-  // keeps this figure off that list; it does not fix Pomplé's copy of the
-  // same gap, which is out of this unit's scope (see mcgrot.js's header).
+  // fire-and-forget is invisible to it and stays a plain, un-inked material
+  // under every look forever. Waiting here is what keeps this figure off
+  // that list. Pomplé carried the identical gap until F21 (below).
   try {
     await mcgrot.ready;
   } catch (err) {
     console.warn('[mcgrots] mcgrot failed to load:', err.message);
+  }
+
+  // F21: same gap, same fix. pomple.js was built fire-and-forget with
+  // nothing awaiting its own readiness, so looks.js's one-time traverse ran
+  // before his meshes existed and he stayed a plain, un-inked material under
+  // every look. This is the same await as mcgrot's above, for the same
+  // reason.
+  try {
+    await pomple.ready;
+  } catch (err) {
+    console.warn('[mcgrots] pomple failed to load:', err.message);
   }
 
   style.setStyle(STYLE_KIND);
@@ -650,6 +752,13 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         setTracking: (v) => pomple.setTracking(v),
       },
       bodyStats: () => actor.stats(),
+      // F22's named control: the gate measures McGrot's visible pixel count
+      // with this OFF, which must come in materially lower than with it on —
+      // that is what proves the fix's own contribution rather than assuming
+      // "he is visible" (he always was, partly).
+      setSelfOcclusion: (v) => { selfOcclusionEnabled = !!v; updateSelfOcclusion(); },
+      get selfOcclusionEnabled() { return selfOcclusionEnabled; },
+      get actorHiddenBySelfOcclusion() { return !actor.group.visible; },
       setActorState: (s) => actor.setState(s),
       lookAt: (yaw) => actor.lookAt(yaw),
       get phase() { return actor.phase; },
