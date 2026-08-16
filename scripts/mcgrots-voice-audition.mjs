@@ -489,6 +489,18 @@ const GEMINI_VOICE_PRIMARY = 'Algenib'; // "Gravelly" — already McGrot's accid
 const GEMINI_VOICE_SWEEP = ['Orus', 'Fenrir', 'Gacrux'];
 const GEMINI_SWEEP_LINE_IDS = ['mcgrot-03', 'mcgrot-01', 'mcgrot-07']; // naw / flare / sincerity — same three as the FAL audition, for cross-engine comparison
 
+// All 30 Gemini prebuilt voice names, spelled exactly as documented
+// (https://ai.google.dev/gemini-api/docs/speech-generation, checked
+// 2026-08-16 — not guessed). A misspelled name here fails loudly against
+// the real API (an unrecognised voiceName errors; nothing in this script
+// substitutes a default), which is the point.
+const GEMINI_ALL_VOICES = ['Zephyr', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Leda', 'Orus', 'Aoede',
+  'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba', 'Despina', 'Erinome',
+  'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar', 'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima',
+  'Achird', 'Zubenelgenubi', 'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'];
+const GEMINI_HEARD_VOICES = ['Algenib', 'Fenrir', 'Gacrux', 'Orus']; // already auditioned, elsewhere
+const GEMINI_SURVEY_LINE_ID = 'mcgrot-12'; // thickest in dialect of the twelve — accent is what's being shortlisted for
+
 function pcmToWav(pcm) {
   const h = Buffer.alloc(44);
   h.write('RIFF', 0); h.writeUInt32LE(pcm.length + 36, 4); h.write('WAVE', 8);
@@ -516,13 +528,24 @@ async function geminiTts(text, voiceName, modelId) {
   throw new Error('no audio in response (got text instead)');
 }
 
-// The twelve solo lines (mcgrot-01..12), excluding the exchange turns —
-// those are a separate corpus and not this unit's scope.
+// The twelve solo lines (mcgrot-01..12), plus the Taxman exchange as a
+// thirteenth, separately-sourced entry — the same three joined turns FAL's
+// loadFalLines() uses, so the text lines up with the FAL "exchange-taxman"
+// clip it's being compared against. Its brief is its own file
+// (scripts/mcgrots-voice-briefs/mcgrot-exch-taxman.txt) rather than one this
+// script assembles, same as every other line.
 function loadGeminiLines() {
   const dialogue = JSON.parse(readFileSync(join(root, 'generated/mcgrots-dialogue.json'), 'utf8'));
   const mcgrot = dialogue.entries.find((e) => e.key === 'MCGROT');
   const lines = mcgrot.lines.filter((l) => /^mcgrot-\d+$/.test(l.id)).sort((a, b) => a.id.localeCompare(b.id));
   if (lines.length !== 12) throw new Error(`expected 12 solo lines in generated/mcgrots-dialogue.json, found ${lines.length}`);
+  const exchangeText = mcgrot.lines
+    .filter((l) => l.id.startsWith('mcgrot-exch-taxman-'))
+    .sort((a, b) => a.turn - b.turn)
+    .map((l) => l.text)
+    .join(' ... ');
+  if (!exchangeText) throw new Error('generated/mcgrots-dialogue.json: no mcgrot-exch-taxman-* lines found');
+  lines.push({ id: 'mcgrot-exch-taxman', text: exchangeText, delivery: '' });
   return { lines, scene: mcgrot.scene };
 }
 
@@ -563,14 +586,20 @@ function geminiFile(lineId, voiceSlug, modelKey) {
 async function runGemini() {
   const { lines: allLines, scene } = loadGeminiLines();
   const linesArg = opt('lines');
-  const wantIds = linesArg ? linesArg.split(',').map((n) => `mcgrot-${String(n).padStart(2, '0')}`) : allLines.map((l) => l.id);
+  const wantIds = linesArg
+    ? linesArg.split(',').map((n) => (n === 'exch-taxman' ? 'mcgrot-exch-taxman' : `mcgrot-${String(n).padStart(2, '0')}`))
+    : allLines.map((l) => l.id);
   const lines = allLines.filter((l) => wantIds.includes(l.id));
   const sweepVoices = opt('voices') ? opt('voices').split(',') : GEMINI_VOICE_SWEEP;
   const wantModels = opt('models') ? opt('models').split(',') : ['flash'];
   for (const m of wantModels) if (!GEMINI_MODELS[m]) throw new Error(`unknown model "${m}" — known: ${Object.keys(GEMINI_MODELS).join(', ')}`);
+  // --voice=<name> overrides the primary-loop voice (default Algenib) so a
+  // second candidate can be completed across an arbitrary --lines= set,
+  // independent of the fixed three-line sweep below.
+  const primaryVoice = opt('voice') || GEMINI_VOICE_PRIMARY;
 
   const jobs = [];
-  for (const line of lines) jobs.push({ line, voice: GEMINI_VOICE_PRIMARY, model: 'flash' });
+  for (const line of lines) jobs.push({ line, voice: primaryVoice, model: 'flash' });
   for (const lineId of GEMINI_SWEEP_LINE_IDS) {
     if (!wantIds.includes(lineId)) continue;
     const line = allLines.find((l) => l.id === lineId);
@@ -690,10 +719,107 @@ async function runGemini() {
   console.log(`Manifest: ${MANIFEST_PATH.replace(root + '/', '')}`);
 }
 
+// A shortlisting pass, not a candidate audition — every Gemini prebuilt
+// voice not already heard, one clip each, on the most dialect-heavy of the
+// twelve solo lines. Kept separate from runGemini()'s main jobs/manifest
+// shape rather than merged in: this is "which of the 26 free options is
+// worth a second listen", not a fourth finalist.
+function surveyFile(voiceSlug) { return `shortlist-${voiceSlug}--${GEMINI_SURVEY_LINE_ID}.mp3`; }
+
+async function runGeminiSurvey() {
+  const unheard = GEMINI_ALL_VOICES.filter((v) => !GEMINI_HEARD_VOICES.includes(v));
+  const brief = loadBrief(GEMINI_SURVEY_LINE_ID);
+  if (!brief) { console.error(`No brief at ${briefPath(GEMINI_SURVEY_LINE_ID).replace(root + '/', '')} — nothing to render.`); process.exit(1); }
+  const { lines: allLines } = loadGeminiLines();
+  const surveyLine = allLines.find((l) => l.id === GEMINI_SURVEY_LINE_ID);
+
+  console.log(`Survey line: ${GEMINI_SURVEY_LINE_ID} (thickest in dialect of the twelve)`);
+  console.log(`Already heard, excluded: ${GEMINI_HEARD_VOICES.join(', ')}`);
+  console.log(`Voices to survey: ${unheard.length} of ${GEMINI_ALL_VOICES.length} total`);
+  console.log(`Model: flash\n`);
+
+  for (const voice of unheard) {
+    const file = surveyFile(voice.toLowerCase());
+    const status = isRendered(join(OUT_DIR, file)) ? 'on disk, will skip' : 'to render';
+    console.log(`  [${voice}] -> ${file} — ${status}`);
+  }
+  // Rough estimate: same heuristic as the main run (line text length, not
+  // the whole brief, drives the audio-duration guess), applied once per voice.
+  const price = GEMINI_MODELS.flash.price;
+  const estSeconds = surveyLine.text.length / 13;
+  const estUsd = unheard.length * ((estSeconds * 25 / 1e6) * price.audio + (brief.length / 4 / 1e6) * price.text);
+  console.log(`\nEstimated spend (rough): ~$${estUsd.toFixed(4)}`);
+
+  if (DRY_RUN) { console.log('\n--dry-run: no network call made.'); return; }
+  if (!GEMINI_KEY) { console.error('\nGEMINI_API_KEY not set. source .env.local first.'); process.exit(1); }
+  if (!YES) { console.error('\nPass --yes to actually spend money.'); process.exit(1); }
+
+  const probeVoice = unheard[0];
+  console.log(`Gemini probe: one call, flash/${probeVoice}, ${GEMINI_SURVEY_LINE_ID}, from its authored brief...`);
+  try {
+    const pcm = await geminiTts(brief, probeVoice, GEMINI_MODELS.flash.id);
+    console.log(`Probe OK — ${(pcm.length / 1024).toFixed(1)}KB of PCM. Proceeding.`);
+  } catch (e) {
+    console.error(`Probe FAILED: ${e.message}\nStopping before spending on the rest.`);
+    process.exit(1);
+  }
+
+  mkdirSync(OUT_DIR, { recursive: true });
+  const loaded = loadManifest();
+  const manifest = loaded.gemini || { lines: [], runs: [] };
+  manifest.survey = manifest.survey || { line: GEMINI_SURVEY_LINE_ID, model: 'flash', heardElsewhere: GEMINI_HEARD_VOICES, runs: [] };
+
+  let ok = 0, fail = 0, skipped = 0;
+  // The probe call above re-renders as this loop's first voice too (same
+  // pattern as runGemini()'s own probe) — one duplicate call, a fraction of
+  // a penny at this line length, in exchange for never risking an unsaved
+  // probe result.
+  for (const voice of unheard) {
+    const file = surveyFile(voice.toLowerCase());
+    const outPath = join(OUT_DIR, file);
+    if (isRendered(outPath)) { console.log(`[${file}] skipped — already on disk`); skipped++; continue; }
+    console.log(`[${file}] rendering via Gemini (flash/${voice})...`);
+    const t0 = Date.now();
+    let pcm = null, err = '';
+    for (let attempt = 1; attempt <= 4 && !pcm; attempt++) {
+      try { pcm = await geminiTts(brief, voice, GEMINI_MODELS.flash.id); }
+      catch (e) {
+        err = e.message;
+        const isRateLimit = /\b429\b/.test(err);
+        if (attempt < 4) await new Promise((r) => setTimeout(r, isRateLimit ? 20000 * attempt : 3000 * attempt));
+      }
+    }
+    const secs = (Date.now() - t0) / 1000;
+    const run = { voice, file, renderedAt: new Date().toISOString(), tookSec: Math.round(secs) };
+    if (!pcm) {
+      console.error(`[${file}] FAILED (${secs.toFixed(0)}s): ${err}`);
+      run.status = 'failed'; run.reason = err; fail++;
+    } else {
+      const wavPath = outPath.replace(/\.mp3$/, '.wav');
+      writeFileSync(wavPath, pcmToWav(pcm));
+      execFileSync('ffmpeg', ['-loglevel', 'error', '-i', wavPath, '-ac', '1', '-b:a', '64k', '-y', outPath]);
+      unlinkSync(wavPath);
+      const duration = ffprobeDuration(outPath);
+      const bytes = statSync(outPath).size;
+      console.log(`[${file}] OK (${secs.toFixed(0)}s) — ${(bytes / 1024).toFixed(1)}KB`
+        + (duration != null ? `, ${duration.toFixed(1)}s audio` : ''));
+      run.status = 'ok'; run.bytes = bytes; run.durationSec = duration;
+      ok++;
+    }
+    manifest.survey.runs = manifest.survey.runs.filter((r) => r.voice !== voice);
+    manifest.survey.runs.push(run);
+    saveManifest({ ...loadManifest(), gemini: manifest });
+    await new Promise((r) => setTimeout(r, 8000));
+  }
+
+  console.log(`\n${ok} ok, ${fail} failed, ${skipped} skipped.`);
+  console.log(`Manifest: ${MANIFEST_PATH.replace(root + '/', '')}`);
+}
+
 // --- dispatch -----------------------------------------------------------------
 async function main() {
   if (SUBCOMMAND === 'self-test' || has('self-test')) return runSelfTest();
-  if (SUBCOMMAND === 'gemini') return runGemini();
+  if (SUBCOMMAND === 'gemini') return has('survey') ? runGeminiSurvey() : runGemini();
   if (SUBCOMMAND === 'fal') return runFal();
   console.error('usage: node scripts/mcgrots-voice-audition.mjs <self-test|gemini|fal> [--dry-run|--yes] [...]');
   process.exit(1);

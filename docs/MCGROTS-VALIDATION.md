@@ -2683,3 +2683,68 @@ audio that doesn't exist, nothing rendered and left out silently.
 **What this does not prove:** whether Pro sounds meaningfully different from
 Flash, or anything else about the 14 new clips. That's the same six criteria,
 same listener, still pending.
+
+### 2026-08-16 — closing FAL out, equalising the finalists, a stray-file audit
+
+**Extending the code, not duplicating it, for an arbitrary-line/voice
+render.** `runGemini()`'s primary-line loop was hardcoded to
+`GEMINI_VOICE_PRIMARY` (Algenib); rendering Orus on nine specific lines
+needed a way to override that voice while still reusing the same probe,
+pacing, 429 backoff, dedup and manifest logic. Added one flag,
+`--voice=<name>`, defaulting to the existing constant — verified by dry-run
+before spending: `gemini --lines=2,4,5,6,8,9,10,11,12 --voice=Orus --dry-run`
+listed exactly 9 jobs, all `[flash/Orus]`, none touching the 3-line sweep
+block (which correctly stayed empty since none of its hardcoded line ids
+were in `--lines=`). Real run: 9 ok, 0 failed.
+
+**The exchange line required a genuine schema extension, not just a flag.**
+`loadGeminiLines()` only ever returned the 12 numeric solo lines; the
+Taxman exchange needed a 13th entry sourced differently (three joined turns
+from `generated/mcgrots-dialogue.json`, matching FAL's own join exactly) and
+addressed by a non-numeric id. Added `mcgrot-exch-taxman` as a literal
+`--lines=` token (mapped directly, bypassing the numeric-padding logic that
+would otherwise mangle it) and appended the line to `loadGeminiLines()`'s
+return after its 12-count assertion, not inside it — the assertion still
+guards the numeric set specifically. Verified by dry-run: `Lines: 1 solo
+(mcgrot-exch-taxman)`, brief loaded, no crash. Two real renders (Algenib,
+Orus), both ok.
+
+**The 26-voice survey is a separate function, deliberately, not a mode
+bolted onto `runGemini()`.** Different manifest shape (`manifest.gemini.survey`,
+keyed on voice alone, not `(lineId, voice, model)` — collision-free by
+construction since there's exactly one line), different naming
+(`shortlist-<voice>--mcgrot-12.mp3`, checked to sort separately from every
+finalist file: `s` > `m` alphabetically, confirmed by listing the directory
+sorted, not assumed from the character comparison alone). Voice list
+verified against Google's published docs immediately before use, not
+recalled from an earlier session's memory of the same page — the two
+fetches agreed, but the check was re-run rather than trusted. 26 ok, 0
+failed, matching the dry-run's plan of 26 exactly.
+
+**File-inventory check, corrected mid-verification.** The usual
+both-directions diff (INDEX.md references vs `ls docs/voice-audition/*.mp3`)
+first reported a spurious mismatch — `04-exchange-taxman--minimax` and
+`2.mp3` as two separate "extra" entries. Root cause: `xargs -n1 basename`
+splits on whitespace, and one filename on disk contains a literal space
+(`04-exchange-taxman--minimax 2.mp3`), so xargs fed `basename` two arguments
+from one line. Not an INDEX bug — re-ran the comparison with `find -exec`
+instead of `ls | xargs`, which respects the filename as one token: 76
+referenced, 76 on disk, clean both directions.
+
+**That "extra" file was investigated, not ignored, once the tooling bug was
+ruled out.** `04-exchange-taxman--minimax 2.mp3` — byte-identical
+(`md5` matched) to the canonical `04-exchange-taxman--minimax.mp3`, same
+15 Aug 12:41 timestamp. Alongside it, an untracked
+`04-exchange-taxman--minimax.mp3.zip` containing a `__MACOSX/._...` entry —
+macOS Finder's own "Compress" artifact, not producible by anything in
+`scripts/mcgrots-voice-audition.mjs` (grepped the file for `zip`: no match).
+The " 2" suffix is macOS's standard rename-on-extract behaviour when a file
+of that name already exists at the destination. Conclusion: someone
+extracted that zip into this folder by hand; neither file came from this
+rig. Both left in place, gitignored, not referenced in `INDEX.md`.
+
+**Suite:** unaffected, no region added.
+
+**What this does not prove:** anything about how Orus, Algenib, MiniMax's
+Taxman take, or any of the 26 shortlist voices actually sound. Six criteria,
+one listener, unchanged.

@@ -370,3 +370,56 @@ both Google engines side by side; Group 3 (Google-only solo lines) covers all
 nine remaining; the "Not yet rendered" section is gone because nothing is
 missing. Every filename cross-checked against the actual directory in both
 directions again: 39 files, 39 references, no gap either way.
+
+## Audition 2, 2026-08-16 — Dan's verdict: FAL is out, it's Algenib vs Orus
+
+**All three FAL engines rejected on accent, confirmed a second time.**
+MiniMax and Maya read English, Qwen read American. Checked once at audition
+1 with the first description, checked again here with the rewritten
+accent-first prompt and a correctly-reused MiniMax voice — failed both
+times. FAL is not a route forward for McGrot; this closes that line of
+investigation rather than leaving it open.
+
+**The decision narrows to two Google voices, Algenib and Orus — but they
+weren't comparable.** Algenib had all twelve lines; Orus only had the three
+that overlap the FAL set. Rendered Orus on the remaining nine
+(`mcgrot-02`/`04`/`05`/`06`/`08`/`09`/`10`/`11`/`12`, Flash, same authored
+briefs) — 9 ok, 0 failed. Both finalists now cover the same thirteen lines
+(the twelve solo lines plus, next, the Taxman exchange).
+
+**The Taxman exchange had never been rendered on Gemini at all** — only the
+twelve solo lines were audition 2's original scope. New brief,
+`scripts/mcgrots-voice-briefs/mcgrot-exch-taxman.txt` (Dan's, committed
+`86740a7`, read and not edited here), rendered on both finalists: Algenib
+and Orus, one call each, both ok. It's compared in `INDEX.md` against the
+MiniMax take specifically — Dan judged MiniMax's *delivery* of this exchange
+the best heard, independent of its accent failing — so it stands as the
+performance bar the two real finalists are measured against, not as a
+candidate.
+
+**A 26-voice shortlisting pass, separate from the finalist decision.**
+Google offers 30 prebuilt voices; 4 had been heard (Algenib, Orus, plus
+Fenrir and Gacrux from an earlier sweep). The other 26 cost nothing extra,
+so each read McGrot's most dialect-heavy line once (`mcgrot-12`, "Chum me
+doon the fit o' the Walk..."), Flash, one clip each — 26 ok, 0 failed. Voice
+names taken from Google's published list
+(https://ai.google.dev/gemini-api/docs/speech-generation), re-checked
+against the docs rather than relied on from memory, so a typo would surface
+as a real API rejection rather than a silent wrong voice.
+
+**`docs/voice-audition/INDEX.md` restructured around the decision.** Group 1
+is now the full Algenib-vs-Orus table, all thirteen lines. Group 2 is the
+Taxman three-way. Group 3 (the Fenrir/Gacrux/Pro sweep and the 26-voice
+shortlist) is explicitly framed as supporting context, not additional
+candidates. FAL moves to an appendix, framed as rejected and kept for the
+record. 76 files referenced, 76 on disk, checked in both directions.
+
+**Two stray files found in the audio folder, neither from this rig.**
+`docs/voice-audition/04-exchange-taxman--minimax.mp3.zip` and
+`04-exchange-taxman--minimax 2.mp3` (the latter macOS's standard
+duplicate-on-extract name, byte-identical to the canonical file, same
+15 Aug 12:41 timestamp as the zip's internal entry). The zip contains a
+`__MACOSX/._...` resource-fork entry — the unmistakable signature of
+Finder's own "Compress" command. Nothing in `scripts/mcgrots-voice-audition.mjs`
+writes a `.zip` anywhere; confirmed by reading the script, not assumed.
+Both files left untouched — not this rig's to remove.

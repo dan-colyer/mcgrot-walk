@@ -294,6 +294,11 @@
         "id": "mcgrot-12",
         "text": "Chum me doon the fit o’ the Walk and I’ll show ye a queue that means something.",
         "delivery": "[proud, already walking]"
+      },
+      {
+        "id": "mcgrot-exch-taxman",
+        "text": "Every penny’s accounted for, if you’d let me finish a sentence. ... That’s no an answer, that’s a— ... Stamped disnae mean answered, pal.",
+        "delivery": ""
       }
     ],
     "runs": [
@@ -550,7 +555,374 @@
         "status": "ok",
         "bytes": 38637,
         "durationSec": 4.730958
+      },
+      {
+        "lineId": "mcgrot-02",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-02--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:58:11.281Z",
+        "tookSec": 3,
+        "status": "ok",
+        "bytes": 21357,
+        "durationSec": 2.570958
+      },
+      {
+        "lineId": "mcgrot-04",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-04--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:58:23.218Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 32109,
+        "durationSec": 3.930958
+      },
+      {
+        "lineId": "mcgrot-05",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-05--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:58:38.297Z",
+        "tookSec": 7,
+        "status": "ok",
+        "bytes": 55533,
+        "durationSec": 6.850958
+      },
+      {
+        "lineId": "mcgrot-06",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-06--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:58:50.691Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 38637,
+        "durationSec": 4.730958
+      },
+      {
+        "lineId": "mcgrot-08",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-08--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:59:02.911Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 44973,
+        "durationSec": 5.530958
+      },
+      {
+        "lineId": "mcgrot-09",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-09--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:59:15.134Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 38829,
+        "durationSec": 4.770958
+      },
+      {
+        "lineId": "mcgrot-10",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-10--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:59:26.838Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 32109,
+        "durationSec": 3.930958
+      },
+      {
+        "lineId": "mcgrot-11",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-11--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:59:39.915Z",
+        "tookSec": 5,
+        "status": "ok",
+        "bytes": 43629,
+        "durationSec": 5.370958
+      },
+      {
+        "lineId": "mcgrot-12",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-12--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:59:51.695Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 33837,
+        "durationSec": 4.130958
+      },
+      {
+        "lineId": "mcgrot-exch-taxman",
+        "voice": "Algenib",
+        "model": "flash",
+        "file": "mcgrot-exch-taxman--gemini-algenib.mp3",
+        "renderedAt": "2026-08-16T09:01:15.686Z",
+        "tookSec": 6,
+        "status": "ok",
+        "bytes": 73197,
+        "durationSec": 9.050958
+      },
+      {
+        "lineId": "mcgrot-exch-taxman",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-exch-taxman--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T09:01:40.310Z",
+        "tookSec": 10,
+        "status": "ok",
+        "bytes": 75117,
+        "durationSec": 9.290958
       }
-    ]
+    ],
+    "survey": {
+      "line": "mcgrot-12",
+      "model": "flash",
+      "heardElsewhere": [
+        "Algenib",
+        "Fenrir",
+        "Gacrux",
+        "Orus"
+      ],
+      "runs": [
+        {
+          "voice": "Zephyr",
+          "file": "shortlist-zephyr--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:03:54.455Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 27693,
+          "durationSec": 3.370958
+        },
+        {
+          "voice": "Puck",
+          "file": "shortlist-puck--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:04:06.637Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 32109,
+          "durationSec": 3.930958
+        },
+        {
+          "voice": "Charon",
+          "file": "shortlist-charon--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:04:18.722Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 31149,
+          "durationSec": 3.810958
+        },
+        {
+          "voice": "Kore",
+          "file": "shortlist-kore--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:04:30.665Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 38253,
+          "durationSec": 4.690958
+        },
+        {
+          "voice": "Leda",
+          "file": "shortlist-leda--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:05:39.773Z",
+          "tookSec": 61,
+          "status": "ok",
+          "bytes": 34029,
+          "durationSec": 4.170958
+        },
+        {
+          "voice": "Aoede",
+          "file": "shortlist-aoede--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:05:53.103Z",
+          "tookSec": 5,
+          "status": "ok",
+          "bytes": 31917,
+          "durationSec": 3.890958
+        },
+        {
+          "voice": "Callirrhoe",
+          "file": "shortlist-callirrhoe--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:06:05.125Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 34413,
+          "durationSec": 4.210958
+        },
+        {
+          "voice": "Autonoe",
+          "file": "shortlist-autonoe--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:06:18.177Z",
+          "tookSec": 5,
+          "status": "ok",
+          "bytes": 32109,
+          "durationSec": 3.930958
+        },
+        {
+          "voice": "Enceladus",
+          "file": "shortlist-enceladus--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:06:30.697Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 32109,
+          "durationSec": 3.930958
+        },
+        {
+          "voice": "Iapetus",
+          "file": "shortlist-iapetus--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:06:42.599Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 30573,
+          "durationSec": 3.730958
+        },
+        {
+          "voice": "Umbriel",
+          "file": "shortlist-umbriel--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:06:54.250Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 35757,
+          "durationSec": 4.370958
+        },
+        {
+          "voice": "Algieba",
+          "file": "shortlist-algieba--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:07:06.403Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 34029,
+          "durationSec": 4.170958
+        },
+        {
+          "voice": "Despina",
+          "file": "shortlist-despina--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:07:18.717Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 31917,
+          "durationSec": 3.890958
+        },
+        {
+          "voice": "Erinome",
+          "file": "shortlist-erinome--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:07:30.607Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 36909,
+          "durationSec": 4.530958
+        },
+        {
+          "voice": "Rasalgethi",
+          "file": "shortlist-rasalgethi--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:07:45.090Z",
+          "tookSec": 6,
+          "status": "ok",
+          "bytes": 34413,
+          "durationSec": 4.210958
+        },
+        {
+          "voice": "Laomedeia",
+          "file": "shortlist-laomedeia--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:08:01.328Z",
+          "tookSec": 8,
+          "status": "ok",
+          "bytes": 32493,
+          "durationSec": 3.970958
+        },
+        {
+          "voice": "Achernar",
+          "file": "shortlist-achernar--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:08:17.257Z",
+          "tookSec": 8,
+          "status": "ok",
+          "bytes": 32877,
+          "durationSec": 4.010958
+        },
+        {
+          "voice": "Alnilam",
+          "file": "shortlist-alnilam--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:08:30.486Z",
+          "tookSec": 5,
+          "status": "ok",
+          "bytes": 33069,
+          "durationSec": 4.050958
+        },
+        {
+          "voice": "Schedar",
+          "file": "shortlist-schedar--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:08:44.974Z",
+          "tookSec": 6,
+          "status": "ok",
+          "bytes": 40557,
+          "durationSec": 4.970958
+        },
+        {
+          "voice": "Pulcherrima",
+          "file": "shortlist-pulcherrima--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:09:18.550Z",
+          "tookSec": 25,
+          "status": "ok",
+          "bytes": 32109,
+          "durationSec": 3.930958
+        },
+        {
+          "voice": "Achird",
+          "file": "shortlist-achird--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:09:34.202Z",
+          "tookSec": 8,
+          "status": "ok",
+          "bytes": 30957,
+          "durationSec": 3.770958
+        },
+        {
+          "voice": "Zubenelgenubi",
+          "file": "shortlist-zubenelgenubi--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:09:49.876Z",
+          "tookSec": 8,
+          "status": "ok",
+          "bytes": 34029,
+          "durationSec": 4.170958
+        },
+        {
+          "voice": "Vindemiatrix",
+          "file": "shortlist-vindemiatrix--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:10:03.884Z",
+          "tookSec": 6,
+          "status": "ok",
+          "bytes": 30189,
+          "durationSec": 3.690958
+        },
+        {
+          "voice": "Sadachbia",
+          "file": "shortlist-sadachbia--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:10:15.666Z",
+          "tookSec": 4,
+          "status": "ok",
+          "bytes": 28077,
+          "durationSec": 3.410958
+        },
+        {
+          "voice": "Sadaltager",
+          "file": "shortlist-sadaltager--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:10:28.824Z",
+          "tookSec": 5,
+          "status": "ok",
+          "bytes": 29037,
+          "durationSec": 3.530958
+        },
+        {
+          "voice": "Sulafat",
+          "file": "shortlist-sulafat--mcgrot-12.mp3",
+          "renderedAt": "2026-08-16T09:10:42.233Z",
+          "tookSec": 5,
+          "status": "ok",
+          "bytes": 33069,
+          "durationSec": 4.050958
+        }
+      ]
+    }
   }
 }

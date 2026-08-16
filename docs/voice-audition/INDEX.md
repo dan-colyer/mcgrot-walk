@@ -1,18 +1,10 @@
 # McGrot's voice — what to listen to, and for what
 
-These are candidate readings of McGrot, the vendor at the heart of the game.
-Nobody has picked a voice yet — that's what listening to these decides. Play
-them in the order below: each group is the *same words*, read by different
-candidates, so you can compare them directly rather than judging one candidate
-across a whole set of different lines.
-
-Five candidates appear below: **MiniMax**, **Qwen** and **Maya** (three
-different voice-generation services), and **Google**, in two different
-versions of its own voice generator — a faster, cheaper one and a slower,
-pricier one, both using the same voice ("Algenib"), plus three more
-Google voices used only on the three most-compared lines. None of the
-candidates have been told which one will "win" — that's the point of
-listening.
+**It's down to two: Google's "Algenib" voice and Google's "Orus" voice.**
+Both cover all twelve of McGrot's lines plus the argument with the tax
+inspector, so this is a genuine side-by-side, not one candidate heard once
+and the other heard a dozen times. Group 1 below is the whole decision.
+Everything after it is supporting material, not a third or fourth option.
 
 ## What to listen for
 
@@ -36,118 +28,139 @@ Six things, and a candidate only works if all six are true. In plain terms:
 
 ---
 
-## Group 1 — the three lines every candidate reads
+## Group 1 — the decision: Algenib vs Orus, every line
 
-The same three lines, across every candidate. This is the most useful
-comparison in the whole set — everything else is one voice heard once.
+All thirteen of McGrot's lines (his twelve regular lines plus his side of
+the argument with the tax inspector), read by both finalists. Play each pair
+back to back.
 
-### "Naw." — can a one-word line stand on its own? (criterion 2)
+| Line | What he's saying | Algenib | Orus |
+|---|---|---|---|
+| 1 | "Mingin? Come back when your own kitchen's had a shift like mine." | `mcgrot-01--gemini-algenib.mp3` (4.2s) | `mcgrot-01--gemini-orus.mp3` (4.4s) |
+| 2 | "Do not call it scraps." | `mcgrot-02--gemini-algenib.mp3` (2.2s) | `mcgrot-02--gemini-orus.mp3` (2.6s) |
+| 3 | "Naw." | `mcgrot-03--gemini-algenib.mp3` (0.8s) | `mcgrot-03--gemini-orus.mp3` (0.9s) |
+| 4 | "Awright pal. Sauce is extra, opinions are free." | `mcgrot-04--gemini-algenib.mp3` (4.1s) | `mcgrot-04--gemini-orus.mp3` (3.9s) |
+| 5 | "Steamboats or stone sober, my queue's still the longest at the fit o' the Walk." | `mcgrot-05--gemini-algenib.mp3` (6.4s) | `mcgrot-05--gemini-orus.mp3` (6.9s) |
+| 6 | "Away and get your messages first — then tell me that's shan." | `mcgrot-06--gemini-algenib.mp3` (4.5s) | `mcgrot-06--gemini-orus.mp3` (4.7s) |
+| 7 | "Pomplé says the sauce needs mercy, and I believe the dog." | `mcgrot-07--gemini-algenib.mp3` (5.2s) | `mcgrot-07--gemini-orus.mp3` (5.3s) |
+| 8 | "Persevere, it says on the bin. Persevere, I say back." | `mcgrot-08--gemini-algenib.mp3` (5.3s) | `mcgrot-08--gemini-orus.mp3` (5.5s) |
+| 9 | "Extra sauce, every time. That's not negotiable, pal." | `mcgrot-09--gemini-algenib.mp3` (3.7s) | `mcgrot-09--gemini-orus.mp3` (4.8s) |
+| 10 | "Radge, the pair of you — queueing for a smell." | `mcgrot-10--gemini-algenib.mp3` (4.0s) | `mcgrot-10--gemini-orus.mp3` (3.9s) |
+| 11 | "I've buried better plans than this under a layer of onions, ken." | `mcgrot-11--gemini-algenib.mp3` (4.0s) | `mcgrot-11--gemini-orus.mp3` (5.4s) |
+| 12 | "Chum me doon the fit o' the Walk and I'll show ye a queue that means something." | `mcgrot-12--gemini-algenib.mp3` (3.5s) | `mcgrot-12--gemini-orus.mp3` (4.1s) |
+| The Taxman argument | see Group 2 below — three ways, not two | `mcgrot-exch-taxman--gemini-algenib.mp3` (9.1s) | `mcgrot-exch-taxman--gemini-orus.mp3` (9.3s) |
 
-| File | Candidate | Length |
-|---|---|---|
-| `01-naw--minimax.mp3` | MiniMax | 1.0s |
-| `01-naw--qwen.mp3` | Qwen | 0.8s |
-| `01-naw--maya.mp3` | Maya | 24.3s |
-| `mcgrot-03--gemini-algenib.mp3` | Google, faster version | 0.8s |
-| `mcgrot-03--gemini-algenib-pro.mp3` | Google, slower/pricier version | 1.0s |
-| `mcgrot-03--gemini-orus.mp3` | Google, a second voice | 0.9s |
-| `mcgrot-03--gemini-fenrir.mp3` | Google, a third voice | 1.2s |
-| `mcgrot-03--gemini-gacrux.mp3` | Google, a fourth voice | 1.0s |
-
-Maya's file is much longer than the word warrants — worth a listen just to
-hear what it actually says.
-
-### "Mingin? Come back when your own kitchen's had a shift like mine." — the flare-up (criterion 1, 3)
-
-| File | Candidate | Length |
-|---|---|---|
-| `02-flare--minimax.mp3` | MiniMax | 4.7s |
-| `02-flare--qwen.mp3` | Qwen | 4.9s |
-| `02-flare--maya.mp3` | Maya | 4.4s |
-| `mcgrot-01--gemini-algenib.mp3` | Google, faster version | 4.2s |
-| `mcgrot-01--gemini-algenib-pro.mp3` | Google, slower/pricier version | 4.9s |
-| `mcgrot-01--gemini-orus.mp3` | Google, a second voice | 4.4s |
-| `mcgrot-01--gemini-fenrir.mp3` | Google, a third voice | 4.8s |
-| `mcgrot-01--gemini-gacrux.mp3` | Google, a fourth voice | 5.1s |
-
-He snaps on "Mingin?" and comes back down for the rest — a candidate that
-stays flat all the way through hasn't got it.
-
-### "Pomplé says the sauce needs mercy, and I believe the dog." — the soft moment (criterion 4)
-
-| File | Candidate | Length |
-|---|---|---|
-| `03-sincerity--minimax.mp3` | MiniMax | 4.6s |
-| `03-sincerity--qwen.mp3` | Qwen | 3.9s |
-| `03-sincerity--maya.mp3` | Maya | 4.6s |
-| `mcgrot-07--gemini-algenib.mp3` | Google, faster version | 5.2s |
-| `mcgrot-07--gemini-algenib-pro.mp3` | Google, slower/pricier version | 4.7s |
-| `mcgrot-07--gemini-orus.mp3` | Google, a second voice | 5.3s |
-| `mcgrot-07--gemini-fenrir.mp3` | Google, a third voice | 6.3s |
-| `mcgrot-07--gemini-gacrux.mp3` | Google, a fourth voice | 5.3s |
-
-Play this against the flare-up above, and against the Taxman clip below — the
-volume and pace should drop, and the roughness in his voice should ease off,
-without losing the accent.
-
-### A note on the two Google versions
-
-The "faster" and "slower/pricier" Google files use the exact same voice —
-the only difference is which of Google's two speech engines made it. Neither
-is more "official" than the other. Listen for whether the pricier one is
-actually better, or whether it's spending more money for no real difference.
+Line 5 and line 11 are worth a specific check: Orus runs noticeably longer
+than Algenib on both (6.9s vs 6.4s, 5.4s vs 4.0s) — worth confirming that's
+pacing and not the voice stumbling.
 
 ---
 
-## Group 2 — two harder passages (MiniMax, Qwen, Maya only)
+## Group 2 — the Taxman argument, three ways
 
-Not read by Google in this round. Both are tougher than the three lines
-above.
-
-### Talked over by the Taxman (criterion 1, 3)
-
-McGrot's side of an argument, cut off and interrupted twice — three short
-bursts, not one smooth line.
+This line has a known-good delivery on record: the MiniMax reading, which
+Dan judged as the best-acted version of this argument he's heard — even
+though MiniMax's accent doesn't pass (see the FAL section below) and it
+cannot ship. It's included here as the performance bar the two real
+finalists are being measured against, not as a candidate.
 
 | File | Candidate | Length |
 |---|---|---|
-| `04-exchange-taxman--minimax.mp3` | MiniMax | 10.3s |
-| `04-exchange-taxman--qwen.mp3` | Qwen | 9.0s |
-| `04-exchange-taxman--maya.mp3` | Maya | 9.0s |
+| `04-exchange-taxman--minimax.mp3` | MiniMax — good delivery, wrong accent, can't ship | 10.3s |
+| `mcgrot-exch-taxman--gemini-algenib.mp3` | Algenib (finalist) | 9.1s |
+| `mcgrot-exch-taxman--gemini-orus.mp3` | Orus (finalist) | 9.3s |
 
-### The comic passage — deliberately garbled nonsense (criterion 5)
-
-This is quoted straight from one of McGrot's own comics. Some of the words
-are AI-mangled nonsense on purpose — that's not a mistake to fix, it's the
-joke. The test is whether it's *read* with total confidence, not stumbled
-through like a mistake.
-
-| File | Candidate | Length |
-|---|---|---|
-| `05-comic-passage--minimax.mp3` | MiniMax | 20.0s |
-| `05-comic-passage--qwen.mp3` | Qwen | 15.9s |
-| `05-comic-passage--maya.mp3` | Maya | 18.3s |
+He's cut off twice and gives up by the third line — the middle turn should
+stop dead mid-word, not trail off politely.
 
 ---
 
-## Group 3 — the rest of McGrot's lines (Google, faster version only)
+## Group 3 — extra context, not part of the decision
 
-Nine more of McGrot's everyday lines, all read by the same Google voice as
-Group 1's faster-version clips. Useful for judging criterion 6 — whether
-this voice still works after several lines in a row, not just for one good
-line.
+These were rendered earlier in the process, before it narrowed to Algenib vs
+Orus. They're kept because they're already made and cost nothing to leave in,
+but nothing here should change the Group 1 decision on its own.
 
-| File | What he's saying | Length |
+### A second engine, and a pricier version of Google's — both ruled out
+
+Two more Google voices (Fenrir, Gacrux) and a slower/pricier version of
+Google's engine (same Algenib voice) were tried on the three lines above that
+overlap with the FAL set, before the two-voice shortlist was settled.
+
+| File | What it is | Length |
 |---|---|---|
-| `mcgrot-02--gemini-algenib.mp3` | "Do not call it scraps." | 2.2s |
-| `mcgrot-04--gemini-algenib.mp3` | "Awright pal. Sauce is extra, opinions are free." | 4.1s |
-| `mcgrot-05--gemini-algenib.mp3` | "Steamboats or stone sober, my queue's still the longest at the fit o' the Walk." | 6.4s |
-| `mcgrot-06--gemini-algenib.mp3` | "Away and get your messages first — then tell me that's shan." | 4.5s |
-| `mcgrot-08--gemini-algenib.mp3` | "Persevere, it says on the bin. Persevere, I say back." | 5.3s |
-| `mcgrot-09--gemini-algenib.mp3` | "Extra sauce, every time. That's not negotiable, pal." | 3.7s |
-| `mcgrot-10--gemini-algenib.mp3` | "Radge, the pair of you — queueing for a smell." | 4.0s |
-| `mcgrot-11--gemini-algenib.mp3` | "I've buried better plans than this under a layer of onions, ken." | 4.0s |
-| `mcgrot-12--gemini-algenib.mp3` | "Chum me doon the fit o' the Walk and I'll show ye a queue that means something." | 3.5s |
+| `mcgrot-01--gemini-fenrir.mp3` | A third Google voice, "Mingin?" line | 4.8s |
+| `mcgrot-01--gemini-gacrux.mp3` | A fourth Google voice, "Mingin?" line | 5.1s |
+| `mcgrot-01--gemini-algenib-pro.mp3` | Pricier engine, same Algenib voice, "Mingin?" line | 4.9s |
+| `mcgrot-03--gemini-fenrir.mp3` | Third voice, "Naw." | 1.2s |
+| `mcgrot-03--gemini-gacrux.mp3` | Fourth voice, "Naw." | 1.0s |
+| `mcgrot-03--gemini-algenib-pro.mp3` | Pricier engine, "Naw." | 1.0s |
+| `mcgrot-07--gemini-fenrir.mp3` | Third voice, Pomplé line | 6.3s |
+| `mcgrot-07--gemini-gacrux.mp3` | Fourth voice, Pomplé line | 5.3s |
+| `mcgrot-07--gemini-algenib-pro.mp3` | Pricier engine, Pomplé line | 4.7s |
+
+### 26 more free voices, one quick check each
+
+Google offers 30 ready-made voices in total; Algenib, Orus and the two above
+(Fenrir, Gacrux) account for 4. The other 26 cost nothing extra to try, so
+every one of them reads McGrot's most dialect-heavy line once, as a sanity
+check that nothing better was overlooked. **This is a shortlisting pass, not
+a third audition** — none of these have been checked against all twelve
+lines, only this one.
+
+All read: "Chum me doon the fit o' the Walk and I'll show ye a queue that
+means something."
+
+| File | Length | File | Length |
+|---|---|---|---|
+| `shortlist-zephyr--mcgrot-12.mp3` | 3.4s | `shortlist-rasalgethi--mcgrot-12.mp3` | 4.2s |
+| `shortlist-puck--mcgrot-12.mp3` | 3.9s | `shortlist-laomedeia--mcgrot-12.mp3` | 4.0s |
+| `shortlist-charon--mcgrot-12.mp3` | 3.8s | `shortlist-achernar--mcgrot-12.mp3` | 4.0s |
+| `shortlist-kore--mcgrot-12.mp3` | 4.7s | `shortlist-alnilam--mcgrot-12.mp3` | 4.1s |
+| `shortlist-leda--mcgrot-12.mp3` | 4.2s | `shortlist-schedar--mcgrot-12.mp3` | 5.0s |
+| `shortlist-aoede--mcgrot-12.mp3` | 3.9s | `shortlist-pulcherrima--mcgrot-12.mp3` | 3.9s |
+| `shortlist-callirrhoe--mcgrot-12.mp3` | 4.2s | `shortlist-achird--mcgrot-12.mp3` | 3.8s |
+| `shortlist-autonoe--mcgrot-12.mp3` | 3.9s | `shortlist-zubenelgenubi--mcgrot-12.mp3` | 4.2s |
+| `shortlist-enceladus--mcgrot-12.mp3` | 3.9s | `shortlist-vindemiatrix--mcgrot-12.mp3` | 3.7s |
+| `shortlist-iapetus--mcgrot-12.mp3` | 3.7s | `shortlist-sadachbia--mcgrot-12.mp3` | 3.4s |
+| `shortlist-umbriel--mcgrot-12.mp3` | 4.4s | `shortlist-sadaltager--mcgrot-12.mp3` | 3.5s |
+| `shortlist-algieba--mcgrot-12.mp3` | 4.2s | `shortlist-sulafat--mcgrot-12.mp3` | 4.1s |
+| `shortlist-despina--mcgrot-12.mp3` | 3.9s | | |
+| `shortlist-erinome--mcgrot-12.mp3` | 4.5s | | |
+
+If nothing here jumps out as obviously better on this one line, Group 1's
+Algenib/Orus decision stands and none of these are worth a full audition.
+
+---
+
+## Appendix — FAL (MiniMax, Qwen, Maya): ruled out, twice measured
+
+**Rejected on accent, confirmed a second time.** Dan's verdict: MiniMax and
+Maya both read English, not Scottish; Qwen read American. This isn't a
+one-off impression — it was checked once at audition 1 (with the first
+description) and again here (with the rewritten, accent-first description,
+and MiniMax's design-once-reuse working correctly) — and failed both times.
+Criterion 3 kills all three regardless of how any of the other five criteria
+go, so none of them were judged past this point. Kept for the record, not as
+something to keep listening to.
+
+| File | Line | Candidate | Length |
+|---|---|---|---|
+| `01-naw--minimax.mp3` | "Naw." | MiniMax | 1.0s |
+| `01-naw--qwen.mp3` | "Naw." | Qwen | 0.8s |
+| `01-naw--maya.mp3` | "Naw." | Maya | 24.3s |
+| `02-flare--minimax.mp3` | "Mingin?..." | MiniMax | 4.7s |
+| `02-flare--qwen.mp3` | "Mingin?..." | Qwen | 4.9s |
+| `02-flare--maya.mp3` | "Mingin?..." | Maya | 4.4s |
+| `03-sincerity--minimax.mp3` | "Pomplé says..." | MiniMax | 4.6s |
+| `03-sincerity--qwen.mp3` | "Pomplé says..." | Qwen | 3.9s |
+| `03-sincerity--maya.mp3` | "Pomplé says..." | Maya | 4.6s |
+| `04-exchange-taxman--minimax.mp3` | Taxman argument | MiniMax — see Group 2, the one FAL file worth a listen | 10.3s |
+| `04-exchange-taxman--qwen.mp3` | Taxman argument | Qwen | 9.0s |
+| `04-exchange-taxman--maya.mp3` | Taxman argument | Maya | 9.0s |
+| `05-comic-passage--minimax.mp3` | Garbled comic passage | MiniMax | 20.0s |
+| `05-comic-passage--qwen.mp3` | Garbled comic passage | Qwen | 15.9s |
+| `05-comic-passage--maya.mp3` | Garbled comic passage | Maya | 18.3s |
 
 ---
 

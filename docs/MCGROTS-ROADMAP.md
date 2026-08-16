@@ -1083,10 +1083,24 @@ rewritten to cover all 39 rendered clips (15 FAL + 24 Gemini across two
 models and four Google voices), grouped by the words spoken, plain language,
 every filename cross-checked against disk.
 
-**Still G5's, not done:** the listen itself and the voice pick (Dan's, with
-Andrew — Flash vs Pro is now part of that decision too), getting the files
-to him (explicitly not this unit's — no Drive upload), TTS rendering of the
-84 lines once a voice is picked, and wiring any of this into the game.
+**2026-08-16, Dan's verdict: FAL is out.** All three engines fail on accent
+— MiniMax and Maya read English, Qwen American — confirmed a second time
+against the rewritten prompt, closing that route rather than leaving it
+open. The decision is now Google's Algenib vs Orus. They weren't
+comparable (Algenib had all 12 lines, Orus only 3), so Orus was rendered on
+the remaining 9 — both finalists now cover the same 13 lines including a
+newly-authored Taxman-exchange brief (`86740a7`) neither had before. A
+26-voice shortlisting pass (every other Google prebuilt voice, one line
+each) ran alongside as a sanity check, explicitly not a third audition.
+`docs/voice-audition/INDEX.md` restructured around Algenib-vs-Orus as the
+headline, FAL demoted to a rejected appendix. Two stray files found in the
+audio folder (a `.zip` and a macOS duplicate-on-extract) — investigated,
+confirmed not from this rig, left in place.
+
+**Still G5's, not done:** the listen itself and the pick between Algenib and
+Orus (Dan's, with Andrew), getting the files to him (explicitly not this
+unit's — no Drive upload), TTS rendering of the 84 lines once a voice is
+picked, and wiring any of this into the game.
 
 ### G6 — Pomplé
 
