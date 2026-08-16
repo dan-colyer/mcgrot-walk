@@ -2935,3 +2935,111 @@ That the head-turn or idle settle READ WELL — that is Dan's judgement. Nor
 whether the remembers-nothing, per-client-only design is enough relationship;
 that is the question G6a exists to let him answer, and is unaffected by anything
 measured here.
+
+## G6b.2 — McGrot, standing at the pitch, wearing a beret
+
+**Landed 2026-08-16.** The brief's own kill-list first: do not simply place the
+existing `mcgrot` archetype and call it done. The orchestrator's render of it
+(`--body=skinned --archetype=mcgrot`) is a photoreal stocky man with no beret, a
+white tee instead of green plaid, khaki trousers instead of green dungarees, and
+dark hair the drawings never show. `docs/CANON.md`'s measured block (G6b.1) found
+the red/orange-red beret in 134 of 141 usable appearances, surviving every
+costume reskin in the corpus, and found that beret-plus-round-head ALONE carries
+recognition. The body is G8a's job; the beret is the cheapest change that moves
+the needle on what G7 needs judged, so it is the whole unit.
+
+**No bake-off question, unlike Pomplé.** `scripts/rig-glb.mjs`'s `BIPEDS` list
+already names `mcgrot`, and `assets/characters/mcgrot-rig.json` exists — G1's A1
+skinned rig applies directly. `src/mcgrots/mcgrot.js` builds him through
+`actor.js`/`actors/skinned.js` exactly as the player's own body does: no
+locomotion, no head-tracking, `actor.snapTo` parks him once at `MCGROT_LOCAL`
+(the same spot `pomple.js` had already assumed for its attention target — this
+module is now the single source, imported by `pomple.js` rather than kept as a
+second copy of the same placed constant), facing `PITCH_YAW` (derived, not
+measured off travel he does not have — see `mcgrot.js`'s header for why that
+number is already the correct one, not a fresh derivation of it).
+
+**The beret is measured geometry, not a guess.** A live probe against the
+normalised mesh (`actors/skinned.js`'s own normalisation, matching
+`rig-glb.mjs`'s) found the `head` bone at unit-y 0.86 (`mcgrot-rig.json`'s own
+`neckY`) and every vertex above that band spanning y 0.861-1.000, x
+-0.079..0.080, z -0.085..0.105. The beret is sized and positioned off those
+numbers, parented to the `head` bone. Colour (`0xa22c16`) was picked on paper,
+then rendered under both the bare shot-tool default and the shipped S2 aerial
+look and re-picked once — the first pick (`0xc23a1a`) read closer to a traffic
+cone than a beret once actually on screen.
+
+**A second, unbriefed fix: the look/hull timing gap.** `looks.js` traverses the
+scene once, at install, and never again — `main.js` awaits the player's own
+`actor.ready` before calling it, but Pomplé and (initially) this figure are
+built fire-and-forget, with nothing in `boot()` ever awaiting them. Measured
+directly (reading `material.type` on the live scene after boot, look=aerial):
+Pomplé's body is `MeshLambertMaterial`, no hull, under every look, always — a
+real, silent, pre-existing gap, not something this unit introduced. Fixed for
+this figure only, by awaiting `mcgrot.ready` in `main.js`'s `boot()` before
+`looks.install(...)`, the same pattern the player's own actor already uses;
+re-measured after the fix, his body and beret both come out `MeshToonMaterial`
+with a hull, matching the rest of the cast. **Pomplé's own copy of this gap is
+untouched** — out of this unit's scope (his geometry and F19/F20 are carried to
+G8a) — and is named here so the next session does not have to re-find it.
+
+### The gate
+
+Three checks, `--only=mcgrot`. Screen-space AABB projection is the same
+technique the van/pomple/statue regions already use.
+
+**Existence + area (the weak check, named as such).** `Box3().setFromObject`
+walks descendants regardless of `.visible` — true here as it is for the statue
+region, confirmed directly rather than assumed. Measured area, all five
+anchors: counter 4.05%, wall 1.26%, kerb 1.20%, far 0.65%, back 0.70% — inside
+the van region's own 0.3%/70% band with real margin, so the band is not
+stretched to fit him.
+
+**He is drawn — a toggle, not a static "not flat" check.** The van/pomple
+regions gate content with a static stddev-vs-flattest-corner check. Built the
+same way here first, then FAULT-INJECTED (`actor.group.visible = false`) before
+trusting it: the static check STAYED GREEN with the whole figure invisible
+(stddev 21.0-30.3 against a flat-corner control of 0.0, comfortably over that
+check's own +10 floor) — his rect overlaps the van's own counter, shelf and
+sauce-bottle detail behind him, which is "not flat" all by itself. This is
+exactly the weak independence ROADMAP § 10 F20 records for Pomplé at this same
+spot (there, found by review, after landing; here, found by fault-injecting the
+check before landing it). Replaced with an on/off toggle of the `mcgrot` group
+in the same boot, diffed inside his own rect — the technique the statue region
+and the beret check below already use. A dry run (two captures with him already
+invisible in both) reads exactly 0.0 at every anchor; this renderer is
+deterministic, so any positive reading is real signal. Measured range with him
+genuinely toggling, all five anchors: counter 8.1, wall 14.1, kerb 21.5, far
+17.6, back 17.4.
+
+**The beret, gated directly.** `mcgrot:beret` toggled invisible in the same
+boot, same anchor, diffed inside the BERET's OWN projected rect (not his whole
+body) — isolating its contribution the way the statue region isolates its own
+from the massing behind it. Dry run: 0.0 at every anchor. Measured range with
+the beret genuinely toggling: counter 22.9, wall 22.4, kerb 29.2, far 20.0, back
+16.1. No anchor is diluted the way the statue's own `counter` reading is — the
+beret's rect sits at the top of his silhouette, mostly clear of the player's own
+capsule standing at the counter anchor's viewing spot in front of him.
+
+**Falsified 2026-08-16**, each against the committed baseline, one at a time,
+restored before the next:
+
+1. `actor.group.visible = false` in `mcgrot.js` — existence+area stayed green
+   (identical numbers, confirming it is blind to visibility as documented
+   above); both toggle checks went red together (diff 0.0 everywhere), and this
+   is what caught the static-check's weak independence before it shipped (see
+   above).
+2. Beret built but attached with `visible = false` — the mcgrot-toggle check
+   stayed green (his body, still visible, reads diff 4.8-21.4 — lower than with
+   the beret present too, since there is now less to remove); the beret check
+   alone went red (diff 0.0 everywhere), proving the two checks are independent
+   of each other rather than one riding on the other's signal.
+
+Full suite: **80/80** (76 prior + 4 new).
+
+### Not gated
+
+That the beret READS AS a beret, on a figure that reads as McGrot — that is
+Dan's G7 judgement, and no number above substitutes for it. Nor whether the
+look/hull fix above changes how the rest of the cast should be treated; that is
+a question for whoever next touches Pomplé's own copy of the gap.

@@ -983,53 +983,87 @@ try {
       // measured range, 0.649%-4.051%, sits inside it with real margin on
       // both sides, so the band is not stretched to fit him): >0.3% rules
       // out a handful of stray pixels, <70% rules out a projection bug
-      // reading as "fills the shot".
+      // reading as "fills the shot". THIS IS THE WEAK CHECK, and named as
+      // such: `Box3().setFromObject` walks descendants regardless of
+      // `.visible` (measured directly here, the same fact the statue region
+      // documents about itself) — it proves the rig loaded and sits at a
+      // sensible spot, not that anything actually drew. The toggle checks
+      // below are what prove that.
       const areaOf = (r) => r ? Math.max(0, r.ux1 - r.ux0) * Math.max(0, r.uy1 - r.uy0) : 0;
       const areaRows = rows.map((v) => ({ id: v.id, area: areaOf(v.rect), rect: v.rect }));
       const badArea = areaRows.filter((v) => !v.rect || !v.rect.anyInFront || v.area < 0.003 || v.area > 0.7);
-      check('mcgrot occupies a sensible fraction of the frame at every anchor',
+      check('mcgrot occupies a sensible fraction of the frame at every anchor (existence only — see the toggle checks below for visibility)',
         badArea.length === 0,
         areaRows.map((v) => `${v.id} ${(v.area * 100).toFixed(2)}%`).join(' / '));
 
-      // THE CONTROL: the flattest of four small corner patches, same
-      // technique as the van/pomple regions — proving the stddev metric can
-      // read "flat" as flat before trusting it to read his rect as "not
-      // flat". Measured stddev at his own rect, all five anchors: 51.4-79.5,
-      // against a flattest-corner control of exactly 0.0 at every one.
-      const stddevOf = (buf, x0, x1, y0, y1) => {
-        const png = PNG.sync.read(buf);
-        const px0 = Math.max(0, Math.round(x0 * png.width));
-        const px1 = Math.min(png.width - 1, Math.round(x1 * png.width));
-        const py0 = Math.max(0, Math.round(y0 * png.height));
-        const py1 = Math.min(png.height - 1, Math.round(y1 * png.height));
-        let sum = 0, sumSq = 0, n = 0;
+      // Shared by both toggle checks below: mean absolute luminance diff
+      // between two captures, inside one unit-rect only.
+      const meanAbsDiffRect = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let sum = 0, n = 0;
         for (let y = py0; y <= py1; y++) {
           for (let x = px0; x <= px1; x++) {
-            const o = (y * png.width + x) * 4;
-            const l = 0.2126 * png.data[o] + 0.7152 * png.data[o + 1] + 0.0722 * png.data[o + 2];
-            sum += l; sumSq += l * l; n++;
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            sum += Math.abs(la - lb); n++;
           }
         }
-        if (!n) return 0;
-        const mean = sum / n;
-        return Math.sqrt(Math.max(0, sumSq / n - mean * mean));
+        return n ? sum / n : 0;
       };
-      const flattestCorner = (buf) => Math.min(
-        stddevOf(buf, 0, 0.06, 0, 0.05),
-        stddevOf(buf, 0.94, 1, 0, 0.05),
-        stddevOf(buf, 0, 0.06, 0.95, 1),
-        stddevOf(buf, 0.94, 1, 0.95, 1),
-      );
-      const contentRows = rows.map((v) => {
+
+      // THE ACTUAL VISIBILITY CHECK, and why it is a toggle rather than the
+      // van/pomple regions' static "not flat" technique. FAULT-INJECTED
+      // first (`actor.group.visible = false` in mcgrot.js): the static
+      // stddev-vs-flattest-corner check the van/pomple regions use STAYED
+      // GREEN with the whole figure invisible (stddev 21.0-30.3 against a
+      // flat-corner control of 0.0, comfortably over that check's own +10
+      // floor) — his rect overlaps the van's own counter, shelf and
+      // sauce-bottle detail behind him, which is plenty of "not flat" all by
+      // itself. This is the exact weak-independence the brief's own pointer
+      // (docs/MCGROTS-ROADMAP.md § 10, F20) warns a check can have at this
+      // spot, measured directly rather than assumed. So this checks HIM,
+      // specifically: `mcgrot` toggled invisible in the SAME boot, same
+      // anchor, diffed inside his own rect only — the technique the beret
+      // check below and the statue region already use, not copied from
+      // van/pomple's weaker one.
+      const mcgrotRows = [];
+      for (const v of rows) {
         const r = v.rect;
-        const mcgrotStddev = r ? stddevOf(v.buf, r.ux0, r.ux1, r.uy0, r.uy1) : 0;
-        const flatStddev = flattestCorner(v.buf);
-        return { id: v.id, mcgrotStddev, flatStddev };
-      });
-      const badContent = contentRows.filter((v) => v.mcgrotStddev <= v.flatStddev + 10);
-      check('the mcgrot rect holds rendered content, not flat background (control: the flattest corner)',
-        badContent.length === 0,
-        contentRows.map((v) => `${v.id} mcgrot=${v.mcgrotStddev.toFixed(1)} flat=${v.flatStddev.toFixed(1)}`).join(' / '));
+        if (!r) { mcgrotRows.push({ id: v.id, diff: 0, missing: true }); continue; }
+        await page.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.snapTo(a);
+          d.stepFrames(2);
+        }, v.id);
+        const withOn = await page.screenshot({ type: 'png' });
+        const originalVisible = await page.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const vis = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return vis;
+        });
+        const withOff = await page.screenshot({ type: 'png' });
+        await page.evaluate((vis) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = vis; window.__mcgrotsDebug.stepFrames(1);
+        }, originalVisible);
+        mcgrotRows.push({ id: v.id, diff: meanAbsDiffRect(withOn, withOff, r) });
+      }
+      // >3 rules out anti-aliasing noise on an unchanged frame — a dry run
+      // (two captures with him already invisible in both) reads exactly 0.0
+      // at every anchor tried, same as the beret's own dry run below; this
+      // renderer is deterministic (CLAUDE.md), so any positive reading is
+      // real signal. Measured range with him genuinely toggling, all five
+      // anchors: see the landing commit for the numbers this was judged
+      // against.
+      const badMcgrot = mcgrotRows.filter((v) => v.missing || v.diff <= 3);
+      check('the mcgrot rect changes when toggled off in the same boot, at every anchor (control: same toggle, dry run reads 0.0)',
+        badMcgrot.length === 0,
+        mcgrotRows.map((v) => v.missing ? `${v.id} MISSING` : `${v.id} diff=${v.diff.toFixed(1)}`).join(' / '));
 
       // THE BERET. This is the whole unit, so it is gated directly rather
       // than trusted to have worked because the geometry was added — the
@@ -1040,18 +1074,18 @@ try {
       // measured only inside the BERET's own projected rect (not his whole
       // body) — isolating the beret's own contribution from the rest of him,
       // the same isolation the statue region uses against the van/massing
-      // behind it. A DRY RUN first (two captures with the beret already off
-      // in both) reads EXACTLY 0.0 at every anchor tried — this renderer is
-      // deterministic (CLAUDE.md), so any positive reading below is real
-      // signal, not noise. Measured range with the beret genuinely toggling,
-      // all five anchors: 11.09-29.24 (default boot, no `?look=` — the same
-      // boot this check actually runs under). No anchor is diluted the way
-      // the statue's `counter` reading is: the beret's own rect sits at the
-      // TOP of his silhouette, mostly clear of the player's own capsule
-      // standing at the counter anchor's viewing spot in front of him.
+      // behind it, and the check above now uses for him. A DRY RUN first
+      // (two captures with the beret already off in both) reads EXACTLY 0.0
+      // at every anchor tried — this renderer is deterministic (CLAUDE.md),
+      // so any positive reading below is real signal, not noise. Measured
+      // range with the beret genuinely toggling, all five anchors:
+      // 11.09-29.24 (default boot, no `?look=` — the same boot this check
+      // actually runs under). No anchor is diluted the way the statue's
+      // `counter` reading is: the beret's own rect sits at the TOP of his
+      // silhouette, mostly clear of the player's own capsule standing at the
+      // counter anchor's viewing spot in front of him.
       const beretRows = [];
       for (const v of rows) {
-        const r = v.rect;
         const beretRect = await page.evaluate((a) => {
           const d = window.__mcgrotsDebug;
           d.snapTo(a);
@@ -1088,22 +1122,7 @@ try {
           const b = window.__mcgrotsDebug.scene.getObjectByName('mcgrot').getObjectByName('mcgrot:beret');
           b.visible = vis; window.__mcgrotsDebug.stepFrames(1);
         }, originalVisible);
-
-        const a = PNG.sync.read(withOn), b = PNG.sync.read(withOff);
-        const px0 = Math.max(0, Math.round(beretRect.ux0 * a.width));
-        const px1 = Math.min(a.width - 1, Math.round(beretRect.ux1 * a.width));
-        const py0 = Math.max(0, Math.round(beretRect.uy0 * a.height));
-        const py1 = Math.min(a.height - 1, Math.round(beretRect.uy1 * a.height));
-        let sum = 0, n = 0;
-        for (let y = py0; y <= py1; y++) {
-          for (let x = px0; x <= px1; x++) {
-            const o = (y * a.width + x) * 4;
-            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
-            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
-            sum += Math.abs(la - lb); n++;
-          }
-        }
-        beretRows.push({ id: v.id, diff: n ? sum / n : 0 });
+        beretRows.push({ id: v.id, diff: meanAbsDiffRect(withOn, withOff, beretRect) });
       }
       // >3 rules out anti-aliasing noise on an unchanged frame (the dry run
       // above measured exactly 0.0, not just "under 3" — there is no
