@@ -68,8 +68,28 @@ So, per unit, every time, no judgement call:
 
 ```bash
 herdr worktree create --cwd "$PWD" --branch <unit> --label <unit> --no-focus
-herdr agent start <fresh-name> --kind claude --pane <returned-pane-id> -- --permission-mode auto
+herdr agent start <fresh-name> --kind claude --pane <returned-pane-id> \
+  -- --permission-mode auto --effort high
 ```
+
+**`--effort` is not optional, because the default is wrong for a worker.**
+Dan's ruling, 2026-08-16, on noticing it. `CLAUDE_CONFIG_DIR` points at
+`~/.claude-personal`, whose `settings.json` sets `"effortLevel": "xhigh"`, and
+every agent started under it inherits that — G6b.1 catalogued JPEGs on two
+xhigh sessions before anyone looked. The orchestrator wants xhigh; a worker
+following a written brief does not.
+
+**`high` for anything that designs a gate. `medium` for a unit with no gate**
+— research, extraction, a document. The split is not arbitrary: gate design is
+where a worker has actually failed here, and it failed by reasoning wrongly
+rather than by executing badly. G5e's self-test exercised `validatePayload()`
+in isolation and proved nothing about the product; G6a's own report reached
+"reads as a legible dog" from close-ups it chose instead of the anchors the
+player sees. Neither is fixed by more diligence. Execution work — read 78
+images, write down what is in them — has never been the failure mode.
+
+Do not restart a running worker to change its effort. The switch costs more
+than it saves mid-unit.
 
 Give the agent a **new name tied to the unit** (`comics-a`, `pomple`), not a
 name tied to the model (`sonnet`). A model-shaped name is what makes reusing
