@@ -2001,6 +2001,41 @@ likely right and least likely to disturb an existing capture — but it touches
 the anchor rig, so whoever takes it needs a control that shows the capsule
 still renders where it should.
 
+### F23 — the beret renders more saturated than the corpus draws it (G6b.2, found in review, OPEN)
+
+**Severity: low, cosmetic, and an authoring/renderer split worth stating
+precisely, because the obvious fix is aimed at the wrong end.** Dan flagged the
+beret as "a bit bright" on the G6b.2 captures. Measured rather than argued:
+
+| | colour | luma |
+|---|---|---|
+| authored material (`mcgrot:beret`) | `#a22c16` | 79 |
+| as rendered, `--look=aerial --anchor=counter` | `#f44920` | 106 |
+| corpus saturated red-orange, 60 comics | `#b06010` / `#a05010` (modal bins) | 107 |
+
+**Brightness is not the problem — saturation is.** The render's luminance
+(106) lands almost exactly on the corpus (107). What diverges is chroma: the
+drawings' red-orange is a muted rust, the render is a vivid orange-red. So
+whoever picked `#a22c16` picked sensibly from the corpus, and the toon ramp's
+lit band is what pushes it up and out. **Do not "fix" this by darkening the
+authored colour without first looking at the ramp** — that would trade a
+correct source value for a compensating one and hide the cause.
+
+**What the corpus row does and does not prove.** It samples every saturated
+red-orange pixel across 60 comics, not berets specifically, so it includes
+brick, the van's awning and the warm sepia strips. It is good evidence about
+the palette the beret has to sit in, and weaker evidence about the beret alone.
+A tighter measurement would isolate beret pixels per comic; nobody has done
+that, and it may not be worth it given the fix is a single value either way.
+
+Reproduce with:
+
+```
+node -e "…"  # sample /tmp/m-counter.png over the beret bbox (see § G6b.2 in
+             # docs/MCGROTS-VALIDATION.md for the exact window)
+node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg
+```
+
 ## 11. Still open
 
 0.5 **McGrot's voice — Dan curates this one.** Added 2026-08-12 on his call:
