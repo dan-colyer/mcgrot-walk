@@ -101,11 +101,27 @@ charcoal is never drawn — not once, in either half, independently.** Both
 workers reached this separately, which is why it is stated flatly. The palette
 line ("charcoal, cream, faded red, dull blue") needs the same revision.
 
-**Where the two halves disagree, and it is unresolved:** set-b finds him
-overwhelmingly puppy-proportioned — oversized head and paws on a small body —
-while set-a reads a labrador/terrier-cross of ordinary adult proportion. This is
-a real split on the single most load-bearing modelling decision for him, and
-G6a's stand-in already assumes the adult read. Settle it before G8a builds him.
+**The two halves disagreed on proportion. SETTLED 2026-08-16 in favour of set-b:
+puppy-proportioned — oversized head, oversized paws, small body.** Set-a read
+him as a labrador/terrier-cross of ordinary adult proportion.
+
+Dan's ruling and the reason it decides the question: **he should look like
+Pomplé, not a real equivalent.** An anatomically correct dog *is* the realistic
+read, and that is what the ruling excludes. Both halves independently found his
+ears outsized — set-a calls them "often the single most legible part of him at a
+distance" — and outsized ears on a correctly proportioned body is not a thing
+the drawings do; it is a cartoon proportion the adult read was quietly
+normalising away.
+
+It is the same argument the beret settles for McGrot. Exaggeration is what makes
+a small shape read as *him* rather than as a dog, and legibility at distance is
+the whole job of a silhouette. It also points the same way as ROADMAP § 10 F20,
+where he currently reads as an unreadable dark mass head-on: a bigger head and
+bigger ears are exactly what that fault wants.
+
+**G6a's stand-in assumes the adult read and is therefore the wrong shape.** Not
+fixed there — the mesh is replaced at G8a, and F19/F20 are carried for the same
+reason.
 
 **The rest of canon holds.** The sign prop, the silent moral-compass role and the
 "tired judgemental stare" all match the drawings; the stare is the one place set-b
