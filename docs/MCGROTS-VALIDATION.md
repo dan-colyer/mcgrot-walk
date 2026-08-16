@@ -3101,3 +3101,180 @@ the anchor is judgeable at all. Not this unit's fault and not Pomplé's either �
 it is where the counter camera sits relative to the player's own mesh — but G7
 puts Dan at that anchor for the readings, so it needs settling before the kill
 criterion is run.
+
+## G7b — three pre-visit fixes, plus two follow-ups Dan found
+
+Landed 2026-08-16, on `docs/briefs/g7b-pre-visit-fixes.md`, ahead of G7's kill
+criterion. Full suite went from 80/80 to 86/86 (+2 F21, +2 F22, +1 F22
+follow-up 1, +1 F22 follow-up 2; F23 added no gate, by the brief's own
+instruction — a colour judgement, not a threshold).
+
+### F21 — Pomplé's own readiness, closing F20 for free
+
+Confirmed exactly as ROADMAP § 10 F21 described: `pomple.js` was built
+fire-and-forget at module scope with nothing awaiting his own `ready`
+promise, so `looks.js`'s one-time scene traverse ran before his meshes
+existed. Fix is the pattern already used for `mcgrot.js`: `main.js` now
+awaits `pomple.ready` before `looks.install(...)`.
+
+```
+before: pomple:body/head = MeshLambertMaterial, no hull, under every look
+after  (?look=aerial): MeshToonMaterial, hull:pomple:body + hull:pomple:head
+control (?look=none):  still MeshLambertMaterial, no hull
+```
+
+New `pomple`-region gate asserts the on-arm against that control. **Fault
+injection was not simple** — removing the `await` alone did not reproduce
+the bug: `mcgrot.ready`'s own await (added ahead of it) gives Pomplé's
+concurrent glb fetch enough incidental real time to finish anyway in this
+harness. Reproducing it needed a temporary, deliberate 500ms delay on
+Pomplé's own load, added and removed around the fault-injection run — a
+race that only sometimes reproduces is not a fixed bug, it is a bug that
+got lucky, so the fix has to be proven against the WORST case, not the
+common one.
+
+**F20 closed as predicted.** Cropped counter-anchor captures, before/after:
+pre-fix a flat brown mass with no edge; post-fix a crisp black ink line
+separating ears, snout and body. F20 was a symptom of F21, exactly as the
+roadmap entry's own 2026-08-16 revision guessed.
+
+pomple region: 7/7.
+
+### F22 — the player's own capsule at `counter`, plus two things the fix itself created
+
+**The fix.** `main.js` hides the player's own body (`actor.group`, never an
+actor — Dan's "actors must not affect the camera" ruling stays intact) when
+the camera sits far enough behind it. Per-anchor camera-to-actor distance,
+measured: counter 4.92m, kerb 5.61m, wall 5.90m, far 6.71m, back 9.27m — a
+0.69m gap between counter and its nearest sibling. `SELF_OCCLUDE_HIDE_DIST`
+(5.2) sits in that gap. Hides rather than fades, matching the street's own
+first-person precedent (no player mesh drawn at all).
+
+New gate: projects McGrot's AABB into screen space and counts, via an
+on/off toggle, what FRACTION of that rect is actually his own pixels —
+not a mean diff, which cannot tell "a little occluded" from "a lot". Floor
+measured at 20% (fix on: 30.2%, matching the natural unoccluded range at
+every other anchor, 28.8–33.7%; fix off, named control
+`setSelfOcclusion(false)`: 16.4%).
+
+**Gate flake, chased and fixed.** The gate failed non-deterministically in
+clean bursts — ~10 runs passing, then ~10 failing at a stable 15.5%, never
+in between. Two wrong theories tried first (a fresh cel/hull material's
+shader needing settle frames; a stale WebGL compositor frame needing a
+double-`requestAnimationFrame` wait) — neither changed the failure rate,
+which was the actual tell: a genuine timing race reads as noise across
+independent runs, not as clean multi-run bursts. Real cause: the region ran
+on the real wall clock, and `rota.js`'s reader stood at `SPOT_LOCAL = [0.35,
+2.1]` — almost exactly McGrot's own `[0.35, 1.3]` — for roughly half of any
+real-time window. Fixed by pinning `rota.setClock(980)` (`whatTheyAreDoing`
+returns null there — the same "empty" reference point the rota region's own
+sequence strip already uses). 20/20 runs afterward read an identical 30.2%.
+
+**Dan re-measured on a detached worktree and found the flake fix had hidden
+a real fault rather than closed it — see docs/briefs, the F22 follow-up
+note is not filed separately, this is that record.** Two things, both
+consequences of the fix above, both invisible to a numeric gate that only
+checks a pinned-empty moment:
+
+1. **The reader still occludes McGrot on the real clock.** Confirmed by
+   captures: real wall clock shows a featureless capsule over his torso,
+   apron and right arm; pinned-980 shows him clear. `actor.group.visible`
+   was `false` in both — not the player's capsule, the reader's. Root
+   cause: `rota.js` predates McGrot (G4a; he landed in G6b.2), so
+   `SPOT_LOCAL`'s x (0.35) was only ever checked against the player's own
+   capsule, never against a real figure standing at the van.
+
+   Fix: `SPOT_LOCAL` moved to `[-1.5, 2.1]`. Picked by rendering five
+   candidates (±1.0, ±1.5, ±2.0) at the pinned 'reading' moment from every
+   anchor — the positive-x candidates walk the reader into Pomplé's own
+   spot (`POMPLE_LOCAL` is on the same side); the negative-x ones clear
+   McGrot everywhere, −1.5 with the widest margin. Re-verified against the
+   ORIGINAL corridor design's own constraint (nearest approach of a live
+   sampled arrival to any anchor's eye): 5.30m, still clear of the 4.73m
+   the original `[-8,2.1]`/`[8,2.1]` pair measured.
+
+   New gate: same visible-pixel-fraction technique, sampled at three real
+   reader-present clocks (995 arriving, 1020 reading, 1050 leaving) rather
+   than the pinned-empty moment — all three read 30.5%, indistinguishable
+   from no reader being there. mcgrot region: 7/7.
+
+2. **The player's own body popped mid-walk.** `updateSelfOcclusion()` ran
+   every frame off a LIVE distance, and the camera eases continuously
+   during a walk — so the distance sweeps continuously through
+   `SELF_OCCLUDE_HIDE_DIST`. Measured, kerb → counter, 240 frames stepped:
+   exactly one flip, frame 71, `actor.progress` 0.304 — the body vanishing
+   in one frame, in plain view, a third of the way through a watched walk.
+
+   First fix tried — resolve visibility once at `goTo()` time, from the
+   DESTINATION anchor's own static distance — was rendered and rejected: it
+   fixed the walk INTO `counter` (hidden from frame 0, while the actor is
+   still small and far off) but produced the same pop, reversed, walking
+   OUT of it (visible from frame 0, large and centred, in the frame
+   `counter` was still showing).
+
+   Landed fix: hidden for the WHOLE walk if EITHER the anchor being left
+   or the one being arrived at would hide it. `walkStartHidden` (read from
+   live visibility at the moment a walk starts, not a stored anchor id —
+   the same reason F11's `previous` avoids one) carries the departure side;
+   the destination anchor's own static value carries the arrival side once
+   the walk completes. A walk into `counter` hides immediately; a walk out
+   of it stays hidden until arrival. Both boundaries land at a moment the
+   camera is far from the OTHER anchor's own tight framing.
+
+   Picked "hide for the whole walk" over a short fade: a translucent player
+   body risks interacting with `looks.js`'s separately-rendered hull/ink
+   pass in ways nothing in this project has tried, where a precomputed
+   boolean touches nothing about how anything renders.
+
+   **Also found while building this, not part of the original report:**
+   `setReviewCamera` (`scripts/mcgrots-bakeoff.mjs`'s G1 body-comparison
+   rig — never exercised by this suite) parks the camera 2.6–2.9m from the
+   actor by design, inside `HIDE_DIST` at every anchor. The live-distance
+   version of F22 hid the actor throughout every review-camera capture
+   taken since F22 landed, silently, because nothing in this repo's own
+   gates drives that mode. `!reviewMode` in `updateSelfOcclusion` is the
+   fix.
+
+   New gate (anchors region): drives both walk directions, asserts no
+   visibility flip occurs at `actor.progress` strictly between 0.02 and
+   0.98 while `walking` is still true. anchors region: 9/9.
+
+Both F22 follow-ups were fault-injected (reverting `SPOT_LOCAL`; reverting
+`updateSelfOcclusion` to the live-distance version) and confirmed to
+reproduce the exact reported symptom before being restored.
+
+### F23 — the beret, retuned by hue rather than by darkening
+
+Dan flagged the beret as "a bit bright." Measured: rendered luma (106)
+already matched the corpus's own saturated red-orange (107, 60 comics
+sampled) — the divergence was never brightness.
+
+Checked the two-band ramp FIRST, per the brief, before touching the colour.
+The lit band is `(255,255,255)` — unity gain. Toggled `renderer.toneMapping`
+(`NoToneMapping` vs ACES) and `lights.sun.color` (neutral white vs the
+scene's warm `0xffd9a0`) independently; neither materially closed the gap.
+**The ramp is not the cause.**
+
+What actually diverged, in proper HSL (not the raw RGB-channel comparison
+the original table used): the old authored value's hue is 9.4° (near-pure
+red); the corpus's own saturated red-orange samples average ~28°, a
+genuinely different colour, not a paler version of the same one. A hue
+shift toward orange raises luma at a fixed saturation/lightness (green
+carries 71.5% of luma's weight), so a value matching the corpus's hue AND
+its already-correct luma together needs a LOWER authored lightness than
+before — the same "pick on paper, render, re-pick" process
+`mcgrot.js`'s own comment already documents for the original value, run one
+iteration further. This is not the "darken to compensate" mistake the brief
+warned against: that warning was about brightness, which already matched;
+this is compensating for a fixed property of colour itself (an orange
+reads brighter than an equally-saturated red at the same input lightness),
+derived from the SAME rendered-luma target the original pick already used.
+
+Landed: `0xa22c16` → `0x753d10`. Rendered (`--look=aerial --anchor=counter`):
+`#c45711`, hue 23.5°, saturation 84%, luma 105.1 — against corpus hue ~28°,
+saturation ~82%, luma 107. Reads as a warm rust in the capture rather than
+a vivid orange-red. Kerb-distance legibility (G6b.1's "beret alone carries
+recognition" claim) unaffected — still a clear, saturated disc at range.
+
+No new gate, per the brief: a colour judgement, not a numeric threshold.
+**This is Dan's call to confirm from the capture, not a closed question.**

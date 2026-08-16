@@ -1900,7 +1900,15 @@ Y-band split with it. Fixing the current geometry buys nothing that survives.
 Judged from `1-counter-detached-fragment.png` and its two controls; regenerable
 by hiding each part in turn at the `counter` anchor.
 
-### F20 — Pomplé is unreadable head-on at the counter, and the gate passes it (G6a, CARRIED to G8a)
+### F20 — Pomplé is unreadable head-on at the counter, and the gate passes it (G6a, CLOSED 2026-08-16 by G7b)
+
+**CLOSED.** Confirmed a symptom of F21, exactly as this entry's own
+2026-08-16 revision predicted: fixing F21 and re-rendering `counter` shows
+Pomplé with a crisp ink outline separating ears, snout and body, where the
+pre-fix capture shows a flat brown mass with no edge. See
+`docs/MCGROTS-VALIDATION.md` § G7b for the before/after. The remainder of
+this entry is kept for the record of how F20 was originally found and why
+it was mistaken for a lighting question.
 
 **Severity: low, and partly a lighting question rather than a modelling one.**
 At `counter` he turns to face the player — the head-turn working as designed —
@@ -1928,7 +1936,16 @@ which is what he demonstrably is. Do not spend G8a's lighting budget on this
 before fixing F21 and re-rendering `counter`; the cheapest test is that one
 capture, and it may close F20 for free.
 
-### F21 — Pomplé renders un-inked and un-cel-shaded under every look, silently (G6a, found by G6b.2, CARRIED)
+### F21 — Pomplé renders un-inked and un-cel-shaded under every look, silently (G6a, found by G6b.2, CLOSED 2026-08-16 by G7b)
+
+**CLOSED.** `main.js` now awaits `pomple.ready` before `looks.install(...)`,
+the same pattern used for `mcgrot.js`. Diagnostic confirms both meshes now
+read `MeshToonMaterial` with their own ink hull under `?look=aerial`, and
+still plain `MeshLambertMaterial` under `?look=none` (the control). New gate
+in the `pomple` region: 7/7. Fault-injection needed an artificial delay on
+Pomplé's own asset load to reproduce reliably — see
+`docs/MCGROTS-VALIDATION.md` § G7b for why. The remainder of this entry is
+kept for the record.
 
 **Severity: low, cosmetic, and structural rather than accidental.** `looks.js`
 traverses the scene once, at install, and never again — `main.js` awaits the
@@ -1974,7 +1991,22 @@ about his silhouette, his colour and his legibility — G6a's own review
 included — was made on an un-inked Lambert dog. G8a should not treat those
 judgements as evidence about the model.
 
-### F22 — the player's own capsule occludes McGrot at the `counter` anchor (G6b.2, found in review, OPEN and blocking G7)
+### F22 — the player's own capsule occludes McGrot at the `counter` anchor (G6b.2, found in review, CLOSED 2026-08-16 by G7b)
+
+**CLOSED**, in three parts. (1) The player's own body now hides when the
+camera sits far enough behind it (`SELF_OCCLUDE_HIDE_DIST`), gated by a
+visible-pixel-fraction floor with a named disabled-fix control. (2) Dan
+re-measured after landing and found the fix's own gate-determinism pin had
+hidden, not closed, a second fault: `rota.js`'s reader stood almost exactly
+on McGrot's own position and occluded him on the real clock — moved
+(`SPOT_LOCAL`), gated on real reader-present clocks. (3) The fix itself
+introduced a third fault, also found by Dan: the player's body popped
+visibility mid-walk, because the original version recomputed a live
+distance every frame against a continuously-easing camera. Frozen to a
+per-anchor decision resolved at walk start/end instead. All three gated,
+all three fault-injected and confirmed to reproduce the reported symptom.
+Full detail, numbers and captures: `docs/MCGROTS-VALIDATION.md` § G7b. The
+remainder of this entry is kept for the record.
 
 **Severity: medium, and it is the only one of these four that G7 cannot be run
 around.** At `counter`, under `--look=aerial --frames=600`, the player's own
@@ -2001,7 +2033,17 @@ likely right and least likely to disturb an existing capture — but it touches
 the anchor rig, so whoever takes it needs a control that shows the capsule
 still renders where it should.
 
-### F23 — the beret renders more saturated than the corpus draws it (G6b.2, found in review, OPEN)
+### F23 — the beret renders more saturated than the corpus draws it (G6b.2, found in review, RETUNED 2026-08-16 by G7b — Dan's call to confirm)
+
+**RETUNED, pending Dan's visual confirmation.** Checked the ramp first, per
+this entry's own instruction: the lit band is unity gain, confirmed not the
+cause by independently toggling tone mapping and the sun's colour. The real
+divergence, measured in proper HSL rather than raw RGB: hue, not
+saturation — the old value sits at 9.4° (near-red), the corpus averages
+~28° (orange). `BERET_COLOUR` moved `0xa22c16` → `0x753d10`; rendered
+sample `#c45711` (hue 23.5°, luma 105.1) against corpus hue ~28°, luma 107.
+No new gate — this entry said "judged on a capture, not a hex value," and
+that stands. Full derivation: `docs/MCGROTS-VALIDATION.md` § G7b.
 
 **Severity: low, cosmetic, and an authoring/renderer split worth stating
 precisely, because the obvious fix is aimed at the wrong end.** Dan flagged the
