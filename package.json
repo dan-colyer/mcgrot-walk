@@ -14,6 +14,7 @@
     "styleshots:mcgrots": "node scripts/mcgrots-styleshots.mjs",
     "sun:mcgrots": "node scripts/mcgrots-sun.mjs",
     "voice-audition:mcgrots": "node scripts/mcgrots-voice-audition.mjs",
+    "drive-pull:mcgrots": "node scripts/mcgrots-drive-pull.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:par": "node scripts/smoke.mjs --shards",
     "probe": "node scripts/probe.mjs",

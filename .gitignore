@@ -50,3 +50,8 @@ docs/voice-audition/*.mp3
 docs/voice-audition/*.wav
 docs/voice-audition/**/*.mp3
 docs/voice-audition/**/*.wav
+
+# G5g Drive pull staging (scripts/mcgrots-drive-pull.mjs): new comics land
+# here first. Landing them in assets/comics/ + assets/catalog.json is a
+# separate human milestone — see scripts/catalog-batches/BRIEF.md.
+assets/comics-incoming/
