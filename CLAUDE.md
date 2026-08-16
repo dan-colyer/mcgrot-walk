@@ -67,10 +67,45 @@ to prevent, one tier down.
 So, per unit, every time, no judgement call:
 
 ```bash
-herdr worktree create --cwd "$PWD" --branch <unit> --label <unit> --no-focus
+herdr worktree create --cwd "$PWD" --branch <unit> --label <unit> --no-focus \
+  --path "$HOME/code/personal/.worktrees/mcgrot-walk/<unit>"
 herdr agent start <fresh-name> --kind claude --pane <returned-pane-id> \
   -- --permission-mode auto --effort high
 ```
+
+**`--path` is mandatory, and leaving it off puts the worker on Dan's WORK
+Claude account.** Hit 2026-08-16, by the orchestrator, four times before he
+noticed. This is the one rule in this file whose violation is not a
+correctness problem but a boundary one.
+
+`~/.zshrc` routes the account by directory: the `claude` shell function sets
+`CLAUDE_CONFIG_DIR=~/.claude-personal` only when `$PWD` is under
+`$HOME/code/personal` or `$HOME/dan_vault/personal`, and otherwise falls
+through to the work login. herdr's default worktree location is
+`$HOME/.herdr/worktrees/...`, which matches neither, so every worker started
+there authenticated as work and wrote this personal project's transcripts into
+the work account's history. Verified after the fact, not assumed:
+
+```bash
+ls ~/.claude/projects/ | grep -i mcgrot     # must show no --herdr-worktrees- entries
+```
+
+The shared-tree workers before the worktree ruling were fine, because
+`/Users/dan/code/personal/mcgrot-walk` matches. **The worktree ruling
+introduced the leak**; the fix is to keep worktrees inside the personal root
+rather than to abandon worktrees.
+
+Two checks, both cheap, both before prompting anything:
+
+1. The path you pass to `--path` starts with `$HOME/code/personal/`. This is a
+   prefix match in a shell function — deterministic, so reading the path is a
+   real check, not a guess.
+2. After the unit lands, the `grep` above still returns nothing new.
+
+Do not try to verify by reading the pane's environment. `CLAUDE_CONFIG_DIR` is
+set by the function *at the moment `claude` is invoked* and is not in the
+pane's env beforehand, so an env check passes while the account is still
+wrong.
 
 **`--effort` is not optional, because the default is wrong for a worker.**
 Dan's ruling, 2026-08-16, on noticing it. `CLAUDE_CONFIG_DIR` points at
