@@ -1136,12 +1136,34 @@ moment to moment, and the emotional beat may live in being noticed rather than
 in a persistent bond. If it is not enough, the cost of the shared-state route
 gets paid deliberately and with the § 6 corollary in view, not by accident.
 
+**G6a landed 2026-08-16** — presentation only, per the split above. The
+re-check the first paragraph asks for was run before building and came back
+negative: G1's winner (A1 skinned) has no rig for a quadruped at all, and A2
+segmented gives a dog one rigid part with no head joint. `src/mcgrots/pomple.js`
+builds its own two-part rig instead of forcing either. The remembers-nothing
+question is now Dan's to judge, and is unaffected by anything measured.
+
 ### G7 — Judge against the kill criterion
 
 Stop and apply the bar before spending anything on the real cast. The visit
 should be playable end to end on stand-in bodies with real voices. Dan sits
 through it. If he does not want a second run, the honest outcome is to say so
 and stop — a measured rejection is delivered work, not a shortfall.
+
+### G8a — McGrot and Pomplé, from the comics
+
+**Dan's ruling, 2026-08-16: the current bodies do not look like the comics, and
+that is a prototyping phase of its own rather than a fix inside G6.** Both leads
+need a real pass — silhouette, proportion, and whether they read as the drawn
+characters — and until it runs, G6 and G7 work with the stand-ins as they are.
+
+This is why the two Pomplé faults in § 10 stay carried. Both live in geometry
+this phase replaces, so spending a worker on the current mesh buys nothing that
+survives it.
+
+Sequenced after G7 deliberately: G7 judges the visit on stand-in bodies, so a
+"no" costs no modelling time. It sits ahead of G8's five principals because the
+two leads carry the pitch and the rest of the cast do not.
 
 ### G8 — The real cast
 
@@ -1813,6 +1835,48 @@ finds this angle immediately, along with the two findings § 12.2 already names.
 If that idea graduates, this fault comes with it and the phase should cover
 both. Judged from `2-feet-off-the-ground.png`, regenerable with a low front
 camera at the actor's facing — the anchor shots cannot show it.
+
+### F19 — a fragment of Pomplé's head floats detached beside him (G6a, CARRIED to G8a)
+
+**Severity: medium — visible on the shipped path, at the anchor the player is
+nearest.** Found by the orchestrator's review on 2026-08-16, after `pomple`'s
+own gate reported 5/5 and the full suite 76/76. Every number was correct; none
+of them can see this.
+
+`pomple.js` cuts its two-part rig on a Y-band at 0.74 of normalised height. That
+cut sweeps a stray piece of geometry into the head part, and it renders as a
+curved sliver floating clear of the body, roughly a body-width to his right.
+
+Attributed by two controls rather than by inspection:
+
+| Render | Sliver present |
+|---|---|
+| `counter` anchor, shipped | yes |
+| same frame, whole `pomple` group hidden | no — so it is his, not the van's |
+| same frame, `pomple:head` mesh hidden, body left visible | no — so it belongs to the head part |
+
+**Carried, on Dan's 2026-08-16 ruling**, because G8a replaces this mesh and the
+Y-band split with it. Fixing the current geometry buys nothing that survives.
+Judged from `1-counter-detached-fragment.png` and its two controls; regenerable
+by hiding each part in turn at the `counter` anchor.
+
+### F20 — Pomplé is unreadable head-on at the counter, and the gate passes it (G6a, CARRIED to G8a)
+
+**Severity: low, and partly a lighting question rather than a modelling one.**
+At `counter` he turns to face the player — the head-turn working as designed —
+and a dog seen head-on in the van's shadow reads as a dark mass rather than a
+dog. At `kerb`, side-on and lit, he reads as a proper terrier.
+
+The `pomple` region passes both: luminance stddev 35.0 against a flat control of
+0.0. That is the limit the project already knows about — **a numeric check
+cannot tell a legible dog from a smudge**, and G6a's own report reached "reads
+as a legible dog" from scratch close-ups rendered outside the gate rather than
+from the anchor captures the player actually sees. Recorded here so the next
+session does not re-derive it from the same green numbers.
+
+**What un-carries it:** G8a, which is where his silhouette gets judged against
+the comics anyway. If it survives a real model, it is a lighting fix at the
+pitch and not his geometry.
 
 ---
 

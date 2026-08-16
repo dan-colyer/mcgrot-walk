@@ -2827,3 +2827,111 @@ triage that saves two people an hour of listening, not a claim about the
 voices. The ten are moved rather than deleted, and the five in the middle band
 are kept deliberately — dropping a genuine option is a worse error than one
 extra clip to play.
+
+## G6a — Pomplé, presentation only
+
+**Landed 2026-08-16.** Written by the implementing session; the independent
+review below was added by the orchestrator and is what changed the verdict.
+
+The brief's own re-check first: G1's winner (A1 skinned) does not exist for a
+quadruped. `scripts/rig-glb.mjs`'s `BIPEDS` list never named `pomple`, so
+`assets/characters/pomple-rig.json` was never generated — confirmed by booting
+`?body=skinned&archetype=pomple`: the rig fetch 404s and the actor group never
+appears at all (rendered frame: nothing where the actor should stand, gullet
+stall and McGrot statue both visible). A2 segmented DOES render a legible dog —
+good silhouette, ears, snout, four legs, tail — but its own quadruped branch
+(`src/mcgrots/actors/segmented.js:126`) builds exactly one rigid `torso` part by
+design, so `joints.head` is never populated and `lookAt()` is a no-op. Neither
+candidate transfers. `src/mcgrots/pomple.js` builds a minimal purpose-built rig
+instead of forcing either.
+
+**The rig: a two-part Y-band split, not the six-part biped scheme.**
+`scripts/segment-glb.mjs`'s neck-finder searches for the narrowest X-width
+horizontal slice — a shoulders-to-neck signature a quadruped does not have (his
+X-width stays 0.45–0.66 across the whole height range with no narrow band,
+measured with `node scripts/glb-anatomy.mjs assets/characters/pomple-form.glb`).
+So the split cuts on Y alone at 0.74 of normalised height. Same
+shared-attribute/index-bucket technique as `actors/segmented.js`, two parts
+instead of six, computed at load time rather than via a new offline sidecar — no
+walk cycle is needed, so an offline generator would have bought nothing here.
+
+**Behaviour.** Idle settle: a 0.35 Hz vertical bob, amplitude 0.006 m, no PRNG
+(a pure function of the module's own time accumulator). A two-state attention
+machine (`player` / `mcgrot`) with hysteresis (enter 5.5 m, exit 7.5 m) drives an
+eased (1.1 rad/s), clamped (±1.05 rad) head yaw toward whichever target holds
+attention. McGrot has no standing figure yet, so `MCGROT_LOCAL` is a documented
+ASSUMPTION — `van.js`'s `OPENING_CX`, at the opening's face line — and is one
+constant to correct once he is real.
+
+### The gate
+
+The claim that matters is the head-turn, not scene-graph presence. Two things
+are measured on the real render at every anchor: the dog's world AABB projected
+through the live camera (area 0.085–0.497% of frame across the five anchors —
+his own scale, a much lower floor than the van region's 0.3%), and, at the two
+nearest anchors only, luminance stddev against the same flattest-corner control
+the van region uses (pomple 34.3–39.6 vs flat 0.0 at both).
+
+**The head-turn gate, with its control named.** Two viewer positions close
+enough that attention holds `player` throughout (`counter` 3.31 m, `kerb`
+5.36 m, both inside `ATTENTION_ENTER_R`), so a yaw difference is attributable to
+the tracked position changing rather than to attention switching target
+mid-measurement. Tracking on: −0.188 vs 1.050 (Δ=1.238, floor 0.2). THE CONTROL:
+the same two positions with tracking off, where the head must hold its rest yaw
+at both. Measured 0.000 / 0.000.
+
+**Falsified 2026-08-16**, each against the committed baseline, one at a time,
+restored before the next:
+
+1. `scene.add(group)` commented out — presence and content both went red
+   together (area 0.000% everywhere); head-turn checks unaffected, confirming
+   they measure state rather than rendering.
+2. Object kept in-scene, material swapped to 4%-opacity `MeshBasicMaterial` —
+   did NOT go red (stddev 15.7/13.3 vs flat 0.0). **Rejected experiment,
+   recorded rather than hidden:** the background at Pomplé's own position (van
+   edge, ground) already carries enough natural contrast that a near-invisible
+   object does not read as flat there. The check is real — fault 1 proves it can
+   go red — but its independence from the presence check is weaker than intended
+   at this spot.
+3. Head-turn target forced to McGrot regardless of `attention` — the tracking-on
+   check went red alone (Δ=0.000).
+4. `if (true || trackingEnabled)` — the off-switch stopped gating the yaw
+   computation. The control went red alone: both positions read the fixed
+   yaw-to-McGrot (−0.789) instead of the rest pose.
+
+### Reviewed independently, 2026-08-16 — 76/76 was true and the picture was still wrong
+
+The orchestrator re-ran the suite in a clean tree: **76/76 in 11.1s**, matching
+the claim. Both halves of the body re-check were re-verified from source rather
+than accepted — `BIPEDS` is six names with no `pomple`, six rig JSONs on disk
+with none for him, and `segmented.js:126` is a single `makePart('torso', …)`.
+
+Opening the anchor captures then found a defect every one of those numbers
+passed: **a fragment of the head mesh floats detached beside him** at the
+`counter` anchor. Attributed by two controls, not by inspection — hiding the
+whole `pomple` group removes both the dog and the sliver, so it is his and not
+the van's; hiding `pomple:head` alone removes the sliver while the body stays,
+so it belongs to the head part. Logged as ROADMAP § 10 F19.
+
+Second finding, ROADMAP § 10 F20: head-on at `counter`, in the van's shadow, he
+reads as a dark mass rather than a dog, and the region passes him at stddev 35.0
+against a flat control of 0.0.
+
+**What this says about the region, and it is the general lesson:** the gate is
+correctly built — a named control, four isolated injections, all red alone —
+and it still cannot see either fault, because both are questions about whether a
+picture is any good. G6a's own report reached "reads as a legible dog" from
+scratch close-ups rendered outside the gate; the anchor captures the player
+actually sees say something different at one of the five. **Render the shipped
+camera, not a flattering one.**
+
+Both faults are CARRIED, not fixed — Dan's 2026-08-16 ruling that the leads'
+models need their own phase (ROADMAP § 5, G8a), which replaces this mesh and
+the Y-band split with it.
+
+### Not gated
+
+That the head-turn or idle settle READ WELL — that is Dan's judgement. Nor
+whether the remembers-nothing, per-client-only design is enough relationship;
+that is the question G6a exists to let him answer, and is unaffected by anything
+measured here.
