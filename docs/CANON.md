@@ -57,6 +57,21 @@ build with minimal neck. `60ee906a` grafts that head alone onto six unrelated
 bodies and every one still reads as McGrot — get those three right and wrong
 garments are survivable; get one wrong and correct garments will not save it.
 
+**One boundary on that, found by G7d (2026-08-16) in `13dc6c45`.** The costume
+is not proof of identity. "Grot Loompas For Change" puts orange-red berets and
+green plaid on a crowd of near-identical protest figures who are explicitly
+*not* McGrot — they are campaigning against him, and he is named on a placard
+but never drawn. So the beret signals *McGrot's world* reliably; it does not
+uniquely identify the character inside a panel that contains other figures.
+
+This does not weaken the stand-in rule above, which is about one figure alone
+at a pitch, and it is why that rule names the head and build alongside the
+beret rather than the beret by itself. **It becomes load-bearing the moment the
+scene contains a second humanoid** — G8's cast, or any crowd. Whoever builds
+that has to give McGrot something the corpus gives him and the look-alikes do
+not, and this comic is the reference for what a crowd of near-misses looks
+like.
+
 **Where the two halves disagree**, kept rather than smoothed: set-a reads him as
 clean-shaven in the large majority, set-b as light stubble. Nobody has adjudicated.
 

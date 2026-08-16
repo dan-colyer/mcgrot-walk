@@ -250,6 +250,16 @@ has to be mechanical:
   that has been promoted by repetition. The same applies to dismissals: boots
   were dismissed at 4.4% of a run, and were 17.1% of the next one without
   changing at all.
+- **A count quoted in an earlier report is a snapshot, and sizing a unit on it
+  is the orchestrator's version of not re-running the diff.** G7a reported that
+  53 reading candidates fell outside `comic-features-set-a.md`'s audit — true
+  when written, and about set-a specifically. The G7b-era brief generalised it
+  to "nobody has opened them" and sized a whole unit on it; `set-b.md` had
+  landed in between and covered 52 of the 53. The real remainder was one comic.
+  Cost: a worker started for an hour's work that was twenty minutes. Re-derive
+  coverage from the artefacts on disk before writing the number into a brief,
+  and quote the command that produced it so the worker can disagree with it —
+  which is exactly how this one was caught.
 
 The gate suite in `scripts/smoke.mjs` is now the reviewer. Extend it whenever
 a milestone adds a claim worth trusting later, and document each gate in
