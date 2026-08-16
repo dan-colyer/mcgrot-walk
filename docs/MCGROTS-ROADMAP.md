@@ -2008,3 +2008,43 @@ second thing moving it. F11 (closed 2026-08-12) was exactly that kind of
 conflict, between two anchors rather than a free yaw; the fix there — ease
 from the camera's own live pose, never an anchor reference — is the shape a
 rotation feature would need too.
+
+### 12.3 The leads' costume varies by day, rather than being one fixed outfit
+
+**Added 2026-08-16 (Dan), on reading G6b.1's extraction.** Some days McGrot
+wears the beret, some days he does not. Same for the rest of the outfit, and
+probably for other characters.
+
+**This came out of a measurement, which is unusual for this section.** G6b.1
+read 156 comics in two disjoint halves and both halves independently sorted the
+leads' features into stable / variant / one-off. The variant bucket is large and
+it is not noise — the drawings genuinely disagree with each other, comic to
+comic. Treating that as something to average into one canonical outfit throws
+away a real property of the source.
+
+**It fits the architecture better than most ideas in this section**, which is
+the reason to keep it rather than dismiss it. § 6's discipline is that the world
+is a pure function of wall-clock time, and the project already derives McGrot's
+presence that way — `mcgrotIsIn(dayKey)`. A costume keyed off the same day
+seed costs nothing on the wire, needs no shared mutable state, and every client
+computes the same McGrot for the same day without being told. It is the same
+shape as the rota, not a new mechanism.
+
+**First obstacles, none answered:**
+
+- **It multiplies the asset work in G8a**, which is the phase that has to build
+  him. One model with swappable parts is a different job from one model, and
+  the swap points have to exist in the mesh before anything can vary.
+- **What is allowed to vary, and what is identity?** The extraction's own
+  finding is that beret-plus-head reads as McGrot even on an unrelated body. If
+  the beret is what makes him recognisable, a beretless day may just read as a
+  stranger. Variation and legibility pull against each other, and the stable
+  bucket is the evidence for where the line sits.
+- **Pomplé may not want this at all.** His variance is mostly colour, which is
+  more likely to be drawing inconsistency than intent.
+
+**What it changes now, before it graduates:** the merge of G6b.1's two halves
+into `docs/CANON.md` **preserves the variant distribution with its counts**
+rather than collapsing each feature to a single description. Collapsing is the
+one step that would make this idea expensive to pick up later, and it costs
+nothing to avoid.
