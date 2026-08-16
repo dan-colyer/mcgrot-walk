@@ -340,3 +340,33 @@ plain sentences about what each clip is for.
 
 **Not done:** the listen itself, and getting these files to Andrew — both
 explicitly Dan's, not this unit's.
+
+## Audition 2, 2026-08-16 — Gemini goes paid: the rest of Part A, plus Flash vs Pro
+
+**The free-tier daily quota that blocked 11 of Part A's renders is gone.**
+The account moved to Google's paid tier — confirmed by Dan with a real call
+to each model before this session resumed, not assumed from a billing page.
+All 11 remaining Flash renders (Algenib on `mcgrot-06`/`07`/`12`, the rest of
+the Orus/Fenrir/Gacrux sweep) landed in one run, **zero 429s** — a clean
+contrast against Part A's daily-cap failures and Part B's transient
+mid-batch lock, neither of which this run needed to work around.
+
+**New: `gemini-2.5-pro-preview-tts` alongside Flash, same voice (Algenib),
+on the three lines shared with the FAL set.** Pro had no free tier at all —
+this is its first real audition, not a repeat of anything. Priced at 2x
+Flash's rate per Dan. Filenames: Flash keeps its original name
+(`mcgrot-NN--gemini-algenib.mp3`, so none of Part A's ten already-rendered
+clips needed re-requesting), Pro gets an explicit `-pro` suffix
+(`mcgrot-NN--gemini-algenib-pro.mp3`) that sorts immediately next to its
+Flash sibling.
+
+**14 rendered, 0 failed, ~$0.019 spent this run** (11 Flash + 3 Pro); 10
+skipped (already on disk from the first pass). All 24 planned Gemini clips
+(12 solo lines × Algenib, 3 lines × 3 sweep voices, 3 lines × Pro) now exist.
+
+**`docs/voice-audition/INDEX.md` rewritten**, not patched — Group 1 (the
+three shared lines) now shows every candidate including the full sweep and
+both Google engines side by side; Group 3 (Google-only solo lines) covers all
+nine remaining; the "Not yet rendered" section is gone because nothing is
+missing. Every filename cross-checked against the actual directory in both
+directions again: 39 files, 39 references, no gap either way.

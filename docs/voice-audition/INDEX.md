@@ -6,10 +6,13 @@ them in the order below: each group is the *same words*, read by different
 candidates, so you can compare them directly rather than judging one candidate
 across a whole set of different lines.
 
-Four candidates appear below: **MiniMax**, **Qwen** and **Maya** (three
-different voice-generation services), and **Google**, in two of its
-ready-made voices, **Algenib** and **Orus**. None of the four have been told
-which one will "win" — that's the point of listening.
+Five candidates appear below: **MiniMax**, **Qwen** and **Maya** (three
+different voice-generation services), and **Google**, in two different
+versions of its own voice generator — a faster, cheaper one and a slower,
+pricier one, both using the same voice ("Algenib"), plus three more
+Google voices used only on the three most-compared lines. None of the
+candidates have been told which one will "win" — that's the point of
+listening.
 
 ## What to listen for
 
@@ -35,8 +38,8 @@ Six things, and a candidate only works if all six are true. In plain terms:
 
 ## Group 1 — the three lines every candidate reads
 
-The same three lines, across all four candidates where a recording exists.
-This is the most useful comparison in the whole set.
+The same three lines, across every candidate. This is the most useful
+comparison in the whole set — everything else is one voice heard once.
 
 ### "Naw." — can a one-word line stand on its own? (criterion 2)
 
@@ -45,7 +48,11 @@ This is the most useful comparison in the whole set.
 | `01-naw--minimax.mp3` | MiniMax | 1.0s |
 | `01-naw--qwen.mp3` | Qwen | 0.8s |
 | `01-naw--maya.mp3` | Maya | 24.3s |
-| `mcgrot-03--gemini-algenib.mp3` | Google (Algenib) | 0.8s |
+| `mcgrot-03--gemini-algenib.mp3` | Google, faster version | 0.8s |
+| `mcgrot-03--gemini-algenib-pro.mp3` | Google, slower/pricier version | 1.0s |
+| `mcgrot-03--gemini-orus.mp3` | Google, a second voice | 0.9s |
+| `mcgrot-03--gemini-fenrir.mp3` | Google, a third voice | 1.2s |
+| `mcgrot-03--gemini-gacrux.mp3` | Google, a fourth voice | 1.0s |
 
 Maya's file is much longer than the word warrants — worth a listen just to
 hear what it actually says.
@@ -57,8 +64,11 @@ hear what it actually says.
 | `02-flare--minimax.mp3` | MiniMax | 4.7s |
 | `02-flare--qwen.mp3` | Qwen | 4.9s |
 | `02-flare--maya.mp3` | Maya | 4.4s |
-| `mcgrot-01--gemini-algenib.mp3` | Google (Algenib) | 4.2s |
-| `mcgrot-01--gemini-orus.mp3` | Google (Orus) | 4.4s |
+| `mcgrot-01--gemini-algenib.mp3` | Google, faster version | 4.2s |
+| `mcgrot-01--gemini-algenib-pro.mp3` | Google, slower/pricier version | 4.9s |
+| `mcgrot-01--gemini-orus.mp3` | Google, a second voice | 4.4s |
+| `mcgrot-01--gemini-fenrir.mp3` | Google, a third voice | 4.8s |
+| `mcgrot-01--gemini-gacrux.mp3` | Google, a fourth voice | 5.1s |
 
 He snaps on "Mingin?" and comes back down for the rest — a candidate that
 stays flat all the way through hasn't got it.
@@ -70,11 +80,22 @@ stays flat all the way through hasn't got it.
 | `03-sincerity--minimax.mp3` | MiniMax | 4.6s |
 | `03-sincerity--qwen.mp3` | Qwen | 3.9s |
 | `03-sincerity--maya.mp3` | Maya | 4.6s |
+| `mcgrot-07--gemini-algenib.mp3` | Google, faster version | 5.2s |
+| `mcgrot-07--gemini-algenib-pro.mp3` | Google, slower/pricier version | 4.7s |
+| `mcgrot-07--gemini-orus.mp3` | Google, a second voice | 5.3s |
+| `mcgrot-07--gemini-fenrir.mp3` | Google, a third voice | 6.3s |
+| `mcgrot-07--gemini-gacrux.mp3` | Google, a fourth voice | 5.3s |
 
-Google's reading of this exact line hasn't rendered yet (see "Not yet
-rendered" below). Play this against the flare-up above, and against the
-Taxman clip below — the volume and pace should drop, and the roughness in his
-voice should ease off, without losing the accent.
+Play this against the flare-up above, and against the Taxman clip below — the
+volume and pace should drop, and the roughness in his voice should ease off,
+without losing the accent.
+
+### A note on the two Google versions
+
+The "faster" and "slower/pricier" Google files use the exact same voice —
+the only difference is which of Google's two speech engines made it. Neither
+is more "official" than the other. Listen for whether the pricier one is
+actually better, or whether it's spending more money for no real difference.
 
 ---
 
@@ -109,38 +130,24 @@ through like a mistake.
 
 ---
 
-## Group 3 — the rest of McGrot's lines (Google only, Algenib voice)
+## Group 3 — the rest of McGrot's lines (Google, faster version only)
 
 Nine more of McGrot's everyday lines, all read by the same Google voice as
-Group 1's Algenib clips. Useful for judging criterion 6 — whether this voice
-still works after several lines in a row, not just for one good line.
+Group 1's faster-version clips. Useful for judging criterion 6 — whether
+this voice still works after several lines in a row, not just for one good
+line.
 
 | File | What he's saying | Length |
 |---|---|---|
 | `mcgrot-02--gemini-algenib.mp3` | "Do not call it scraps." | 2.2s |
 | `mcgrot-04--gemini-algenib.mp3` | "Awright pal. Sauce is extra, opinions are free." | 4.1s |
 | `mcgrot-05--gemini-algenib.mp3` | "Steamboats or stone sober, my queue's still the longest at the fit o' the Walk." | 6.4s |
+| `mcgrot-06--gemini-algenib.mp3` | "Away and get your messages first — then tell me that's shan." | 4.5s |
 | `mcgrot-08--gemini-algenib.mp3` | "Persevere, it says on the bin. Persevere, I say back." | 5.3s |
 | `mcgrot-09--gemini-algenib.mp3` | "Extra sauce, every time. That's not negotiable, pal." | 3.7s |
 | `mcgrot-10--gemini-algenib.mp3` | "Radge, the pair of you — queueing for a smell." | 4.0s |
 | `mcgrot-11--gemini-algenib.mp3` | "I've buried better plans than this under a layer of onions, ken." | 4.0s |
-
----
-
-## Not yet rendered
-
-Google limits how many of these it will generate per day, and that ran out
-partway through this batch. Nothing is wrong with these — they simply haven't
-been made yet, and will be added the same way once the daily limit resets:
-
-- Three everyday lines, Google/Algenib: "Pomplé says the sauce needs
-  mercy...", "Away and get your messages first — then tell me that's shan",
-  and "Chum me doon the fit o' the Walk and I'll show ye a queue that means
-  something"
-- The Orus voice on "Naw." and Pomplé's line (it's only been rendered for
-  the "Mingin?" line so far)
-- Two more Google voices, Fenrir and Gacrux, not rendered on any of the three
-  lines yet
+| `mcgrot-12--gemini-algenib.mp3` | "Chum me doon the fit o' the Walk and I'll show ye a queue that means something." | 3.5s |
 
 ---
 

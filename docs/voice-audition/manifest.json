@@ -378,42 +378,6 @@
         "durationSec": 4.010958
       },
       {
-        "lineId": "mcgrot-12",
-        "voice": "Algenib",
-        "file": "mcgrot-12--gemini-algenib.mp3",
-        "renderedAt": "2026-08-15T10:18:11.167Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-03",
-        "voice": "Orus",
-        "file": "mcgrot-03--gemini-orus.mp3",
-        "renderedAt": "2026-08-15T10:18:20.440Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-03",
-        "voice": "Fenrir",
-        "file": "mcgrot-03--gemini-fenrir.mp3",
-        "renderedAt": "2026-08-15T10:18:29.745Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-03",
-        "voice": "Gacrux",
-        "file": "mcgrot-03--gemini-gacrux.mp3",
-        "renderedAt": "2026-08-15T10:18:39.031Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
         "lineId": "mcgrot-01",
         "voice": "Orus",
         "file": "mcgrot-01--gemini-orus.mp3",
@@ -422,51 +386,6 @@
         "status": "ok",
         "bytes": 35949,
         "durationSec": 4.410958
-      },
-      {
-        "lineId": "mcgrot-01",
-        "voice": "Fenrir",
-        "file": "mcgrot-01--gemini-fenrir.mp3",
-        "renderedAt": "2026-08-15T10:19:01.279Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-01",
-        "voice": "Gacrux",
-        "file": "mcgrot-01--gemini-gacrux.mp3",
-        "renderedAt": "2026-08-15T10:19:10.527Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-07",
-        "voice": "Orus",
-        "file": "mcgrot-07--gemini-orus.mp3",
-        "renderedAt": "2026-08-15T10:19:19.797Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-07",
-        "voice": "Fenrir",
-        "file": "mcgrot-07--gemini-fenrir.mp3",
-        "renderedAt": "2026-08-15T10:19:29.050Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
-      },
-      {
-        "lineId": "mcgrot-07",
-        "voice": "Gacrux",
-        "file": "mcgrot-07--gemini-gacrux.mp3",
-        "renderedAt": "2026-08-15T10:19:38.284Z",
-        "tookSec": 9,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
       },
       {
         "lineId": "mcgrot-05",
@@ -481,20 +400,156 @@
       {
         "lineId": "mcgrot-06",
         "voice": "Algenib",
+        "model": "flash",
         "file": "mcgrot-06--gemini-algenib.mp3",
-        "renderedAt": "2026-08-15T10:26:46.045Z",
-        "tookSec": 121,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+        "renderedAt": "2026-08-16T08:41:48.585Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 36333,
+        "durationSec": 4.450958
       },
       {
         "lineId": "mcgrot-07",
         "voice": "Algenib",
+        "model": "flash",
         "file": "mcgrot-07--gemini-algenib.mp3",
-        "renderedAt": "2026-08-15T10:28:54.877Z",
-        "tookSec": 121,
-        "status": "failed",
-        "reason": "API 429: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota ex"
+        "renderedAt": "2026-08-16T08:42:01.118Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 42477,
+        "durationSec": 5.210958
+      },
+      {
+        "lineId": "mcgrot-12",
+        "voice": "Algenib",
+        "model": "flash",
+        "file": "mcgrot-12--gemini-algenib.mp3",
+        "renderedAt": "2026-08-16T08:42:12.378Z",
+        "tookSec": 3,
+        "status": "ok",
+        "bytes": 28653,
+        "durationSec": 3.490958
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-03--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:42:22.248Z",
+        "tookSec": 2,
+        "status": "ok",
+        "bytes": 8109,
+        "durationSec": 0.930958
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Fenrir",
+        "model": "flash",
+        "file": "mcgrot-03--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-16T08:42:45.800Z",
+        "tookSec": 15,
+        "status": "ok",
+        "bytes": 10029,
+        "durationSec": 1.170958
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Gacrux",
+        "model": "flash",
+        "file": "mcgrot-03--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-16T08:42:55.740Z",
+        "tookSec": 2,
+        "status": "ok",
+        "bytes": 8493,
+        "durationSec": 0.970958
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Fenrir",
+        "model": "flash",
+        "file": "mcgrot-01--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-16T08:43:07.534Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 38829,
+        "durationSec": 4.770958
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Gacrux",
+        "model": "flash",
+        "file": "mcgrot-01--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-16T08:43:20.238Z",
+        "tookSec": 5,
+        "status": "ok",
+        "bytes": 41517,
+        "durationSec": 5.090958
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Orus",
+        "model": "flash",
+        "file": "mcgrot-07--gemini-orus.mp3",
+        "renderedAt": "2026-08-16T08:43:32.723Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 43053,
+        "durationSec": 5.290958
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Fenrir",
+        "model": "flash",
+        "file": "mcgrot-07--gemini-fenrir.mp3",
+        "renderedAt": "2026-08-16T08:43:46.709Z",
+        "tookSec": 6,
+        "status": "ok",
+        "bytes": 50733,
+        "durationSec": 6.250958
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Gacrux",
+        "model": "flash",
+        "file": "mcgrot-07--gemini-gacrux.mp3",
+        "renderedAt": "2026-08-16T08:43:59.222Z",
+        "tookSec": 4,
+        "status": "ok",
+        "bytes": 43053,
+        "durationSec": 5.290958
+      },
+      {
+        "lineId": "mcgrot-03",
+        "voice": "Algenib",
+        "model": "pro",
+        "file": "mcgrot-03--gemini-algenib-pro.mp3",
+        "renderedAt": "2026-08-16T08:44:09.945Z",
+        "tookSec": 3,
+        "status": "ok",
+        "bytes": 8877,
+        "durationSec": 1.010958
+      },
+      {
+        "lineId": "mcgrot-01",
+        "voice": "Algenib",
+        "model": "pro",
+        "file": "mcgrot-01--gemini-algenib-pro.mp3",
+        "renderedAt": "2026-08-16T08:44:23.402Z",
+        "tookSec": 5,
+        "status": "ok",
+        "bytes": 39789,
+        "durationSec": 4.890958
+      },
+      {
+        "lineId": "mcgrot-07",
+        "voice": "Algenib",
+        "model": "pro",
+        "file": "mcgrot-07--gemini-algenib-pro.mp3",
+        "renderedAt": "2026-08-16T08:44:36.896Z",
+        "tookSec": 5,
+        "status": "ok",
+        "bytes": 38637,
+        "durationSec": 4.730958
       }
     ]
   }

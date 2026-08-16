@@ -1071,15 +1071,22 @@ MiniMax's design-once-reuse is real: one voice id
 (`ttv-voice-2026081518363626-ZFQUVUyB`) covers all five clips, confirmed by
 a live call to `fal-ai/minimax/speech-02-turbo`, not assumed from docs.
 Audition 1's stale files moved to `docs/voice-audition/audition-1/`, not
-deleted. `docs/voice-audition/INDEX.md` groups all 25 rendered clips (15 FAL
-+ 10 Gemini) by the words spoken, plain language throughout, six criteria
-reproduced, every gap named.
+deleted.
 
-**Still G5's, not done:** the remaining 11 Gemini renders (quota-blocked, no
-code change pending), the listen itself and the voice pick (Dan's, with
-Andrew), getting the files to him (explicitly not this unit's — no Drive
-upload), TTS rendering of the 84 lines once a voice is picked, and wiring any
-of this into the game.
+**2026-08-16: the account went paid, and the remaining 11 Gemini renders
+landed with zero 429s** — confirmed empirically (the run logged none), not
+assumed from Dan's report of the top-up. Also new: `gemini-2.5-pro-preview-tts`
+(2x Flash's price, no free tier ever) auditioned on the same three
+cross-comparison lines as the FAL set, same voice (Algenib), files named so
+each line's Flash/Pro pair sorts adjacent. `docs/voice-audition/INDEX.md`
+rewritten to cover all 39 rendered clips (15 FAL + 24 Gemini across two
+models and four Google voices), grouped by the words spoken, plain language,
+every filename cross-checked against disk.
+
+**Still G5's, not done:** the listen itself and the voice pick (Dan's, with
+Andrew — Flash vs Pro is now part of that decision too), getting the files
+to him (explicitly not this unit's — no Drive upload), TTS rendering of the
+84 lines once a voice is picked, and wiring any of this into the game.
 
 ### G6 — Pomplé
 

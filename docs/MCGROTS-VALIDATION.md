@@ -2647,3 +2647,39 @@ be.
 
 **What this does not prove:** anything about how any of these 25 rendered
 clips sound. Nothing in this project's tooling can judge that.
+
+### 2026-08-16 — Gemini paid tier: the blocked 11, plus Flash vs Pro
+
+**Confirmed, not assumed, that the daily quota is actually gone.** Same
+`runGemini()` code path, same 8s pacing, same bounded 429 backoff (4
+attempts, escalating) as the free-tier run that hit `RESOURCE_EXHAUSTED`
+twice — this run made 14 real calls and logged **zero 429s**. If the account
+were still capped, this run would have failed identically to the first two;
+it didn't, which is the actual evidence the top-up took effect, not Dan's
+report of it alone (though that matched).
+
+**File-naming collision avoided by construction, not caught by a test.**
+Before this change, the manifest's dedup key was `(lineId, voice)` — adding a
+`model` field without widening that key would have made a Pro run silently
+overwrite its Flash sibling's manifest entry (same line, same voice
+"Algenib", different model). Fixed by widening the filter to
+`(lineId, voice, model)` before any Pro job ran, not after finding the bug —
+checked by inspecting the manifest after the run: `mcgrot-01`, `03`, `07`
+each carry two separate `runs` entries, one per model, both present.
+
+**Resumability held across the model dimension too.** Flash kept its
+original filenames specifically so Part A's ten already-rendered clips
+would not be re-requested — confirmed in the run log: `[mcgrot-0X--gemini-
+algenib.mp3] skipped — already on disk` for exactly the ten, `rendering...`
+for the eleven gaps and the three new Pro jobs. 10 skipped, 14 rendered, 0
+failed — matches the dry-run's plan exactly.
+
+**INDEX.md rebuilt and re-verified against the filesystem.** 39 `.mp3`
+filenames referenced, 39 on disk, diffed in both directions — no reference to
+audio that doesn't exist, nothing rendered and left out silently.
+
+**Suite:** unaffected, no region added.
+
+**What this does not prove:** whether Pro sounds meaningfully different from
+Flash, or anything else about the 14 new clips. That's the same six criteria,
+same listener, still pending.

@@ -472,10 +472,14 @@ async function runFal() {
 // from it — that script is the street's, out of scope to edit, and does not
 // export these. Kept deliberately small: just enough to POST, unwrap PCM into
 // a WAV, and hand it to ffmpeg, the same way generate-tts.mjs does.
-const GEMINI_MODEL = 'gemini-2.5-flash-preview-tts';
-// $ per 1M tokens (audio output; text input) — for the estimate only, same
-// table as generate-tts.mjs.
-const GEMINI_PRICE = { audio: 10, text: 0.5 };
+// Flash was the only model reachable during audition 2's first pass — the
+// account was on the free tier, which does not offer Pro at all. Now paid
+// (2026-08-16), both are real: $ per 1M tokens (audio output; text input),
+// same table shape as generate-tts.mjs. Pro's rate is 2x Flash's, per Dan.
+const GEMINI_MODELS = {
+  flash: { id: 'gemini-2.5-flash-preview-tts', price: { audio: 10, text: 0.5 } },
+  pro: { id: 'gemini-2.5-pro-preview-tts', price: { audio: 20, text: 1 } },
+};
 const GEMINI_VOICE_PRIMARY = 'Algenib'; // "Gravelly" — already McGrot's accidental default
 // Three other prebuilt voices, swept across three representative lines.
 // Chosen, not defended — there is no right answer (brief, Part A). Orus
@@ -494,8 +498,8 @@ function pcmToWav(pcm) {
   return Buffer.concat([h, pcm]);
 }
 
-async function geminiTts(text, voiceName) {
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`, {
+async function geminiTts(text, voiceName, modelId) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
     body: JSON.stringify({
@@ -533,12 +537,12 @@ function loadBrief(lineId) {
   return existsSync(p) ? readFileSync(p, 'utf8') : null;
 }
 
-async function geminiProbe(lineId, voice) {
+async function geminiProbe(lineId, voice, modelKey) {
   const brief = loadBrief(lineId);
   if (!brief) { console.error(`Probe FAILED: no brief at ${briefPath(lineId).replace(root + '/', '')}`); return false; }
-  console.log(`Gemini probe: one call, ${voice}, ${lineId}, from its authored brief...`);
+  console.log(`Gemini probe: one call, ${modelKey}/${voice}, ${lineId}, from its authored brief...`);
   try {
-    const pcm = await geminiTts(brief, voice);
+    const pcm = await geminiTts(brief, voice, GEMINI_MODELS[modelKey].id);
     console.log(`Probe OK — ${(pcm.length / 1024).toFixed(1)}KB of PCM. Proceeding.`);
     return true;
   } catch (e) {
@@ -547,44 +551,68 @@ async function geminiProbe(lineId, voice) {
   }
 }
 
+// Flash keeps its original filenames (no model suffix) so the 10 already
+// rendered under audition 2 are recognised and never re-requested. Pro is
+// new, gets an explicit suffix, and sorts immediately next to its Flash
+// sibling for the same line/voice — "-pro" comes before the bare ".mp3"
+// alphabetically, so the pair sits adjacent either way.
+function geminiFile(lineId, voiceSlug, modelKey) {
+  return modelKey === 'pro' ? `${lineId}--gemini-${voiceSlug}-pro.mp3` : `${lineId}--gemini-${voiceSlug}.mp3`;
+}
+
 async function runGemini() {
   const { lines: allLines, scene } = loadGeminiLines();
   const linesArg = opt('lines');
   const wantIds = linesArg ? linesArg.split(',').map((n) => `mcgrot-${String(n).padStart(2, '0')}`) : allLines.map((l) => l.id);
   const lines = allLines.filter((l) => wantIds.includes(l.id));
   const sweepVoices = opt('voices') ? opt('voices').split(',') : GEMINI_VOICE_SWEEP;
+  const wantModels = opt('models') ? opt('models').split(',') : ['flash'];
+  for (const m of wantModels) if (!GEMINI_MODELS[m]) throw new Error(`unknown model "${m}" — known: ${Object.keys(GEMINI_MODELS).join(', ')}`);
 
   const jobs = [];
-  for (const line of lines) jobs.push({ line, voice: GEMINI_VOICE_PRIMARY });
+  for (const line of lines) jobs.push({ line, voice: GEMINI_VOICE_PRIMARY, model: 'flash' });
   for (const lineId of GEMINI_SWEEP_LINE_IDS) {
     if (!wantIds.includes(lineId)) continue;
     const line = allLines.find((l) => l.id === lineId);
-    for (const voice of sweepVoices) jobs.push({ line, voice });
+    for (const voice of sweepVoices) jobs.push({ line, voice, model: 'flash' });
+  }
+  // Pro comparison: Algenib only, only the three lines shared with the FAL
+  // audition set — not the full twelve, not the other sweep voices. Pro had
+  // no free tier at all, so this is its first real audition, not a repeat.
+  if (wantModels.includes('pro')) {
+    for (const lineId of GEMINI_SWEEP_LINE_IDS) {
+      if (!wantIds.includes(lineId)) continue;
+      const line = allLines.find((l) => l.id === lineId);
+      jobs.push({ line, voice: GEMINI_VOICE_PRIMARY, model: 'pro' });
+    }
   }
 
   console.log(`Briefs dir: ${BRIEFS_DIR.replace(root + '/', '')} (authored by Dan, not generated here)`);
   console.log(`Scene (reference only, not sent — the brief file is sent verbatim): ${JSON.stringify(scene)}`);
   console.log(`Lines: ${lines.length} solo (${lines.map((l) => l.id).join(', ')})`);
   console.log(`Sweep: ${sweepVoices.join(', ')} on ${GEMINI_SWEEP_LINE_IDS.filter((id) => wantIds.includes(id)).join(', ')}`);
+  console.log(`Models: ${wantModels.join(', ')}`
+    + (wantModels.includes('pro') ? ` (pro: Algenib only, on ${GEMINI_SWEEP_LINE_IDS.filter((id) => wantIds.includes(id)).join(', ')})` : ''));
   console.log(`Plan: ${jobs.length} render(s)\n`);
 
   let estUsd = 0, missing = 0;
-  for (const { line, voice } of jobs) {
+  for (const { line, voice, model } of jobs) {
     const brief = loadBrief(line.id);
     if (!brief) {
-      console.log(`  [${voice}] ${line.id} — MISSING brief at ${briefPath(line.id).replace(root + '/', '')}`);
+      console.log(`  [${model}/${voice}] ${line.id} — MISSING brief at ${briefPath(line.id).replace(root + '/', '')}`);
       missing++;
       continue;
     }
     // Printed verbatim (JSON.stringify) so a stray embedded newline or other
     // parse artefact is visible before anything is spent — audition 1's
     // failure mode, now on a file Dan edits by hand instead of code.
-    console.log(`  [${voice}] ${line.id} — brief ${brief.length}c: ${JSON.stringify(brief.slice(0, 80))}...`);
+    console.log(`  [${model}/${voice}] ${line.id} — brief ${brief.length}c: ${JSON.stringify(brief.slice(0, 80))}...`);
     // Rough pre-spend estimate: no audio exists yet to measure, so duration
     // is guessed from a plain speech-rate heuristic (~13 chars/sec) applied
     // to the line's own text (what's actually spoken), not the whole brief.
     const estSeconds = line.text.length / 13;
-    const cost = (estSeconds * 25 / 1e6) * GEMINI_PRICE.audio + (brief.length / 4 / 1e6) * GEMINI_PRICE.text;
+    const price = GEMINI_MODELS[model].price;
+    const cost = (estSeconds * 25 / 1e6) * price.audio + (brief.length / 4 / 1e6) * price.text;
     estUsd += cost;
   }
   console.log(`\nEstimated spend (rough, duration guessed from line length): ~$${estUsd.toFixed(4)}`
@@ -596,7 +624,7 @@ async function runGemini() {
 
   const probeJob = jobs.find(({ line }) => loadBrief(line.id));
   if (!probeJob) { console.error('\nNo authored brief found to probe with — nothing to render.'); process.exit(1); }
-  const probeOk = await geminiProbe(probeJob.line.id, probeJob.voice);
+  const probeOk = await geminiProbe(probeJob.line.id, probeJob.voice, probeJob.model);
   if (!probeOk) { console.error('\nProbe failed — stopping before spending on the rest.'); process.exit(1); }
 
   mkdirSync(OUT_DIR, { recursive: true });
@@ -610,22 +638,22 @@ async function runGemini() {
   manifest.lines = allLines.map(({ id, text, delivery }) => ({ id, text, delivery }));
 
   let ok = 0, fail = 0, skipped = 0, spentUsd = 0;
-  for (const { line, voice } of jobs) {
+  for (const { line, voice, model } of jobs) {
     const voiceSlug = voice.toLowerCase();
-    const file = `${line.id}--gemini-${voiceSlug}.mp3`;
+    const file = geminiFile(line.id, voiceSlug, model);
     const outPath = join(OUT_DIR, file);
     if (isRendered(outPath)) { console.log(`[${file}] skipped — already on disk`); skipped++; continue; }
     const brief = loadBrief(line.id);
     if (!brief) { console.log(`[${file}] skipped — no brief yet at ${briefPath(line.id).replace(root + '/', '')}`); skipped++; continue; }
-    console.log(`[${file}] rendering via Gemini (${voice})...`);
+    console.log(`[${file}] rendering via Gemini (${model}/${voice})...`);
     const t0 = Date.now();
     let pcm = null, err = '';
-    // Measured this run: the preview-tts model's rate limit is tight enough
-    // to 429 mid-batch even at modest volume, but recovers within the same
-    // run (successes and 429s interleaved). A 429 gets a real wait, not the
-    // short backoff other errors get.
+    // A 429 gets a real wait, bounded at 4 attempts — a per-minute limit
+    // recovers within a run (measured, audition 2 Part A: successes and
+    // 429s interleaved); it is not looped on indefinitely the way a hard
+    // daily cap would be.
     for (let attempt = 1; attempt <= 4 && !pcm; attempt++) {
-      try { pcm = await geminiTts(brief, voice); }
+      try { pcm = await geminiTts(brief, voice, GEMINI_MODELS[model].id); }
       catch (e) {
         err = e.message;
         const isRateLimit = /\b429\b/.test(err);
@@ -633,7 +661,7 @@ async function runGemini() {
       }
     }
     const secs = (Date.now() - t0) / 1000;
-    const run = { lineId: line.id, voice, file, renderedAt: new Date().toISOString(), tookSec: Math.round(secs) };
+    const run = { lineId: line.id, voice, model, file, renderedAt: new Date().toISOString(), tookSec: Math.round(secs) };
     if (!pcm) {
       console.error(`[${file}] FAILED (${secs.toFixed(0)}s): ${err}`);
       run.status = 'failed'; run.reason = err; fail++;
@@ -644,14 +672,15 @@ async function runGemini() {
       unlinkSync(wavPath);
       const duration = ffprobeDuration(outPath);
       const bytes = statSync(outPath).size;
-      const cost = (duration != null ? duration * 25 / 1e6 * GEMINI_PRICE.audio : 0) + (brief.length / 4 / 1e6) * GEMINI_PRICE.text;
+      const price = GEMINI_MODELS[model].price;
+      const cost = (duration != null ? duration * 25 / 1e6 * price.audio : 0) + (brief.length / 4 / 1e6) * price.text;
       spentUsd += cost;
       console.log(`[${file}] OK (${secs.toFixed(0)}s) — ${(bytes / 1024).toFixed(1)}KB`
         + (duration != null ? `, ${duration.toFixed(1)}s audio` : ''));
       run.status = 'ok'; run.bytes = bytes; run.durationSec = duration;
       ok++;
     }
-    manifest.runs = manifest.runs.filter((r) => !(r.lineId === line.id && r.voice === voice));
+    manifest.runs = manifest.runs.filter((r) => !(r.lineId === line.id && r.voice === voice && (r.model || 'flash') === model));
     manifest.runs.push(run);
     saveManifest({ ...loadManifest(), gemini: manifest });
     await new Promise((r) => setTimeout(r, 8000)); // rate-limit pacing, matches generate-tts.mjs
