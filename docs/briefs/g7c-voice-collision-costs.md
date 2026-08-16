@@ -40,7 +40,12 @@ For each of the three routes, answer in numbers wherever a number exists:
 - **What it does NOT fix.** Each route leaves something; say what.
 
 Route 3 needs one extra thing: `docs/MCGROTS-VOICE.md` records that FAL/MiniMax
-Voice Design was closed out on cost. **Do not reopen that decision** — record
+Voice Design was closed out on **accent** — all three FAL engines were rejected
+on it, confirmed across both audition rounds. (This brief originally said
+"cost"; that was wrong, and G7c corrected it rather than following it silently,
+which is the behaviour these briefs ask for. Corrected in place so a later
+reader is not misled by the brief that produced the doc.) **Do not reopen that
+decision** — record
 what route 3 would now mean given FAL is out, which may be that it has no live
 implementation at all. That is a legitimate answer.
 

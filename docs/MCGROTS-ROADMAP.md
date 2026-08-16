@@ -1187,8 +1187,52 @@ Three things that unit found beyond its brief, all worth carrying:
   shortlist candidate and must never be counted in the 135.
 
 Also recorded there: 53 of the 115 clean candidates fall outside the 78-comic
-G6b.1 audit and have NOT had an image opened. Drawing from beyond the 20 means
-doing that pass first.
+G6b.1 audit and have NOT had an image opened. **Superseded by G7d, same day:
+that gap was real against set-a alone, and `comic-features-set-b.md` closed 52
+of the 53 before anyone acted on it. The true remainder is one comic,
+`13dc6c45`, now audited in `docs/comic-features-set-c.md`.** The whole reading
+pool has now had every image opened.
+
+**G7c landed 2026-08-16 — `docs/g7-voice-collision-costs.md`, and it found a
+prerequisite nobody had seen.** Costing the readings turned up the fact that
+matters more than the costs:
+
+**There is no code path that renders a reading in McGrot's voice.** Two
+independent blockers, both verified here:
+
+1. `scripts/generate-tts.mjs` selects targets with
+   `!existsSync(join(root,'assets',audioRel))` — it skips anything already
+   rendered. All eight proposed readings already carry a vendor mp3, so
+   pointing the generator at them is a **no-op**, not a re-render. Producing a
+   McGrot-voiced version needs a separate output path and a small script;
+   neither exists.
+2. `scripts/tts-prompts/<id>.txt` for those eight are the **vendor's** director
+   briefs, not McGrot's. Confirmed by reading `2b2110bb.txt`, whose Audio
+   Profile is Shug Gantsie, a jumpy nightwatchman. Eight McGrot-persona briefs
+   do not exist, and per `docs/MCGROTS-VOICE.md`'s settled convention **Dan
+   authors them**.
+
+So the voice work on G7's critical path is not "pick a voice" — that is
+settled — it is *(a)* Dan writing eight McGrot director briefs and *(b)* a
+small unit building the render path. Sized as estimates against the only real
+per-call timing in the repo (35 Gemini calls in
+`docs/voice-audition/manifest.json`, mean 5.3s, range 2–15s): ~9,292 prompt
+chars, roughly $0.05–0.06, and 98–176s of wall clock. The money is
+irrelevant; the missing script and the missing briefs are not.
+
+**The three collision routes, costed.** Route 1, reassigning the six Algenib
+vendors: five are already rendered (200.9s, 7,023 chars, ≈$0.06, ~59–107s) and
+one has never been rendered, so it is free to redirect. Route 2, accepting the
+echo: zero cost, and it does not touch the collision. Route 3, taking McGrot
+off the prebuilts: **cannot be costed, because no live implementation exists**
+— the audition rig is never called from the shipped render path, and FAL was
+closed out on accent (not cost; three engines rejected on it across both
+audition rounds).
+
+One thing G7c flagged that is nobody's job yet: **voice assignment for future
+vendors happens outside this repo.** `prep-comics.mjs` hard-codes only the
+three v1 comics, so nothing in-repo stops a future batch landing back on
+Algenib and deepening the collision after it has been resolved.
 
 ### G8a — McGrot and Pomplé, from the comics
 
