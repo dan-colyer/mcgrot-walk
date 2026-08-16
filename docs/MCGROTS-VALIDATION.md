@@ -2748,3 +2748,82 @@ rig. Both left in place, gitignored, not referenced in `INDEX.md`.
 **What this does not prove:** anything about how Orus, Algenib, MiniMax's
 Taxman take, or any of the 26 shortlist voices actually sound. Six criteria,
 one listener, unchanged.
+
+---
+
+## G5g — Drive pull (`scripts/mcgrots-drive-pull.mjs`)
+
+Pulls new comics from Andrew's Google Drive folder (`McGrot/2 - Add new comics
+here`) into `assets/comics-incoming/` — gitignored staging, deliberately not
+`assets/comics/`. One-way only: reads `gdrive:`, writes local. Never `rclone
+sync`. Dedupes by filename against `assets/comics/` union the staging dir,
+using `rclone lsjson` + MimeType to separate images from anything else Andrew
+drops in.
+
+**What it proves:**
+
+- **Empty-folder case is clean.** Real run against the real (empty) upload
+  folder exits 0, prints "nothing to pull", creates no directory.
+- **Fetch works.** Full pull of 150 not-locally-present files from the
+  read-only seeded folder — via `--remote`/`--staging` overrides built for
+  this test — landed all 150, each verified by size against the `lsjson`
+  listing.
+- **Skip is real, not assumed.** Identical second run over the same 396-file
+  folder skipped all 396, pulled 0, exit 0.
+- **It cannot write upward.** Two functional uses of `gdrive:`, both in source
+  position; a runtime assertion immediately before the one `rclone copy` call
+  refuses to execute if the destination starts with `gdrive:` or the source
+  does not. No `sync`/`moveto`/`purge` anywhere. Re-verified independently by
+  control before the commit was authorised, because the failure mode is
+  silently resurrecting the 18 files Dan deleted by hand.
+
+**What it deliberately does not do:** touch `assets/catalog.json`. Landing a
+batch is a human milestone (`scripts/catalog-batches/BRIEF.md`) — a new `npc`
+block adds a vendor, moves goldens and breaks gates naming the census. No gate
+added to `smoke:mcgrots`: it needs network and a credential, and the suite is
+offline and free.
+
+**Known limit:** dedup is by filename only, so a file Andrew renames is pulled
+again. Staging is gitignored, so a duplicate costs nothing.
+
+---
+
+## Splitting the 30 Gemini voices by pitch, and why it is a triage and not a fact
+
+McGrot is a man, so roughly a third of the 30 prebuilt voices are wasted
+listening for Dan and Andrew. **Google does not publish the gender of any
+voice** — the docs give a one-word characteristic ("Gravelly", "Breathy") and
+nothing more — and the catalogue could not answer it either: those 30 voices
+were assigned across 156 NPCs without regard to gender, so every voice carries
+both male and female names.
+
+So it was measured. Median fundamental frequency per clip, autocorrelation
+over 40 ms frames at 16 kHz, searching 60–400 Hz, keeping only frames with RMS
+above 0.02 and a normalised autocorrelation peak above 0.35 — roughly 100–150
+voiced frames survive per clip.
+
+**The control is the thing that makes this usable.** Every clip is the same
+line (`mcgrot-12`, chosen for being dialect-heavy), so pitch differences are
+the voice and not the words. **Algenib (146.8 Hz) and Orus (139.1 Hz)** are the
+reference: Dan judges both plausible for McGrot, so "male" is calibrated
+against the two voices actually in contention rather than a textbook band.
+
+| Band | Voices | Action |
+|---|---|---|
+| 124–158 Hz | pulcherrima, umbriel, iapetus, enceladus, algieba, alnilam, **orus**, schedar, puck, **algenib**, achird, charon, aoede | kept |
+| 174–191 Hz | rasalgethi, sadaltager, zubenelgenubi, sadachbia, despina | kept, flagged |
+| 205–286 Hz | kore, erinome, achernar, laomedeia, autonoe, callirrhoe, leda, vindemiatrix, zephyr, sulafat | moved to `shortlist-female/` |
+
+**Corroborated, not just asserted.** `scripts/prep-comics.mjs` carries three
+hand-authored voice assignments from long before this work, and all three agree
+with the measurement: Algenib to a male character, Achernar (222 Hz) to Morag,
+Rasalgethi (174 Hz) to Kenneth. Rasalgethi agreeing is the useful one — it is
+in the middle band, and it says that band really does contain male voices.
+
+**What this does NOT prove, and the reason nothing was deleted.** Pitch is not
+gender. A low-pitched female voice or a high-pitched male one would be filed
+wrongly and there is no published ground truth to check against. This is a
+triage that saves two people an hour of listening, not a claim about the
+voices. The ten are moved rather than deleted, and the five in the middle band
+are kept deliberately — dropping a genuine option is a worse error than one
+extra clip to play.
