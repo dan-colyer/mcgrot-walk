@@ -1265,10 +1265,6 @@ try {
       await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(false));
       const fixOffFraction = await mcgrotVisiblePixelFraction();
       await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(true));
-      // Back to the region's own default boot (`?look=none`, real wall clock)
-      // for whatever runs after this block.
-      await page.evaluate(() => window.__mcgrotsDebug.setLook('none'));
-      await page.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
 
       // FLOOR MEASURED, not guessed at 50% (the first attempt, which failed
       // against the fix's own correct output). A humanoid AABB is never
@@ -1287,6 +1283,39 @@ try {
       check('F22 control: with the fix disabled, the same measurement comes in materially lower',
         fixOffFraction < fixOnFraction * 0.8,
         `fix on=${(fixOnFraction * 100).toFixed(1)}% fix off=${(fixOffFraction * 100).toFixed(1)}%`);
+
+      // F22 FOLLOW-UP (found by Dan on a detached worktree, re-measured here):
+      // the pinned-980 check above proves the PLAYER's own body no longer
+      // occludes him. It says nothing about rota.js's reader, who used to
+      // stand at the same x as McGrot ([0.35, 2.1] vs his own [0.35, 1.3] —
+      // rota.js predates him; see rota.js's own SPOT_LOCAL comment) and read
+      // as a featureless capsule over his torso, apron and right arm on the
+      // real clock. That figure was also the F22 gate's actual flake source
+      // (see the gate-flake commit) — pinning the clock made the gate
+      // deterministic and silently hid this second, real fault behind it.
+      //
+      // rota.js's SPOT_LOCAL is now [-1.5, 2.1] (moved beside the counter,
+      // clear of both McGrot and Pomplé — see that file's own comment for
+      // the candidate renders this was picked from). Gated here on clocks
+      // where a reader IS PRESENT (not the pinned-980 empty moment above),
+      // covering the phases a real visit actually passes through: arriving,
+      // mid-reading, leaving. Same `mcgrotVisiblePixelFraction` measurement
+      // and the same floor as the check above — the claim is "the reader
+      // does not reopen F22", not a new threshold.
+      const readerPresentFractions = {};
+      for (const wc of [995, 1020, 1050]) {
+        await page.evaluate((w) => window.__mcgrotsDebug.rota.setClock(w), wc);
+        readerPresentFractions[wc] = await mcgrotVisiblePixelFraction();
+      }
+      const badReaderPresent = Object.entries(readerPresentFractions).filter(([, f]) => f <= 0.2);
+      check('F22 follow-up: the rota reader does not reopen the counter occlusion, at every phase of a visit',
+        badReaderPresent.length === 0,
+        Object.entries(readerPresentFractions).map(([wc, f]) => `t=${wc} ${(f * 100).toFixed(1)}%`).join(' / ') + ' (>20% required, each)');
+
+      // Back to the region's own default boot (`?look=none`, real wall clock)
+      // for whatever runs after this block.
+      await page.evaluate(() => window.__mcgrotsDebug.setLook('none'));
+      await page.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
 
       check('console still clean after driving the mcgrot region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
