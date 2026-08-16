@@ -88,6 +88,29 @@ in isolation and proved nothing about the product; G6a's own report reached
 player sees. Neither is fixed by more diligence. Execution work — read 78
 images, write down what is in them — has never been the failure mode.
 
+**`low` for a mechanical unit whose procedure is fully specified and whose
+output is checkable by a count, a diff or a hash** — regenerate audio for this
+list of IDs, merge this batch, rename these files. The test is whether a wrong
+step would be cheap and immediately visible.
+
+**Never `low` for a unit that designs a safety guard**, however mechanical it
+looks from outside. G5g reads as a plain rclone wrapper; what it actually
+produced was the choice to refuse rather than trust static review, a runtime
+assertion on the copy direction, and `--remote`/`--staging` overrides invented
+so the shipped code path could be exercised against a read-only folder. None of
+that was in the brief. At `low` the likely output is a working script with no
+guard, which is exactly the failure the unit existed to prevent.
+
+**`xhigh` on a worker is a smell, not a setting.** It means the brief did not
+settle a design and the worker is being asked to invent one. Raise the brief,
+not the effort — the orchestrator writes briefs precisely so a worker never has
+to. If a unit genuinely cannot be briefed, it is not a worker unit; it belongs
+in this session or in a phase gate.
+
+**The phase gate is the exception, and it is not a worker.** It runs xhigh, in
+a fresh session that did not write the code, and reports to Dan rather than
+here. `max` has no use in this project — nothing has warranted it.
+
 Do not restart a running worker to change its effort. The switch costs more
 than it saves mid-unit.
 
