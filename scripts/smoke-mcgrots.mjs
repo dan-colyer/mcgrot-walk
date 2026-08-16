@@ -1221,7 +1221,27 @@ try {
       // not the fault). Aerial (S2, the settled style) is what Dan actually
       // sees during the visit and is what separates cleanly — see the floor
       // comment below.
-      await page.evaluate(() => window.__mcgrotsDebug.setLook('aerial'));
+      //
+      // SETTLES 4 FRAMES after install, the style region's own established
+      // number for a fresh cel/hull material (its S1/S2 checks below:
+      // `setLook('inked'); stepFrames(4)`) — a new shader needs a compile.
+      //
+      // CLOCK PINNED TO A KNOWN-EMPTY MOMENT (rota.js: `whatTheyAreDoing(980)`
+      // is null — the same reference point the rota region's own sequence
+      // strip uses for '1-empty'). Without this the region ran on the REAL
+      // wall clock (`rotaNow()`'s fallback), and rota.js's own reader stands
+      // at `SPOT_LOCAL = [0.35, 2.1]` — almost exactly McGrot's own position
+      // ([0.35, 1.3]) and directly between him and the `counter` camera.
+      // Found by opening a failing run's own capture: the "un-inked" 15.5%
+      // reading was not a material or compile race at all — it was a second
+      // figure standing in front of him, present roughly half of any given
+      // real-time window (readings.json's average duration is close to
+      // GAP_S). This is why the fault reproduced in clean bursts (many runs
+      // in a row landing inside the same real-time visit window) rather than
+      // as independent per-run noise, which is what actually ruled out a
+      // rendering race.
+      await page.evaluate(() => window.__mcgrotsDebug.rota.setClock(980));
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(4); });
 
       const counterRow = rows.find((v) => v.id === 'counter');
       const mcgrotVisiblePixelFraction = async () => {
@@ -1245,9 +1265,10 @@ try {
       await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(false));
       const fixOffFraction = await mcgrotVisiblePixelFraction();
       await page.evaluate(() => window.__mcgrotsDebug.setSelfOcclusion(true));
-      // Back to the region's own default boot (`?look=none`) for whatever
-      // runs after this block.
+      // Back to the region's own default boot (`?look=none`, real wall clock)
+      // for whatever runs after this block.
       await page.evaluate(() => window.__mcgrotsDebug.setLook('none'));
+      await page.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
 
       // FLOOR MEASURED, not guessed at 50% (the first attempt, which failed
       // against the fix's own correct output). A humanoid AABB is never
