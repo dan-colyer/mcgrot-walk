@@ -423,3 +423,43 @@ duplicate-on-extract name, byte-identical to the canonical file, same
 Finder's own "Compress" command. Nothing in `scripts/mcgrots-voice-audition.mjs`
 writes a `.zip` anywhere; confirmed by reading the script, not assumed.
 Both files left untouched — not this rig's to remove.
+
+## 2026-08-16 — Andrew's verdict: Algenib for McGrot, provisionally
+
+**Algenib wins.** Andrew's ear, relayed by Dan the same day, closing the
+Algenib-vs-Orus finalist pair that Dan's own 2026-08-16 verdict had narrowed to.
+Explicitly **provisional** — it is a value to build on, not a closed decision,
+and re-opening it costs one regeneration pass rather than a phase.
+
+**The Taxman exchange stays on the MiniMax clip**
+(`docs/voice-audition/04-exchange-taxman--minimax.mp3`), also provisional. This
+is the one surviving FAL artefact after FAL was closed out on accent, and it is
+kept deliberately: it was chosen for its *delivery* of the interruption, and the
+Taxman is a bureaucratic adversary rather than a Leith voice, so the accent that
+disqualified MiniMax for McGrot is not disqualifying here. Recorded so a later
+session does not read it as FAL being reinstated. It is not — see the audition-2
+verdict above. Nothing else routes to FAL.
+
+### One conflict this creates, and it needs a decision before G8
+
+`docs/MCGROTS-ROADMAP.md` § 11.0.5 states the constraint: a principal wants a
+voice that is **not** among the ones the vendor crowd already uses, or he echoes
+them. Measured against the live catalogue:
+
+| | value |
+|---|---|
+| catalogue entries carrying a voice | 156 |
+| distinct Gemini voices in use | 30 — i.e. all of them |
+| entries already using Algenib | 6 |
+| `generate-tts.mjs` fallback default | `'Algenib'` |
+
+So the constraint **cannot be satisfied by picking differently**: all 30
+prebuilts are spoken for, and Algenib is additionally the fallback every
+entry without an explicit `voiceName` lands on. McGrot will share a voice with
+six vendors whatever is chosen.
+
+That is a finding, not a blocker for G7 — McGrot is at his own pitch and the
+street's crowd is a different game. It matters at G8/G9 if the two ever share a
+scene. Three routes exist and none has been costed: re-assign those six vendors
+off Algenib, accept the echo, or take McGrot off the prebuilts entirely. Left
+open deliberately rather than guessed.

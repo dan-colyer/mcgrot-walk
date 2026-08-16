@@ -51,6 +51,35 @@ Merging is now a real merge rather than interleaving, which is the point — but
 it also means the orchestrator now owns integration, and a branch that never
 lands is work that never happened.
 
+**A new unit gets a NEW agent, never a reused pane.** Dan's ruling,
+2026-08-16, and it is not a preference — it is the difference between a worker
+that finishes and one that dies halfway. Workers run on models with smaller
+context windows than the orchestrator's, and a pane that has already done one
+unit starts the next one part-full. The orchestrator does not get to see how
+full; there is no reading for it from outside, so the only safe assumption is
+that a used pane is a compromised one.
+
+The second reason is quieter and worse. A worker carrying the last unit's
+context carries its assumptions too, and will act on a fact that was true two
+units ago without re-checking it — the same failure the phase-gate rule exists
+to prevent, one tier down.
+
+So, per unit, every time, no judgement call:
+
+```bash
+herdr worktree create --cwd "$PWD" --branch <unit> --label <unit> --no-focus
+herdr agent start <fresh-name> --kind claude --pane <returned-pane-id> -- --permission-mode auto
+```
+
+Give the agent a **new name tied to the unit** (`comics-a`, `pomple`), not a
+name tied to the model (`sonnet`). A model-shaped name is what makes reusing
+the pane feel natural, and it also means `.herdr/<name>.md` accumulates several
+units' reports in one file instead of one file per unit.
+
+Leave the finished pane alone rather than tidying it: its `.herdr` file and
+scrollback are the record, and closing a workspace you did not create is
+against the herdr rules anyway. Prune worktrees when the branch has landed.
+
 **Workers talk back over herdr, not over the pane's scrollback.** Claude Code's
 own cross-session messaging needs v2.1.224 and the `stable` channel is pinned
 to 2.1.220, so it is unavailable here; re-check when stable moves. The
