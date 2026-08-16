@@ -99,34 +99,57 @@ overlap with the FAL set, before the two-voice shortlist was settled.
 | `mcgrot-07--gemini-gacrux.mp3` | Fourth voice, Pomplé line | 5.3s |
 | `mcgrot-07--gemini-algenib-pro.mp3` | Pricier engine, Pomplé line | 4.7s |
 
-### 26 more free voices, one quick check each
+### 16 more free voices, one quick check each
 
 Google offers 30 ready-made voices in total; Algenib, Orus and the two above
 (Fenrir, Gacrux) account for 4. The other 26 cost nothing extra to try, so
-every one of them reads McGrot's most dialect-heavy line once, as a sanity
+every one of them read McGrot's most dialect-heavy line once, as a sanity
 check that nothing better was overlooked. **This is a shortlisting pass, not
 a third audition** — none of these have been checked against all twelve
 lines, only this one.
+
+**Ten of the original 26 have been set aside — McGrot is a man, and ten of
+these voices measured clearly female.** Google doesn't publish which of its
+voices are male or female, so this was measured rather than assumed: the
+pitch of each voice reading the exact same line was compared (technically,
+median fundamental frequency — how high or low the voice sits). Algenib and
+Orus, the two finalists, both sit around 140-147 Hz, an ordinary male range.
+Ten of the shortlist voices measured 205-286 Hz — clearly higher, clearly a
+different range, not a marginal call. Those ten are kept, not deleted (they
+cost real money to make), just moved out of the way to
+`docs/voice-audition/shortlist-female/`: Kore, Erinome, Achernar, Laomedeia,
+Autonoe, Callirrhoe, Leda, Vindemiatrix, Zephyr, Sulafat.
+
+**A second, independent check agrees.** Three of these same voice names were
+already hand-assigned to characters elsewhere in the project, by a person,
+before this pitch measurement existed: Algenib went to a male character,
+Achernar (222 Hz — one of the ten set aside above) went to Morag, a woman,
+and Rasalgethi (174 Hz, still in the table below) went to Kenneth, a man.
+That assignment lines up with the measurement rather than contradicting it.
+
+**Five of the remaining voices are marked below with a `♦`** — Rasalgethi,
+Sadaltager, Zubenelgenubi, Sadachbia and Despina, all measuring somewhere in
+174-191 Hz. That's higher than Algenib and Orus but not in the clearly-female
+205+ range the ten set-aside voices measured. Kept deliberately rather than
+dropped: wrongly ruling out a real option is worse than one extra clip in
+the list.
 
 All read: "Chum me doon the fit o' the Walk and I'll show ye a queue that
 means something."
 
 | File | Length | File | Length |
 |---|---|---|---|
-| `shortlist-zephyr--mcgrot-12.mp3` | 3.4s | `shortlist-rasalgethi--mcgrot-12.mp3` | 4.2s |
-| `shortlist-puck--mcgrot-12.mp3` | 3.9s | `shortlist-laomedeia--mcgrot-12.mp3` | 4.0s |
-| `shortlist-charon--mcgrot-12.mp3` | 3.8s | `shortlist-achernar--mcgrot-12.mp3` | 4.0s |
-| `shortlist-kore--mcgrot-12.mp3` | 4.7s | `shortlist-alnilam--mcgrot-12.mp3` | 4.1s |
-| `shortlist-leda--mcgrot-12.mp3` | 4.2s | `shortlist-schedar--mcgrot-12.mp3` | 5.0s |
-| `shortlist-aoede--mcgrot-12.mp3` | 3.9s | `shortlist-pulcherrima--mcgrot-12.mp3` | 3.9s |
-| `shortlist-callirrhoe--mcgrot-12.mp3` | 4.2s | `shortlist-achird--mcgrot-12.mp3` | 3.8s |
-| `shortlist-autonoe--mcgrot-12.mp3` | 3.9s | `shortlist-zubenelgenubi--mcgrot-12.mp3` | 4.2s |
-| `shortlist-enceladus--mcgrot-12.mp3` | 3.9s | `shortlist-vindemiatrix--mcgrot-12.mp3` | 3.7s |
-| `shortlist-iapetus--mcgrot-12.mp3` | 3.7s | `shortlist-sadachbia--mcgrot-12.mp3` | 3.4s |
-| `shortlist-umbriel--mcgrot-12.mp3` | 4.4s | `shortlist-sadaltager--mcgrot-12.mp3` | 3.5s |
-| `shortlist-algieba--mcgrot-12.mp3` | 4.2s | `shortlist-sulafat--mcgrot-12.mp3` | 4.1s |
-| `shortlist-despina--mcgrot-12.mp3` | 3.9s | | |
-| `shortlist-erinome--mcgrot-12.mp3` | 4.5s | | |
+| `shortlist-puck--mcgrot-12.mp3` | 3.9s | `shortlist-schedar--mcgrot-12.mp3` | 5.0s |
+| `shortlist-charon--mcgrot-12.mp3` | 3.8s | `shortlist-pulcherrima--mcgrot-12.mp3` | 3.9s |
+| `shortlist-aoede--mcgrot-12.mp3` | 3.9s | `shortlist-achird--mcgrot-12.mp3` | 3.8s |
+| `shortlist-enceladus--mcgrot-12.mp3` | 3.9s | `shortlist-zubenelgenubi--mcgrot-12.mp3` ♦ | 4.2s |
+| `shortlist-iapetus--mcgrot-12.mp3` | 3.7s | `shortlist-sadachbia--mcgrot-12.mp3` ♦ | 3.4s |
+| `shortlist-umbriel--mcgrot-12.mp3` | 4.4s | `shortlist-sadaltager--mcgrot-12.mp3` ♦ | 3.5s |
+| `shortlist-algieba--mcgrot-12.mp3` | 4.2s | `shortlist-rasalgethi--mcgrot-12.mp3` ♦ | 4.2s |
+| `shortlist-despina--mcgrot-12.mp3` ♦ | 3.9s | `shortlist-alnilam--mcgrot-12.mp3` | 4.1s |
+
+♦ = higher-pitched than the two finalists but plausibly still male — kept
+on purpose, see above.
 
 If nothing here jumps out as obviously better on this one line, Group 1's
 Algenib/Orus decision stands and none of these are worth a full audition.
