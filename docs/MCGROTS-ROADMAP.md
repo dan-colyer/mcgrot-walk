@@ -1162,6 +1162,34 @@ should be playable end to end on stand-in bodies with real voices. Dan sits
 through it. If he does not want a second run, the honest outcome is to say so
 and stop — a measured rejection is delivered work, not a shortfall.
 
+**G7a landed 2026-08-16 — the shortlist exists, in `docs/g7-reading-shortlist.md`.**
+418 → 156 transcribed → 135 with a verified mp3 → 121 after 14 broken or
+non-strip assets → 115 after duplicate performances → a shortlist of 20, each
+image opened rather than checked by title. A worked set of eight totals 185.4s,
+leaving roughly 6.9 minutes of the ten for walking, complaints and Pomplé.
+Verified here independently: the catalog counts reproduce, and `ffprobe` on the
+proposed eight returns each duration to 0.1s and the same 185.4s total.
+
+Three things that unit found beyond its brief, all worth carrying:
+
+- **The two known duplicate pairs are TRIPLES**, and there are two further
+  unlogged duplicate pairs. Found by comparing quoted verbatim lines across all
+  135 candidates rather than by title.
+- **The 135 mp3s are in VENDOR voices, not Algenib.** They are evidence about
+  the writing and the length and nothing else. Whatever eight Dan picks must be
+  regenerated in McGrot's voice before G7 is run, and that regeneration is
+  blocked behind the Algenib collision in § 11.
+- **A 136th mp3 exists that the funnel deliberately excludes**: `3c6b637b`,
+  "McGrot — The Badger Consultancy", which has audio but no `npc` block because
+  an `npc` block would make him vendor 125 (see `CLAUDE.md`). It is the only
+  clip in the catalogue that is McGrot reading as himself, so it is the natural
+  reference for what the regenerated eight should sound like — but it is not a
+  shortlist candidate and must never be counted in the 135.
+
+Also recorded there: 53 of the 115 clean candidates fall outside the 78-comic
+G6b.1 audit and have NOT had an image opened. Drawing from beyond the 20 means
+doing that pass first.
+
 ### G8a — McGrot and Pomplé, from the comics
 
 **Dan's ruling, 2026-08-16: the current bodies do not look like the comics, and
@@ -1890,6 +1918,16 @@ session does not re-derive it from the same green numbers.
 the comics anyway. If it survives a real model, it is a lighting fix at the
 pitch and not his geometry.
 
+**Revised 2026-08-16, after F21 was confirmed independently: this is most
+likely a SYMPTOM of F21, not a lighting fault and not a modelling one.** F21
+says Pomplé carries no ink hull under any look. The ink outline is precisely
+what separates a figure from a dark background in this style — it is the reason
+McGrot stays legible standing in the same van shadow — so "a dark mass rather
+than a dog" is the expected appearance of an un-inked Lambert dog in shade,
+which is what he demonstrably is. Do not spend G8a's lighting budget on this
+before fixing F21 and re-rendering `counter`; the cheapest test is that one
+capture, and it may close F20 for free.
+
 ### F21 — Pomplé renders un-inked and un-cel-shaded under every look, silently (G6a, found by G6b.2, CARRIED)
 
 **Severity: low, cosmetic, and structural rather than accidental.** `looks.js`
@@ -1914,7 +1952,54 @@ model. Whoever builds it should await its own readiness before
 `looks.install(...)` from the start, per the pattern now in `main.js` for
 McGrot.
 
----
+**Confirmed independently by the orchestrator, 2026-08-16**, in a clean tree,
+by reading the live scene rather than the code — the code reads as if the fix
+applies to everyone, which is how this survived G6a:
+
+```
+node scripts/mcgrots-shot.mjs --look=aerial --frames=600 \
+  -e "(()=>{const g=dbg.scene.getObjectByName('pomple');const o=[];g.traverse(m=>{if(m.isMesh)o.push([m.name,m.material?.type]);});return JSON.stringify(o);})()"
+→ [["pomple:body","MeshLambertMaterial"],["pomple:head","MeshLambertMaterial"]]
+```
+
+The same expression against `mcgrot` returns `MeshToonMaterial`/`cel:unnamed`
+for both meshes plus `hull:skinned` and `hull:mcgrot:beret`. Two figures, one
+scene, one install — the difference is entirely whether `boot()` awaited them.
+**That pair of commands is the diagnostic**, and it is worth running before
+blaming any future "this character looks wrong" on its model.
+
+**One consequence worth stating, because it changes what this fault costs:**
+Pomplé has never once been rendered in the shipped style. Every judgement made
+about his silhouette, his colour and his legibility — G6a's own review
+included — was made on an un-inked Lambert dog. G8a should not treat those
+judgements as evidence about the model.
+
+### F22 — the player's own capsule occludes McGrot at the `counter` anchor (G6b.2, found in review, OPEN and blocking G7)
+
+**Severity: medium, and it is the only one of these four that G7 cannot be run
+around.** At `counter`, under `--look=aerial --frames=600`, the player's own
+body capsule sits between the camera and McGrot and covers roughly the middle
+third of him — part of the apron and one arm. He is still identifiable, but
+only because the beret clears the top of the capsule.
+
+This is not the model's fault and not G8a's to fix: it is where the `counter`
+camera sits relative to the player's own mesh, and it would occlude any figure
+standing at the serving opening. It went unnoticed because no earlier unit put
+anything there to occlude — Pomplé stands off to the side.
+
+**Why it blocks:** G7 is the kill criterion, and it seats Dan at this anchor
+for six to eight readings. Judging whether McGrot is worth continuing with,
+while a third of him is behind a featureless cream capsule, is not the test the
+milestone intends. **This is not a judgement to schedule after G8a** — it is
+cheap now and the answer changes what G8a is judged against.
+
+**Candidate fixes, in the order they should be tried, none measured yet:** hide
+or fade the player's own body at anchors where the camera is inside it (the
+street already has the first-person precedent); move the `counter` eye offset;
+or shift McGrot's stand position along the serving opening. The first is most
+likely right and least likely to disturb an existing capture — but it touches
+the anchor rig, so whoever takes it needs a control that shows the capsule
+still renders where it should.
 
 ## 11. Still open
 

@@ -3043,3 +3043,61 @@ That the beret READS AS a beret, on a figure that reads as McGrot — that is
 Dan's G7 judgement, and no number above substitutes for it. Nor whether the
 look/hull fix above changes how the rest of the cast should be treated; that is
 a question for whoever next touches Pomplé's own copy of the gap.
+
+### Judged under S2, 2026-08-16 — the beret carries it and the body fights it
+
+The unit landed 80/80 and was NOT judged on a picture under the shipped look;
+this is that judgement, run by the orchestrator in a clean tree. Every capture
+is under `--look=aerial`, because `LOOK_KIND` in `main.js` defaults to `'none'`
+and a bare shot is therefore not what the player sees — a reviewer who forgets
+that is judging a photoreal render and blaming the model.
+
+```
+node scripts/mcgrots-shot.mjs --look=aerial --anchor=counter --frames=600 --shot=/tmp/m-counter.png
+node scripts/mcgrots-shot.mjs --look=aerial --anchor=kerb    --frames=600 --shot=/tmp/m-kerb.png
+```
+
+**The beret works, and it works exactly as the extraction predicted.** At
+`kerb` he is perhaps thirty pixels tall and the beret still reads: a saturated
+red-orange disc sitting on a round head, unmistakable at a distance where every
+other feature has dissolved. G6b.1's claim was that beret-plus-round-head alone
+carries recognition. That is now confirmed at the range the player actually
+stands at, not just in the corpus.
+
+**The body does not, and it is a texture problem rather than a shading one.**
+Measured rather than inferred — the swap DID reach him:
+
+| mesh | material | ink hull |
+|---|---|---|
+| `skinned` | `MeshToonMaterial` `cel:unnamed` | `hull:skinned` present |
+| `mcgrot:beret` | `MeshToonMaterial` `cel:unnamed` | `hull:mcgrot:beret` present |
+
+So he is cel-shaded and outlined. What makes him read as a photograph pasted
+into a drawing is that `celFor()` carries `map: src.map` through to the toon
+material, and his source albedo is a 512px photoreal texture — grime, fabric
+weave, skin tone. The two-band ramp only touches the lighting term; a
+photographic map survives it intact. Against a van and a street that carry no
+texture at all, the figure is the only photographic object in the frame.
+
+**This is worth writing down because the obvious diagnosis is wrong.** Seeing a
+photoreal figure in a flat world, the natural conclusion is that the look never
+reached him — which is exactly F21, and exactly what IS true of Pomplé three
+metres away in the same frame. It is not true here. Do not "fix" McGrot's
+install order; it is already right, and the numbers above are how to tell the
+two failures apart in one command.
+
+**Costume, against the measured canon:** cream/white short-sleeved shirt where
+the corpus says green plaid (~60/71), khaki trousers where it says green
+dungarees, dark hair at the temples where the drawings show a round bald head
+universally. Only the beret and the apron-over-shirt layering match. This is
+the asset generated from prose canon before anyone checked the drawings, and it
+is G8a's to replace — recorded here so G8a starts from a measured list rather
+than re-rendering it.
+
+**One thing the unit could not have known about:** at the `counter` anchor the
+player's own capsule body occludes roughly the middle third of him, including
+part of the apron and one arm. The beret clears it, which is the only reason
+the anchor is judgeable at all. Not this unit's fault and not Pomplé's either —
+it is where the counter camera sits relative to the player's own mesh — but G7
+puts Dan at that anchor for the readings, so it needs settling before the kill
+criterion is run.
