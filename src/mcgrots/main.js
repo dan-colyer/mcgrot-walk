@@ -32,6 +32,7 @@ import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
 import { buildPomple } from './pomple.js';
+import { buildMcgrot } from './mcgrot.js';
 import { loadRota, createReader, whoIsHere, whatTheyAreDoing, overlapCount, cycleSeconds } from './rota.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
@@ -122,6 +123,13 @@ scene.add(sun, sun.target);
 
 // G3a: the real van, price board and ground dressing — replaces the G0 box.
 buildVan(scene);
+
+// G6b.2: McGrot himself, standing at the van's serving opening — reuses G1's
+// A1 skinned rig (see mcgrot.js's header for why, unlike Pomplé, there is no
+// bake-off question here). `pomple.js` now imports `MCGROT_LOCAL` from this
+// module directly, so his attention target and this figure's placement can
+// never drift apart into two copies of the same number.
+const mcgrot = buildMcgrot(scene);
 
 // G6a: Pomplé, presentation only — his own module; G1's rig does not
 // transfer to a quadruped (see pomple.js's header). Module-scope, same as
@@ -395,6 +403,10 @@ function frame(dt) {
   // structural rather than a promise.
   const now = rotaNow();
   reader.update(dt, now);
+  // G6b.2: no locomotion and no per-frame state (see mcgrot.js's header) —
+  // called for parity with every other actor, not because anything here
+  // changes frame to frame.
+  mcgrot.update(dt);
   // G6a: reads the player's own live position only — never the camera, per
   // Dan's ruling that actors must not affect it.
   pomple.update(dt, actor.group.position);
@@ -504,6 +516,19 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
       console.warn('[mcgrots] rota failed to load:', err.message);
       rotaError = err.message;
     }
+  }
+
+  // G6b.2: awaited for the SAME reason the player's own `actor.ready` is
+  // awaited above, and named here rather than left implicit — `looks.js`
+  // traverses the scene once, at install, and never again, so a body built
+  // fire-and-forget (Pomplé's own pattern) is invisible to it and stays a
+  // plain, un-inked material under every look forever. Waiting here is what
+  // keeps this figure off that list; it does not fix Pomplé's copy of the
+  // same gap, which is out of this unit's scope (see mcgrot.js's header).
+  try {
+    await mcgrot.ready;
+  } catch (err) {
+    console.warn('[mcgrots] mcgrot failed to load:', err.message);
   }
 
   style.setStyle(STYLE_KIND);

@@ -56,6 +56,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { assetUrl } from '../assets.js';
 import { liftMap } from './actors/texture.js';
 import { toWorld } from './site.js';
+import { MCGROT_LOCAL } from './mcgrot.js';
 
 // Matches actors/texture.js's treatment for the rest of the cast — the same
 // glb-embedded textures are too dark to light unlifted (docs/STYLE.md), and a
@@ -73,13 +74,10 @@ const POMPLE_LOCAL = [2.6, 1.15];
 // facing by default between visitors.
 const POMPLE_YAW = Math.PI * 0.92;
 
-// McGrot has no standing figure yet — G4 built the rota's placeholder reader,
-// not McGrot himself, and van.js's own header lists "the McGrot/Pomplé
-// figures" as G4/G6's job, still open. This is a placed ASSUMPTION, not a
-// measurement: the centre of the van's serving opening (van.js's
-// `OPENING_CX`), at the opening's own face line (`VAN_DEPTH / 2`). One
-// constant to correct the day McGrot is a real figure somewhere else.
-const MCGROT_LOCAL = [0.35, 1.3];
+// G6b.2 CLOSED THIS: McGrot is now a real figure (`mcgrot.js`), standing at
+// the van's serving opening, and `MCGROT_LOCAL` is imported from there rather
+// than kept as a second copy of the same placed assumption. One value, one
+// place — see mcgrot.js's own header for the position's derivation.
 
 // docs/CANON.md § Pomplé: "small-to-medium, compact and sturdy", "low compact
 // shape". A real shoulder-to-ear-tip height for a dog of that description.

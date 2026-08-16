@@ -1143,6 +1143,18 @@ segmented gives a dog one rigid part with no head joint. `src/mcgrots/pomple.js`
 builds its own two-part rig instead of forcing either. The remembers-nothing
 question is now Dan's to judge, and is unaffected by anything measured.
 
+**G6b.2 landed 2026-08-16** — McGrot himself, standing at the van's serving
+opening, wearing a beret. Unlike Pomplé, G1's A1 skinned rig already has a biped
+entry for `mcgrot` (`assets/characters/mcgrot-rig.json` exists), so there was no
+bake-off question; `src/mcgrots/mcgrot.js` reuses `actor.js`/`actors/skinned.js`
+directly. The beret is the whole unit, per Dan's ruling that a new body is
+G8a's — sized off a live measurement of the actual mesh, not guessed, and
+gated with an on/off toggle rather than the van/pomple regions' weaker static
+check (see F21 above for what that check-swap caught). `pomple.js`'s
+`MCGROT_LOCAL` is now imported from this module rather than kept as a second
+copy. Full details, numbers and both fault injections:
+`docs/MCGROTS-VALIDATION.md` § G6b.2.
+
 ### G7 — Judge against the kill criterion
 
 Stop and apply the bar before spending anything on the real cast. The visit
@@ -1877,6 +1889,30 @@ session does not re-derive it from the same green numbers.
 **What un-carries it:** G8a, which is where his silhouette gets judged against
 the comics anyway. If it survives a real model, it is a lighting fix at the
 pitch and not his geometry.
+
+### F21 — Pomplé renders un-inked and un-cel-shaded under every look, silently (G6a, found by G6b.2, CARRIED)
+
+**Severity: low, cosmetic, and structural rather than accidental.** `looks.js`
+traverses the scene once, at install, and never again — `main.js` awaits the
+player's own `actor.ready` before calling `looks.install(...)`, but Pomplé is
+built fire-and-forget at module scope, with nothing in `boot()` ever awaiting
+his own readiness. Measured directly (reading `material.type` on the live scene
+after boot, `?look=aerial`): his body and head are both `MeshLambertMaterial`,
+with no ink hull, regardless of which look is installed. This has been true
+since G6a landed; nothing in that region's own gate checks material type, so it
+passed unnoticed.
+
+**Found and fixed for McGrot** (`docs/MCGROTS-VALIDATION.md` § G6b.2), which
+carried the identical risk (also built fire-and-forget) — the fix there is
+`main.js` awaiting `mcgrot.ready` before `looks.install(...)`, the same pattern
+the player's own actor already uses. **Not applied to Pomplé here** — his
+geometry is carried to G8a alongside F19/F20, and this is one more item in that
+same carry rather than a fix worth making to a mesh that is being replaced.
+
+**What un-carries it:** the same event that un-carries F19/F20 — G8a's real
+model. Whoever builds it should await its own readiness before
+`looks.install(...)` from the start, per the pattern now in `main.js` for
+McGrot.
 
 ---
 
