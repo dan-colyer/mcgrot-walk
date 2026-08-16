@@ -24,6 +24,33 @@ follow this repo's conventions by default, so brief it explicitly and review
 it the same way). Give each worker its own file. `looks.js` and `main.js` are
 the hot spots; parallel edits to either are how a session loses a morning.
 
+**Control stays on `main`; every worker gets its own git worktree and
+branch.** Dan's ruling, 2026-08-16. The orchestrator never implements, so its
+tree stays clean and is the one place a full suite run means what it says.
+
+```bash
+herdr worktree create --cwd "$PWD" --branch <unit> --label <unit> --no-focus
+herdr agent start <name> --kind claude --pane <returned-pane-id> -- --permission-mode auto
+```
+
+*Why, given the old rule was explicit pathspec in one shared tree.* Pathspec
+discipline protects you from committing a file that is entirely someone
+else's. It does nothing when two workers legitimately edit the *same* file —
+naming it commits their half-finished half too. That gap opened on 2026-08-16
+with three workers running and two briefed to write
+`docs/MCGROTS-VALIDATION.md`; it was caught before either committed, by
+reading the briefs against each other rather than by any check. Worktrees
+remove the class of problem instead of asking three sessions to remember a
+convention.
+
+Two things worktrees do **not** fix, both worth knowing before trusting them:
+`git stash` is shared across the whole repo, so a bare `git stash pop` still
+reaches into another worker's entry; and a worker can still be *told* to edit a
+file another worker owns, which is a briefing error no isolation prevents.
+Merging is now a real merge rather than interleaving, which is the point — but
+it also means the orchestrator now owns integration, and a branch that never
+lands is work that never happened.
+
 **Workers talk back over herdr, not over the pane's scrollback.** Claude Code's
 own cross-session messaging needs v2.1.224 and the `stable` channel is pinned
 to 2.1.220, so it is unavailable here; re-check when stable moves. The

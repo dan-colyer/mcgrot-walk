@@ -98,26 +98,46 @@ everything the answer does not block. A question is not a reason to idle.
 - Rejected experiments get written down with their numbers too. Most of them
   sounded obviously right, and the point is to stop a later session re-deriving
   them.
-- **Two concurrent workers share ONE working tree — commit by explicit
-  pathspec, always.** There are no per-worker branches. A bare `git commit`,
-  or any `git commit -a`, takes whatever the *other* worker has staged and
-  buries their half-finished module inside your commit. Run `git status
-  --short` first and name only your own files:
+- **You work in your own git worktree, on your own branch** (Dan's ruling,
+  2026-08-16). Control holds `main` and no worker commits there. Check where
+  you are before your first commit:
+
+  ```bash
+  git rev-parse --show-toplevel && git branch --show-current
+  ```
+
+  If that prints the repo root and `main`, you are in control's tree by
+  mistake — stop and report rather than committing.
+
+  **Commit by explicit pathspec anyway.** Run `git status --short` first and
+  name only your own files:
 
   ```bash
   git commit -- src/mcgrots/statue.js docs/MCGROTS-ROADMAP.md
   ```
 
+  The habit costs nothing and it is what saves you the day the isolation is
+  not there — a rerun in a shared tree, a brief that predates this rule.
+
+  *Why the rule changed.* Workers used to share one tree with no branches.
   Hit on 2026-08-12: G3a and G3b ran concurrently, the brief said "one line
-  each in `main.js`, git will merge that" — which is true of two branches and
-  meaningless in one tree, where there is no merge, only interleaving. Sonnet
-  had three files staged while Codex was mid-build. It landed cleanly by luck,
-  not by design.
-- **A full suite run measures the other worker's half-built work too.** While
-  a concurrent unit is in flight, gate with `npm run smoke:mcgrots --
-  --only=<your region>` and treat red checks outside it as theirs. Re-run the
-  full suite after both have landed, and never report a combined number as a
-  verdict on your own unit.
+  each in `main.js`, git will merge that" — true of two branches, meaningless
+  in one tree, where there is no merge, only interleaving. Sonnet had three
+  files staged while Codex was mid-build; it landed cleanly by luck. On
+  2026-08-16 three workers ran at once and two were briefed to edit
+  `docs/MCGROTS-VALIDATION.md`, which pathspec discipline does not help with —
+  naming a file you both edited commits their half of it too. Explicit
+  pathspec protects against picking up someone else's *file*; it does nothing
+  when you legitimately share one.
+- **`git stash` is shared across worktrees even though the working trees are
+  not.** There is one `refs/stash` for the whole repo, so a bare `git stash
+  pop` can pop another worker's entry into your tree. Check `git stash list`
+  and pop by explicit index, or make a scratch commit instead of stashing.
+- **A full suite run measures the other workers' half-built work too** when
+  you are not isolated. While a concurrent unit is in flight, gate with `npm
+  run smoke:mcgrots -- --only=<your region>` and treat red checks outside it
+  as theirs. Re-run the full suite after both have landed, and never report a
+  combined number as a verdict on your own unit.
 
 ## Scope
 
