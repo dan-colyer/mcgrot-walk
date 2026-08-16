@@ -933,6 +933,46 @@ try {
         Math.abs(offA) < 0.01 && Math.abs(offB) < 0.01,
         `tracking off: counter=${offA.toFixed(3)} kerb=${offB.toFixed(3)}`);
 
+      // F21: he was built fire-and-forget at module scope with nothing
+      // awaiting his own readiness, so looks.js's one-time traverse at
+      // install ran before his meshes existed — he stayed a plain, un-inked
+      // MeshLambertMaterial under every look forever. `mcgrot.js` gets the
+      // same claim gated above (his beret toggles); this reads the exact pair
+      // of properties the diagnostic in docs/briefs/g7b-pre-visit-fixes.md
+      // used to confirm the fault, and the fix, directly on the live scene —
+      // material type and the presence of an ink hull, not "install()
+      // returned true" (looks.js's own stats() comment: that only proves the
+      // function ran).
+      //
+      // THE CONTROL, named per the brief: the identical read under
+      // `?look=none`, which must show the plain material and no hull — that
+      // is what isolates the LOOK's contribution from "he has some material
+      // or other", the same isolation the S1 region's zero-width control
+      // uses. Reset to 'none' at the end either way, since that is the
+      // default boot every later region in this file assumes.
+      const pompleMaterials = async () => page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        const at = (name) => g.getObjectByName(name)?.material?.type || null;
+        const hull = (name) => !!g.getObjectByName(`hull:${name}`);
+        return {
+          body: at('pomple:body'), head: at('pomple:head'),
+          hullBody: hull('pomple:body'), hullHead: hull('pomple:head'),
+        };
+      });
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(1); });
+      const inkedRead = await pompleMaterials();
+      check('F21: pomple is cel-shaded and inked under a look (?look=aerial)',
+        inkedRead.body === 'MeshToonMaterial' && inkedRead.head === 'MeshToonMaterial'
+        && inkedRead.hullBody && inkedRead.hullHead,
+        `body=${inkedRead.body} head=${inkedRead.head} hullBody=${inkedRead.hullBody} hullHead=${inkedRead.hullHead}`);
+
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('none'); window.__mcgrotsDebug.stepFrames(1); });
+      const plainRead = await pompleMaterials();
+      check('F21 control: under ?look=none he stays plain, un-inked (isolates the look\'s contribution)',
+        plainRead.body === 'MeshLambertMaterial' && plainRead.head === 'MeshLambertMaterial'
+        && !plainRead.hullBody && !plainRead.hullHead,
+        `body=${plainRead.body} head=${plainRead.head} hullBody=${plainRead.hullBody} hullHead=${plainRead.hullHead}`);
+
       check('console still clean after driving the pomple region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }

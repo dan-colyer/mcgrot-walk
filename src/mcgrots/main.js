@@ -521,14 +521,24 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
   // G6b.2: awaited for the SAME reason the player's own `actor.ready` is
   // awaited above, and named here rather than left implicit — `looks.js`
   // traverses the scene once, at install, and never again, so a body built
-  // fire-and-forget (Pomplé's own pattern) is invisible to it and stays a
-  // plain, un-inked material under every look forever. Waiting here is what
-  // keeps this figure off that list; it does not fix Pomplé's copy of the
-  // same gap, which is out of this unit's scope (see mcgrot.js's header).
+  // fire-and-forget is invisible to it and stays a plain, un-inked material
+  // under every look forever. Waiting here is what keeps this figure off
+  // that list. Pomplé carried the identical gap until F21 (below).
   try {
     await mcgrot.ready;
   } catch (err) {
     console.warn('[mcgrots] mcgrot failed to load:', err.message);
+  }
+
+  // F21: same gap, same fix. pomple.js was built fire-and-forget with
+  // nothing awaiting its own readiness, so looks.js's one-time traverse ran
+  // before his meshes existed and he stayed a plain, un-inked material under
+  // every look. This is the same await as mcgrot's above, for the same
+  // reason.
+  try {
+    await pomple.ready;
+  } catch (err) {
+    console.warn('[mcgrots] pomple failed to load:', err.message);
   }
 
   style.setStyle(STYLE_KIND);
