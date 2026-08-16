@@ -683,6 +683,62 @@ try {
       check('interrupting an in-progress walk still eases, not cuts (F11)',
         interruptedFrac < 0.1,
         `frame-1 ${interrupted.frame1.toFixed(3)}m of ${interrupted.total.toFixed(3)}m total (${(interruptedFrac * 100).toFixed(1)}%)`);
+
+      // F22 follow-up 2 (Dan, re-measured on a detached worktree, 2026-08-16):
+      // the live-distance version of the player's self-occlusion hide
+      // (main.js's `SELF_OCCLUDE_HIDE_DIST`) flipped mid-walk whenever the
+      // eased camera crossed the threshold, regardless of the actor's own
+      // progress — measured, kerb -> counter: exactly one flip, frame 71 of
+      // 240, `actor.progress` 0.304, the body vanishing in one frame, in
+      // plain view, a third of the way through a walk the player is
+      // watching. Frozen to a per-anchor decision instead
+      // (`ANCHOR_HIDES_ACTOR` / `walkStartHidden`): hidden for the whole walk
+      // if EITHER the anchor being left or the one being arrived at would
+      // hide it, so a flip can only happen at the two boundaries where the
+      // camera is nowhere near the OTHER anchor's own tight framing — the
+      // start of a walk (destination hides) or its completion (departure
+      // hides, held until arrival). Tried "resolve purely from the
+      // destination" first and rejected it after rendering both directions:
+      // it fixed the walk INTO `counter` but produced the same pop, reversed,
+      // walking OUT of it (visible from frame 0, large and centred, in the
+      // frame `counter` was still showing).
+      //
+      // GATED AS "no flip happens strictly mid-transit" — `actor.progress`
+      // in (0, 1) with `walking` still true — covering both directions, not
+      // just the one the bug was found in.
+      const walkVisibilityFlips = async (fromId, toId) => page.evaluate(({ from, to }) => {
+        const d = window.__mcgrotsDebug;
+        d.setMarkersVisible(false);
+        d.snapTo(from);
+        d.stepFrames(2);
+        d.goTo(to);
+        const flips = [];
+        let last = d.actor.group.visible;
+        for (let i = 0; i < 300; i++) {
+          d.stepFrames(1);
+          const vis = d.actor.group.visible;
+          if (vis !== last) {
+            flips.push({ progress: +d.actor.progress.toFixed(3), walking: d.state().walking });
+            last = vis;
+          }
+        }
+        return flips;
+      }, { from: fromId, to: toId });
+
+      const flipsIn = await walkVisibilityFlips('kerb', 'counter');
+      const flipsOut = await walkVisibilityFlips('counter', 'kerb');
+      // 0.02 clears one frame's own progress at the loop's first check (a
+      // "frame 0" flip already reads a small positive progress, having been
+      // stepped once before the first read) without opening the window wide
+      // enough to hide a genuine mid-transit flip — measured mid-transit
+      // flip in the ORIGINAL bug was at progress 0.304, over an order of
+      // magnitude past this margin.
+      const midTransit = (flips) => flips.filter((f) => f.walking && f.progress > 0.02 && f.progress < 0.98);
+      const badFlipsIn = midTransit(flipsIn);
+      const badFlipsOut = midTransit(flipsOut);
+      check('the player\'s own visibility never flips mid-transit, either direction (F22 follow-up 2)',
+        badFlipsIn.length === 0 && badFlipsOut.length === 0,
+        `kerb->counter: ${JSON.stringify(flipsIn)} / counter->kerb: ${JSON.stringify(flipsOut)}`);
     }
 
     // ------------------------------------------------------------------ van ---

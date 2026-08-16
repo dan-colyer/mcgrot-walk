@@ -269,6 +269,55 @@ let rotaError = null;        // G4a: catalog.json/readings.json failed — repor
 const SELF_OCCLUDE_HIDE_DIST = 5.2;
 let selfOcclusionEnabled = true; // F22 gate's named control disables this
 
+// F22 FOLLOW-UP 2/2 (Dan, re-measured on a detached worktree, 2026-08-16):
+// the ORIGINAL version of this recomputed live distance every frame, which
+// flips whenever the eased camera crosses SELF_OCCLUDE_HIDE_DIST — including
+// mid-walk. Measured, kerb -> counter, 240 frames stepped: exactly one flip,
+// frame 71, actor.progress 0.304, at 5.187m (distance range across the whole
+// walk 4.036-5.855m). The body vanished in one frame, in plain view, a third
+// of the way through a walk the player is watching — and at a moment with no
+// relationship to the actor's own stand position, only to where the eased
+// camera happened to be that frame.
+//
+// FROZEN TO A PER-ANCHOR CONSTANT instead of a live distance. This is Dan's
+// "hide for the whole walk" option over a fade: a translucent player body
+// risks interacting with the hull/ink pipeline (`looks.js`'s outline meshes
+// are a second, separately rendered pass keyed to the same materials) in
+// ways nothing in this project has tried yet, where a precomputed boolean
+// touches nothing about how anything renders.
+//
+// NOT PURELY "resolved at goTo time from the destination", though that was
+// tried first: it fixes the walk INTO `counter` (hidden from frame 0, while
+// the actor is still small and far off in the departing anchor's own frame)
+// but breaks the walk OUT of it just as badly in the other direction —
+// visible from frame 0 too, which means the body POPS IN, large and
+// centred, in the frame `counter` was still showing. Rendered and opened
+// both directions before landing on the rule below (see the F22-follow-up-2
+// commit for the captures). The actual rule: hidden for the WHOLE walk if
+// EITHER the anchor being left or the one being arrived at would hide it —
+// `walkStartHidden` (set in `goTo`'s walk branch, from live visibility, not
+// a stored anchor id) carries the departure side; `current.id` below carries
+// the arrival side once `actor.walking` goes false. So a walk into `counter`
+// hides immediately (destination hides) and a walk out of it stays hidden
+// until the walk actually completes (departure hides) — both transitions
+// change state only at a boundary where the camera is far from the OTHER
+// anchor's own tight framing, never mid-ease.
+//
+// REVIEW-MODE GUARD, found while building this: `setReviewCamera` (used only
+// by `scripts/mcgrots-bakeoff.mjs`, G1's body-comparison rig, never by the
+// shipped game or this suite) parks the camera 2.6-2.9m from the actor by
+// design — inside HIDE_DIST at every anchor. The live-distance version hid
+// the actor throughout every review-camera capture ever taken under F22,
+// silently, because nothing in this repo's own gates exercises that mode.
+// `!reviewMode` is the fix; `current` can also be null before the first
+// `goTo` (main.js's own boot calls `goTo('back', { snap: true })` before the
+// first frame, so this is defence, not a path the shipped game takes).
+const ANCHOR_HIDES_ACTOR = new Map(ANCHORS.map((a) => [
+  a.id,
+  Math.hypot(a.camera.eye.x - a.pos.x, a.camera.eye.y, a.camera.eye.z - a.pos.z) < SELF_OCCLUDE_HIDE_DIST,
+]));
+let walkStartHidden = false; // set in goTo's walk branch; read by updateSelfOcclusion
+
 function goTo(id, { snap = false } = {}) {
   const a = anchorById(id);
   if (!a) return false;
@@ -320,6 +369,13 @@ function goTo(id, { snap = false } = {}) {
       eye: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
       look: { x: lastLook.x, y: lastLook.y, z: lastLook.z },
     };
+    // F22 follow-up 2: snapshot whether the actor was hidden BEFORE this leg,
+    // read from live visibility rather than a stored anchor id, for the same
+    // reason `previous` above reads the camera's live pose rather than an
+    // anchor reference — it stays correct across an interrupted walk with no
+    // special case. See `updateSelfOcclusion`'s own comment for what this
+    // feeds.
+    walkStartHidden = !actor.group.visible;
     actor.walkTo(a.pos.x, a.pos.z, a.yaw);
   }
   page.setCaption(a.label);
@@ -412,13 +468,17 @@ function listenerPose() {
   };
 }
 
-// F22. Every frame rather than per-anchor, because a WALK eases the camera
-// continuously and the actor is walking too — the distance is live, not a
-// per-anchor constant. `actor.group.visible` is the whole player body (the
-// only child `makeActor` ever adds), so this hides him entirely, not a part.
+// F22 / F22 follow-up 2. Runs every frame for parity with every other
+// per-frame updater, but the DECISION is the frozen per-anchor lookup above
+// plus `walkStartHidden` — see that constant's own comment for the "hidden
+// if EITHER endpoint would hide" rule and why. `actor.group.visible` is the
+// whole player body (the only child `makeActor` ever adds), so this hides
+// him entirely, not a part.
 function updateSelfOcclusion() {
-  if (!selfOcclusionEnabled) { actor.group.visible = true; return; }
-  actor.group.visible = camera.position.distanceTo(actor.group.position) >= SELF_OCCLUDE_HIDE_DIST;
+  if (!selfOcclusionEnabled || reviewMode || !current) { actor.group.visible = true; return; }
+  const destinationHides = ANCHOR_HIDES_ACTOR.get(current.id);
+  const hidden = actor.walking ? (walkStartHidden || destinationHides) : destinationHides;
+  actor.group.visible = !hidden;
 }
 
 function frame(dt) {
