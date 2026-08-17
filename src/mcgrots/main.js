@@ -64,7 +64,7 @@ const BODY_ARCHETYPE = params.get('archetype') || 'rab';
 //   S3 one key        ?style=key        (posterise is its control)
 //   S4 the page       ?page=on
 const STYLE_KIND = params.get('style') || 'none';
-const LOOK_KIND = params.get('look') || 'none';
+const LOOK_KIND = params.get('look') || 'aerial';
 const PAGE_ON = params.get('page') === 'on';
 const KEY_KIND = params.get('key') || null;
 // G4a's control arm for the camera-independence gate: boot with the rota

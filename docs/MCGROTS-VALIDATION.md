@@ -3457,3 +3457,58 @@ fault-injection/restore cycle, confirming each restore was byte-exact.
 - **The style default.** `LOOK_KIND` still defaults to `'none'` as of this
   section — the flip to `'aerial'` is a separate commit, separately
   measured, immediately following this one.
+
+## G7h follow-up — the style default flip, and a pre-existing flake found while explaining it
+
+`LOOK_KIND` now defaults to `'aerial'` (S2), the settled style per G2 and
+this brief's "two things settled" — the shipped default had disagreed with
+what § 9 requires Dan to judge. One line
+(`src/mcgrots/main.js`: `params.get('look') || 'none'` →
+`params.get('look') || 'aerial'`). Full suite unaffected: **99/99, identical
+pass/fail set** before and after.
+
+**Every numeric detail that moved was checked and is explained; one of them
+took real work to explain, and the answer was not this flip.**
+
+Two runs of the full suite, before and after the one-line change, showed the
+per-anchor shot table (mean 72–82 → 102–113, all five anchors) and the S1/S2
+toggle diffs shifting — expected, and correct: S2 is documented to wash the
+distance out, lighter and flatter than no look at all, and every check
+reading these numbers has its own pass threshold with margin either side of
+the shift (e.g. "all 5 shots have luminance stddev >= 8" — floor unchanged,
+just a different anchor is now the tightest case).
+
+**One number did NOT explain cleanly on the first look: `hulls=41 of 43
+meshes` → `43 of 45`, on the `S1 inks the objects and cels everything`
+check.** Per this unit's own instruction ("if something moves that you
+cannot explain, that is a finding — stop and report it") — stopped, and
+traced it rather than recapturing over it. Re-ran `--only=style` three times
+under each default: stable at 41/43 for `'none'`, stable at 43/45 for
+`'aerial'` — looked, at first, like the flip's own doing.
+
+**It was not.** The `style` region's shared page boots with `rota` live
+(no `?rota=off`), and by the time it reaches this measurement — after boot,
+camera, statue, anchors, van, pomple, mcgrot, seat, rota and audio have all
+already run — real wall-clock time has elapsed, and the rota's OWN reader
+capsule may or may not have entered the scene by then (`ensureActor()` is
+lazy, built once a visit becomes active on the REAL clock, and never
+removed once built). Confirmed directly: probing the raw scene right after
+boot, `readerPresent` and its `phase` varied run to run and default to
+default, and pinning `rota.setClock(980)` — the SAME known-empty moment the
+`mcgrot` region's own history uses — before measuring made the count
+**identical under both defaults: 44 hulls of 46 meshes, every time.** The
+"stable" 41/43-vs-43/45 split across three quick `--only=style` reruns was
+an artifact of running them close enough together to keep landing on the
+same side of the rota cycle, not evidence the flip caused it.
+
+**This is a pre-existing flake in the `style` region, not introduced by this
+unit and not fixed by it** — the region has never pinned the clock for this
+measurement, unlike `mcgrot`, which learned this exact lesson (this file's
+own "found by opening a failing run's own capture" comment above) and pinned
+`rota.setClock(980)` because of it. `style`'s own numeric thresholds
+(`hulls > 0 && hulls < swapped`) have enough margin that ±2 meshes never
+flips a PASS to a FAIL, so it has not caused a visible failure yet — but the
+detail lines it reports are not reproducible run to run, and a future check
+tightened against an exact count would inherit the same flake `mcgrot` had
+before it pinned. **Flagging, not fixing** — out of this unit's scope (a
+one-line default flip), and `style` is not a file this unit owns.
