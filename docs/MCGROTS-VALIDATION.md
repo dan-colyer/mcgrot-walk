@@ -3278,3 +3278,182 @@ recognition" claim) unaffected — still a clear, saturated disc at range.
 
 No new gate, per the brief: a colour judgement, not a numeric threshold.
 **This is Dan's call to confirm from the capture, not a closed question.**
+
+## G7h — the ten-minute visit sequencer
+
+The single largest code gap before § 9's kill criterion could be run at all:
+nothing sequenced a scripted timeline against a clock. `visit.js` is new;
+`audio.js` and `main.js` are extended; `docs/g7-visit-shape.md` is unchanged
+(still not this unit's to edit) but is now the document out of date against
+`visit.js`'s own CUES table, not the reverse.
+
+**Corrected mid-build, twice, before any gate was written — both changes are
+load-bearing and are recorded here because the brief this unit started from
+does not reflect either.**
+
+1. Dan's ruling, 2026-08-17: the visit must be a PURE FUNCTION OF THE WALL
+   CLOCK, not session-relative. The brief as written started the visit from
+   the title card's gesture and ran it off session time — that spends
+   roadmap § 6, the discipline that keeps multiplayer additive ("drive the
+   rota from wall-clock time, never from session start"). `visit.js` is now
+   the same shape as `rota.js`: `CUES` (28 authored rows) plus `cueAt(now)`,
+   a pure function, reusing `rotaClockOverride`/`rotaNow()` — no second
+   clock lever. The gesture still gates AUDIO (no `AudioContext` may exist
+   before one) but no longer gates the timeline; the visit is already
+   running when a player arrives, and joining snaps to the current cue's
+   anchor rather than walking in from wherever boot last parked.
+
+2. Consequence of (1), drawn out on Dan's own follow-up: a pure function of
+   absolute time cannot carry a live, per-client duration override (the
+   brief's original § 4, "prefer the real clip duration") without breaking
+   the exact property the wall-clock ruling protects — two players joining
+   at the same instant could see different cue boundaries if one has a
+   slower network. `rota.js` itself has no such override either: its
+   durations are already real, baked into `readings.json` *before* the
+   schedule is built. So `visit.js`'s cue windows are now built from
+   **measured** durations, not the shape doc's vendor-voice/word-rate
+   estimates:
+
+   | | authored in the shape doc | measured (`ffprobe` against the landed clips) |
+   |---|---|---|
+   | 8 readings | 185.4s | 144.0s |
+   | 9 placed complaints | 45.8s | 38.6s |
+
+   Reproduced by:
+   ```
+   for f in assets/audio/mcgrot/*.mp3 assets/audio/mcgrot/lines/*.mp3; do
+     printf "%s " "$(basename "$f" .mp3)"
+     ffprobe -v error -show_entries format=duration -of csv=p=0 "$f"
+   done
+   ```
+   The 48.6s shortfall is pooled into the six SILENCE rows, in proportion to
+   each row's own original length (Dan's ruling), rather than left as
+   trailing dead air after every reading/complaint (the doc's own § 9: "in
+   the gaps", which presupposes the gaps are deliberate) or taken off the
+   total. New cycle: **600.6s** (was 600.7s — both are "ten minutes plus
+   rounding slack", not forced to exactly 600). Walk durations (31.5s total)
+   are untouched — physics-derived, not audio.
+
+`main.js`'s `frame()` branches on `VISIT_ON` (`?visit=on` or
+`window.__mcgrotsForceVisit`, ships OFF — this moves no existing capture).
+On that path, `cueAt(now)` drives `goTo` — snap on the first frame post-boot,
+a real eased walk only when a cue boundary changes the anchor — and feeds
+`readerAudio.update()` the same `{id, phase:'reading', elapsed, duration,
+dir}` shape `whatTheyAreDoing` already produces, off McGrot's own position
+rather than a wandering reader. `reader.update`/`whatTheyAreDoing` are
+skipped entirely on this path: the visit supplies the schedule, nothing
+races it, and there is nothing to "pause" in a system that is a pure
+function of the same clock. `pomple.playBeat?.(name)` fires once per cue
+instance at the three budgeted silence windows — optional and guarded, per
+the brief's own §5; `pomple.js` is untouched, and the beats themselves are
+the next unit's job.
+
+`audio.js`'s `audioUrl(id, dir)`: `dir` is an explicit per-cue field
+(`visit.js`'s `audioDirFor(kind)` — `'mcgrot/'` for readings, `'mcgrot/lines/'`
+for complaints), never guessed from the id's shape. Every existing caller
+(rota's own schedule) passes no `dir` and resolves exactly as before —
+verified by the full suite's unrelated `rota`/`audio` regions staying green
+throughout.
+
+### The four gates
+
+**All pinned except one**, on purpose. The `mcgrot` region's own history
+(`rota.setClock(980)`, above) is why: it ran on the real wall clock once and
+failed in clean bursts, because rota's reader stood in front of McGrot for
+roughly half of any given real-time window. A 600.6s cycle has more surface
+for exactly that flake than the ~40s cycle that bit the `mcgrot` region.
+Every check pins `rota.setClock(t)` — the SAME lever rota.js's region already
+uses, not a second one. Only the last check runs unpinned, and only asserts
+the visit is somewhere sensible.
+
+1. **Every cue fires, in order.** `cueAt` is pure, so this is a sweep, not a
+   drive: 1s-stride samples across the 600.6s cycle, asserting all 28 cues
+   appear exactly once, in order (`visit` region: sweep). Spot-checked
+   against the CUES table's own authored fields at three rows (cue 0, 1, 27)
+   so a self-consistent-but-wrong order can't pass by construction alone.
+   *Control:* the same idiom rota's own "pure function of the clock" gate
+   uses — same instant twice gives the same cue, a different instant gives a
+   different one. Fault-injected (`cueAt` pinned to always read `t=0`):
+   1/28 cues seen, purity control read cue 0 for both t=200 and t=400 —
+   the SAME injection also failed gate 3's anchor check and gate 2's audio
+   check downstream, which is the expected shape of an upstream fault, not a
+   separate finding. Restored, re-verified green.
+
+2. **The audio is audible.** `mediaEl.volume = 0` is this project's own
+   history repeating itself if it isn't checked for directly (F15, the G4
+   phase gate) — an `AnalyserNode` tapped onto the real signal path (the
+   `audio` region's own technique, reused) is what the check actually reads,
+   never `currentSrc`/`paused`/`currentTime`. Pinned to t=16.7 (3s into cue 1,
+   the reading `2b2110bb`), real CDP click for the gesture (a synthetic
+   `card.dismiss()` does not exercise Chromium's autoplay gate).
+   *Control:* the same page, pinned to t=5 — inside cue 0, a silence row —
+   reads RMS 0. (Booting with the visit off was considered and rejected as
+   the control: it would race the REAL rota's own reader on the real wall
+   clock, exactly the flake this region's header explains.) Fault-injected
+   (`mediaEl.volume = 0` in `audio.js`'s `start()`): the reading check failed
+   at rms=0.000 (must be >0.005), the silence control and every other visit
+   check stayed green — a clean, isolated red. Restored, re-verified green.
+
+3. **The player is where the cue says.** Two checks, not one — the second
+   exists because the first didn't catch a real fault. The first: every
+   reading/complaint cue (17 of 28), each an INDEPENDENT fresh join
+   (`rejoin()` resets the "has the visit placed the actor" latch, then the
+   clock pins to that cue's own midpoint). The second, added after the first
+   passed a real injected fault: `rejoin()` only exercises `frame()`'s SNAP
+   branch, never the "walk on a live cue boundary" branch — a fault that
+   disabled only that second branch (`else if (current?.id !== cue.anchor)`
+   short-circuited to always-false) passed check one outright, because every
+   sample in it re-snaps from scratch. Check two joins ONCE, then pins
+   forward through six consecutive cues with no `rejoin()` between them,
+   which is the shape that actually exercises the walk-triggered path.
+   *Control (both checks):* a separate `?rota=off` boot (rota disabled too,
+   so it cannot add anchor noise of its own) — the anchor never moves off
+   its boot-time value across the same pinned instants.
+   Fault-injected twice: the `else if` short-circuit above passed check one
+   (17/17, unchanged) and failed check two (3 of 6 pinned cues wrong,
+   `expected kerb, got counter`) — found BY the injection, not reasoned
+   about in advance; a broken `cueAt` (see gate 1) failed both checks, since
+   the anchor is derived from it. Restored, re-verified green in both cases.
+
+4. **It is a picture, not a black screen.** Six captures
+   (`docs/smoke/captures/mcgrots/g0/visit-*.png`), spanning every anchor the
+   route touches and all four cue kinds, pinned-then-settled with REAL
+   frames (matching the `rota` region's own 'rota-2-arriving' technique) so
+   a walk-in-progress capture shows an actually eased camera, not a
+   teleport. **Found by this exact process, before the region existed as
+   written today:** the initial version of the capture fixture pinned
+   `t=0` without first calling `rejoin()` — between `page.goto()` returning
+   and the fixture's own `pauseAuto()` landing, real `requestAnimationFrame`
+   frames kept ticking on the real wall clock (network round trips are real
+   time), so `visitJoined` was sometimes already `true` by the time the
+   fixture ran, landing the "clean start" capture at whatever anchor the
+   real clock happened to hit instead of `counter` — reproduced directly by
+   probing `state()` immediately after boot, before any pin (`anchor: 'wall'`
+   on one run). `rejoin()` before the first pin is the fix; this is a
+   test-harness determinism issue only — a real player booting with
+   `?visit=on` mid-cycle is SUPPOSED to land wherever the clock says, which
+   is exactly what item (1) above changed on Dan's ruling.
+   All six captures opened and inspected: McGrot at the van (beret, apron),
+   Pomplé nearby, the price board and statue legible where framed, no black
+   or flat frames. Not gated numerically, per this project's own rule that a
+   numeric gate cannot see a bad picture — E5d's nine seconds of black passed
+   every fog/exposure assert it had.
+
+Full suite: **99/99** (86 pre-existing + 13 new: the `visit` region's 12
+checks plus the added anchor-chain check from gate 3's own finding above).
+`npm run bundle:mcgrots` bundle hash is identical before and after every
+fault-injection/restore cycle, confirming each restore was byte-exact.
+
+### Not gated
+
+- **That the visit is GOOD.** § 9's own words: "a felt judgement... none of
+  [the gates] can tell whether it is any good." The six captures exist to be
+  opened, not just counted.
+- **Pomplé's three beats.** `playBeat?.()` is called at the right cue, with
+  the right name, at the right moment — that the call happens is gated
+  (indirectly, via the anchor/cue checks above touching the same frames);
+  what a beat actually DOES is the next unit's scope entirely, since
+  `pomple.js` has no `playBeat` yet and the call is a guarded no-op today.
+- **The style default.** `LOOK_KIND` still defaults to `'none'` as of this
+  section — the flip to `'aerial'` is a separate commit, separately
+  measured, immediately following this one.

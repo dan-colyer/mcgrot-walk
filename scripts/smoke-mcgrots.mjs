@@ -2141,6 +2141,42 @@ try {
           ? anchorBad.map((r) => `cue ${r.index} @t=${r.pin.toFixed(1)}: expected ${r.expected}, got ${r.actual}`).join('; ')
           : `${anchorRows.length}/17 reading/complaint cues checked, all match`);
 
+      // --- 3b: the SAME thing, but crossing a live cue boundary -----------
+      // The check above calls `rejoin()` before every sample, which only
+      // exercises the "on join, snap" path — every sample lands via the FIRST
+      // branch of the same `if` in main.js's frame(), never the second. A
+      // fault that disables ONLY the "walk on a cue boundary" branch (the
+      // `else if (current?.id !== cue.anchor)` one) passed the check above
+      // outright when tried — found by actually fault-injecting it, not
+      // reasoned about. This one joins ONCE, then pins forward through six
+      // consecutive cues WITHOUT rejoining, so an anchor that never advances
+      // once seated (that exact fault) is the thing it catches.
+      const chainRows = await visitPage.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        d.visit.rejoin();
+        d.rota.setClock(0);
+        d.stepFrames(1);
+        const cues = d.visit.cues();
+        let t = 0;
+        const rows = [];
+        for (const cue of cues) {
+          const mid = t + cue.dur / 2;
+          d.rota.setClock(mid);
+          d.stepFrames(1);
+          rows.push({ index: cue.index, pin: mid, expected: cue.anchor, actual: d.state().anchor });
+          t += cue.dur;
+          if (rows.length >= 6) break; // crosses cue 3's walk boundary and beyond
+        }
+        d.rota.clearClock();
+        return rows;
+      });
+      const chainBad = chainRows.filter((r) => r.actual !== r.expected);
+      check('...and the anchor tracks correctly across a LIVE cue-boundary walk, not just a fresh join (cues 0-5, one continuous visit)',
+        chainRows.length === 6 && chainBad.length === 0,
+        chainBad.length
+          ? chainBad.map((r) => `cue ${r.index} @t=${r.pin.toFixed(1)}: expected ${r.expected}, got ${r.actual}`).join('; ')
+          : `${chainRows.length}/6 consecutive cues, no rejoin between them, all match`);
+
       // --- control: the anchor sequence with the visit off never advances --
       // Own page, own boot: `?rota=off` too, so rota's own reader cannot add
       // anchor noise of its own — this control is about the VISIT wiring
