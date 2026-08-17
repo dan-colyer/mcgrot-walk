@@ -2461,6 +2461,18 @@ try {
     // padding wide enough to stop meaning anything. A same-run, immediately-
     // prior control sees the same jitter characteristics, so the two are
     // directly comparable and the margin below is real signal, not noise.
+    //
+    // THE CONTROL WINDOW IS THE SAME LENGTH AS THE BEAT WINDOW IT PAIRS WITH,
+    // for every beat, and that equality is load-bearing, found by fault
+    // injection rather than reasoned out in advance: a first pass paired a
+    // 150-frame (2.5s) control against a 300-frame (5s) settle-beat window
+    // ("long enough for the beat to finish" was the only reasoning behind
+    // 300). With settle's own effect fully neutered (fault injection —
+    // squash and yaw both no-op), the check still PASSED: ambient head-turn
+    // drift alone, given twice the window to accumulate in, cleared the
+    // margin against the shorter control. Equalising the two window lengths
+    // (both 300 frames) closed it — see the settle fault-injection log in
+    // .herdr/beats.md and docs/g7-pomple-beats.md for the numbers.
     if (wants('beats')) {
       const wrapAngle = (a) => {
         while (a > Math.PI) a -= Math.PI * 2;
@@ -2565,12 +2577,27 @@ try {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
         return { x: g.position.x, z: g.position.z };
       });
+      // SAME frame count as the beat window below — matched, not just "long
+      // enough". A first pass used a 150-frame (2.5s) control against a
+      // 300-frame (5s) beat window ("long enough to finish" was the only
+      // reasoning behind 300); fault-injecting settle (below) caught that
+      // mismatch: with settle fully neutered, ambient head-turn drift alone
+      // over the LONGER window still cleared the margin against the SHORTER
+      // control, a false pass. Equalising the windows exposed a second,
+      // real issue on approach specifically: even a genuine, un-faulted
+      // approach only reads 21.3% against an 18.4% control (2.9pp, under
+      // the 8pp margin) at 300/300 frames, because APPROACH's own motion
+      // finishes in ~140 frames (measured: `getBeat()` reads null at frame
+      // 140, 2.33s) and the remaining ~160 frames of the 5s window are pure
+      // ambient standing-still, diluting his own signal with noise the
+      // control has equally much of. 150 frames (2.5s) — just past
+      // completion, no dilution — is what both windows use below.
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
       const a1 = await shotAndRect();
       const approachControlDiff = diffFraction(a0.buf, a1.buf, union(a0.rect, a1.rect)) * 100;
 
       await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('approach'));
-      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(300));   // 5s — enough to fully stop (measured: ~2.5s)
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s — measured completion is 2.33s
       const a2 = await shotAndRect();
       writeFileSync(join(OUT, 'beats-approach-end.png'), a2.buf);
       const a2pos = await page.evaluate(() => {
@@ -2595,12 +2622,18 @@ try {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
         return { rotY: g.rotation.y, scaleY: g.scale.y };
       });
-      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
+      // SAME frame count as the beat window below — see the approach
+      // control's comment above for why this equality is load-bearing (the
+      // check the mismatch was originally caught on) and why it is sized to
+      // settle's own SETTLE_TURN_S (3.8s = 228 frames) plus a small buffer,
+      // not to a round "long enough" number — the same dilution the
+      // approach fix addresses would otherwise apply here too.
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s ambient-only control window
       const s1 = await shotAndRect();
       const settleControlDiff = diffFraction(s0.buf, s1.buf, union(s0.rect, s1.rect)) * 100;
 
       await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('settle'));
-      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(300));   // 5s — enough to fully close (needs 3.8s)
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s — SETTLE_TURN_S is 3.8s
       const s2 = await shotAndRect();
       writeFileSync(join(OUT, 'beats-settle-end.png'), s2.buf);
       const s2state = await page.evaluate(() => {
