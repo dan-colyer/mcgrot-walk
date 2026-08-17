@@ -1318,6 +1318,35 @@ determinism "the asset here" for exactly this reason.
 Corollary: keep peers and the player out of any geometry hash, the way
 `leithers.js` already is.
 
+### The persistent world is the product. The scripted loop is scaffolding.
+
+**Dan's ruling, 2026-08-17**, settling the question the ideation session raised
+as § F1 of `docs/g7-ideas.md` — whether G7h's fixed 28-cue timeline is a *demo
+of* the wall-clock world or a *replacement for* it:
+
+> "It is a persistent world, you can log in any time. Yes it's currently on a 10
+> min scenario that will loop but that's for poc. Once we've polished it, we'll
+> randomise and expand scenes."
+
+So the answer is demo, not replacement, and this section keeps paying. Three
+things follow, and they are the reason this is recorded here rather than in the
+G7 narrative:
+
+- **`visit.js`'s 28 cues are a fixture, not the design.** Anything built on the
+  assumption that the timeline is fixed, ordered or ten minutes long is building
+  on scaffolding. Randomised and expanded scenes are the direction of travel.
+- **Arriving mid-something is correct behaviour, not an edge case.** G7h already
+  snaps a joining player to the current cue's anchor for this reason.
+  `audio.js` has always seeked to `elapsed` on arrival so a late arrival hears
+  the middle of a file — see § F2 of the ideas doc, which is now a wanted
+  feature rather than an option.
+- **A character appearing twice in one ten-minute window is a fixture problem,
+  not a cast problem.** The ideation session proposed cutting one of the two
+  bureaucrats (§ E2) because their registers overlap. Declined on this ruling:
+  two officials who never share a scenario are not one joke twice. The
+  constraint belongs in whatever schedules scenes, not in the cast list. Both
+  keep their fifteen lines.
+
 ---
 
 ## 7. Verification
