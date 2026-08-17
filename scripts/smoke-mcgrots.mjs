@@ -2815,9 +2815,45 @@ try {
         while (a < -Math.PI) a += Math.PI * 2;
         return a;
       };
-      await page.evaluate(() => window.__mcgrotsDebug.rota.setClock(980));
-      await page.evaluate(() => window.__mcgrotsDebug.snapTo('kerb'));
-      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(5));
+
+      // Re-navigate to the plain default page before doing anything else.
+      // G7n: the `style` region immediately before this one in the file
+      // (and the source of `--only=beats`-alone reading GREENER than the
+      // full suite) navigates to `?body=skinned&archetype=rab` for its own
+      // checks and never navigates back — the shared `page` carries that
+      // URL into whatever runs next. Measured: with that state inherited,
+      // notice's own ambient-only control window read 4.2% instead of its
+      // isolated ~22.6%, and settle's gap shrank from ~4.4pp to ~1.7pp,
+      // enough to fail. This is the actual isolation bug — bigger than the
+      // rota clock (still pinned below, per beat, since that alone is not
+      // sufficient) — and re-establishing the plain page is what actually
+      // fixes `--only=beats` reading the same either way.
+      await page.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+      await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+      // The anchor a beat plays from, read from visit.js's own cue table
+      // (G7n) rather than a second hardcoded mapping, so a change to the
+      // table is followed rather than silently gating a picture the visit
+      // no longer shows from there. G7i's gate hardcoded all three beats to
+      // `kerb`; only `notice` actually fires there — `approach` fires at
+      // `far`, `settle` at `counter` (docs/g7-pomple-beats.md,
+      // docs/briefs/g7n-gate-the-beats-where-they-play.md).
+      const anchorForBeat = (name) => page.evaluate((n) => {
+        const cue = window.__mcgrotsDebug.visit.cues().find((c) => c.beat === n);
+        if (!cue) throw new Error(`beats gate: no cue in visit.js names beat '${n}'`);
+        return cue.anchor;
+      }, name);
+
+      // Re-established before EVERY beat, not once for the whole region —
+      // cheap insurance so a beat's own window never depends on what the
+      // previous beat in this SAME region left behind either.
+      const pinAndSnap = async (anchorId) => {
+        await page.evaluate(() => window.__mcgrotsDebug.rota.setClock(980));
+        await page.evaluate((id) => window.__mcgrotsDebug.snapTo(id), anchorId);
+        await page.evaluate(() => window.__mcgrotsDebug.stepFrames(5));
+      };
 
       const pompleRect = () => page.evaluate(() => {
         const d = window.__mcgrotsDebug;
@@ -2870,39 +2906,24 @@ try {
         const buf = await page.screenshot({ type: 'png' });
         return { rect, buf };
       };
-      // Margin above the paired ambient-only control, in percentage points.
-      // RE-DERIVED 2026-08-17 after the follow-up's two fixes (approach's
-      // destination moved to clear McGrot's silhouette; settle dropped the
-      // scale squash for a head-drop) changed what both beats actually
-      // measure. Four repeated runs of the corrected implementation read
-      // bit-for-bit identical to one decimal place (notice 26.6/16.7,
-      // approach 17.9/12.3, settle 13.6/12.3 — beat/control, every run) —
-      // this renderer's run-to-run noise on this exact comparison is near
-      // zero, not the ~0.5pt this comment previously warned about (that
-      // figure came from a different, since-changed pairing). Real,
-      // confirmed-by-render gaps: notice ~9.9pp, approach ~5.6pp. 4pp clears
-      // both with real headroom, well above the measured noise floor.
-      const BEAT_MARGIN_PP = 4;
-      // Settle gets its OWN, smaller margin — not the same number weakened
-      // to fit, a different physical claim. Its gap is only ~1.3pp, and that
-      // is not measurement noise (see above: near-zero jitter) or a window-
-      // sizing artifact (control and beat windows are matched, same as
-      // approach's) — it is what the motion itself produces. Pomplé occupies
-      // 0.09-0.5% of the frame at every anchor (the pre-existing pomple
-      // region's own measured range); an in-place ~180° YAW of an object
-      // that small does not sweep nearly as many screen pixels as a 1.3m
-      // TRANSLATION (approach) or a turn that widens his silhouette toward
-      // the camera (notice) does, even though the pose change is real —
-      // confirmed by the numeric pose check below and by rendering
-      // `beats-settle-end.png` and opening it (see docs/g7-pomple-beats.md).
-      // 0.8pp is comfortably above the measured near-zero noise floor and
-      // comfortably below the real 1.3pp gap; it is NOT set to make a weak
-      // claim look strong — see the write-up for the honest read on whether
-      // this beat is worth keeping in the visit at all.
-      const SETTLE_MARGIN_PP = 0.8;
+      // Margins RE-DERIVED 2026-08-17 (G7n) at each beat's OWN anchor —
+      // notice at `kerb` (unchanged from G7i), approach at `far`, settle at
+      // `counter`. G7i's numbers do not carry across: camera distance
+      // changes how many screen pixels the same pose change sweeps. Measured
+      // over 37 repeated runs (.herdr/beatgates.md): notice beat~32.3-32.4%
+      // control~22.6-22.8% (gap 9.5-9.8pp), approach beat~26.1-26.2%
+      // control~20.6-20.8% (gap 5.3-5.6pp), settle beat~23.2%
+      // control~18.6-18.9% (gap 4.3-4.6pp, one 3.4pp dip observed once).
+      // Each margin sits below its beat's worst observed gap with real
+      // headroom, not at the typical value.
+      const NOTICE_MARGIN_PP = 4;
+      const APPROACH_MARGIN_PP = 3;
+      const SETTLE_MARGIN_PP = 2.5;
       const beatOn = { notice: null, approach: null, settle: null };
 
       // -- notice: body eases to face the player, holds, releases, ends --
+      // Fires at `kerb` — same anchor G7i gated it at.
+      await pinAndSnap(await anchorForBeat('notice'));
       const n0 = await shotAndRect();
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
       const n1 = await shotAndRect();
@@ -2913,10 +2934,10 @@ try {
       const n2 = await shotAndRect();
       writeFileSync(join(OUT, 'beats-notice-hold.png'), n2.buf);
       const noticeBeatDiff = diffFraction(n1.buf, n2.buf, union(n1.rect, n2.rect)) * 100;
-      beatOn.notice = noticeBeatDiff > noticeControlDiff + BEAT_MARGIN_PP;
+      beatOn.notice = noticeBeatDiff > noticeControlDiff + NOTICE_MARGIN_PP;
       check('notice: the beat changes materially more of the screen than ambient behaviour alone (control: the same window, no beat fired)',
         beatOn.notice,
-        `beat=${noticeBeatDiff.toFixed(1)}% control=${noticeControlDiff.toFixed(1)}% (need beat > control + ${BEAT_MARGIN_PP}pp)`);
+        `beat=${noticeBeatDiff.toFixed(1)}% control=${noticeControlDiff.toFixed(1)}% (need beat > control + ${NOTICE_MARGIN_PP}pp)`);
 
       // Full close: notice must end itself (never linger) and land exactly
       // back at rest — the forced-snap this unit's own manual verification
@@ -2932,6 +2953,9 @@ try {
         `beat=${noticeEnd.beat} rotY=${noticeEnd.rotY.toFixed(4)} (rest=${(Math.PI * 0.92).toFixed(4)})`);
 
       // -- approach: a short, scripted translation toward the counter --
+      // Fires at `far` — G7i gated this beat at `kerb`, a picture the visit
+      // never shows it from.
+      await pinAndSnap(await anchorForBeat('approach'));
       const a0 = await shotAndRect();
       const a0pos = await page.evaluate(() => {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
@@ -2965,10 +2989,10 @@ try {
         return { x: g.position.x, z: g.position.z, beat: g.userData.getBeat() };
       });
       const approachBeatDiff = diffFraction(a1.buf, a2.buf, union(a1.rect, a2.rect)) * 100;
-      beatOn.approach = approachBeatDiff > approachControlDiff + BEAT_MARGIN_PP;
+      beatOn.approach = approachBeatDiff > approachControlDiff + APPROACH_MARGIN_PP;
       check('approach: the beat changes materially more of the screen than ambient behaviour alone (control: the same window, no beat fired)',
         beatOn.approach,
-        `beat=${approachBeatDiff.toFixed(1)}% control=${approachControlDiff.toFixed(1)}% (need beat > control + ${BEAT_MARGIN_PP}pp)`);
+        `beat=${approachBeatDiff.toFixed(1)}% control=${approachControlDiff.toFixed(1)}% (need beat > control + ${APPROACH_MARGIN_PP}pp)`);
 
       const travelled = Math.hypot(a2pos.x - a0pos.x, a2pos.z - a0pos.z);
       check('approach: actually moves a short, bounded distance and stops (no pathfinding, no drift)',
@@ -2978,6 +3002,9 @@ try {
       // -- settle: turns away and drops the head (a squash-based "lying" --
       // -- read as roadkill on a two-part rig — see pomple.js's --
       // -- SETTLE_HEAD_DROP comment for the follow-up that replaced it) --
+      // Fires at `counter` — G7i gated this beat at `kerb`, a picture the
+      // visit never shows it from.
+      await pinAndSnap(await anchorForBeat('settle'));
       const s0 = await shotAndRect();
       const s0state = await page.evaluate(() => {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
@@ -3005,7 +3032,7 @@ try {
       });
       const settleBeatDiff = diffFraction(s1.buf, s2.buf, union(s1.rect, s2.rect)) * 100;
       beatOn.settle = settleBeatDiff > settleControlDiff + SETTLE_MARGIN_PP;
-      check('settle: the beat changes the screen more than ambient behaviour alone, by a SMALL but real margin (control: the same window, no beat fired — see SETTLE_MARGIN_PP above for why this bar is lower than notice/approach)',
+      check('settle: the beat changes the screen more than ambient behaviour alone (control: the same window, no beat fired)',
         beatOn.settle,
         `beat=${settleBeatDiff.toFixed(1)}% control=${settleControlDiff.toFixed(1)}% (need beat > control + ${SETTLE_MARGIN_PP}pp)`);
 

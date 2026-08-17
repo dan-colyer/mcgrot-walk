@@ -203,3 +203,107 @@ landing in parallel, and `docs/MCGROTS-ROADMAP.md`'s shape is the
 orchestrator's. Worth folding in: § 9's fifth requirement now has a hook and
 three beats; settle's weak legibility at distance is the one open item before
 calling it fully closed.
+
+## G7n follow-up: gated at the wrong anchor, and a real isolation bug
+
+The section above judged all three beats from `kerb`, because that is where
+the gate fired all three. It shouldn't have: visit.js's cue table only fires
+`notice` at `kerb` — `approach` fires at `far`, `settle` at `counter`. Two of
+three gates were measuring a picture the player never sees, and the mismeasure
+had a visible symptom: `settle`'s margin (0.8pp) was tuned to `kerb`'s own
+numbers and flaked (6/7) even in isolation, since the true gap there hovers
+right on the bar.
+
+**Fix:** each beat now snaps to the anchor named in `visit.js`'s own `CUES`
+table (read live via `window.__mcgrotsDebug.visit.cues()`, not a second
+hardcoded copy), and margins were re-derived from scratch by measurement —
+G7i's kerb numbers do not carry across, because camera distance changes how
+many screen pixels the same pose change sweeps.
+
+| beat | anchor | beat % | control % | gap | margin |
+|---|---|---|---|---|---|
+| notice | kerb (unchanged) | ~32.3-32.4 | ~22.6-22.8 | ~9.5-9.8pp | 4pp |
+| approach | far | ~26.1-26.2 | ~20.6-20.8 | ~5.3-5.6pp | 3pp |
+| settle | counter | ~23.2-23.3 | ~18.6-19.3 | ~4.3-4.9pp | 2.5pp |
+
+Both of the brief's predictions held: approach's gap shrank once measured at
+its own, farther anchor (kerb's old 4pp margin would no longer clear it with
+comparable headroom); settle's gap grew once measured at its own, closer
+anchor — its old kerb-gated 0.8pp scrape was an artefact of the wrong anchor,
+not a property of the beat.
+
+**The isolation bug was bigger than the clock.** `--only=beats` alone used to
+read different (better) numbers than the full suite gave it. The actual cause:
+the `style` region, which runs immediately before `beats` in the file,
+navigates the shared page to `?body=skinned&archetype=rab` for its own checks
+and never navigates back — `beats` inherited that page state whenever it ran
+after `style`, and never saw it in isolation. Measured directly: with that
+state inherited, notice's own ambient-only control window read 4.2% instead of
+its isolated ~22.6%, and settle's gap shrank from ~4.4pp to ~1.7pp — enough to
+fail. `beats` now re-navigates to the plain default page as its first step
+(the same sequence the suite's own boot uses), on top of re-pinning the rota
+clock and re-snapping the anchor before every beat rather than once for the
+whole region. Both isolated and full-suite runs now agree.
+
+**A genuine gate-design finding from fault injection.** Stripping settle's
+yaw/head-drop logic to a no-op (bt/timer kept, so it still starts and ends
+cleanly) correctly turned the geometric pose check red (Δyaw stayed 0.000,
+headPitch never moved) — but the diff check stayed green (beat=25.9%,
+control=19.2%, comfortably over the 2.5pp margin). The reason: pomple.js
+deliberately suppresses ambient head-tracking while `beat === 'settle'` (a
+real part of the design, independent of `SETTLE_TURN_RATE`/
+`SETTLE_HEAD_DROP` — see the module's own comment, "reading as losing
+interest rather than still watching while sinking"). That suppression alone
+produces enough visible motion (headYaw recentring) to satisfy the diff
+check's actual claim ("the beat changes the screen more than ambient alone"),
+even with the beat's own turn+drop code fully inert. This mirrors G7i's own
+finding for `notice` ("a beat that never moves trivially satisfies 'ended at
+rest'... a corroboration for a working beat, not an independent detector on
+its own") with the roles reversed: here the geometric check is the
+independent detector, and the diff check is corroboration only — it does not,
+on its own, prove settle's core turn+drop mechanism is intact. Not treated as
+a gate bug to fix, since the diff check's claim stays literally true; recorded
+here as what it does not prove, per this doc's own convention below.
+
+### Judgement: would a viewer notice, at the correct anchor?
+
+Captures regenerated at each beat's own anchor:
+`docs/smoke/captures/mcgrots/g0/beats-notice-hold.png` (kerb),
+`beats-approach-end.png` (far), `beats-settle-end.png` (counter).
+
+- **Notice @ kerb: modest, not clearly.** Same anchor and capture technique
+  G7i judged "yes, clearly" from, but viewed at native gameplay scale (no
+  crop/zoom) he reads as a small, indistinct shape near McGrot — a
+  perceptible change in silhouette is there if you already know to look for
+  it, less unambiguous than the original write-up suggested. Not a
+  regression (the anchor is unchanged); a more conservative read of the same
+  picture.
+- **Approach @ far: I could not clearly see him move here.** G7i's "yes, but
+  modestly" verdict was made at `kerb`, a much closer anchor than the one
+  approach actually fires from. At native scale in `beats-approach-end.png`
+  he is a tiny dark speck beside the stall, not confidently readable as a dog
+  at all, let alone as having taken a step. The diff gate still clears its
+  margin with real headroom (~5.3-5.6pp gap against a 3pp bar), so this is
+  not a case of "cannot be measured as visible" — it measures as visible.
+  But a numeric pass and a legible picture are different claims, and at `far`
+  they diverge: the number says yes, a cropped/zoomed close-up (below)
+  confirms the pose does change, and an honest glance at the actual frame a
+  player would see says the change is easy to miss.
+- **Settle @ counter: clearer than the old kerb-gated read.** Counter is the
+  closest of the three anchors (4.92m vs kerb's 5.61m), and at native scale
+  the turned-away, head-dropped shape is legible as a real pose change — more
+  so than G7i's original "weak... reads mostly as 'he got smaller'" verdict,
+  which was written against the older scale-squash implementation and the
+  wrong (farther) anchor besides. The head-drop replacement (superseding the
+  scale-squash this doc originally described) reads as "turned away, head
+  down," not unambiguously "lying down" — the two-part rig still limits what
+  the pose can sell — but it is a clear, real change, not a shrink.
+
+Net: of the three, `approach` is the one whose case for staying in is weakest
+on a straight look at the frame, despite clearing its numeric bar. Not cut
+here — the brief's named criterion is whether a beat "can be measured as
+visible," and it can — but worth the orchestrator's judgement call on whether
+"clears the pixel-diff bar" is sufficient going forward, or whether a beat
+firing from an establishing-wide anchor needs a stronger authored motion (a
+longer approach distance, a body-turn accompanying it) to read at the
+distance it actually plays from.
