@@ -1433,6 +1433,44 @@ project exists is that the street was allowed to keep going at 80%.
 
 ## 10. Known faults — carried, not blocking
 
+### F24 — the van and McGrot were authored to two different ground planes (Dan, 2026-08-17, from a render)
+
+**His proportions are NOT wrong — that was the first hypothesis and it is
+false.** McGrot measures 1.77 m, a normal human height. Measured off the live
+scene:
+
+| part | y range (m) |
+|---|---|
+| McGrot | 0.00 → 1.77 — feet on the road |
+| `van-body` (the floor) | **0.62** → 2.67 |
+| `van-counter` | 1.09 → 1.15 |
+| `van-wheels` | 0.02 → 0.82 |
+
+He stands at road level *inside* the van's plan footprint (his x[8.56, 9.65]
+and z[−6.47, −5.54] both sit inside the van's), so his legs occupy the same
+space as the van's underside. That is the clipping visible in every `counter`
+capture.
+
+**The two halves cannot both be satisfied as authored.** A counter at 1.12 m
+crosses a road-level figure at mid-chest, which is why the shot currently
+composes well. Stand him on the van floor instead and the same counter sits
+0.50 m above his feet — knee height. The counter was authored for a figure on
+the road; the van for one standing inside it.
+
+Three fixes, not equivalent, none measured yet:
+
+1. **Hide the leg zone** — bring the van's lower body or a valance down toward
+   the ground. Cheapest, preserves every authored shot and a composition that
+   otherwise reads. Recommended for the PoC.
+2. **Commit to a van you stand in** — raise him to 0.62 m and the counter to
+   ~1.55 m, with props and price board. Most correct, but moves the framing at
+   every anchor and will shift captures.
+3. **Commit to a stall you stand behind** — drop the van floor to near ground
+   level. Changes what the vehicle reads as.
+
+Does not block G7; it is visible in the kill-criterion visit and should be
+decided before G8a rebuilds the leads.
+
 Things that are wrong, deliberately left, with enough detail to pick up cold.
 Distinct from § 11, which is undecided questions rather than broken work.
 
@@ -2187,6 +2225,27 @@ node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg
 ```
 
 ## 11. Still open
+
+0.1 **Nobody has heard any of the new audio, and it is Dan's ear that decides.**
+   Carried from 2026-08-17 at his request — he was on his phone and could not
+   listen. **No worker in the G7e/G7g/G7j/G7k run had audio playback**, so every
+   claim about these clips is a measurement of amplitude, never of quality.
+   What is waiting:
+
+   - **The eight readings in McGrot's own voice**, `assets/audio/mcgrot/` —
+     these he has heard and approved.
+   - **The twelve complaint lines**, `assets/audio/mcgrot/lines/` — unheard.
+   - **The six Taxman exchange lines**, `assets/audio/cast/` — unheard, and
+     `docs/g7-taxman-scene.md` already flags that the scene reads as radio
+     dialogue over a diorama because neither body moves.
+   - **The ambient bed, its ducking and the gull**, synthesised in
+     `src/mcgrots/ambience.js` — unheard. Its gates prove non-zero output, that
+     the bed ducks, and that it does not damage a reading's own RMS. None of
+     that says whether it sounds like a street.
+
+   How: `npm run dev:mcgrots`, then `/mcgrots.html?ambience=on&visit=on`.
+
+
 
 0.5 **McGrot's voice — Dan curates this one.** Added 2026-08-12 on his call:
    a placeholder is fine for now, the real choice is his and comes later.
