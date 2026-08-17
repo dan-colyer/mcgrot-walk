@@ -37,7 +37,8 @@
 //   against this table, not the reverse (Dan's call) — it is still not this
 //   module's to edit.
 // beat: 'notice' | 'approach' | 'settle' on the three silence windows the
-//   shape budgets for Pomplé — not this unit's to implement, see main.js
+//   shape budgets for Pomplé — see main.js. 'taxman' on the wall/101.8s row
+//   is G7j's own, read by taxman.js's sceneCueAt(cue.elapsed) — see there.
 export const CUES = [
   { kind: 'silence', anchor: 'counter', audio: null, dur: 13.7 },
   { kind: 'reading', anchor: 'counter', audio: '2b2110bb', dur: 17.8 },
@@ -50,7 +51,12 @@ export const CUES = [
   { kind: 'walk', anchor: 'wall', audio: null, dur: 7.1 },
   { kind: 'complaint', anchor: 'wall', audio: 'mcgrot-01', dur: 4.1 },
   { kind: 'reading', anchor: 'wall', audio: '0121c47c', dur: 22.9 },
-  { kind: 'silence', anchor: 'wall', audio: null, dur: 101.8 },
+  // G7j: the Taxman's two-hander with McGrot lives in this gap — the longest
+  // single silence row in the table (docs/g7-taxman-scene.md). `beat:
+  // 'taxman'` is read only by taxman.js's sceneCueAt(cue.elapsed); every
+  // other silence row's own beat values ('notice'/'approach'/'settle') are
+  // Pomplé's and untouched by this unit.
+  { kind: 'silence', anchor: 'wall', audio: null, dur: 101.8, beat: 'taxman' },
   { kind: 'complaint', anchor: 'wall', audio: 'mcgrot-04', dur: 4.1 },
   { kind: 'walk', anchor: 'kerb', audio: null, dur: 7.1 },
   { kind: 'reading', anchor: 'kerb', audio: '022bcde2', dur: 14.9 },

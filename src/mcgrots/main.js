@@ -33,6 +33,7 @@ import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
 import { buildPomple } from './pomple.js';
 import { buildMcgrot } from './mcgrot.js';
+import { buildTaxman, sceneCueAt, sceneDuration } from './taxman.js';
 import { loadRota, createReader, whoIsHere, whatTheyAreDoing, overlapCount, cycleSeconds } from './rota.js';
 import { CUES, cueAt, audioDirFor, cycleSeconds as visitCycleSeconds } from './visit.js';
 
@@ -142,6 +143,12 @@ const mcgrot = buildMcgrot(scene);
 // transfer to a quadruped (see pomple.js's header). Module-scope, same as
 // `reader` below: the glb loads lazily and `update()` no-ops until it does.
 const pomple = buildPomple(scene);
+
+// G7j: the Taxman, present only for his own scene inside the wall/101.8s
+// silence cue — see taxman.js's own header. Built here, same timing as
+// mcgrot/pomple above, so its (synchronous, capsule) mesh exists before
+// looks.install() runs in boot() below.
+const taxman = buildTaxman(scene);
 
 // Built in boot(), once the assets object exists — a segmented body needs the
 // glb and its sidecar, and assetUrl is the only sanctioned way to reach them.
@@ -475,6 +482,14 @@ let visitJoined = false;
 // only repeats once the cycle has genuinely wrapped, at which point firing
 // the beat again is correct (every lap replays it), not a bug.
 let lastBeatCueIndex = -1;
+// G7j gate-only override, same shape as `selfOcclusionEnabled`/
+// `setSelfOcclusion` above. Needed because `taxman.group.visible` is
+// reasserted from `sceneCueAt(cue.elapsed)` on EVERY frame (by design — his
+// arrival must be a pure function of the pinned clock, not a latch) — so the
+// mcgrot/pomple/van regions' own toggle-then-stepFrames-then-diff technique
+// would otherwise reassert him visible on the very next frame and read a
+// diff of zero regardless of the fix. This flag is the escape hatch.
+let taxmanForceHidden = false;
 
 // G4b: the camera's own position/facing, read fresh every frame — the ONLY
 // thing audio takes from the camera side. See audio.js's header for why the
@@ -529,12 +544,25 @@ function frame(dt) {
       pomple.playBeat?.(cue.beat);
       lastBeatCueIndex = cue.index;
     }
-    info = (cue.kind === 'reading' || cue.kind === 'complaint')
-      ? { id: cue.audio, phase: 'reading', elapsed: cue.elapsed, duration: cue.dur, dir: audioDirFor(cue.kind) }
-      : null;
-    // McGrot is the voice for both his own readings and his complaints —
-    // never the camera, same structural rule as the rota's reader position.
-    readerPos = mcgrot.group.position;
+    // G7j: the Taxman's scene is a pure function of `cue.elapsed` on the
+    // ONE cue tagged for it — same discipline as everything else on this
+    // clock, see taxman.js's own header. `taxman.group.visible` is set every
+    // frame from `active`, never latched, so a clock jump (a gate pinning a
+    // new instant, or a real player rejoining mid-scene) cannot leave him
+    // stuck visible after the window has passed.
+    const taxmanScene = cue.beat === 'taxman' ? sceneCueAt(cue.elapsed) : { active: false, id: null };
+    taxman.group.visible = taxmanForceHidden ? false : taxmanScene.active;
+    if (taxmanScene.id) {
+      info = { id: taxmanScene.id, phase: 'reading', elapsed: taxmanScene.elapsed, duration: taxmanScene.dur, dir: taxmanScene.dir };
+      readerPos = taxmanScene.speaker === 'taxman' ? taxman.group.position : mcgrot.group.position;
+    } else {
+      info = (cue.kind === 'reading' || cue.kind === 'complaint')
+        ? { id: cue.audio, phase: 'reading', elapsed: cue.elapsed, duration: cue.dur, dir: audioDirFor(cue.kind) }
+        : null;
+      // McGrot is the voice for both his own readings and his complaints —
+      // never the camera, same structural rule as the rota's reader position.
+      readerPos = mcgrot.group.position;
+    }
   } else {
     // G4a: the reader's own actor, driven from the wall clock. This call and
     // the `const reader = createReader(...)` above are the ONLY things
@@ -553,6 +581,9 @@ function frame(dt) {
   // G6a: reads the player's own live position only — never the camera, per
   // Dan's ruling that actors must not affect it.
   pomple.update(dt, actor.group.position);
+  // G7j: parity call only, same as mcgrot's above — no per-frame animation,
+  // visibility is driven above from the cue, not from here.
+  taxman.update(dt);
   placeCamera();
   updateSelfOcclusion();
   // G4b: same wall clock the reader/visit was just driven from, so audio and
@@ -683,6 +714,15 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
     await pomple.ready;
   } catch (err) {
     console.warn('[mcgrots] pomple failed to load:', err.message);
+  }
+
+  // G7j: same await, same reason — a capsule body resolves immediately, but
+  // the await keeps this actor's boot sequencing identical to mcgrot's and
+  // pomple's rather than a special case for "this one never actually waits".
+  try {
+    await taxman.ready;
+  } catch (err) {
+    console.warn('[mcgrots] taxman failed to load:', err.message);
   }
 
   style.setStyle(STYLE_KIND);
@@ -817,6 +857,18 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         get headYaw() { return pomple.headYaw; },
         get attention() { return pomple.attention; },
         setTracking: (v) => pomple.setTracking(v),
+      },
+      // G7j. `sceneCueAt` re-exported directly, same reasoning as `visit.cueAt`
+      // above — the gate calls the SAME pure function the game itself does,
+      // against `visit.cueAt(t).elapsed` on the tagged cue, not a copy of it.
+      taxman: {
+        sceneCueAt: (elapsed) => sceneCueAt(elapsed),
+        sceneDuration: () => sceneDuration(),
+        // Gate-only override — see `taxmanForceHidden`'s own comment above
+        // for why the usual toggle-then-diff technique needs this here and
+        // not at van/pomple/mcgrot.
+        setForceHidden: (v) => { taxmanForceHidden = !!v; },
+        get forceHidden() { return taxmanForceHidden; },
       },
       bodyStats: () => actor.stats(),
       // F22's named control: the gate measures McGrot's visible pixel count
