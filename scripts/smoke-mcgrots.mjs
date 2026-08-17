@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -2768,6 +2768,253 @@ try {
 
       await page.evaluate(() => { window.__mcgrotsDebug.setPage(false); });
       check('console still clean after every style arm',
+        consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+    }
+
+    // -------------------------------------------------------------- beats ---
+    // G7i. docs/g7-visit-shape.md § 3 item 5: pomple.js had ambient behaviour
+    // only — idle settle, head-turn, attention — and nothing that takes a cue
+    // and does a specific, once-off, noticeable thing. Three scripted beats
+    // now exist behind `pomple.playBeat(name)`.
+    //
+    // main.js's debug object does NOT forward playBeat — it is sequencer's
+    // (G7h) file, out of scope for this unit (docs/briefs/g7i-pomple-beats.md
+    // § Scope). Every other pomple check above already reaches him via
+    // `scene.getObjectByName('pomple')`, so playBeat is exposed through that
+    // SAME group's `userData` (pomple.js's own choice, additive, no main.js
+    // edit) rather than through the debug object.
+    //
+    // THE CLAIM: a beat changes what is on screen, materially, more than
+    // ambient behaviour alone does over the same span. THE NAMED CONTROL,
+    // per the brief: "the same pinned moment with no beat fired — ambient
+    // behaviour only." Measured directly, in-page, immediately before each
+    // beat fires — not a hardcoded floor — because the ambient floor itself
+    // is not zero (idle bob + the existing head-turn keep moving him a
+    // little on their own) and drifts ~0.5 points run to run on this
+    // renderer's own jitter (measured: two back-to-back runs of the same
+    // sequence read 38.67%/38.81% for notice, 14.64%/14.25% for its ambient
+    // control) — a fixed number would either flake on that noise or need
+    // padding wide enough to stop meaning anything. A same-run, immediately-
+    // prior control sees the same jitter characteristics, so the two are
+    // directly comparable and the margin below is real signal, not noise.
+    //
+    // THE CONTROL WINDOW IS THE SAME LENGTH AS THE BEAT WINDOW IT PAIRS WITH,
+    // for every beat, and that equality is load-bearing, found by fault
+    // injection rather than reasoned out in advance: a first pass paired a
+    // 150-frame (2.5s) control against a 300-frame (5s) settle-beat window
+    // ("long enough for the beat to finish" was the only reasoning behind
+    // 300). With settle's own effect fully neutered (fault injection —
+    // squash and yaw both no-op), the check still PASSED: ambient head-turn
+    // drift alone, given twice the window to accumulate in, cleared the
+    // margin against the shorter control. Equalising the two window lengths
+    // (both 300 frames) closed it — see the settle fault-injection log in
+    // .herdr/beats.md and docs/g7-pomple-beats.md for the numbers.
+    if (wants('beats')) {
+      const wrapAngle = (a) => {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      };
+      await page.evaluate(() => window.__mcgrotsDebug.rota.setClock(980));
+      await page.evaluate(() => window.__mcgrotsDebug.snapTo('kerb'));
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(5));
+
+      const pompleRect = () => page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        const pomple = d.scene.getObjectByName('pomple');
+        const box = new d.THREE.Box3().setFromObject(pomple);
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+        for (const x of [box.min.x, box.max.x]) {
+          for (const y of [box.min.y, box.max.y]) {
+            for (const z of [box.min.z, box.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+              y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+          }
+        }
+        const clamp01 = (v) => Math.max(0, Math.min(1, v));
+        return {
+          ux0: clamp01(x0 * 0.5 + 0.5), ux1: clamp01(x1 * 0.5 + 0.5),
+          uy0: clamp01(1 - (y1 * 0.5 + 0.5)), uy1: clamp01(1 - (y0 * 0.5 + 0.5)),
+        };
+      });
+      const union = (a, b) => ({
+        ux0: Math.min(a.ux0, b.ux0), ux1: Math.max(a.ux1, b.ux1),
+        uy0: Math.min(a.uy0, b.uy0), uy1: Math.max(a.uy1, b.uy1),
+      });
+      // Same technique as the mcgrot region's F22 occlusion gate: counts
+      // pixels crossing a luminance threshold rather than averaging them, so
+      // a small bright change and a large dim one cannot read as the same
+      // number by cancelling in a mean.
+      const diffFraction = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+      const shotAndRect = async () => {
+        const rect = await pompleRect();
+        const buf = await page.screenshot({ type: 'png' });
+        return { rect, buf };
+      };
+      // Margin above the paired ambient-only control, in percentage points.
+      // RE-DERIVED 2026-08-17 after the follow-up's two fixes (approach's
+      // destination moved to clear McGrot's silhouette; settle dropped the
+      // scale squash for a head-drop) changed what both beats actually
+      // measure. Four repeated runs of the corrected implementation read
+      // bit-for-bit identical to one decimal place (notice 26.6/16.7,
+      // approach 17.9/12.3, settle 13.6/12.3 — beat/control, every run) —
+      // this renderer's run-to-run noise on this exact comparison is near
+      // zero, not the ~0.5pt this comment previously warned about (that
+      // figure came from a different, since-changed pairing). Real,
+      // confirmed-by-render gaps: notice ~9.9pp, approach ~5.6pp. 4pp clears
+      // both with real headroom, well above the measured noise floor.
+      const BEAT_MARGIN_PP = 4;
+      // Settle gets its OWN, smaller margin — not the same number weakened
+      // to fit, a different physical claim. Its gap is only ~1.3pp, and that
+      // is not measurement noise (see above: near-zero jitter) or a window-
+      // sizing artifact (control and beat windows are matched, same as
+      // approach's) — it is what the motion itself produces. Pomplé occupies
+      // 0.09-0.5% of the frame at every anchor (the pre-existing pomple
+      // region's own measured range); an in-place ~180° YAW of an object
+      // that small does not sweep nearly as many screen pixels as a 1.3m
+      // TRANSLATION (approach) or a turn that widens his silhouette toward
+      // the camera (notice) does, even though the pose change is real —
+      // confirmed by the numeric pose check below and by rendering
+      // `beats-settle-end.png` and opening it (see docs/g7-pomple-beats.md).
+      // 0.8pp is comfortably above the measured near-zero noise floor and
+      // comfortably below the real 1.3pp gap; it is NOT set to make a weak
+      // claim look strong — see the write-up for the honest read on whether
+      // this beat is worth keeping in the visit at all.
+      const SETTLE_MARGIN_PP = 0.8;
+      const beatOn = { notice: null, approach: null, settle: null };
+
+      // -- notice: body eases to face the player, holds, releases, ends --
+      const n0 = await shotAndRect();
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
+      const n1 = await shotAndRect();
+      const noticeControlDiff = diffFraction(n0.buf, n1.buf, union(n0.rect, n1.rect)) * 100;
+
+      await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('notice'));
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s into the beat — mid-hold
+      const n2 = await shotAndRect();
+      writeFileSync(join(OUT, 'beats-notice-hold.png'), n2.buf);
+      const noticeBeatDiff = diffFraction(n1.buf, n2.buf, union(n1.rect, n2.rect)) * 100;
+      beatOn.notice = noticeBeatDiff > noticeControlDiff + BEAT_MARGIN_PP;
+      check('notice: the beat changes materially more of the screen than ambient behaviour alone (control: the same window, no beat fired)',
+        beatOn.notice,
+        `beat=${noticeBeatDiff.toFixed(1)}% control=${noticeControlDiff.toFixed(1)}% (need beat > control + ${BEAT_MARGIN_PP}pp)`);
+
+      // Full close: notice must end itself (never linger) and land exactly
+      // back at rest — the forced-snap this unit's own manual verification
+      // found necessary (a first pass ended on a fixed timer that could
+      // leave him mid-turn; see pomple.js's NOTICE_RELEASE_S comment).
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(400));
+      const noticeEnd = await page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        return { rotY: g.rotation.y, beat: g.userData.getBeat() };
+      });
+      check('notice: fully closes — ends itself and returns exactly to rest yaw',
+        noticeEnd.beat === null && Math.abs(noticeEnd.rotY - Math.PI * 0.92) < 0.01,
+        `beat=${noticeEnd.beat} rotY=${noticeEnd.rotY.toFixed(4)} (rest=${(Math.PI * 0.92).toFixed(4)})`);
+
+      // -- approach: a short, scripted translation toward the counter --
+      const a0 = await shotAndRect();
+      const a0pos = await page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        return { x: g.position.x, z: g.position.z };
+      });
+      // SAME frame count as the beat window below — matched, not just "long
+      // enough". A first pass used a 150-frame (2.5s) control against a
+      // 300-frame (5s) beat window ("long enough to finish" was the only
+      // reasoning behind 300); fault-injecting settle (below) caught that
+      // mismatch: with settle fully neutered, ambient head-turn drift alone
+      // over the LONGER window still cleared the margin against the SHORTER
+      // control, a false pass. Equalising the windows exposed a second,
+      // real issue on approach specifically: even a genuine, un-faulted
+      // approach only reads 21.3% against an 18.4% control (2.9pp, under
+      // the 8pp margin) at 300/300 frames, because APPROACH's own motion
+      // finishes in ~140 frames (measured: `getBeat()` reads null at frame
+      // 140, 2.33s) and the remaining ~160 frames of the 5s window are pure
+      // ambient standing-still, diluting his own signal with noise the
+      // control has equally much of. 150 frames (2.5s) — just past
+      // completion, no dilution — is what both windows use below.
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
+      const a1 = await shotAndRect();
+      const approachControlDiff = diffFraction(a0.buf, a1.buf, union(a0.rect, a1.rect)) * 100;
+
+      await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('approach'));
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s — measured completion is 2.33s
+      const a2 = await shotAndRect();
+      writeFileSync(join(OUT, 'beats-approach-end.png'), a2.buf);
+      const a2pos = await page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        return { x: g.position.x, z: g.position.z, beat: g.userData.getBeat() };
+      });
+      const approachBeatDiff = diffFraction(a1.buf, a2.buf, union(a1.rect, a2.rect)) * 100;
+      beatOn.approach = approachBeatDiff > approachControlDiff + BEAT_MARGIN_PP;
+      check('approach: the beat changes materially more of the screen than ambient behaviour alone (control: the same window, no beat fired)',
+        beatOn.approach,
+        `beat=${approachBeatDiff.toFixed(1)}% control=${approachControlDiff.toFixed(1)}% (need beat > control + ${BEAT_MARGIN_PP}pp)`);
+
+      const travelled = Math.hypot(a2pos.x - a0pos.x, a2pos.z - a0pos.z);
+      check('approach: actually moves a short, bounded distance and stops (no pathfinding, no drift)',
+        a2pos.beat === null && travelled > 1.0 && travelled <= 1.35,
+        `travelled=${travelled.toFixed(2)}m beat=${a2pos.beat} (want 1.0-1.35m, authored 1.3m)`);
+
+      // -- settle: turns away and drops the head (a squash-based "lying" --
+      // -- read as roadkill on a two-part rig — see pomple.js's --
+      // -- SETTLE_HEAD_DROP comment for the follow-up that replaced it) --
+      const s0 = await shotAndRect();
+      const s0state = await page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        const head = g.getObjectByName('pomple:head-joint');
+        return { rotY: g.rotation.y, headPitch: head.rotation.x };
+      });
+      // SAME frame count as the beat window below — see the approach
+      // control's comment above for why this equality is load-bearing (the
+      // check the mismatch was originally caught on) and why it is sized to
+      // settle's own SETTLE_TURN_S (3.8s = 228 frames) plus a small buffer,
+      // not to a round "long enough" number — the same dilution the
+      // approach fix addresses would otherwise apply here too.
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s ambient-only control window
+      const s1 = await shotAndRect();
+      const settleControlDiff = diffFraction(s0.buf, s1.buf, union(s0.rect, s1.rect)) * 100;
+
+      await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('settle'));
+      await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s — SETTLE_TURN_S is 3.8s
+      const s2 = await shotAndRect();
+      writeFileSync(join(OUT, 'beats-settle-end.png'), s2.buf);
+      const s2state = await page.evaluate(() => {
+        const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        const head = g.getObjectByName('pomple:head-joint');
+        return { rotY: g.rotation.y, headPitch: head.rotation.x, beat: g.userData.getBeat() };
+      });
+      const settleBeatDiff = diffFraction(s1.buf, s2.buf, union(s1.rect, s2.rect)) * 100;
+      beatOn.settle = settleBeatDiff > settleControlDiff + SETTLE_MARGIN_PP;
+      check('settle: the beat changes the screen more than ambient behaviour alone, by a SMALL but real margin (control: the same window, no beat fired — see SETTLE_MARGIN_PP above for why this bar is lower than notice/approach)',
+        beatOn.settle,
+        `beat=${settleBeatDiff.toFixed(1)}% control=${settleControlDiff.toFixed(1)}% (need beat > control + ${SETTLE_MARGIN_PP}pp)`);
+
+      const yawTurned = Math.abs(wrapAngle(s2state.rotY - s0state.rotY));
+      check('settle: turns away (yaw reverses) and the head drops, and stops there',
+        s2state.beat === null && yawTurned > Math.PI - 0.05 && s2state.headPitch > 0.5,
+        `Δyaw=${yawTurned.toFixed(3)} (want ~${Math.PI.toFixed(3)}) headPitch ${s0state.headPitch.toFixed(3)}->${s2state.headPitch.toFixed(3)} (want >0.5) beat=${s2state.beat}`);
+
+      check('console still clean after driving the beats region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }
   }
