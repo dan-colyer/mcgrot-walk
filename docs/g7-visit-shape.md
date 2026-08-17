@@ -1,5 +1,22 @@
 # G7f — the ten-minute visit, minute by minute
 
+> **SUPERSEDED as data, 2026-08-17. `src/mcgrots/visit.js` is now the source of
+> truth for the timeline; this document is the design behind it.**
+>
+> The durations below came from vendor-voice placeholders and were estimates —
+> the complaint rows say so themselves. Both sets have since been rendered in
+> Algenib and measured, and both came in short: the eight readings 185.4s →
+> 144.0s, the nine placed complaints 45.8s → 38.6s.
+>
+> G7h baked the measured values into `visit.js`'s cue table and pooled the
+> 48.5s shortfall across the six silence rows in proportion to their length,
+> keeping the cycle at ten minutes. The new silence rows are 13.7 / 72.0 /
+> 101.8 / 84.6 / 56.0 / 58.3 seconds and the cycle is **600.6s**.
+>
+> The ordering, the anchors, the placement of the nine complaints and the three
+> Pomplé windows are all unchanged and still hold. **Read this for the shape;
+> read `visit.js` for the numbers.**
+
 What has to happen across ten minutes for § 9's kill criterion to be
 judgeable at all: the chosen style, a walk between anchors that reads well,
 six to eight readings, McGrot's complaints in the gaps, and Pomplé doing
