@@ -52,7 +52,7 @@ const keepOpen = process.argv.includes('--keep-open');
 
 // Every candidate is a URL flag, and they are deliberately three separate
 // params — a bundle cannot be a control for another bundle (see G2).
-const PARAMS = ['body', 'archetype', 'look', 'style', 'key', 'page', 'pose'];
+const PARAMS = ['body', 'archetype', 'look', 'style', 'key', 'page', 'pose', 'visit'];
 
 if (!shot && !expr && !file) {
   console.error('nothing to do — pass --shot=<path>, -e <expression>, or -f <module>');
