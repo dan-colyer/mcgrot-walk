@@ -57,7 +57,6 @@ import { assetUrl } from '../assets.js';
 import { liftMap } from './actors/texture.js';
 import { toWorld } from './site.js';
 import { MCGROT_LOCAL } from './mcgrot.js';
-import { ANCHORS } from './anchors.js';
 
 // Matches actors/texture.js's treatment for the rest of the cast — the same
 // glb-embedded textures are too dark to light unlifted (docs/STYLE.md), and a
@@ -123,8 +122,26 @@ const NOTICE_BODY_RATE = 0.6;   // rad/s — slower than HEAD_TURN_RATE (1.1),
 // too short a release and the forced snap below becomes the visible pop.
 const NOTICE_RELEASE_S = 4.0;
 
-const APPROACH_DIST = 1.3;      // m — "a few steps": short of the counter
-                                 // (3.31 m away) and of the player's own spot
+// Pitch-local (site.js § toWorld), same space as POMPLE_LOCAL/MCGROT_LOCAL.
+// NOT the counter anchor's own position — a first pass aimed straight at it
+// and walked him behind McGrot's legs (Dan's own render caught it, follow-up
+// 2026-08-17): the counter [0, 3.2] sits on the FAR side of McGrot
+// [0.35, 1.3] from Pomplé's rest spot [2.6, 1.15], so a straight-line partial
+// step toward it crosses McGrot's own x, landing him in-line with McGrot's
+// legs from the kerb camera. A SECOND candidate picked by local-space
+// reasoning alone ([1.6, 2.0], "stays on Pomplé's own side of McGrot's x")
+// ALSO failed — checked by measuring, not assumed this time: projected into
+// the kerb camera, it landed at screen-x 0.091, squarely inside McGrot's own
+// screen-x span [-0.007, 0.121]. Local-space x separation does not translate
+// to screen-space clearance once the camera's own angle is involved; this
+// point was instead chosen by projecting several candidates into the actual
+// kerb camera and requiring real NDC clearance beyond McGrot's span (this one
+// lands at screen-x ~0.33, McGrot's span tops out at 0.121 — a ~0.13 NDC
+// margin, roughly 6.5% of the frame width clear). Verified by render too —
+// see the landing commit for the capture this was picked against.
+const APPROACH_TARGET_LOCAL = [3.8, 1.8];
+const APPROACH_DIST = 1.3;      // m — "a few steps"; close to the full
+                                 // distance to the point above (1.37m)
 const APPROACH_SPEED = 0.6;     // m/s — a walk, not a trot
 const APPROACH_TURN_RATE = 0.9; // rad/s — faces the travel direction
 
@@ -137,15 +154,30 @@ const SETTLE_TURN_RATE = 0.9;   // rad/s
 // so this constant only controls how much of the turn is EASED before that
 // snap; too short and the snap itself becomes the visible pop.
 const SETTLE_TURN_S = 3.8;
-const SETTLE_SQUASH = 0.30;     // fraction of HEIGHT the silhouette drops.
-                                 // The rig has no lying pose — two rigid
-                                 // parts, no legs (this file's header) — so
-                                 // "lies down" is approximated as a lowered,
-                                 // flattened silhouette via group.scale.y
-                                 // (feet-anchored, so it settles toward the
-                                 // ground rather than shrinking in place)
-                                 // rather than a new pose.
-const SETTLE_SQUASH_S = 1.8;    // s
+// FOLLOW-UP, 2026-08-17 (Dan's render): the first pass squashed group.scale.y
+// by 30% to fake a lying pose. Rendered and opened at kerb, it did not read
+// as lying — "roadkill" was the word for it: a two-part rig with no legs has
+// no pose in there for a uniform vertical crush to find, and the dog shape
+// disappeared entirely rather than resolving as a smaller dog. SETTLE_SQUASH
+// and SETTLE_SQUASH_S are gone; nothing here scales the group any more.
+//
+// Replaced with a head-drop instead: `pomple:head` is already its own mesh on
+// its own joint (splitBody's pivot), and this file already drives its LOCAL
+// yaw every frame for the ambient head-turn — pitching it down on the SAME
+// joint, independent of the stationary body, is legible in silhouette in a
+// way uniform scaling never was. A dog losing interest and looking at the
+// ground is the beat; it does not need to lie down.
+const SETTLE_HEAD_DROP = 0.6;   // rad (~34°) — nose-down pitch, local to the
+                                 // head joint. Picked by rendering a few
+                                 // candidates at kerb and reading the
+                                 // capture (this file's own established
+                                 // method — see Y_SPLIT's header comment for
+                                 // the precedent): smaller read as barely
+                                 // there, this is the first one where the
+                                 // dropped head reads unambiguously against
+                                 // the ambient head-turn's own tilts.
+const SETTLE_HEAD_RATE = 0.5;   // rad/s — slow, matching the turn's own
+                                 // "losing interest" pace
 
 const _va = new THREE.Vector3();
 const _vb = new THREE.Vector3();
@@ -219,7 +251,7 @@ export function buildPomple(scene, { assets = null } = {}) {
 
   const mcgrotWorld = toWorld(MCGROT_LOCAL[0], MCGROT_LOCAL[1]);
   const mcgrotTarget = new THREE.Vector3(mcgrotWorld.x, 0, mcgrotWorld.z);
-  const counterAnchor = ANCHORS.find((a) => a.id === 'counter');
+  const approachWorld = toWorld(APPROACH_TARGET_LOCAL[0], APPROACH_TARGET_LOCAL[1]);
 
   let built = false;
   let bytes = 0;
@@ -232,11 +264,14 @@ export function buildPomple(scene, { assets = null } = {}) {
 
   // G7i beat state. `bodyYaw` is the group's OWN yaw — ambient code never
   // touched it before this (POMPLE_YAW was a build-time constant); a beat is
-  // the only thing that eases it now. `posOffset`/`squash` are similarly
+  // the only thing that eases it now. `posOffset`/`headPitch` are similarly
   // beat-only and sit at their rest value (0) whenever no beat is running.
   let bodyYaw = POMPLE_YAW;
   const posOffset = { x: 0, z: 0 };
-  let squash = 0;              // 0 = standing, 1 = fully settled
+  let headPitch = 0;           // settle-only: LOCAL head-joint pitch, nose
+                                // down. Independent of headYaw below, which
+                                // ambient tracking keeps driving on the same
+                                // joint's Y axis.
   let beat = null;             // active beat name, or null
   let bt = 0;                  // THIS BEAT's own elapsed time, reset per call
   let approachTarget = null;   // {ux, uz, dist, travelled} — captured once
@@ -288,8 +323,8 @@ export function buildPomple(scene, { assets = null } = {}) {
   // fire-and-forget and moves on — this starts a beat; `update()` plays it out
   // over subsequent frames. A second call before the first beat has finished
   // interrupts it: state is not reset to rest first, so bodyYaw/posOffset/
-  // squash simply keep easing from wherever they currently sit toward the new
-  // beat's own targets — no pop back to a canonical rest pose between beats,
+  // headPitch simply keep easing from wherever they currently sit toward the
+  // new beat's own targets — no pop back to a canonical rest pose between beats,
   // which matters because approach and settle are meant to read as one
   // continuous visit (he stays where approach left him; settle turns him away
   // from THERE, not from his original spot).
@@ -299,8 +334,8 @@ export function buildPomple(scene, { assets = null } = {}) {
     beat = name;
     bt = 0;
     if (name === 'approach') {
-      const dx = counterAnchor.pos.x - (basePos.x + posOffset.x);
-      const dz = counterAnchor.pos.z - (basePos.z + posOffset.z);
+      const dx = approachWorld.x - (basePos.x + posOffset.x);
+      const dz = approachWorld.z - (basePos.z + posOffset.z);
       const len = Math.hypot(dx, dz) || 1;
       approachTarget = { ux: dx / len, uz: dz / len, dist: APPROACH_DIST, travelled: 0 };
     } else if (name === 'settle') {
@@ -320,7 +355,7 @@ export function buildPomple(scene, { assets = null } = {}) {
     // attention. Small on purpose (docs/CANON.md: "minimal motion").
     group.position.y = Math.sin(t * IDLE_BOB_FREQ * Math.PI * 2) * IDLE_BOB_AMP;
 
-    // The active beat, if any — drives bodyYaw/posOffset/squash only. Runs
+    // The active beat, if any — drives bodyYaw/posOffset/headPitch only. Runs
     // BEFORE the attention/head-turn block below so the head aims relative to
     // this frame's already-updated body yaw, not last frame's.
     if (beat === 'notice') {
@@ -363,21 +398,21 @@ export function buildPomple(scene, { assets = null } = {}) {
       }
     } else if (beat === 'settle') {
       bt += dt;
-      squash = Math.min(1, squash + dt / SETTLE_SQUASH_S);
       if (bt >= SETTLE_TURN_S) {
-        bodyYaw = settleAwayYaw;   // snap closed — same guarantee `notice`
-        squash = 1;                // makes: never left stalled mid-turn
+        bodyYaw = settleAwayYaw;     // snap closed — same guarantee `notice`
+        headPitch = SETTLE_HEAD_DROP; // uses: never left stalled mid-turn
         beat = null;
       } else {
-        const d = wrapAngle(settleAwayYaw - bodyYaw);
-        bodyYaw += Math.min(Math.abs(d), SETTLE_TURN_RATE * dt) * Math.sign(d);
+        const dYawB = wrapAngle(settleAwayYaw - bodyYaw);
+        bodyYaw += Math.min(Math.abs(dYawB), SETTLE_TURN_RATE * dt) * Math.sign(dYawB);
+        const dPitch = SETTLE_HEAD_DROP - headPitch;
+        headPitch += Math.min(Math.abs(dPitch), SETTLE_HEAD_RATE * dt) * Math.sign(dPitch);
       }
     }
 
     group.rotation.y = bodyYaw;
     group.position.x = basePos.x + posOffset.x;
     group.position.z = basePos.z + posOffset.z;
-    group.scale.y = HEIGHT * (1 - squash * SETTLE_SQUASH);
 
     // The attention state machine — two states, one hysteresis band. Bigger
     // than it needs to be would fight docs/CANON.md's "long stares"; this
@@ -392,8 +427,14 @@ export function buildPomple(scene, { assets = null } = {}) {
       attention = 'mcgrot';
     }
 
+    // Suppressed during settle — deliberately, not via the public
+    // `trackingEnabled` flag (that flag is the head-turn gate's own named
+    // control and settle must not fight a gate driving it independently).
+    // With no target, targetLocalYaw stays 0 and headYaw eases back to
+    // centred — combined with headPitch above, he recentres AND drops,
+    // reading as losing interest rather than still watching while sinking.
     let targetLocalYaw = 0;
-    if (trackingEnabled) {
+    if (trackingEnabled && beat !== 'settle') {
       const target = attention === 'player' && playerWorld
         ? _va.set(playerWorld.x, 0, playerWorld.z)
         : mcgrotTarget;
@@ -408,7 +449,10 @@ export function buildPomple(scene, { assets = null } = {}) {
 
     const dYaw = wrapAngle(targetLocalYaw - headYaw);
     headYaw += Math.min(Math.abs(dYaw), HEAD_TURN_RATE * dt) * Math.sign(dYaw);
-    if (headJoint) headJoint.rotation.y = headYaw;
+    if (headJoint) {
+      headJoint.rotation.y = headYaw;
+      headJoint.rotation.x = headPitch;
+    }
   }
 
   // G7i's gate needs to drive playBeat from the running page, but main.js's
