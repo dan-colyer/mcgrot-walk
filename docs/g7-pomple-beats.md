@@ -307,3 +307,46 @@ visible," and it can — but worth the orchestrator's judgement call on whether
 firing from an establishing-wide anchor needs a stronger authored motion (a
 longer approach distance, a body-turn accompanying it) to read at the
 distance it actually plays from.
+
+## Second follow-up: approach moves from `far` to `counter`
+
+Dan's ruling: the fault was the anchor assignment, not the beat. `far`
+(6.71m) is the most distant of the five anchors — nothing Pomplé does was
+going to read from there. Rather than cut `approach`, `visit.js`'s cue table
+was edited to move it: the `beat: 'approach'` field came off the `far` silence
+row and onto the free 56.0s `counter` silence row (line 72), which carried no
+beat before. Two beats now sit at `counter`, none at `far` — deliberate, since
+§ 9 asks that Pomplé be noticed, not evenly distributed.
+
+The gate needed no code change to follow this — `anchorForBeat` already reads
+`visit.js`'s own `CUES` table live via the debug API, so it picked up
+`counter` automatically. Confirmed rather than assumed.
+
+**Margin re-derived from scratch at `counter`** (not carried over from `far`):
+15 repeat runs, beat~19.4% every time, control~15.6-15.7%, gap 3.7-3.8pp,
+near-identical run to run. `APPROACH_MARGIN_PP` set to 2 (down from `far`'s
+3), real headroom below the observed floor.
+
+**Rendered at native scale, no crop or zoom** — the brief's own correction to
+how this unit reviewed `far`, where a cropped/zoomed close-up made a barely-
+visible beat look acceptable. Compared the rest pose (`approach-before.png`,
+captured immediately before `playBeat('approach')` fires) against
+`beats-approach-end.png`: at rest he sits as a small, part-shadowed shape
+tucked beside McGrot's stall; after the beat he has moved right along the
+kerb edge, clear of the stall's shadow, legible as a separated dog shape with
+visible legs and ears — a real, visible displacement, not a shrink or a blob
+shuffling in place. This reads. The `far`-anchor problem was specifically
+about distance, not about Pomplé's model or the beat's motion being
+inherently too subtle — moving him to the closest-but-one anchor (4.92m,
+same as `settle`) fixed it.
+
+Fault-injected `APPROACH_DIST` → 0 again at the new anchor: both approach
+checks went red (diff: beat=14.2% vs control=15.6%, now BELOW the ambient
+floor since a beat that travels nowhere is slightly less varied on screen
+than ambient alone over the same window; distance check: travelled=0.00m).
+Restored, reconfirmed 7/7 isolated, 130/130 full suite.
+
+Beat kept, not cut. `docs/MCGROTS-VALIDATION.md`/`docs/MCGROTS-ROADMAP.md`
+updates are the orchestrator's, per scope — worth folding in: § 9's beat
+requirement is now closed on all three beats with no open legibility
+concern, `approach` and `settle` both fire from `counter`, none from `far`.
