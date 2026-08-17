@@ -34,6 +34,7 @@ import { buildVan } from './van.js';
 import { buildPomple } from './pomple.js';
 import { buildMcgrot } from './mcgrot.js';
 import { loadRota, createReader, whoIsHere, whatTheyAreDoing, overlapCount, cycleSeconds } from './rota.js';
+import { CUES, cueAt, audioDirFor, cycleSeconds as visitCycleSeconds } from './visit.js';
 
 // G1's bake-off lever. `?body=segmented` swaps the candidate without touching
 // anything else, which is what keeps the comparison to the body alone —
@@ -63,7 +64,7 @@ const BODY_ARCHETYPE = params.get('archetype') || 'rab';
 //   S3 one key        ?style=key        (posterise is its control)
 //   S4 the page       ?page=on
 const STYLE_KIND = params.get('style') || 'none';
-const LOOK_KIND = params.get('look') || 'none';
+const LOOK_KIND = params.get('look') || 'aerial';
 const PAGE_ON = params.get('page') === 'on';
 const KEY_KIND = params.get('key') || null;
 // G4a's control arm for the camera-independence gate: boot with the rota
@@ -71,6 +72,12 @@ const KEY_KIND = params.get('key') || null;
 // never appears. The two arms otherwise share every line of boot() — the
 // gate's whole point is that they differ in nothing else.
 const ROTA_OFF = params.get('rota') === 'off';
+// G7h: the scripted ten-minute visit, a pure function of the same wall clock
+// rota.js already reads (Dan's correction, 2026-08-17 — session-relative was
+// tried first and rejected: roadmap § 6 requires "drive from wall-clock time,
+// never from session start"). Ships OFF so this moves no existing capture;
+// `__mcgrotsForceVisit` is the same-shaped lever the street's own flags use.
+const VISIT_ON = params.get('visit') === 'on' || window.__mcgrotsForceVisit === true;
 
 const FIXED_DT = 1 / 60;
 
@@ -456,6 +463,19 @@ function placeCamera() {
 let rotaClockOverride = null;
 const rotaNow = () => rotaClockOverride ?? Date.now() / 1000;
 
+// G7h: has the visit's very first frame placed the actor yet. Snap once (a
+// late join lands ON the current cue's anchor, per the correction — "at
+// `wall`, immediately, not walking there from `counter`"); every anchor
+// change after that is a real, eased walk, triggered only when a cue
+// boundary actually changes `cueAt(now).anchor`. `dbg.visit.rejoin()` resets
+// this so the gate suite can test a fresh join at an arbitrary pinned instant
+// without reloading the page.
+let visitJoined = false;
+// Dedups `pomple.playBeat` against the SAME cue instance — `cueAt`'s `index`
+// only repeats once the cycle has genuinely wrapped, at which point firing
+// the beat again is correct (every lap replays it), not a bug.
+let lastBeatCueIndex = -1;
+
 // G4b: the camera's own position/facing, read fresh every frame — the ONLY
 // thing audio takes from the camera side. See audio.js's header for why the
 // dependency is safe in this direction and not the other.
@@ -486,14 +506,46 @@ function frame(dt) {
   actor.update(dt, clock);
   // Park state resolves on arrival, so a sitting spot only sits once reached.
   if (current && !actor.walking && actor.state !== 'sit' && current.sit) actor.setState('sit');
-  // G4a: the reader's own actor, driven from the wall clock. This call and
-  // the `const reader = createReader(...)` below are the ONLY things main.js
-  // does for the rota — rota.js owns the schedule, the reader's positions and
-  // its walk/read/leave state machine. `reader.update` never receives the
-  // camera and cannot move it; see rota.js's header for why that is
-  // structural rather than a promise.
   const now = rotaNow();
-  reader.update(dt, now);
+  let info, readerPos;
+  if (VISIT_ON) {
+    // G7h: the visit SUPPLIES the schedule rather than racing rota's own —
+    // `reader.update`/`whatTheyAreDoing` are simply not called on this path,
+    // so the rota's wandering reader capsule never appears and rota.js's
+    // schedule never advances (it is a pure function of the same clock, so
+    // there is nothing to "pause"). `cueAt` is the same shape as
+    // `whatTheyAreDoing`: a pure function of `now`.
+    const cue = cueAt(now);
+    if (!visitJoined) {
+      goTo(cue.anchor, { snap: true });
+      visitJoined = true;
+    } else if (current?.id !== cue.anchor) {
+      goTo(cue.anchor); // a real, eased walk — only crosses a cue boundary
+    }
+    if (cue.beat && cue.index !== lastBeatCueIndex) {
+      // G7h §5: the beat and its content are the NEXT unit's job. This call
+      // is the interface it lands against — optional and guarded so a
+      // pomple.js with no `playBeat` yet (today) is a silent no-op.
+      pomple.playBeat?.(cue.beat);
+      lastBeatCueIndex = cue.index;
+    }
+    info = (cue.kind === 'reading' || cue.kind === 'complaint')
+      ? { id: cue.audio, phase: 'reading', elapsed: cue.elapsed, duration: cue.dur, dir: audioDirFor(cue.kind) }
+      : null;
+    // McGrot is the voice for both his own readings and his complaints —
+    // never the camera, same structural rule as the rota's reader position.
+    readerPos = mcgrot.group.position;
+  } else {
+    // G4a: the reader's own actor, driven from the wall clock. This call and
+    // the `const reader = createReader(...)` above are the ONLY things
+    // main.js does for the rota — rota.js owns the schedule, the reader's
+    // positions and its walk/read/leave state machine. `reader.update` never
+    // receives the camera and cannot move it; see rota.js's header for why
+    // that is structural rather than a promise.
+    reader.update(dt, now);
+    info = whatTheyAreDoing(now);
+    readerPos = reader.group ? reader.group.position : null;
+  }
   // G6b.2: no locomotion and no per-frame state (see mcgrot.js's header) —
   // called for parity with every other actor, not because anything here
   // changes frame to frame.
@@ -503,11 +555,11 @@ function frame(dt) {
   pomple.update(dt, actor.group.position);
   placeCamera();
   updateSelfOcclusion();
-  // G4b: same wall clock the reader itself was just driven from, so audio
-  // and the reader's visible arrival/departure never disagree about who is
-  // there. Runs every frame regardless of whether a gesture has happened —
+  // G4b: same wall clock the reader/visit was just driven from, so audio and
+  // whoever is visibly arriving/departing never disagree about who is there.
+  // Runs every frame regardless of whether a gesture has happened —
   // audio.update() is a no-op until start() has been called.
-  readerAudio.update(whatTheyAreDoing(now), reader.group ? reader.group.position : null, listenerPose());
+  readerAudio.update(info, readerPos, listenerPose());
   style.render(scene, camera);
 }
 
@@ -743,6 +795,21 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         reader: () => reader.state,
         setClock(seconds) { rotaClockOverride = seconds; },
         clearClock() { rotaClockOverride = null; },
+      },
+      // G7h. `cueAt` re-exported directly, same reasoning as `rota` above —
+      // pinned against the SAME `rotaClockOverride` lever, not a second one
+      // (the correction's own point: reuse rota's clock rather than
+      // inventing one). `rejoin()` is a testing-only lever with no player-
+      // facing equivalent: it resets the "has the visit placed the actor yet"
+      // latch so the gate can drive a fresh SNAP-on-join at an arbitrary
+      // pinned instant without reloading the page.
+      visit: {
+        on: VISIT_ON,
+        cues: () => CUES,
+        cueAt: (t) => cueAt(t),
+        cycleSeconds: () => visitCycleSeconds(),
+        rejoin() { visitJoined = false; },
+        state: () => ({ joined: visitJoined, anchor: current?.id ?? null, lastBeatCueIndex }),
       },
       // G6a. `group` is reached via `scene.getObjectByName('pomple')`, same
       // as every other prop's gate region (see `van`) — no second handle.

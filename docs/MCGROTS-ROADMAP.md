@@ -1247,6 +1247,22 @@ vendors happens outside this repo.** `prep-comics.mjs` hard-codes only the
 three v1 comics, so nothing in-repo stops a future batch landing back on
 Algenib and deepening the collision after it has been resolved.
 
+**G7h landed 2026-08-17 — `visit.js`, the sequencer. This was the single
+largest code gap before § 9 could be run at all.** `docs/g7-visit-shape.md`
+placed the ten minutes on a clock; nothing before this unit drove the game
+against it. Full account, including the two mid-build corrections, in
+`docs/MCGROTS-VALIDATION.md` § "G7h — the ten-minute visit sequencer" — the
+short version: the visit is a pure function of the wall clock, matching
+`rota.js`'s own shape (Dan's ruling, protecting roadmap § 6's "never from
+session start"), and its reading/complaint durations are now the MEASURED
+ffprobe figures against the landed clips (144.0s / 38.6s), not the shape
+doc's vendor-voice estimates — `docs/g7-visit-shape.md` is consequently now
+the document out of date against `visit.js`, not the reverse, and is Dan's
+to reconcile. Shipped OFF (`?visit=on`); the full suite is 99/99 with all
+four gates fault-injected and confirmed to go red before being restored.
+Pomplé's three scripted beats are explicitly out of scope (G7h §5;
+`pomple.playBeat?.()` is a guarded no-op today) — briefed separately as G7i.
+
 ### G8a — McGrot and Pomplé, from the comics
 
 **Dan's ruling, 2026-08-16: the current bodies do not look like the comics, and
