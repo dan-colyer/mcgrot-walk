@@ -2904,9 +2904,13 @@ try {
       const doorT = 33.1 + 0.3;  // inside EVENTS' door window — the control for check 5
 
       // --- arm B: visit on, ambience OFF — the control for checks 1 and 3 ---
+      // EXPLICIT `&ambience=off`, not just omitting the param — since the
+      // G7k follow-up flipped main.js's default to ON, omitting it now means
+      // ON. Caught by running this after that flip: check 1's control read
+      // off: peak=0.094 rms=0.011, ambience audibly running on the "off" arm.
       const armOff = await browser.newPage({ viewport: { width: 1280, height: 720 } });
       await installTap(armOff);
-      await armOff.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on`, { waitUntil: 'load' });
+      await armOff.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on&ambience=off`, { waitUntil: 'load' });
       await armOff.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
       await armOff.evaluate(() => window.__mcgrotsDebug.pauseAuto());
       await armOff.click('#title-card');

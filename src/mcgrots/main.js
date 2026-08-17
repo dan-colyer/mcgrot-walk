@@ -79,11 +79,11 @@ const ROTA_OFF = params.get('rota') === 'off';
 // never from session start"). Ships OFF so this moves no existing capture;
 // `__mcgrotsForceVisit` is the same-shaped lever the street's own flags use.
 const VISIT_ON = params.get('visit') === 'on' || window.__mcgrotsForceVisit === true;
-// G7k: the synthesised ambient bed under the visit's silence. Ships OFF —
-// same lever shape as VISIT_ON above, and the same reason: landing the
-// module and flipping its default are two separate claims (see ambience.js's
-// header and docs/g7-ambience.md).
-const AMBIENCE_ON = params.get('ambience') === 'on' || window.__mcgrotsForceAmbience === true;
+// G7k follow-up: defaults ON now — same two-landing shape G7h used for
+// LOOK_KIND (docs/MCGROTS-VALIDATION.md "G7h follow-up"), landed as its own
+// commit with its own measurement of what moved. `?ambience=off` or
+// `window.__mcgrotsForceAmbience = false` still opts out.
+const AMBIENCE_ON = params.get('ambience') !== 'off' && window.__mcgrotsForceAmbience !== false;
 
 const FIXED_DT = 1 / 60;
 
