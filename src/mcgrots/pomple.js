@@ -57,6 +57,7 @@ import { assetUrl } from '../assets.js';
 import { liftMap } from './actors/texture.js';
 import { toWorld } from './site.js';
 import { MCGROT_LOCAL } from './mcgrot.js';
+import { ANCHORS } from './anchors.js';
 
 // Matches actors/texture.js's treatment for the rest of the cast — the same
 // glb-embedded textures are too dark to light unlifted (docs/STYLE.md), and a
@@ -103,6 +104,48 @@ const MAX_HEAD_YAW = 1.05;     // rad (~60°) — short of a full profile turn
 const ATTENTION_ENTER_R = 5.5; // m — player closer than this claims attention
 const ATTENTION_EXIT_R = 7.5;  // m — hysteresis band, so proximity right at
                                 // the boundary cannot flicker the target
+
+// G7i — the three scripted beats (docs/g7-visit-shape.md § 3 item 5,
+// docs/briefs/g7i-pomple-beats.md). The sequencer calls `playBeat(name)`
+// fire-and-forget at an authored moment; each beat is a pure function of its
+// OWN elapsed time (`bt`, reset every call), never of `t` or a wall clock —
+// the visit sequencer is now a pure function of the clock (Dan's ruling,
+// 2026-08-17) and a beat that drew from anything else would break that.
+// Still NO PRNG, same as the rest of this file: nothing below draws randomly.
+const NOTICE_TURN_S = 4.0;      // s — body eases toward the live player pos
+const NOTICE_BODY_RATE = 0.6;   // rad/s — slower than HEAD_TURN_RATE (1.1),
+                                 // so the whole-body commitment reads as
+                                 // heavier/considered, not another head flick
+// s — the phase easing bodyYaw back to POMPLE_YAW. Sized against the WORST
+// case the turn phase can leave behind (a live target, so the turn phase can
+// leave up to its own full reach, NOTICE_TURN_S * NOTICE_BODY_RATE = 2.4 rad,
+// unconverged): 2.4 / 0.6 = 4.0s needed, matching the settle fix's lesson —
+// too short a release and the forced snap below becomes the visible pop.
+const NOTICE_RELEASE_S = 4.0;
+
+const APPROACH_DIST = 1.3;      // m — "a few steps": short of the counter
+                                 // (3.31 m away) and of the player's own spot
+const APPROACH_SPEED = 0.6;     // m/s — a walk, not a trot
+const APPROACH_TURN_RATE = 0.9; // rad/s — faces the travel direction
+
+const SETTLE_TURN_RATE = 0.9;   // rad/s
+// s — sized for the WORST case, a full pi-radian reversal (Math.PI /
+// SETTLE_TURN_RATE = 3.49s), plus margin: found by measuring, not guessed —
+// a first pass at 1.8s ended the beat on a timer before the turn could
+// finish, snapping him mid-rotation. update() force-snaps to the exact
+// target when this elapses regardless (same pattern `notice` already uses),
+// so this constant only controls how much of the turn is EASED before that
+// snap; too short and the snap itself becomes the visible pop.
+const SETTLE_TURN_S = 3.8;
+const SETTLE_SQUASH = 0.30;     // fraction of HEIGHT the silhouette drops.
+                                 // The rig has no lying pose — two rigid
+                                 // parts, no legs (this file's header) — so
+                                 // "lies down" is approximated as a lowered,
+                                 // flattened silhouette via group.scale.y
+                                 // (feet-anchored, so it settles toward the
+                                 // ground rather than shrinking in place)
+                                 // rather than a new pose.
+const SETTLE_SQUASH_S = 1.8;    // s
 
 const _va = new THREE.Vector3();
 const _vb = new THREE.Vector3();
@@ -169,12 +212,14 @@ export function buildPomple(scene, { assets = null } = {}) {
   const group = new THREE.Group();
   group.name = 'pomple';
   const w = toWorld(POMPLE_LOCAL[0], POMPLE_LOCAL[1]);
-  group.position.set(w.x, 0, w.z);
+  const basePos = { x: w.x, z: w.z };
+  group.position.set(basePos.x, 0, basePos.z);
   group.rotation.y = POMPLE_YAW;
   scene.add(group);
 
   const mcgrotWorld = toWorld(MCGROT_LOCAL[0], MCGROT_LOCAL[1]);
   const mcgrotTarget = new THREE.Vector3(mcgrotWorld.x, 0, mcgrotWorld.z);
+  const counterAnchor = ANCHORS.find((a) => a.id === 'counter');
 
   let built = false;
   let bytes = 0;
@@ -184,6 +229,18 @@ export function buildPomple(scene, { assets = null } = {}) {
   let attention = 'mcgrot';   // small, readable state machine — see below
   let headYaw = 0;            // current LOCAL head yaw, eased each frame
   let t = 0;                  // this module's own clock; never shared
+
+  // G7i beat state. `bodyYaw` is the group's OWN yaw — ambient code never
+  // touched it before this (POMPLE_YAW was a build-time constant); a beat is
+  // the only thing that eases it now. `posOffset`/`squash` are similarly
+  // beat-only and sit at their rest value (0) whenever no beat is running.
+  let bodyYaw = POMPLE_YAW;
+  const posOffset = { x: 0, z: 0 };
+  let squash = 0;              // 0 = standing, 1 = fully settled
+  let beat = null;             // active beat name, or null
+  let bt = 0;                  // THIS BEAT's own elapsed time, reset per call
+  let approachTarget = null;   // {ux, uz, dist, travelled} — captured once
+  let settleAwayYaw = 0;       // captured once, at playBeat('settle') time
 
   const ready = (async () => {
     const gltf = await new GLTFLoader().loadAsync(assetUrl(assets, 'characters/pomple-form.glb'));
@@ -226,6 +283,31 @@ export function buildPomple(scene, { assets = null } = {}) {
     built = true;
   })();
 
+  // The frozen interface (docs/briefs/g7i-pomple-beats.md, docs/briefs/
+  // g7h-visit-sequencer.md § 5): the sequencer calls `pomple.playBeat?.(name)`
+  // fire-and-forget and moves on — this starts a beat; `update()` plays it out
+  // over subsequent frames. A second call before the first beat has finished
+  // interrupts it: state is not reset to rest first, so bodyYaw/posOffset/
+  // squash simply keep easing from wherever they currently sit toward the new
+  // beat's own targets — no pop back to a canonical rest pose between beats,
+  // which matters because approach and settle are meant to read as one
+  // continuous visit (he stays where approach left him; settle turns him away
+  // from THERE, not from his original spot).
+  function playBeat(name) {
+    if (!built) return;
+    if (name !== 'notice' && name !== 'approach' && name !== 'settle') return;
+    beat = name;
+    bt = 0;
+    if (name === 'approach') {
+      const dx = counterAnchor.pos.x - (basePos.x + posOffset.x);
+      const dz = counterAnchor.pos.z - (basePos.z + posOffset.z);
+      const len = Math.hypot(dx, dz) || 1;
+      approachTarget = { ux: dx / len, uz: dz / len, dist: APPROACH_DIST, travelled: 0 };
+    } else if (name === 'settle') {
+      settleAwayYaw = wrapAngle(bodyYaw + Math.PI);
+    }
+  }
+
   // Per-client presentation only (roadmap § G6): `playerWorld` is a plain
   // {x,z}-shaped read of the player's own live position, which every client
   // already computes locally — nothing here is relayed, and nothing here is
@@ -237,6 +319,65 @@ export function buildPomple(scene, { assets = null } = {}) {
     // Idle settle: a slow vertical breathing/weight-shift, independent of
     // attention. Small on purpose (docs/CANON.md: "minimal motion").
     group.position.y = Math.sin(t * IDLE_BOB_FREQ * Math.PI * 2) * IDLE_BOB_AMP;
+
+    // The active beat, if any — drives bodyYaw/posOffset/squash only. Runs
+    // BEFORE the attention/head-turn block below so the head aims relative to
+    // this frame's already-updated body yaw, not last frame's.
+    if (beat === 'notice') {
+      bt += dt;
+      if (bt <= NOTICE_TURN_S) {
+        // Same atan2(dx, dz) "world yaw that faces a target" formula the
+        // head-aim code below already uses (this file's own header: that is
+        // the established, already-correct derivation for this project's
+        // convention) — applied to the WHOLE body instead of just the head,
+        // which is the "commit the body to it" the brief asks for.
+        if (playerWorld) {
+          const dx = playerWorld.x - (basePos.x + posOffset.x);
+          const dz = playerWorld.z - (basePos.z + posOffset.z);
+          if (Math.hypot(dx, dz) > 1e-4) {
+            const targetYaw = Math.atan2(dx, dz);
+            const d = wrapAngle(targetYaw - bodyYaw);
+            bodyYaw += Math.min(Math.abs(d), NOTICE_BODY_RATE * dt) * Math.sign(d);
+          }
+        }
+      } else if (bt <= NOTICE_TURN_S + NOTICE_RELEASE_S) {
+        const d = wrapAngle(POMPLE_YAW - bodyYaw);
+        bodyYaw += Math.min(Math.abs(d), NOTICE_BODY_RATE * dt) * Math.sign(d);
+      } else {
+        bodyYaw = POMPLE_YAW;   // snap closed — beat always ends clean
+        beat = null;
+      }
+    } else if (beat === 'approach') {
+      bt += dt;
+      const remaining = approachTarget.dist - approachTarget.travelled;
+      if (remaining > 1e-4) {
+        const targetYaw = Math.atan2(approachTarget.ux, approachTarget.uz);
+        const d = wrapAngle(targetYaw - bodyYaw);
+        bodyYaw += Math.min(Math.abs(d), APPROACH_TURN_RATE * dt) * Math.sign(d);
+        const step = Math.min(remaining, APPROACH_SPEED * dt);
+        posOffset.x += approachTarget.ux * step;
+        posOffset.z += approachTarget.uz * step;
+        approachTarget.travelled += step;
+      } else {
+        beat = null;   // stopped — posOffset/bodyYaw persist, by design
+      }
+    } else if (beat === 'settle') {
+      bt += dt;
+      squash = Math.min(1, squash + dt / SETTLE_SQUASH_S);
+      if (bt >= SETTLE_TURN_S) {
+        bodyYaw = settleAwayYaw;   // snap closed — same guarantee `notice`
+        squash = 1;                // makes: never left stalled mid-turn
+        beat = null;
+      } else {
+        const d = wrapAngle(settleAwayYaw - bodyYaw);
+        bodyYaw += Math.min(Math.abs(d), SETTLE_TURN_RATE * dt) * Math.sign(d);
+      }
+    }
+
+    group.rotation.y = bodyYaw;
+    group.position.x = basePos.x + posOffset.x;
+    group.position.z = basePos.z + posOffset.z;
+    group.scale.y = HEIGHT * (1 - squash * SETTLE_SQUASH);
 
     // The attention state machine — two states, one hysteresis band. Bigger
     // than it needs to be would fight docs/CANON.md's "long stares"; this
@@ -270,10 +411,23 @@ export function buildPomple(scene, { assets = null } = {}) {
     if (headJoint) headJoint.rotation.y = headYaw;
   }
 
+  // G7i's gate needs to drive playBeat from the running page, but main.js's
+  // debug object (the established route every other check in this file uses)
+  // is sequencer's (G7h) file and out of scope here — see docs/briefs/
+  // g7i-pomple-beats.md's scope section. `scene.getObjectByName('pomple')`
+  // already returns this GROUP for every other pomple gate check, so exposing
+  // playBeat through its userData (the sanctioned arbitrary-data bag on any
+  // three.js object) reaches it without touching main.js at all. This is
+  // additive only — the frozen interface itself is the method below, which is
+  // what main.js's `pomple.playBeat?.(name)` actually calls.
+  group.userData.playBeat = playBeat;
+  group.userData.getBeat = () => beat;
+
   return {
     group,
     ready,
     update,
+    playBeat,
     stats: () => ({ drawCalls: built ? 2 : 0, triangles: 0, bytes }),
 
     // Debug/gate surface — read-only except `setTracking`, which the head-
@@ -283,5 +437,6 @@ export function buildPomple(scene, { assets = null } = {}) {
     get attention() { return attention; },
     setTracking(v) { trackingEnabled = !!v; },
     get tracking() { return trackingEnabled; },
+    get beat() { return beat; },
   };
 }
