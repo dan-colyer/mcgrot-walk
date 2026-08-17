@@ -82,15 +82,14 @@ re-verified green with `npm run smoke:mcgrots -- --only=taxman`.
 
 | # | Claim | Fault injected | Result |
 |---|---|---|---|
-| 1 | He is rendered, not merely in the scene graph | `taxman.group.visible = false` forced permanently (bypassing the schedule) | rect-toggle check went from `diff=24.9` to `diff=0.0` — red |
-| 2 | He does not occlude McGrot | `TAXMAN_LOCAL` moved to `[0.35, 2.6]` (on McGrot's own approach line) | McGrot's visible fraction dropped from 29.2% to well under the 20% floor — red |
-| 3 | All six lines are audible | `dir: 'cast/'` changed to `'mcgrot/'` in `sceneCueAt`'s return (points at the wrong tree, 404s) | all six lines read `rms=0.000` — red |
-| 4 | Arrival is deterministic | `GAP` changed from a constant to `Math.random() * 2` | the purity check ("same instant twice") went red on the second of the two identical pins |
+| 1 | He is rendered, not merely in the scene graph | `taxman.group.visible` hard-coded `false` in `main.js`'s frame(), bypassing the schedule entirely | the AABB-existence check still passed (`Box3().setFromObject` ignores `.visible`, same weak-check caveat the mcgrot/van regions already document) — but the toggle-diff check went from `diff=24.9` to a flat FAIL, exactly the reason that check exists rather than the AABB one alone |
+| 2 | He does not occlude McGrot | `TAXMAN_LOCAL` co-located with `MCGROT_LOCAL` (`[0.35, 1.3]`) | McGrot's own visible-pixel fraction and its control both went red — a first attempt at moving him onto the OLD rota-reader occlusion spot (`[0.35, 2.6]`) passed cleanly instead, because that fault occludes the `counter` camera's line, not `wall`'s (where this scene actually plays) — worth recording, since it is exactly the "reasoned about the blast radius instead of measuring it" mistake this project's own verification contract warns against |
+| 3 | All six lines are audible | `dir: 'cast/'` changed to `'mcgrot/'` inside `sceneCueAt`'s return (points at the wrong tree, 404s) | all six lines read `rms=0.000`, `playing=false` — red |
+| 4 | Arrival is deterministic | `sceneCueAt` given a module-level toggle that ignores its own `elapsed` argument on alternating calls | the "a different pinned instant gives a different result" control went red; the bare "same instant twice" check happened to still pass on this particular pin by coincidence — the control is what actually exercises the claim, which is why the brief asks for one |
 
-Exact commands and full before/after check output for each: see the fault
-commit that follows this one and is then reverted — `git log -p` on
-`src/mcgrots/taxman.js` and `scripts/smoke-mcgrots.mjs` around this landing
-carries every injection verbatim.
+Every injection reverted with `git checkout -- src/mcgrots/taxman.js` (a
+tracked path — safe, unlike an untracked one) before the next; full suite
+re-verified 112/112 after the last restore.
 
 ## The render, opened
 
