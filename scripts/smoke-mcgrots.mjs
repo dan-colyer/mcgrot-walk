@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -3016,6 +3016,342 @@ try {
 
       check('console still clean after driving the beats region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+    }
+    if (wants('taxman')) {
+      const taxmanPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      const taxmanErrors = [];
+      taxmanPage.on('console', (m) => { if (m.type() === 'error') taxmanErrors.push(m.text()); });
+      taxmanPage.on('pageerror', (e) => taxmanErrors.push(String(e)));
+      await taxmanPage.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on`, { waitUntil: 'load' });
+      await taxmanPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await taxmanPage.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await taxmanPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await taxmanPage.evaluate(() => window.__mcgrotsDebug.setMarkersVisible(false));
+
+      // Where the tagged cue starts, read from the SHIPPED table rather than
+      // hand-computed — tracks any future re-pooling of the silence rows
+      // (visit.js's own header: the 48.6s shortfall was already pooled once).
+      const cueInfo = await taxmanPage.evaluate(() => {
+        const cues = window.__mcgrotsDebug.visit.cues();
+        let t = 0;
+        for (const c of cues) {
+          if (c.beat === 'taxman') return { start: t, dur: c.dur, index: c.index };
+          t += c.dur;
+        }
+        return null;
+      });
+      check('the wall/101.8s silence row carries the taxman beat',
+        !!cueInfo, JSON.stringify(cueInfo));
+
+      // The exchange's own schedule, read from sceneCueAt itself (the SAME
+      // pure function main.js drives every frame) rather than reproduced by
+      // hand — a 0.25s sweep is fine grained enough to land inside the
+      // shortest line (mcgrot-exch-taxman-02, 2.4s).
+      const sceneRows = await taxmanPage.evaluate((cueStart) => {
+        const d = window.__mcgrotsDebug;
+        const dur = d.taxman.sceneDuration();
+        const rows = [];
+        let lastId = undefined;
+        // `sweepAt` on its own key — `sceneCueAt`'s own return already carries
+        // an `elapsed` field (elapsed WITHIN the current line, not within the
+        // cue), and spreading `c` after a same-named key would silently let
+        // that tiny in-line value clobber the sweep time this needs. Found by
+        // running it and getting nonsense pins (0.15s into the cue for every
+        // line), not reasoned about in advance.
+        for (let e = 0; e < dur; e += 0.25) {
+          const c = d.taxman.sceneCueAt(e);
+          if (c.id !== lastId) { rows.push({ sweepAt: e, ...c }); lastId = c.id; }
+        }
+        return { dur, rows, cueStart };
+      }, cueInfo.start);
+
+      check('all six lines appear in the schedule, in the turn order the dialogue JSON authored (McGrot opens, the Taxman closes every pair, the Taxman has the last word)',
+        sceneRows.rows.filter((r) => r.id).map((r) => r.id).join(',')
+          === ['mcgrot-exch-taxman-01', 'taxman-exch-taxman-01', 'mcgrot-exch-taxman-02', 'taxman-exch-taxman-02', 'mcgrot-exch-taxman-03', 'taxman-exch-taxman-03'].join(','),
+        sceneRows.rows.filter((r) => r.id).map((r) => r.id).join(', '));
+
+      // Pin the first sampled instant each of the six lines is actually
+      // playing — used by the audibility gate below. `sweepAt` is relative to
+      // the CUE's own start, matching what main.js passes to sceneCueAt
+      // (`cue.elapsed`), so the absolute clock pin is cueStart+it.
+      const linePins = sceneRows.rows.filter((r) => r.id).map((r) => ({ id: r.id, speaker: r.speaker, at: cueInfo.start + r.sweepAt + 0.15 }));
+      // A GAP sample (id null, `active: true`, and NOT the opening gap before
+      // line 1 — that one is indistinguishable from "not arrived yet" to a
+      // reader of this file, even though sceneCueAt itself already treats it
+      // as present) for the silence control below.
+      const gapRow = sceneRows.rows.find((r, i) => !r.id && r.active && i > 0);
+      const gapPin = gapRow ? cueInfo.start + gapRow.sweepAt + 0.15 : null;
+
+      // Shared AABB-projection helper — same technique as the van/pomple/
+      // mcgrot regions above, its own copy per this file's own convention.
+      const projectRect = async (name) => taxmanPage.evaluate((n) => {
+        const d = window.__mcgrotsDebug;
+        const obj = d.scene.getObjectByName(n);
+        if (!obj) return null;
+        const box = new d.THREE.Box3().setFromObject(obj);
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, anyInFront = false;
+        for (const x of [box.min.x, box.max.x]) {
+          for (const y of [box.min.y, box.max.y]) {
+            for (const z of [box.min.z, box.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              if (p.z < 1) anyInFront = true;
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+              y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+          }
+        }
+        const clamp01 = (v) => Math.max(0, Math.min(1, v));
+        return {
+          ux0: clamp01(x0 * 0.5 + 0.5), ux1: clamp01(x1 * 0.5 + 0.5),
+          uy0: clamp01(1 - (y1 * 0.5 + 0.5)), uy1: clamp01(1 - (y0 * 0.5 + 0.5)),
+          anyInFront,
+        };
+      }, name);
+      const meanAbsDiffRect = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let sum = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            sum += Math.abs(la - lb); n++;
+          }
+        }
+        return n ? sum / n : 0;
+      };
+      const countDiffPixels = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+
+      // Pinned to the middle of the FIRST taxman-voiced line — the moment
+      // the brief's own gates are stated against ("while the Taxman is
+      // present"). `visit.rejoin()` first: the real clock keeps ticking
+      // until pauseAuto() actually lands (a network round trip is real time
+      // passing), so without this the join could race onto some other cue —
+      // same fix the visit region's own 'f-closing-counter' capture needed.
+      const taxmanPin = linePins.find((p) => p.speaker === 'taxman').at;
+      await taxmanPage.evaluate((t) => {
+        const d = window.__mcgrotsDebug;
+        d.visit.rejoin();
+        d.rota.setClock(t);
+        d.stepFrames(1);
+      }, taxmanPin);
+      // 450 real frames (7.5s) so the actor's own boot-time walk-in has
+      // genuinely settled — same settle count the visit region's own
+      // 'c'/'d'/'f' captures use for a jump that forces a fresh walk.
+      await taxmanPage.evaluate(() => window.__mcgrotsDebug.stepFrames(450, 1 / 60));
+
+      // --- 1: he is on screen and rendered, not merely in the scene graph --
+      const taxmanRect = await projectRect('taxman');
+      check('the taxman AABB projects to a sensible, non-degenerate rect while his scene is active',
+        !!taxmanRect && taxmanRect.anyInFront
+          && (taxmanRect.ux1 - taxmanRect.ux0) * (taxmanRect.uy1 - taxmanRect.uy0) > 0.0003,
+        JSON.stringify(taxmanRect));
+
+      const taxmanWithOn = await taxmanPage.screenshot({ type: 'png' });
+      await taxmanPage.evaluate(() => { window.__mcgrotsDebug.taxman.setForceHidden(true); window.__mcgrotsDebug.stepFrames(1); });
+      const taxmanWithOff = await taxmanPage.screenshot({ type: 'png' });
+      const taxmanToggleDiff = meanAbsDiffRect(taxmanWithOn, taxmanWithOff, taxmanRect);
+      // >3 rules out anti-aliasing noise on an unchanged frame — same
+      // threshold and the same reasoning as the mcgrot/beret toggle checks
+      // above (this renderer is deterministic; any positive reading here is
+      // real signal). `setForceHidden` is the escape hatch this unit adds
+      // specifically because `taxman.group.visible` is reasserted from the
+      // pinned clock every frame — a plain `scene.getObjectByName('taxman')
+      // .visible = false` here would be overwritten on the very next
+      // `stepFrames` call and this check would read a false negative (found
+      // by trying exactly that first, not reasoned about — see this
+      // region's own landing notes).
+      check('the taxman rect actually changes when force-hidden in the same boot (control: same toggle, would read 0.0 if visible were latched rather than driven live)',
+        taxmanToggleDiff > 3, `diff=${taxmanToggleDiff.toFixed(1)}`);
+      await taxmanPage.evaluate(() => { window.__mcgrotsDebug.taxman.setForceHidden(false); window.__mcgrotsDebug.stepFrames(1); });
+
+      // --- 2: he does not occlude McGrot -----------------------------------
+      // Same toggle, diffed inside McGrot's OWN rect this time — the mcgrot
+      // region's own F22 technique, applied to a new occluder. The control
+      // named in the brief: the identical measurement with the Taxman
+      // absent, which must ALSO clear the floor (proving the instrument, not
+      // just the outcome, holds at this anchor and pinned moment).
+      const mcgrotRect = await projectRect('mcgrot');
+      const mcgrotVisibleFraction = async () => {
+        const withOn = await taxmanPage.screenshot({ type: 'png' });
+        const wasVisible = await taxmanPage.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const v = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return v;
+        });
+        const withOff = await taxmanPage.screenshot({ type: 'png' });
+        await taxmanPage.evaluate((v) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = v; window.__mcgrotsDebug.stepFrames(1);
+        }, wasVisible);
+        return countDiffPixels(withOn, withOff, mcgrotRect);
+      };
+      const fractionTaxmanPresent = await mcgrotVisibleFraction();
+      await taxmanPage.evaluate(() => { window.__mcgrotsDebug.taxman.setForceHidden(true); window.__mcgrotsDebug.stepFrames(1); });
+      const fractionTaxmanAbsent = await mcgrotVisibleFraction();
+      await taxmanPage.evaluate(() => { window.__mcgrotsDebug.taxman.setForceHidden(false); window.__mcgrotsDebug.stepFrames(1); });
+
+      // Same 20% floor the mcgrot region's own F22 gate established (natural
+      // unoccluded range there: 28.8-33.7% across all five anchors).
+      check('McGrot is not occluded at the wall anchor while the Taxman is present — his own visible-pixel fraction clears the established floor',
+        fractionTaxmanPresent > 0.2,
+        `${(fractionTaxmanPresent * 100).toFixed(1)}% of his rect is actually him (>20% required)`);
+      check('control: the identical measurement with the Taxman absent also clears the floor, and is not materially higher (isolates his own contribution as ~zero, not "he happens not to matter here")',
+        fractionTaxmanAbsent > 0.2 && Math.abs(fractionTaxmanPresent - fractionTaxmanAbsent) < 0.03,
+        `present=${(fractionTaxmanPresent * 100).toFixed(1)}% absent=${(fractionTaxmanAbsent * 100).toFixed(1)}% (delta must be <3 points)`);
+
+      // --- 4: his arrival is deterministic ----------------------------------
+      // Same instant twice -> same presence/line; a different instant (still
+      // inside the 101.8s cue, but past the ~25s scene) -> absent. Same
+      // purity idiom the visit region's own cueAt control uses.
+      const arrivalAt = async (t) => taxmanPage.evaluate((tt) => {
+        const d = window.__mcgrotsDebug;
+        d.rota.setClock(tt);
+        d.stepFrames(1);
+        return { visible: d.scene.getObjectByName('taxman').visible, cue: d.taxman.sceneCueAt(d.visit.cueAt(tt).elapsed) };
+      }, t);
+      const a1 = await arrivalAt(taxmanPin);
+      const a2 = await arrivalAt(taxmanPin);
+      const outside = cueInfo.start + sceneRows.dur + 20; // well past the ~25s scene, still inside the 101.8s cue
+      const b = await arrivalAt(outside);
+      check('his arrival is deterministic — the same pinned instant twice gives the same presence and line',
+        a1.visible === a2.visible && a1.cue.id === a2.cue.id,
+        `t=${taxmanPin.toFixed(1)} (asked twice): visible=${a1.visible}/${a2.visible} id=${a1.cue.id}/${a2.cue.id}`);
+      check('control: a different pinned instant gives a different result (still inside the same 101.8s cue, past the ~25s scene)',
+        a1.visible === true && b.visible === false,
+        `t=${taxmanPin.toFixed(1)} visible=${a1.visible}; t=${outside.toFixed(1)} visible=${b.visible}`);
+
+      check('console still clean after driving the taxman region',
+        taxmanErrors.length === 0, taxmanErrors.slice(0, 3).join(' | ') || 'no errors');
+      await taxmanPage.close();
+
+      // --- 3: all six lines are audible -------------------------------------
+      // Own page, real CDP click — F15's own lesson, repeated because this
+      // repo has paid for it before: currentSrc/paused/currentTime prove a
+      // source was wired up, not that anything is audible.
+      const taxmanAudioPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      const taxmanAudioErrors = [];
+      taxmanAudioPage.on('pageerror', (e) => taxmanAudioErrors.push(String(e)));
+      await taxmanAudioPage.addInitScript(() => {
+        const proto = (window.AudioContext || window.webkitAudioContext).prototype;
+        const orig = proto.createMediaElementSource;
+        proto.createMediaElementSource = function (el) {
+          const src = orig.call(this, el);
+          const analyser = this.createAnalyser();
+          analyser.fftSize = 2048;
+          src.connect(analyser);
+          window.__mcgrotsAnalyser = analyser;
+          return src;
+        };
+      });
+      await taxmanAudioPage.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on`, { waitUntil: 'load' });
+      await taxmanAudioPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await taxmanAudioPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await taxmanAudioPage.click('#title-card'); // the real gesture
+
+      const sampleRMS = async (p) => p.evaluate(() => {
+        const a = window.__mcgrotsAnalyser;
+        if (!a) return { peak: 0, rms: 0 };
+        const data = new Uint8Array(a.fftSize);
+        a.getByteTimeDomainData(data);
+        let peak = 0, sumSq = 0;
+        for (let j = 0; j < data.length; j++) {
+          const v = (data[j] - 128) / 128;
+          peak = Math.max(peak, Math.abs(v));
+          sumSq += v * v;
+        }
+        return { peak, rms: Math.sqrt(sumSq / data.length) };
+      });
+      const waitForAudible = async (p, attempts = 15) => {
+        for (let i = 0; i < attempts; i++) {
+          const r = await sampleRMS(p);
+          if (r.rms > 0.005) return r;
+          await new Promise((res) => setTimeout(res, 150));
+        }
+        return { peak: 0, rms: 0 };
+      };
+
+      const lineResults = [];
+      for (const p of linePins) {
+        await taxmanAudioPage.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(1); }, p.at);
+        const playingId = await taxmanAudioPage.evaluate(() => window.__mcgrotsDebug.readerAudio.playingId);
+        const r = await waitForAudible(taxmanAudioPage);
+        lineResults.push({ id: p.id, playingId, ...r });
+      }
+      const badLines = lineResults.filter((r) => r.playingId !== r.id || r.rms <= 0.005);
+      check('all six lines are audible — real RMS off the output, not just element state, at every line in the exchange',
+        lineResults.length === 6 && badLines.length === 0,
+        lineResults.map((r) => `${r.id}: playing=${r.playingId === r.id} rms=${r.rms.toFixed(3)}`).join(' / '));
+
+      // Control: a GAP between two lines (present, nothing scheduled) must
+      // read silent — the same "a condition that must read zero" shape the
+      // brief asks for, and the same idiom the visit region's own cue-0
+      // control uses.
+      if (gapPin !== null) {
+        await taxmanAudioPage.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(1); }, gapPin);
+        await new Promise((r) => setTimeout(r, 300)); // let the previous line's tail actually stop
+        const silentSamples = [await sampleRMS(taxmanAudioPage), await sampleRMS(taxmanAudioPage), await sampleRMS(taxmanAudioPage)];
+        const silentWorst = silentSamples.reduce((a, b) => (b.rms > a.rms ? b : a));
+        check('...and control: a gap between two lines produces no output',
+          silentWorst.rms <= 0.005, `t=${gapPin.toFixed(1)} peak=${silentWorst.peak.toFixed(3)} rms=${silentWorst.rms.toFixed(3)} (must be <=0.005)`);
+      }
+
+      await taxmanAudioPage.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
+      check('console clean on the taxman audio page',
+        taxmanAudioErrors.length === 0, taxmanAudioErrors.slice(0, 3).join(' | ') || 'no errors');
+      await taxmanAudioPage.close();
+
+      // --- render pass: is it two people talking, or two files playing? ----
+      // Numeric gates cannot see this (E5d's own lesson) — captured for the
+      // review to open, not to be judged by a number.
+      const shotsPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      await shotsPage.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on`, { waitUntil: 'load' });
+      await shotsPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await shotsPage.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await shotsPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await shotsPage.evaluate(() => window.__mcgrotsDebug.setMarkersVisible(false));
+      const taxmanShots = [];
+      const captureAt = async (label, t) => {
+        await shotsPage.evaluate((tt) => {
+          const d = window.__mcgrotsDebug;
+          d.visit.rejoin();
+          d.rota.setClock(tt);
+          d.stepFrames(1);
+        }, t);
+        await shotsPage.evaluate(() => window.__mcgrotsDebug.stepFrames(450, 1 / 60));
+        const buf = await shotsPage.screenshot({ type: 'png' });
+        writeFileSync(join(OUT, `taxman-${label}.png`), buf);
+        taxmanShots.push(label);
+      };
+      const mcgrotPin = linePins.find((p) => p.speaker === 'mcgrot').at;
+      await captureAt('a-mcgrot-speaking', mcgrotPin);
+      await captureAt('b-taxman-speaking', taxmanPin);
+      if (gapPin !== null) await captureAt('c-gap-both-present', gapPin);
+      await shotsPage.close();
+
+      check('the exchange captured with both figures on screen (open and look — numeric gates cannot see whether this reads as two people talking)',
+        taxmanShots.length >= 2, `${taxmanShots.length} frames written to docs/smoke/captures/mcgrots/g0/taxman-*.png`);
     }
   }
 
