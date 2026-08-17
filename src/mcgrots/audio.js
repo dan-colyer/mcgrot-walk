@@ -48,7 +48,12 @@
 // which this module cannot enforce (that's rota.js's pool-intersection job)
 // but must not fall over if it is ever violated.
 
-function audioUrl(id) {
+// `dir` is an explicit per-caller prefix (e.g. visit.js's `audioDirFor`),
+// never inferred from the id's shape — an id-pattern heuristic breaks the
+// first time an id looks like the other kind. Undefined for every existing
+// caller (rota.js's schedule), so this is backward compatible by construction:
+// the pool it schedules lives directly under assets/audio/.
+function audioUrl(id, dir) {
   // Same convention as foot.js's loadFoot(): honour the single-file build's
   // window.MCGROT_ASSETS if one exists, else the dev server's relative path.
   // There is no single-file build for this game yet (brief, "no asset
@@ -57,7 +62,7 @@ function audioUrl(id) {
   if (typeof window !== 'undefined' && window.MCGROT_ASSETS?.audio?.[id]) {
     return window.MCGROT_ASSETS.audio[id];
   }
-  return `assets/audio/${id}.mp3`;
+  return `assets/audio/${dir ?? ''}${id}.mp3`;
 }
 
 export function createReaderAudio() {
@@ -129,7 +134,7 @@ export function createReaderAudio() {
 
     if (info.id !== currentId) {
       stopPlayback();
-      mediaEl.src = audioUrl(info.id);
+      mediaEl.src = audioUrl(info.id, info.dir);
       currentId = info.id;
       const wantId = info.id;
       // Setting `.currentTime` before metadata has loaded is unreliable —
