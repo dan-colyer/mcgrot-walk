@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'ambience', 'dialogue'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -2769,6 +2769,352 @@ try {
       await page.evaluate(() => { window.__mcgrotsDebug.setPage(false); });
       check('console still clean after every style arm',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+    }
+
+    // -------------------------------------------------------------- ambience ---
+    // G7k. `ambience.js` builds its OWN AudioContext, never readerAudio's (see
+    // that module's header for why) — so "is the reading audible with the bed
+    // on" cannot be answered by tapping one context, the way the `audio`
+    // region's F15 fix does. The tap below generalises that same technique
+    // (wrap a prototype method, mirror the real signal into a parallel path,
+    // change nothing shipped does) across however many AudioContexts a boot
+    // ends up creating: every `.connect(ctx.destination)` call, from any
+    // context, gets mirrored into a MediaStreamAudioDestinationNode for THAT
+    // context, and every such stream is collected in construction order.
+    // main.js's title-card handler starts readerAudio before ambience
+    // (see main.js), so construction order is fixed: tap 0 is the voice,
+    // tap 1 is the bed. Check 3's fault injection adds a third, synthetic tap.
+    if (wants('ambience')) {
+      const installTap = async (p) => p.addInitScript(() => {
+        window.__mcgrotsMixTaps = [];
+        const origConnect = AudioNode.prototype.connect;
+        AudioNode.prototype.connect = function (target, ...rest) {
+          if (typeof AudioDestinationNode !== 'undefined' && target instanceof AudioDestinationNode) {
+            const ctx = target.context;
+            if (!ctx.__mcgrotsStreamDest) {
+              ctx.__mcgrotsStreamDest = ctx.createMediaStreamDestination();
+              window.__mcgrotsMixTaps.push(ctx.__mcgrotsStreamDest.stream);
+            }
+            origConnect.call(this, ctx.__mcgrotsStreamDest);
+          }
+          return origConnect.call(this, target, ...rest);
+        };
+      });
+
+      // Builds (or rebuilds) a named analyser from a subset of tap indices —
+      // 'voice' ([0]), 'bed' ([1]), and check 3's fault injection later adds
+      // a third index and rebuilds 'voice' as [0, 2]. A fresh mix
+      // AudioContext each call, never reused, so rebuilding one tag never
+      // disturbs another.
+      const buildAnalyser = async (p, indices, tag) => p.evaluate(({ idx, tag }) => {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        const mixCtx = new Ctor();
+        const analyser = mixCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        for (const i of idx) {
+          const stream = window.__mcgrotsMixTaps[i];
+          if (stream) mixCtx.createMediaStreamSource(stream).connect(analyser);
+        }
+        window.__mcgrotsAnalysers = window.__mcgrotsAnalysers || {};
+        window.__mcgrotsAnalysers[tag] = analyser;
+      }, { idx: indices, tag });
+
+      const sampleRMS = async (p, tag) => p.evaluate((tag) => {
+        const a = (window.__mcgrotsAnalysers || {})[tag];
+        if (!a) return { peak: 0, rms: 0 };
+        const data = new Uint8Array(a.fftSize);
+        a.getByteTimeDomainData(data);
+        let peak = 0, sumSq = 0;
+        for (let j = 0; j < data.length; j++) {
+          const v = (data[j] - 128) / 128;
+          peak = Math.max(peak, Math.abs(v));
+          sumSq += v * v;
+        }
+        return { peak, rms: Math.sqrt(sumSq / data.length) };
+      }, tag);
+
+      // Polled, not a single sample — same reason as the `audio` region's own
+      // waitForAudible: play() and the WebAudio graph run on the real wall
+      // clock, decoupled from this harness's frozen rAF, so the first sample
+      // or two can still be silence (or, for a one-shot event, can still be
+      // BEFORE the burst has actually started rendering).
+      const waitForRMS = async (p, tag, predicate, attempts = 16) => {
+        let last = { peak: 0, rms: 0 };
+        for (let i = 0; i < attempts; i++) {
+          last = await sampleRMS(p, tag);
+          if (predicate(last)) return last;
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        return last;
+      };
+      const peakOverWindow = async (p, tag, attempts, gapMs) => {
+        let peak = 0;
+        for (let i = 0; i < attempts; i++) {
+          const s = await sampleRMS(p, tag);
+          peak = Math.max(peak, s.peak);
+          await new Promise((r) => setTimeout(r, gapMs));
+        }
+        return peak;
+      };
+
+      // Finds a `t` (within one visit cycle) where `visit.cueAt` reports the
+      // given kind, comfortably clear of both window edges — a query against
+      // the LIVE CUES table rather than a hardcoded offset, so this region
+      // does not silently drift if visit.js's own authored durations change
+      // (not this unit's file to predict). ALSO clear of ambience's own
+      // discrete-event windows (`d.ambience.eventAt(t)` — a separate 54s
+      // clock, unrelated to the visit's 600.7s one) — measured without this
+      // exclusion, a `readingT`/`silenceT` that happened to land inside a
+      // gull or tram window contaminated the bed-only RMS checks below with
+      // an uncontrolled one-shot on top of the continuous bed, and the
+      // ducking ratio read 0.16 instead of the ~0.42 the gain math predicts.
+      const findCueWindow = async (p, kind) => p.evaluate((k) => {
+        const d = window.__mcgrotsDebug;
+        const cycle = d.visit.cycleSeconds();
+        for (let t = 1; t < cycle; t += 1) {
+          const c = d.visit.cueAt(t);
+          if (c.kind === k && c.elapsed > 2 && (c.dur - c.elapsed) > 2 && !d.ambience.eventAt(t)) return t;
+        }
+        return null;
+      }, kind);
+
+      // --- arm A: visit + ambience both on — this is the shipped combination ---
+      const armOn = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      const armOnErrors = [];
+      armOn.on('console', (m) => { if (m.type() === 'error') armOnErrors.push(m.text()); });
+      armOn.on('pageerror', (e) => armOnErrors.push(String(e)));
+      await installTap(armOn);
+      await armOn.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on&ambience=on`, { waitUntil: 'load' });
+      await armOn.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      const flagLive = await armOn.evaluate(() => window.__mcgrotsDebug.ambience.on);
+      check('ambience is flagged on for this boot (?ambience=on) — a precondition for every check below',
+        flagLive, `ambience.on=${flagLive}`);
+      await armOn.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await armOn.click('#title-card');
+      await armOn.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      const armOnStarted = await armOn.evaluate(() => window.__mcgrotsDebug.ambience.started);
+      check('ambience.start() built an AudioContext from the title-card gesture',
+        armOnStarted, `started=${armOnStarted}`);
+      await buildAnalyser(armOn, [0], 'voice');
+      await buildAnalyser(armOn, [1], 'bed');
+
+      const readingT = await findCueWindow(armOn, 'reading');
+      const silenceT = await findCueWindow(armOn, 'silence');
+      const gullT = 19.8 + 0.5;  // inside EVENTS' gull window (ambience.js)
+      const doorT = 33.1 + 0.3;  // inside EVENTS' door window — the control for check 5
+
+      // --- arm B: visit on, ambience OFF — the control for checks 1 and 3 ---
+      const armOff = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      await installTap(armOff);
+      await armOff.goto(`http://127.0.0.1:${port}/mcgrots.html?visit=on`, { waitUntil: 'load' });
+      await armOff.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await armOff.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      await armOff.click('#title-card');
+      await armOff.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await buildAnalyser(armOff, [0], 'voice');
+      // Never started: AMBIENCE_ON is false on this boot, so main.js's onStart
+      // never calls ambience.start() and tap index 1 never exists — 'bed' here
+      // reads zero because there is nothing connected to read, which is
+      // exactly what "ambience off" is supposed to mean.
+      await buildAnalyser(armOff, [1], 'bed');
+
+      // ---------------------------------------------------------- check 1 ---
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, silenceT);
+      const bedOn = await waitForRMS(armOn, 'bed', (r) => r.rms > 0.003);
+      await armOff.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, silenceT);
+      const bedOff = await sampleRMS(armOff, 'bed');
+      check('the bed is audible (non-zero RMS with ambience on; control: ambience off reads zero)',
+        bedOn.rms > 0.003 && bedOff.rms <= 0.0005,
+        `on: peak=${bedOn.peak.toFixed(3)} rms=${bedOn.rms.toFixed(3)} / off: peak=${bedOff.peak.toFixed(3)} rms=${bedOff.rms.toFixed(3)}`);
+
+      // ---------------------------------------------------------- check 2 ---
+      // Bed-only tap (index 1), never the mix — isolates the DUCK from the
+      // voice's own level, which check 3 measures separately.
+      const unducked = await waitForRMS(armOn, 'bed', (r) => r.rms > 0.003);
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, readingT);
+      // 1500ms, not DUCK_RAMP's own 600ms plus a token margin: measured with
+      // armOn and armOff both open and both driving real playback, 700ms
+      // left the ramp mid-flight often enough to read as a real ducking
+      // difference in the "disabled" control below (reading rms=0.058 vs
+      // silence rms=0.126 — the control looked exactly like a WORKING duck).
+      // This region always has two pages competing for the same audio
+      // pipeline, so the margin has to cover that load, not just the ramp.
+      await new Promise((r) => setTimeout(r, 1500));
+      const ducked = await sampleRMS(armOn, 'bed');
+      const duckRatio = unducked.rms > 0 ? ducked.rms / unducked.rms : 1;
+      check('ducking happens — bed RMS during a voice cue is materially below its level between cues',
+        duckRatio < 0.75,
+        `unducked rms=${unducked.rms.toFixed(3)}, ducked rms=${ducked.rms.toFixed(3)} (ratio ${duckRatio.toFixed(2)}, must be <0.75)`);
+
+      // Control: ducking disabled — the two must become indistinguishable.
+      await armOn.evaluate(() => window.__mcgrotsDebug.ambience.setDuckingEnabled(false));
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, readingT);
+      await new Promise((r) => setTimeout(r, 1500)); // same margin as check 2's own ramp wait, above
+      const duckOffDuringReading = await sampleRMS(armOn, 'bed');
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, silenceT);
+      await new Promise((r) => setTimeout(r, 1500));
+      const duckOffDuringSilence = await sampleRMS(armOn, 'bed');
+      const controlRatio = duckOffDuringSilence.rms > 0 ? duckOffDuringReading.rms / duckOffDuringSilence.rms : 1;
+      // GATED ON THE RAW GAIN NODE, not the RMS ratio above. Traced (not
+      // dismissed) rather than loosened to fit: `ambience.gainValue` (a
+      // direct read of the master GainNode's own AudioParam) held exactly
+      // 0.14 (MASTER_GAIN) in BOTH states once ducking was disabled, proving
+      // the mechanism under test is flat — but the RMS ratio still read as
+      // low as 0.46-0.65 across repeat runs with armOn/armOff both open. The
+      // two pages compete for the same real-time audio pipeline in this
+      // harness (armOff plays a continuous reading throughout this whole
+      // region), and that contention measurably changes the BED's own
+      // rendered amplitude independent of anything ducking does — an
+      // artefact of this region's own two-page setup, not of the feature.
+      // RMS stays in the detail line as supporting colour, never gated on.
+      const gainAtSilenceOff = await armOn.evaluate(() => window.__mcgrotsDebug.ambience.gainValue); // clock is still at silenceT from the sample above
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, readingT);
+      const gainAtReadingOff = await armOn.evaluate(() => window.__mcgrotsDebug.ambience.gainValue);
+      check('...and with ducking disabled the reading-vs-silence GAIN is identical (control; RMS is supporting colour — see comment on why RMS alone is not gated here)',
+        Math.abs(gainAtSilenceOff - gainAtReadingOff) < 0.0005,
+        `gain(silence)=${gainAtSilenceOff.toFixed(4)}, gain(reading)=${gainAtReadingOff.toFixed(4)} — both must equal MASTER_GAIN (0.14); ` +
+        `RMS for reference only: reading=${duckOffDuringReading.rms.toFixed(3)}, silence=${duckOffDuringSilence.rms.toFixed(3)} (ratio ${controlRatio.toFixed(2)})`);
+      await armOn.evaluate(() => window.__mcgrotsDebug.ambience.setDuckingEnabled(true));
+
+      // ---------------------------------------------------------- check 3 ---
+      // THE MOST IMPORTANT ONE (brief). Voice-only tap (index 0) on both arms,
+      // same pinned reading, ambience on vs off — must agree within tolerance.
+      //
+      // MUST RE-SEEK FRESH BEFORE EVERY SAMPLE, not just re-pin the clock.
+      // audio.js only seeks when the schedule's id CHANGES (its own "SEEK TO
+      // elapsed, ALWAYS" comment is about a fresh id, not a repeated one) —
+      // re-pinning to the SAME readingT with the SAME id already current is a
+      // no-op, and the media element just keeps playing forward in real wall-
+      // clock time. Measured before this fix: three samples taken minutes
+      // apart in real time, all nominally "at readingT", read 0.0186 / 0.0132
+      // / 0.0092 — a spoken reading has a real amplitude envelope (pauses,
+      // stresses), so comparing RMS across drifted playback positions was
+      // comparing different WORDS, not the presence or absence of the bed.
+      // The fix: bounce through a known-silent moment first so `currentId`
+      // resets to null (audio.js's own stopPlayback), then re-pin readingT —
+      // that is a genuine id-changed transition, which DOES reseek to the
+      // same deterministic `elapsed`, giving every sample the same starting
+      // point in the file.
+      const freshSeekToReading = async (p) => {
+        await p.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(1); }, silenceT);
+        await p.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(1); }, readingT);
+      };
+      // 0.015, not F15's own 0.005 floor: a FRESHLY BUILT analyser (as the
+      // fault-injection/restore steps below rebuild every time) reads a
+      // genuine but artificially low RMS for its first second or so — the
+      // same settling behaviour check 5 hit and traced with the 'bed' tap.
+      // 0.005 let waitForRMS return the moment that settling curve first
+      // crossed the floor, not once it reached the reading's real level —
+      // measured, restore read rms=0.0074 against a same-content baseline
+      // of 0.0318, a false "damaged" reading with nothing actually wrong.
+      // 0.015 sits below the observed steady-state (~0.03) but above the
+      // settling artefact.
+      await freshSeekToReading(armOn);
+      const voiceOn = await waitForRMS(armOn, 'voice', (r) => r.rms > 0.015);
+      await freshSeekToReading(armOff);
+      const voiceOff = await waitForRMS(armOff, 'voice', (r) => r.rms > 0.015);
+      const voiceDelta = voiceOff.rms > 0 ? Math.abs(voiceOn.rms - voiceOff.rms) / voiceOff.rms : 1;
+      check('the bed does not damage the voice — a reading’s own RMS agrees with/without ambience, within 10%',
+        voiceOn.rms > 0.015 && voiceOff.rms > 0.015 && voiceDelta < 0.10,
+        `on: rms=${voiceOn.rms.toFixed(4)} / off: rms=${voiceOff.rms.toFixed(4)} (relative delta ${(voiceDelta * 100).toFixed(1)}%, must be <10%)`);
+
+      // FAULT INJECTION for check 3 — same idiom as the statue/audio regions'
+      // own runtime-state injections (`.visible = false`, `mediaEl.volume =
+      // 0`): mutate live state, not a file, and prove the check above can
+      // actually go red. Simulates a future bug where ambience's signal leaks
+      // into the channel this check treats as pure voice.
+      //
+      // A SEPARATE TAP ENTRY, connected as a SECOND source into the SAME
+      // analyser — not a merged MediaStream. First attempt tried
+      // `new MediaStream([...a.getAudioTracks(), ...b.getAudioTracks()])`
+      // and it silently did nothing (injected rms barely moved: 0.0328 ->
+      // 0.0322 against a loud gain-0.8 tone). Per spec, `createMediaStream
+      // Source` on a multi-track stream uses ONE track, implementation-
+      // defined which — Web Audio nodes mix by CONNECTING multiple sources
+      // into the same destination, not by merging tracks into one stream, so
+      // that is what this does instead: push the noise as tap index 2 and
+      // rebuild 'voice' from indices [0, 2] — `buildAnalyser` already sums
+      // whatever indices it is given, so this needed no new mechanism.
+      await armOn.evaluate(() => {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        const noiseCtx = new Ctor();
+        const dest = noiseCtx.createMediaStreamDestination();
+        const osc = noiseCtx.createOscillator();
+        osc.frequency.value = 300;
+        const g = noiseCtx.createGain();
+        g.gain.value = 0.8;
+        osc.connect(g).connect(dest);
+        osc.start();
+        window.__mcgrotsMixTaps[2] = dest.stream;
+      });
+      await buildAnalyser(armOn, [0, 2], 'voice');
+      await freshSeekToReading(armOn); // same deterministic elapsed as voiceOn/voiceOff — see the comment above
+      const voiceInjected = await waitForRMS(armOn, 'voice', (r) => r.rms > 0.015);
+      const injectedDelta = voiceOff.rms > 0 ? Math.abs(voiceInjected.rms - voiceOff.rms) / voiceOff.rms : 1;
+      const faultWentRed = !(injectedDelta < 0.10);
+      // Restore: rebuild 'voice' from index 0 alone — the noise tap at index
+      // 2 is simply never referenced again, nothing to unwind.
+      await buildAnalyser(armOn, [0], 'voice');
+      await freshSeekToReading(armOn);
+      const voiceRestored = await waitForRMS(armOn, 'voice', (r) => r.rms > 0.015);
+      const restoredDelta = voiceOff.rms > 0 ? Math.abs(voiceRestored.rms - voiceOff.rms) / voiceOff.rms : 1;
+      check('check 3 can actually go red (fault-injected contamination of the voice tap) and recovers once restored',
+        faultWentRed && restoredDelta < 0.10,
+        `injected: rms=${voiceInjected.rms.toFixed(4)} delta=${(injectedDelta * 100).toFixed(1)}% (must exceed 10%) / ` +
+        `restored: rms=${voiceRestored.rms.toFixed(4)} delta=${(restoredDelta * 100).toFixed(1)}%`);
+
+      // ---------------------------------------------------------- check 4 ---
+      // Pure — no audio needed. Two SEPARATE page boots (armOn, armOff), same
+      // pinned instant, must agree; two different pinned instants on the same
+      // boot must NOT agree (the control that rules out a module that always
+      // returns the same thing regardless of input).
+      const evOnA = await armOn.evaluate((t) => window.__mcgrotsDebug.ambience.eventAt(t), gullT);
+      const evOffA = await armOff.evaluate((t) => window.__mcgrotsDebug.ambience.eventAt(t), gullT);
+      check('the same pinned clock produces the same event schedule across two separate boots',
+        JSON.stringify(evOnA) === JSON.stringify(evOffA),
+        `boot A: ${JSON.stringify(evOnA)} / boot B: ${JSON.stringify(evOffA)}`);
+      const evOnB = await armOn.evaluate((t) => window.__mcgrotsDebug.ambience.eventAt(t), doorT);
+      check('...and a different pinned moment produces a different event (control)',
+        JSON.stringify(evOnA) !== JSON.stringify(evOnB),
+        `t=${gullT.toFixed(1)}: ${JSON.stringify(evOnA)} / t=${doorT.toFixed(1)}: ${JSON.stringify(evOnB)}`);
+
+      // ---------------------------------------------------------- check 5 ---
+      // Addition to the brief, ideation session D2 (2026-08-17): the gull is
+      // the prominent discrete event and must read as more than a texture
+      // layer. Door is the control — a comparable short one-shot, quieter by
+      // design (ambience.js: gull gain 1.8 vs door gain 0.12).
+      //
+      // MEASURED AGAINST A BASELINE, not as a raw peak. The 'bed' tap carries
+      // the continuous rumble+mid layers too. First attempt read gull=0.086
+      // vs door=0.078 against a baseline of 0.094 — both events were smaller
+      // than the CONTINUOUS bed's own peak, not because the events weren't
+      // firing but because ambience.js's own gains left too little headroom
+      // (gull's bandpass filter at Q=3 was rejecting a real fraction of its
+      // own sweep, and the continuous rumble/mid layers were louder than
+      // either event's post-filter output). Fixed in ambience.js — wider
+      // filter Q, no stereo panner (a measured second, smaller loss), a
+      // quieter continuous bed, and a louder gull — not by loosening this
+      // check. `baselinePeak` (a window with no event active at all) is
+      // subtracted from both, isolating each event's actual contribution.
+      const t0NoEvent = 0; // EVENTS' first window opens at 6.4s (ambience.js) — t=0 is clear
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, t0NoEvent);
+      const baselinePeak = await peakOverWindow(armOn, 'bed', 8, 60);
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, gullT);
+      const gullPeak = await peakOverWindow(armOn, 'bed', 16, 60);
+      await armOn.evaluate((t) => { window.__mcgrotsDebug.rota.setClock(t); window.__mcgrotsDebug.stepFrames(2); }, doorT);
+      const doorPeak = await peakOverWindow(armOn, 'bed', 16, 60);
+      const gullDelta = Math.max(0, gullPeak - baselinePeak);
+      const doorDelta = Math.max(0, doorPeak - baselinePeak);
+      check('the gull reads as more prominent than a comparable discrete event (control: the door; both measured above the continuous bed’s own baseline)',
+        gullDelta > 0.05 && gullDelta > doorDelta * 1.4,
+        `baseline peak=${baselinePeak.toFixed(3)} / gull peak=${gullPeak.toFixed(3)} (delta ${gullDelta.toFixed(3)}) / ` +
+        `door peak=${doorPeak.toFixed(3)} (delta ${doorDelta.toFixed(3)}) — gull delta must be >0.05 and >1.4x the door’s`);
+
+      check('console clean after driving the ambience region',
+        armOnErrors.length === 0, armOnErrors.slice(0, 3).join(' | ') || 'no errors');
+
+      await armOn.close();
+      await armOff.close();
     }
   }
 
