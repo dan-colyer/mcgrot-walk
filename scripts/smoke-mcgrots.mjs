@@ -2910,18 +2910,20 @@ try {
       // Margins RE-DERIVED 2026-08-17 (G7n) at each beat's OWN anchor —
       // notice at `kerb` (unchanged from G7i), approach and settle both at
       // `counter` (G7n follow-up: approach moved off `far`, too distant for
-      // Pomplé to read at all — see docs/g7-pomple-beats.md). G7i's kerb
-      // numbers, and G7n's own first-pass `far` numbers, do not carry
-      // across: camera distance changes how many screen pixels the same
-      // pose change sweeps. Measured over repeated runs (.herdr/
-      // beatgates.md): notice beat~32.3-32.4% control~22.6-22.8% (gap
-      // 9.5-9.8pp), approach beat~19.4% control~15.6-15.7% (gap
-      // 3.7-3.8pp, 15/15 runs near-identical), settle beat~23.2%
-      // control~18.6-18.9% (gap 4.3-4.6pp, one 3.4pp dip observed once).
-      // Each margin sits below its beat's worst observed gap with real
-      // headroom, not at the typical value.
+      // Pomplé to read at all; G7n third round: approach's own DIRECTION was
+      // then found inverted — see docs/g7-pomple-beats.md for both). Numbers
+      // below are post-direction-fix and post-rect-fix (see `approachRect`/
+      // `settleRect` above: a same-pair union dilutes the beat's own signal
+      // once its motion or pose change grows its own screen rect materially,
+      // which walking toward McGrot now does for approach and which settle
+      // inherits since it starts from wherever approach ends). 15 repeated
+      // runs each, near bit-identical: notice beat~32.3-32.4%
+      // control~22.6-22.8% (gap 9.5-9.8pp), approach beat~15.4%
+      // control~5.8% (gap 9.6pp, deterministic), settle beat~13.8%
+      // control~8.9-9.0% (gap 4.8-4.9pp). Each margin sits below its beat's
+      // worst observed gap with real headroom, not at the typical value.
       const NOTICE_MARGIN_PP = 4;
-      const APPROACH_MARGIN_PP = 2;
+      const APPROACH_MARGIN_PP = 5;
       const SETTLE_MARGIN_PP = 2.5;
       const beatOn = { notice: null, approach: null, settle: null };
 
@@ -2961,12 +2963,30 @@ try {
       // pass moved it to `far` (visit.js's cue at the time) and found it
       // measured healthy but was barely visible there; the G7n follow-up
       // moved the cue itself to `counter` (docs/g7-pomple-beats.md).
+      //
+      // G7n third round: neither check below has any notion of SIGN — a
+      // pixel-diff and a travelled-distance MAGNITUDE both pass identically
+      // whether Pomplé walks toward McGrot or away from him. He was, in
+      // fact, walking away (2.255m -> 3.425m off McGrot, measured directly
+      // on the live scene before this round's fix), and both checks stayed
+      // green throughout — the project's own documented trap (AGENTS.md:
+      // "derive direction from travel: walk the actor and watch where it
+      // goes"). Fixed in pomple.js (walks toward `mcgrotWorld` now, not a
+      // kerb-camera-derived point); `distToMcgrot` below is the check that
+      // was missing, added so a future regression on the SIGN of this
+      // motion cannot pass silently again.
+      const distToMcgrot = () => page.evaluate(() => {
+        const p = window.__mcgrotsDebug.scene.getObjectByName('pomple');
+        const m = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+        return p.position.distanceTo(m.position);
+      });
       await pinAndSnap(await anchorForBeat('approach'));
       const a0 = await shotAndRect();
       const a0pos = await page.evaluate(() => {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
         return { x: g.position.x, z: g.position.z };
       });
+      const a0dist = await distToMcgrot();
       // SAME frame count as the beat window below — matched, not just "long
       // enough". A first pass used a 150-frame (2.5s) control against a
       // 300-frame (5s) beat window ("long enough to finish" was the only
@@ -2984,7 +3004,11 @@ try {
       // completion, no dilution — is what both windows use below.
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s ambient-only control window
       const a1 = await shotAndRect();
-      const approachControlDiff = diffFraction(a0.buf, a1.buf, union(a0.rect, a1.rect)) * 100;
+      // The named control for the directional check below: the SAME window,
+      // no beat fired. Position is only ever touched inside an active beat
+      // (idle bob is Y-only), so this should read as an exact hold, not just
+      // an approximate one — a true, not manufactured, null result.
+      const a1dist = await distToMcgrot();
 
       await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('approach'));
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(150));   // 2.5s — measured completion is 2.33s
@@ -2994,11 +3018,37 @@ try {
         const g = window.__mcgrotsDebug.scene.getObjectByName('pomple');
         return { x: g.position.x, z: g.position.z, beat: g.userData.getBeat() };
       });
-      const approachBeatDiff = diffFraction(a1.buf, a2.buf, union(a1.rect, a2.rect)) * 100;
+      const a2dist = await distToMcgrot();
+      // G7n third round: FIXED rect, not a fresh union per pair. Now that
+      // approach walks toward McGrot (not away), the same-pair-union each
+      // check used before this round dilutes the beat's own reading:
+      // control's rect (a0 vs a1, no motion) is just his standing
+      // footprint, but the beat's rect (a1 vs a2) spans his WHOLE swept
+      // path — measured 2.86x larger — so an equal number of true-positive
+      // pixels reads as a much smaller FRACTION for the beat than for the
+      // control, purely from denominator size, before lighting is even a
+      // factor. Using the SAME rect (union of all three shots) for both
+      // diffs removes that asymmetry — the same fix in spirit as G7i's own
+      // window-length equalisation (docs/g7-pomple-beats.md), applied to
+      // screen AREA instead of TIME.
+      const approachRect = union(union(a0.rect, a1.rect), a2.rect);
+      const approachControlDiff = diffFraction(a0.buf, a1.buf, approachRect) * 100;
+      const approachBeatDiff = diffFraction(a1.buf, a2.buf, approachRect) * 100;
       beatOn.approach = approachBeatDiff > approachControlDiff + APPROACH_MARGIN_PP;
       check('approach: the beat changes materially more of the screen than ambient behaviour alone (control: the same window, no beat fired)',
         beatOn.approach,
         `beat=${approachBeatDiff.toFixed(1)}% control=${approachControlDiff.toFixed(1)}% (need beat > control + ${APPROACH_MARGIN_PP}pp)`);
+
+      // G7n third round: the check that was missing. A pixel-diff and a
+      // travelled-distance MAGNITUDE (below) both pass whether he walks
+      // toward McGrot or away — this is the only check with a notion of
+      // SIGN. control (no beat fired, same window) must show ~zero drift;
+      // the beat must show a MATERIAL decrease, not just a nonzero one.
+      const controlDriftAbs = Math.abs(a1dist - a0dist);
+      const closedBy = a1dist - a2dist;
+      check('approach: closes distance to McGrot, not opens it (control: the same window with no beat fired shows no drift)',
+        controlDriftAbs < 0.01 && closedBy > 0.8,
+        `control drift=${controlDriftAbs.toFixed(3)}m (want <0.01) beat closed by=${closedBy.toFixed(3)}m (want >0.8) dist ${a1dist.toFixed(3)}m -> ${a2dist.toFixed(3)}m`);
 
       const travelled = Math.hypot(a2pos.x - a0pos.x, a2pos.z - a0pos.z);
       check('approach: actually moves a short, bounded distance and stops (no pathfinding, no drift)',
@@ -3025,7 +3075,6 @@ try {
       // approach fix addresses would otherwise apply here too.
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s ambient-only control window
       const s1 = await shotAndRect();
-      const settleControlDiff = diffFraction(s0.buf, s1.buf, union(s0.rect, s1.rect)) * 100;
 
       await page.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('settle'));
       await page.evaluate(() => window.__mcgrotsDebug.stepFrames(240));   // 4.0s — SETTLE_TURN_S is 3.8s
@@ -3036,7 +3085,16 @@ try {
         const head = g.getObjectByName('pomple:head-joint');
         return { rotY: g.rotation.y, headPitch: head.rotation.x, beat: g.userData.getBeat() };
       });
-      const settleBeatDiff = diffFraction(s1.buf, s2.buf, union(s1.rect, s2.rect)) * 100;
+      // G7n third round: FIXED rect across all three shots, same fix as
+      // approach and for the same reason — settle's own rect grows too
+      // (measured ~1.7x, turning + dropping the head widens his silhouette
+      // box), now that he starts this beat from a different position/
+      // orientation (approach ends beside McGrot, not out on the open kerb
+      // edge). A same-pair union diluted the beat's own reading below its
+      // ambient control (beat 13.8% < control 15.2%) until this fix.
+      const settleRect = union(union(s0.rect, s1.rect), s2.rect);
+      const settleControlDiff = diffFraction(s0.buf, s1.buf, settleRect) * 100;
+      const settleBeatDiff = diffFraction(s1.buf, s2.buf, settleRect) * 100;
       beatOn.settle = settleBeatDiff > settleControlDiff + SETTLE_MARGIN_PP;
       check('settle: the beat changes the screen more than ambient behaviour alone (control: the same window, no beat fired)',
         beatOn.settle,

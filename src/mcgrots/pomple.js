@@ -122,26 +122,26 @@ const NOTICE_BODY_RATE = 0.6;   // rad/s — slower than HEAD_TURN_RATE (1.1),
 // too short a release and the forced snap below becomes the visible pop.
 const NOTICE_RELEASE_S = 4.0;
 
-// Pitch-local (site.js § toWorld), same space as POMPLE_LOCAL/MCGROT_LOCAL.
-// NOT the counter anchor's own position — a first pass aimed straight at it
-// and walked him behind McGrot's legs (Dan's own render caught it, follow-up
-// 2026-08-17): the counter [0, 3.2] sits on the FAR side of McGrot
-// [0.35, 1.3] from Pomplé's rest spot [2.6, 1.15], so a straight-line partial
-// step toward it crosses McGrot's own x, landing him in-line with McGrot's
-// legs from the kerb camera. A SECOND candidate picked by local-space
-// reasoning alone ([1.6, 2.0], "stays on Pomplé's own side of McGrot's x")
-// ALSO failed — checked by measuring, not assumed this time: projected into
-// the kerb camera, it landed at screen-x 0.091, squarely inside McGrot's own
-// screen-x span [-0.007, 0.121]. Local-space x separation does not translate
-// to screen-space clearance once the camera's own angle is involved; this
-// point was instead chosen by projecting several candidates into the actual
-// kerb camera and requiring real NDC clearance beyond McGrot's span (this one
-// lands at screen-x ~0.33, McGrot's span tops out at 0.121 — a ~0.13 NDC
-// margin, roughly 6.5% of the frame width clear). Verified by render too —
-// see the landing commit for the capture this was picked against.
-const APPROACH_TARGET_LOCAL = [3.8, 1.8];
-const APPROACH_DIST = 1.3;      // m — "a few steps"; close to the full
-                                 // distance to the point above (1.37m)
+// G7n third round (2026-08-17): the fixed local-space target this constant
+// used to name (`APPROACH_TARGET_LOCAL = [3.8, 1.8]`, chosen to clear
+// McGrot's silhouette from the `kerb` camera — see git history) pointed AWAY
+// from McGrot: walking toward it took Pomplé from 2.255m to 3.425m off
+// McGrot and 7.793m to 8.017m off the camera at `counter`, the anchor this
+// beat now actually fires from and is gated at. A beat named `approach`
+// retreated, and neither existing check (pixel diff, travelled-distance
+// magnitude) has any notion of sign, so it read green throughout — this is
+// the project's own documented trap (AGENTS.md: "Where you can, derive
+// direction from travel: walk the actor and watch where it goes"), and the
+// kerb-camera-derived target was exactly the "reasoning from a formula" that
+// invites it.
+//
+// FIXED by walking toward McGrot's own live target point (`mcgrotTarget`,
+// already computed below for the ambient attention system) instead of a
+// second hand-picked local point, and CONFIRMED BY MEASUREMENT, not trusted
+// on the formula alone: probing the built scene at `counter` with this
+// change, distance to McGrot goes 2.255m -> 0.955m (closes, as `approach`
+// should) and the same probe is now the gate's own directional check below.
+const APPROACH_DIST = 1.3;      // m — "a few steps"
 const APPROACH_SPEED = 0.6;     // m/s — a walk, not a trot
 const APPROACH_TURN_RATE = 0.9; // rad/s — faces the travel direction
 
@@ -251,7 +251,6 @@ export function buildPomple(scene, { assets = null } = {}) {
 
   const mcgrotWorld = toWorld(MCGROT_LOCAL[0], MCGROT_LOCAL[1]);
   const mcgrotTarget = new THREE.Vector3(mcgrotWorld.x, 0, mcgrotWorld.z);
-  const approachWorld = toWorld(APPROACH_TARGET_LOCAL[0], APPROACH_TARGET_LOCAL[1]);
 
   let built = false;
   let bytes = 0;
@@ -334,8 +333,8 @@ export function buildPomple(scene, { assets = null } = {}) {
     beat = name;
     bt = 0;
     if (name === 'approach') {
-      const dx = approachWorld.x - (basePos.x + posOffset.x);
-      const dz = approachWorld.z - (basePos.z + posOffset.z);
+      const dx = mcgrotWorld.x - (basePos.x + posOffset.x);
+      const dz = mcgrotWorld.z - (basePos.z + posOffset.z);
       const len = Math.hypot(dx, dz) || 1;
       approachTarget = { ux: dx / len, uz: dz / len, dist: APPROACH_DIST, travelled: 0 };
     } else if (name === 'settle') {
