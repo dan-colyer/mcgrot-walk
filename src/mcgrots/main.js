@@ -28,6 +28,7 @@ import { createLooks, LOOKS } from './looks.js';
 import { createPage } from './page.js';
 import { createTitleCard } from './card.js';
 import { createReaderAudio } from './audio.js';
+import { createAmbience } from './ambience.js';
 import { KEYS } from './keys.js';
 import { buildStatue } from './statue.js';
 import { buildVan } from './van.js';
@@ -79,6 +80,11 @@ const ROTA_OFF = params.get('rota') === 'off';
 // never from session start"). Ships OFF so this moves no existing capture;
 // `__mcgrotsForceVisit` is the same-shaped lever the street's own flags use.
 const VISIT_ON = params.get('visit') === 'on' || window.__mcgrotsForceVisit === true;
+// G7k follow-up: defaults ON now — same two-landing shape G7h used for
+// LOOK_KIND (docs/MCGROTS-VALIDATION.md "G7h follow-up"), landed as its own
+// commit with its own measurement of what moved. `?ambience=off` or
+// `window.__mcgrotsForceAmbience = false` still opts out.
+const AMBIENCE_ON = params.get('ambience') !== 'off' && window.__mcgrotsForceAmbience !== false;
 
 const FIXED_DT = 1 / 60;
 
@@ -591,6 +597,12 @@ function frame(dt) {
   // Runs every frame regardless of whether a gesture has happened —
   // audio.update() is a no-op until start() has been called.
   readerAudio.update(info, readerPos, listenerPose());
+  // G7k: driven from the SAME `info`/`now` readerAudio just used, so the bed
+  // never disagrees with the reader about whether a voice is playing.
+  if (AMBIENCE_ON) {
+    ambience.setDucked(!!(info && info.phase === 'reading'));
+    ambience.update(now);
+  }
   style.render(scene, camera);
 }
 
@@ -658,7 +670,11 @@ window.addEventListener('keydown', (e) => {
 // before any sound exists, not before the scene finishes loading. The
 // AudioContext is built here, in onStart, and nowhere else.
 const readerAudio = createReaderAudio();
-const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
+// G7k: its own AudioContext, never readerAudio's — see ambience.js's header.
+// Started from the SAME gesture, guarded by AMBIENCE_ON so an unflagged boot
+// never constructs a second AudioContext at all.
+const ambience = createAmbience();
+const titleCard = createTitleCard({ onStart() { readerAudio.start(); if (AMBIENCE_ON) ambience.start(); } });
 
 (async function boot() {
   const leith = await loadFoot();
@@ -815,6 +831,21 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); } });
         get currentTime() { return readerAudio.currentTime; },
         get currentSrc() { return readerAudio.currentSrc; },
         get paused() { return readerAudio.paused; },
+      },
+      // G7k. Same discipline as readerAudio above: the gate drives the SAME
+      // instance main.js updates every frame. `on` reports whether the flag
+      // is live at all — the gate's audio checks are meaningless if it isn't.
+      ambience: {
+        on: AMBIENCE_ON,
+        start: () => ambience.start(),
+        get started() { return ambience.started; },
+        get isDucked() { return ambience.isDucked(); },
+        setDuckingEnabled: (v) => ambience.setDuckingEnabled(v),
+        get duckingEnabled() { return ambience.duckingEnabled; },
+        get gainValue() { return ambience.gainValue; },
+        eventAt: (t) => ambience.eventAt(t),
+        cycleSeconds: () => ambience.cycleSeconds(),
+        update: (t) => ambience.update(t),
       },
       page: () => page.enabled,
       setPage: (v) => { page.setEnabled(!!v); resize(); },
