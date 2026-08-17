@@ -2837,9 +2837,10 @@ try {
       // (G7n) rather than a second hardcoded mapping, so a change to the
       // table is followed rather than silently gating a picture the visit
       // no longer shows from there. G7i's gate hardcoded all three beats to
-      // `kerb`; only `notice` actually fires there — `approach` fires at
-      // `far`, `settle` at `counter` (docs/g7-pomple-beats.md,
-      // docs/briefs/g7n-gate-the-beats-where-they-play.md).
+      // `kerb`; only `notice` actually fires there. `approach` fired at
+      // `far` before the G7n follow-up moved it to `counter` (too distant
+      // to read at all — docs/g7-pomple-beats.md); `settle` fires at
+      // `counter` too.
       const anchorForBeat = (name) => page.evaluate((n) => {
         const cue = window.__mcgrotsDebug.visit.cues().find((c) => c.beat === n);
         if (!cue) throw new Error(`beats gate: no cue in visit.js names beat '${n}'`);
@@ -2907,17 +2908,20 @@ try {
         return { rect, buf };
       };
       // Margins RE-DERIVED 2026-08-17 (G7n) at each beat's OWN anchor —
-      // notice at `kerb` (unchanged from G7i), approach at `far`, settle at
-      // `counter`. G7i's numbers do not carry across: camera distance
-      // changes how many screen pixels the same pose change sweeps. Measured
-      // over 37 repeated runs (.herdr/beatgates.md): notice beat~32.3-32.4%
-      // control~22.6-22.8% (gap 9.5-9.8pp), approach beat~26.1-26.2%
-      // control~20.6-20.8% (gap 5.3-5.6pp), settle beat~23.2%
+      // notice at `kerb` (unchanged from G7i), approach and settle both at
+      // `counter` (G7n follow-up: approach moved off `far`, too distant for
+      // Pomplé to read at all — see docs/g7-pomple-beats.md). G7i's kerb
+      // numbers, and G7n's own first-pass `far` numbers, do not carry
+      // across: camera distance changes how many screen pixels the same
+      // pose change sweeps. Measured over repeated runs (.herdr/
+      // beatgates.md): notice beat~32.3-32.4% control~22.6-22.8% (gap
+      // 9.5-9.8pp), approach beat~19.4% control~15.6-15.7% (gap
+      // 3.7-3.8pp, 15/15 runs near-identical), settle beat~23.2%
       // control~18.6-18.9% (gap 4.3-4.6pp, one 3.4pp dip observed once).
       // Each margin sits below its beat's worst observed gap with real
       // headroom, not at the typical value.
       const NOTICE_MARGIN_PP = 4;
-      const APPROACH_MARGIN_PP = 3;
+      const APPROACH_MARGIN_PP = 2;
       const SETTLE_MARGIN_PP = 2.5;
       const beatOn = { notice: null, approach: null, settle: null };
 
@@ -2953,8 +2957,10 @@ try {
         `beat=${noticeEnd.beat} rotY=${noticeEnd.rotY.toFixed(4)} (rest=${(Math.PI * 0.92).toFixed(4)})`);
 
       // -- approach: a short, scripted translation toward the counter --
-      // Fires at `far` — G7i gated this beat at `kerb`, a picture the visit
-      // never shows it from.
+      // Fires at `counter` — G7i gated this beat at `kerb`; G7n's first
+      // pass moved it to `far` (visit.js's cue at the time) and found it
+      // measured healthy but was barely visible there; the G7n follow-up
+      // moved the cue itself to `counter` (docs/g7-pomple-beats.md).
       await pinAndSnap(await anchorForBeat('approach'));
       const a0 = await shotAndRect();
       const a0pos = await page.evaluate(() => {
