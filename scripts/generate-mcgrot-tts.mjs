@@ -12,10 +12,12 @@
 //
 // Usage:
 //   set -a; source .env.local; set +a
-//   node scripts/generate-mcgrot-tts.mjs                 # all eight
+//   node scripts/generate-mcgrot-tts.mjs                 # all eight comic readings
 //   node scripts/generate-mcgrot-tts.mjs --ids 2b2110bb  # one
 //   node scripts/generate-mcgrot-tts.mjs --limit 1        # first target only
 //   node scripts/generate-mcgrot-tts.mjs --force          # overwrite existing output
+//   node scripts/generate-mcgrot-tts.mjs --lines          # the twelve solo complaint lines (G7g)
+//   node scripts/generate-mcgrot-tts.mjs --lines --ids mcgrot-01  # one complaint line
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync, existsSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { dirname, join, resolve, sep } from 'path';
@@ -48,14 +50,25 @@ function assertUnderMcgrotDir(outPath) {
 
 const EIGHT = ['2b2110bb', '19f35bc7', '03347596', '0121c47c', '022bcde2', '08d846d0', '00f88d65', '0738152e'];
 
+// McGrot's own solo complaint lines (G7g). Six exchange lines
+// (mcgrot-exch-taxman-*, mcgrot-exch-inspector-*) are deliberately excluded —
+// neither the Taxman nor the Government Inspector is built anywhere in the
+// scene, so McGrot's half of a two-hander has no audible partner.
+const LINES = ['mcgrot-01', 'mcgrot-02', 'mcgrot-03', 'mcgrot-04', 'mcgrot-05', 'mcgrot-06',
+  'mcgrot-07', 'mcgrot-08', 'mcgrot-09', 'mcgrot-10', 'mcgrot-11', 'mcgrot-12'];
+
 // --- args ---
 const argv = process.argv.slice(2);
 const flag = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : null; };
 const force = argv.includes('--force');
 const limit = flag('--limit') ? parseInt(flag('--limit'), 10) : Infinity;
 const idsArg = argv.includes('--ids') ? argv.slice(argv.indexOf('--ids') + 1).filter(a => !a.startsWith('--')) : null;
+const useLines = argv.includes('--lines');
+const POOL = useLines ? LINES : EIGHT;
+const PROMPT_DIR = useLines ? join(root, 'scripts/tts-prompts/mcgrot/lines') : join(root, 'scripts/tts-prompts/mcgrot');
+const CLIP_DIR = useLines ? join(OUTPUT_DIR, 'lines') : OUTPUT_DIR;
 
-mkdirSync(OUTPUT_DIR, { recursive: true });
+mkdirSync(CLIP_DIR, { recursive: true });
 
 function pcmToWav(pcm) {
   const h = Buffer.alloc(44);
@@ -95,10 +108,10 @@ async function tts(text, voiceName, model) {
   throw new Error('no audio in response (got text instead)');
 }
 
-const targetIds = (idsArg || EIGHT).filter((id) => EIGHT.includes(id)).slice(0, limit);
+const targetIds = (idsArg || POOL).filter((id) => POOL.includes(id)).slice(0, limit);
 const targets = targetIds.map((id) => {
-  const promptPath = join(root, 'scripts/tts-prompts/mcgrot', `${id}.txt`);
-  const out = join(OUTPUT_DIR, `${id}.mp3`);
+  const promptPath = join(PROMPT_DIR, `${id}.txt`);
+  const out = join(CLIP_DIR, `${id}.mp3`);
   return { id, promptPath, out };
 });
 
