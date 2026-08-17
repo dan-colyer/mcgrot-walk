@@ -307,3 +307,126 @@ visible," and it can — but worth the orchestrator's judgement call on whether
 firing from an establishing-wide anchor needs a stronger authored motion (a
 longer approach distance, a body-turn accompanying it) to read at the
 distance it actually plays from.
+
+## Second follow-up: approach moves from `far` to `counter`
+
+Dan's ruling: the fault was the anchor assignment, not the beat. `far`
+(6.71m) is the most distant of the five anchors — nothing Pomplé does was
+going to read from there. Rather than cut `approach`, `visit.js`'s cue table
+was edited to move it: the `beat: 'approach'` field came off the `far` silence
+row and onto the free 56.0s `counter` silence row (line 72), which carried no
+beat before. Two beats now sit at `counter`, none at `far` — deliberate, since
+§ 9 asks that Pomplé be noticed, not evenly distributed.
+
+The gate needed no code change to follow this — `anchorForBeat` already reads
+`visit.js`'s own `CUES` table live via the debug API, so it picked up
+`counter` automatically. Confirmed rather than assumed.
+
+**Margin re-derived from scratch at `counter`** (not carried over from `far`):
+15 repeat runs, beat~19.4% every time, control~15.6-15.7%, gap 3.7-3.8pp,
+near-identical run to run. `APPROACH_MARGIN_PP` set to 2 (down from `far`'s
+3), real headroom below the observed floor.
+
+**Rendered at native scale, no crop or zoom** — the brief's own correction to
+how this unit reviewed `far`, where a cropped/zoomed close-up made a barely-
+visible beat look acceptable. Compared the rest pose (`approach-before.png`,
+captured immediately before `playBeat('approach')` fires) against
+`beats-approach-end.png`: at rest he sits as a small, part-shadowed shape
+tucked beside McGrot's stall; after the beat he has moved right along the
+kerb edge, clear of the stall's shadow, legible as a separated dog shape with
+visible legs and ears — a real, visible displacement, not a shrink or a blob
+shuffling in place. This reads. The `far`-anchor problem was specifically
+about distance, not about Pomplé's model or the beat's motion being
+inherently too subtle — moving him to the closest-but-one anchor (4.92m,
+same as `settle`) fixed it.
+
+Fault-injected `APPROACH_DIST` → 0 again at the new anchor: both approach
+checks went red (diff: beat=14.2% vs control=15.6%, now BELOW the ambient
+floor since a beat that travels nowhere is slightly less varied on screen
+than ambient alone over the same window; distance check: travelled=0.00m).
+Restored, reconfirmed 7/7 isolated, 130/130 full suite.
+
+Beat kept, not cut. `docs/MCGROTS-VALIDATION.md`/`docs/MCGROTS-ROADMAP.md`
+updates are the orchestrator's, per scope — worth folding in: § 9's beat
+requirement is now closed on all three beats with no open legibility
+concern, `approach` and `settle` both fire from `counter`, none from `far`.
+
+## Third round: approach moved the wrong way, and no gate could see it
+
+Neither of the two rounds above caught this: `approach` was retreating from
+McGrot, not approaching him. Measured directly on the live scene before any
+fix — distance to McGrot 2.255m → 3.425m, distance to camera 7.793m →
+8.017m, at `counter`, the anchor this beat actually plays from. The pixel-
+diff check and the travelled-distance check both passed throughout, because
+neither has any notion of sign — a retreat of 1.3m and an approach of 1.3m
+read identically to both.
+
+**Root cause:** `APPROACH_TARGET_LOCAL`, the fixed local-space point Pomplé
+walked toward, was chosen by an earlier follow-up (`aa3c47e`) purely to
+clear McGrot's silhouette from the *old* `kerb` camera — an occlusion fix,
+not a direction one. Walking toward it moved him away from McGrot in local
+x. This is the project's own documented trap, named verbatim in AGENTS.md:
+reasoning about direction from an anchor-derived formula rather than walking
+the actor and watching where it goes.
+
+**Fix, confirmed by measurement rather than trusted on the new formula:**
+`pomple.js` now aims `approach` at `mcgrotWorld` — McGrot's own live target
+point, already computed in the module for the ambient attention system —
+instead of a second hand-picked point. Probed the built scene directly:
+distance to McGrot now closes 2.255m → 0.955m, camera distance 7.793m →
+7.102m. `notice` was checked the same way, independently, rather than
+trusted from reading the code: facing-error to the live player goes from
+1.057 rad to exactly 0 rad after the turn phase — converges onto the player,
+not away. No bug there.
+
+**The check that was missing:** `approach: closes distance to McGrot, not
+opens it`, with a named control (the same window, no beat fired — position
+only ever moves inside an active beat, so this control reads an exact,
+not approximate, zero drift). Fault-injecting an inverted direction turns
+this check red while the pixel-diff check stays green — direct proof the
+old checks genuinely could not see the sign of the motion, and that this
+one can.
+
+**A second, structural bug the direction fix exposed.** Fixing the
+direction didn't just need a fresh margin — it broke both existing diff
+checks outright: approach's gap collapsed to exactly zero (beat=control=
+15.6%) and settle's went negative (beat 13.8% < control 15.2%). Investigated
+rather than patched with a lower margin: measured Pomplé's own on-screen
+bounding box before and after each beat and found the old technique —
+`union(before, after)` computed fresh for each pair — dilutes the beat's own
+reading whenever its rect grows much larger than the control's near-static
+one. Measured 2.86× for approach (a real translation now, where before it
+was a smaller apparent motion) and ~1.7× for settle (which inherits a
+different starting rect now that approach ends him elsewhere). A constant
+number of true-positive pixels against a 2.86×-larger denominator reads as
+a much smaller fraction — pure measurement dilution, independent of
+lighting. Fixed by using one FIXED rect (the union across all three shots in
+the beat) for both the control and beat `diffFraction` calls, in both
+`approach` and `settle` — the same fix in spirit as G7i's own window-LENGTH
+equalisation (documented above), applied to screen AREA instead of TIME.
+Restored real, deterministic signal: approach gap 9.6pp, settle gap
+4.8–4.9pp, both stable across 15 repeat runs with the fix in place.
+
+**Rendered at native scale, no crop or zoom, per this round's explicit
+correction** (a cropped/zoomed read is what made the wrong-direction version
+look better than it was). Compared a fresh rest-pose capture against
+`beats-approach-end.png`: he visibly shifts left, ending up beside McGrot's
+leg rather than out on the open kerb edge. The position shift itself reads
+without magnification — but the end pose is less crisply lit than the
+wrong-direction version was, since correctly walking toward McGrot also
+walks him into the stall's own shadow. A real trade-off, not a regression:
+the wrong-direction version was, by coincidence, better lit precisely
+because it was wrong. On balance this still reads — a distinct shape
+visibly closer to McGrot, not a shrink or a blur into shadow — so the beat
+stays in.
+
+Fault injection, all confirmed and restored: inverted direction → the new
+directional check red, pixel-diff check unmoved (proving the old check's
+blindness directly); `APPROACH_DIST` → 0 → all three approach checks red
+(diff, direction, travelled-distance); settle's yaw/head-drop stripped to a
+no-op → pose check red, diff check green (the same head-tracking-suppression
+confound already documented above, re-verified under the new rect
+technique, not a new issue).
+
+`npm run smoke:mcgrots -- --only=beats`: 8/8 (one check added since the
+previous round), run 8x in a row. Full suite: 131/131.
