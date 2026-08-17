@@ -1162,6 +1162,19 @@ should be playable end to end on stand-in bodies with real voices. Dan sits
 through it. If he does not want a second run, the honest outcome is to say so
 and stop — a measured rejection is delivered work, not a shortfall.
 
+**THE EIGHT ARE PICKED, 2026-08-17.** Dan delegated the choice ("you choose for
+now") and the pick is G7a's own proposed set, unchanged: `2b2110bb`,
+`19f35bc7`, `03347596`, `0121c47c`, `022bcde2`, `08d846d0`, `00f88d65`,
+`0738152e`. They are already rendered in Algenib by G7e and Dan has heard them
+("happy with them"), so the choice costs nothing to keep and re-picking would
+throw away eight clips. Revisit only if a reading reads badly in the sequenced
+visit — the shortlist's other 12 are still costed and available.
+
+**Their real durations are 144.0s, not 185.4s.** G7e's Algenib renders are
+22.3% shorter than the vendor placeholders this section was budgeted from. That
+adds ~41s of slack to the ten minutes; `docs/g7-visit-shape.md`'s silence rows
+are conservative by that much.
+
 **G7a landed 2026-08-16 — the shortlist exists, in `docs/g7-reading-shortlist.md`.**
 418 → 156 transcribed → 135 with a verified mp3 → 121 after 14 broken or
 non-strip assets → 115 after duplicate performances → a shortlist of 20, each
@@ -2077,9 +2090,15 @@ likely right and least likely to disturb an existing capture — but it touches
 the anchor rig, so whoever takes it needs a control that shows the capsule
 still renders where it should.
 
-### F23 — the beret renders more saturated than the corpus draws it (G6b.2, found in review, RETUNED 2026-08-16 by G7b — Dan's call to confirm)
+### F23 — the beret renders more saturated than the corpus draws it (G6b.2, found in review, CLOSED 2026-08-17 on Dan's confirmation)
 
-**RETUNED, pending Dan's visual confirmation.** Checked the ramp first, per
+**CLOSED.** Dan confirmed the retuned beret from the `counter` capture on
+2026-08-17: "beret looks better". Note the entry's own title is the fault it
+started from and is wrong — the divergence was hue, not saturation, and the
+title is left as-written so the correction below is legible rather than
+silently tidied away.
+
+**RETUNED, then confirmed.** Checked the ramp first, per
 this entry's own instruction: the lit band is unity gain, confirmed not the
 cause by independently toggling tone mapping and the sun's colour. The real
 divergence, measured in proper HSL rather than raw RGB: hue, not
