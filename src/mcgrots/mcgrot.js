@@ -24,6 +24,24 @@
 // is a real figure somewhere else"). This module is that figure now, and it
 // is the single source — `pomple.js` imports it rather than keeping a copy.
 //
+// G7p (2026-08-18, docs/MCGROTS-ROADMAP.md § 10 F24 REOPENED): the opening's
+// own face line put him 3.8cm IN FRONT of the van's solid front panel, not
+// behind it — measured from the `counter` camera, his own AABB centre sat at
+// 6.501m and the panel (below the sill) at 6.539m. Everything above the
+// valance line rendered OVER the van rather than behind it, so his apron hung
+// below the serving sill where a solid panel should have occluded him. Local
+// z moved from 1.3 (`VAN_DEPTH / 2`) to 0.9 — 0.32m behind the panel's own
+// back face (z 1.22), not just its front — chosen by rendering the actual
+// frame at nine candidates between 1.3 and 0.5 and measuring both the sill-
+// band occlusion and the `mcgrot` region's own F22 fraction at each: 0.9 is
+// where the sill-band residual bottoms out (0.6-5.0% of his own footprint
+// across all five anchors, down from 20.9-24.3% at the old position) and
+// going further back (0.6-0.8) buys no further occlusion, only a smaller
+// figure in frame. See docs/MCGROTS-VALIDATION.md's G7p entry for the full
+// table and the conflict this creates with F22's 20% floor (it is a real
+// one, not fixed by picking a different z — see that entry before touching
+// this value again).
+//
 // YAW: not measured off travel, because he has none to measure — he never
 // walks. Per AGENTS.md's project invariant, this game's own forward
 // convention is `(+sin yaw, +cos yaw)`, which is already exactly what
@@ -48,7 +66,7 @@ import { toWorld, PITCH_YAW } from './site.js';
 import { makeActor } from './actor.js';
 import { makeSkinnedBody } from './actors/skinned.js';
 
-export const MCGROT_LOCAL = [0.35, 1.3];
+export const MCGROT_LOCAL = [0.35, 0.9];
 
 // docs/CANON.md § McGrot: "red/orange-red beret", 134 of 141 appearances.
 // Picked warm and fully saturated on paper, then RENDERED under the scene's

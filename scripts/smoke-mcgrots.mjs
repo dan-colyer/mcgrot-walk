@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience', 'signs', 'valance'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience', 'signs', 'valance', 'pushback'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -4354,6 +4354,308 @@ try {
         frameRows.map((v) => `${v.id} before=${(v.before * 100).toFixed(2)}% after=${(v.after * 100).toFixed(2)}% delta=${((v.after - v.before) * 100).toFixed(3)}pp`).join(' / '));
 
       check('console still clean after driving the valance region',
+        consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
+    }
+
+    // G7p (docs/briefs/g7p-push-mcgrot-back.md, docs/MCGROTS-ROADMAP.md § 10
+    // F24 REOPENED 2026-08-18). The valance (G7o, region above) hid his LEGS;
+    // it never touched depth, so he still stood 3.8cm in FRONT of the van's
+    // solid front panel — everything above the valance line, including his
+    // apron, rendered OVER the van rather than behind it. This unit moved
+    // `MCGROT_LOCAL`'s local z from 1.3 (the opening's own face line) to 0.9,
+    // 0.32m behind the panel's own back face (1.22).
+    //
+    // THE TENSION THIS REGION MEASURES RATHER THAN ASSUMES: pushing him
+    // behind the panel necessarily hides more of his own AABB (everything
+    // below the sill is now deliberately occluded), and the `mcgrot` region's
+    // own F22 floor (20% of his AABB rect must be his own pixels) was
+    // calibrated against a figure standing IN FRONT of the van, not behind
+    // its counter. Nine candidate local-z values were rendered and measured
+    // (0.5 through 1.3) before picking 0.9 — see mcgrot.js's own comment on
+    // `MCGROT_LOCAL` and docs/MCGROTS-VALIDATION.md's G7p entry for the full
+    // table. There is no candidate that clears both: at local z 1.20 (the
+    // point where F22's fraction last clears 20%, 20.16%), the sill-band
+    // fraction is STILL 16.23% — his apron is still plainly visible below the
+    // sill in the rendered frame, not a rounding artefact — and every
+    // candidate that clears the sill band cleanly (z<=0.9) reads 8-12% on
+    // F22, well under its floor. THE 20% FLOOR IS NOT LOWERED HERE — the
+    // checks below measure and report the conflict rather than hide it.
+    if (wants('pushback')) {
+      await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
+        { waitUntil: 'load' });
+      await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      // Same settle as the valance region above: aerial is LOOK_KIND's
+      // default but set explicitly and let the fresh cel/hull material
+      // compile (4 frames, the style region's own established number).
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(4); });
+
+      const ids = await page.evaluate(() => window.__mcgrotsDebug.anchorIds());
+
+      const countDiffPixels = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+      const project = (box) => page.evaluate((b) => {
+        const d = window.__mcgrotsDebug;
+        const box3 = new d.THREE.Box3(new d.THREE.Vector3(b.min.x, b.min.y, b.min.z), new d.THREE.Vector3(b.max.x, b.max.y, b.max.z));
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, anyInFront = false;
+        for (const x of [box3.min.x, box3.max.x]) {
+          for (const y of [box3.min.y, box3.max.y]) {
+            for (const z of [box3.min.z, box3.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              if (p.z < 1) anyInFront = true;
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+              y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+          }
+        }
+        const c = (v) => Math.max(0, Math.min(1, v));
+        return {
+          ux0: c(x0 * 0.5 + 0.5), ux1: c(x1 * 0.5 + 0.5),
+          uy0: c(1 - (y1 * 0.5 + 0.5)), uy1: c(1 - (y0 * 0.5 + 0.5)), anyInFront,
+        };
+      }, box);
+
+      // The toggle-diff fraction inside an arbitrary projected rect — same
+      // technique as the mcgrot/valance regions above (mcgrot hidden vs
+      // shown, same boot, same anchor). Named here rather than shared with
+      // those regions because those functions close over THEIR OWN `page`
+      // and this region opens its own boot.
+      const toggleFraction = async (rect) => {
+        const withOn = await page.screenshot({ type: 'png' });
+        const wasVisible = await page.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const v = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return v;
+        });
+        const withOff = await page.screenshot({ type: 'png' });
+        await page.evaluate((v) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = v; window.__mcgrotsDebug.stepFrames(1);
+        }, wasVisible);
+        return countDiffPixels(withOn, withOff, rect);
+      };
+
+      // van.js literals, quoted here since they are not on the debug API
+      // (the valance region above does the same for CHASSIS_H).
+      const OPENING_CX = 0.35, CHASSIS_H = 0.62;
+      const OPENING_SILL = CHASSIS_H + 0.52;
+      // The OLD local z (the opening's own face line, `VAN_DEPTH / 2` before
+      // this unit) — used ONLY as this region's own in-boot control, never
+      // written back to the scene outside a measurement window.
+      const OLD_LOCAL_Z = 1.3;
+
+      // ------------------------------------------------------- claim 1 ---
+      // "Nothing of McGrot is visible below the serving sill, at every
+      // anchor." The band is HIS OWN x/z footprint (not the van's) with y
+      // clamped [0, OPENING_SILL] — road to the serving sill, wider than the
+      // valance region's own [0, CHASSIS_H] leg band because the fault this
+      // unit closes is the APRON, which sits above the floor line and below
+      // the sill. CONTROL: the identical measurement with him repositioned
+      // to the OLD local z, in the SAME boot — the shape of control the
+      // valance region's own leg-zone check already uses, applied to depth
+      // instead of a visibility toggle.
+      const sillRows = [];
+      for (const id of ids) {
+        await page.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.setMarkersVisible(false);
+          d.snapTo(a);
+          d.rota.setClock(980);
+          d.stepFrames(2);
+        }, id);
+
+        const newRect = await page.evaluate((sill) => {
+          const d = window.__mcgrotsDebug;
+          const m = d.scene.getObjectByName('mcgrot');
+          const box = new d.THREE.Box3().setFromObject(m);
+          return { min: { x: box.min.x, y: 0, z: box.min.z }, max: { x: box.max.x, y: sill, z: box.max.z } };
+        }, OPENING_SILL);
+        const newSillRect = await project(newRect);
+        const newFraction = await toggleFraction(newSillRect);
+
+        // Reposition to the OLD local z within this same boot, remeasure,
+        // then put him straight back — the live `mcgrot.position` this
+        // moves is the same Object3D the shipped scene uses, not a copy.
+        const origPos = await page.evaluate((z) => {
+          const d = window.__mcgrotsDebug;
+          const van = d.scene.getObjectByName('van');
+          const m = d.scene.getObjectByName('mcgrot');
+          const before = { x: m.position.x, y: m.position.y, z: m.position.z };
+          const w = van.localToWorld(new d.THREE.Vector3(0.35, 0, z));
+          m.position.set(w.x, 0, w.z);
+          d.stepFrames(2);
+          return before;
+        }, OLD_LOCAL_Z);
+        const oldRect = await page.evaluate((sill) => {
+          const d = window.__mcgrotsDebug;
+          const m = d.scene.getObjectByName('mcgrot');
+          const box = new d.THREE.Box3().setFromObject(m);
+          return { min: { x: box.min.x, y: 0, z: box.min.z }, max: { x: box.max.x, y: sill, z: box.max.z } };
+        }, OPENING_SILL);
+        const oldSillRect = await project(oldRect);
+        const oldFraction = await toggleFraction(oldSillRect);
+        await page.evaluate((p) => {
+          const d = window.__mcgrotsDebug;
+          d.scene.getObjectByName('mcgrot').position.set(p.x, p.y, p.z);
+          d.stepFrames(2);
+        }, origPos);
+
+        sillRows.push({ id, oldPct: +(oldFraction * 100).toFixed(2), newPct: +(newFraction * 100).toFixed(2) });
+      }
+      // MEASURED, all five anchors, in THIS boot (see mcgrot.js's own
+      // comment for the isolated-boot table this was first found on, which
+      // reads slightly lower on `back` — a few tenths of a point of
+      // anchor-order noise, not a different picture; both renders open
+      // clean): old (his position before this unit) 20.9-24.0%, new
+      // (shipped) 0.7-5.0% — down by an order of magnitude, never near the
+      // old range. 8% clears the shipped max (5.0%) with real margin and
+      // stays far short of the old minimum (20.9%); 15% on the control sits
+      // well under that same old minimum.
+      const badSillNew = sillRows.filter((v) => v.newPct >= 8);
+      check('nothing of him is visible below the serving sill at the shipped position, at every anchor',
+        badSillNew.length === 0,
+        sillRows.map((v) => `${v.id} new=${v.newPct}%`).join(' / '));
+      const badSillOld = sillRows.filter((v) => v.oldPct <= 15);
+      check('control: at the OLD position (before this unit) the same band clearly shows him',
+        badSillOld.length === 0,
+        sillRows.map((v) => `${v.id} old=${v.oldPct}%`).join(' / '));
+
+      // ------------------------------------------------------- claim 2 ---
+      // "He is still clearly visible through the opening" — F22's own
+      // technique (mcgrot region above), his full AABB rect this time, at
+      // `counter`, reported OLD vs NEW against F22's existing 20% floor.
+      // THE FLOOR IS NOT MOVED: the finding is that the new position falls
+      // under it. Asserted both ways ON PURPOSE — a future change that closes
+      // this gap (a taller opening, a lower counter) should turn the second
+      // check red so it gets noticed and this comment gets revisited, not
+      // silently stay "passing" because nobody is checking the number
+      // anymore.
+      await page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        d.setMarkersVisible(false);
+        d.snapTo('counter');
+        d.rota.setClock(980);
+        d.stepFrames(2);
+      });
+      const newBox = await page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        const box = new d.THREE.Box3().setFromObject(d.scene.getObjectByName('mcgrot'));
+        return { min: box.min, max: box.max };
+      });
+      const newBodyRect = await project(newBox);
+      const newF22 = await toggleFraction(newBodyRect);
+
+      const shippedPos = await page.evaluate((z) => {
+        const d = window.__mcgrotsDebug;
+        const van = d.scene.getObjectByName('van');
+        const m = d.scene.getObjectByName('mcgrot');
+        const before = { x: m.position.x, y: m.position.y, z: m.position.z };
+        const w = van.localToWorld(new d.THREE.Vector3(0.35, 0, z));
+        m.position.set(w.x, 0, w.z);
+        d.stepFrames(2);
+        return before;
+      }, OLD_LOCAL_Z);
+      const oldBox = await page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        const box = new d.THREE.Box3().setFromObject(d.scene.getObjectByName('mcgrot'));
+        return { min: box.min, max: box.max };
+      });
+      const oldBodyRect = await project(oldBox);
+      const oldF22 = await toggleFraction(oldBodyRect);
+      await page.evaluate((p) => {
+        const d = window.__mcgrotsDebug;
+        d.scene.getObjectByName('mcgrot').position.set(p.x, p.y, p.z);
+        d.stepFrames(2);
+      }, shippedPos);
+
+      // MEASURED: old=25.5% (agrees with the mcgrot region's own F22 number),
+      // new=10.2% — the finding this unit exists to report, not a bug in this
+      // check.
+      check('F22 control: at the OLD position he clears the 20% floor (agrees with the mcgrot region\'s own number)',
+        oldF22 > 0.2, `old=${(oldF22 * 100).toFixed(1)}%  (>20% required)`);
+      check('F22 finding: at the shipped (pushed-back) position he falls under the 20% floor — measured, not a bug; see mcgrot.js\'s MCGROT_LOCAL comment',
+        newF22 < 0.2, `old=${(oldF22 * 100).toFixed(1)}% new=${(newF22 * 100).toFixed(1)}%  (floor is 20%, NOT lowered)`);
+
+      // ------------------------------------------------------- claim 3 ---
+      // "Pomplé still looks at him." pomple.js imports `MCGROT_LOCAL`
+      // directly and computes its attention target ONCE at module load
+      // (`mcgrotTarget`) — repositioning the live `mcgrot` object, as claims
+      // 1 and 2 do above, does not move that target, so this claim needs a
+      // different technique: an ANALYTIC yaw computed independently from
+      // pomple's own live position and the van's own transform, for both the
+      // OLD and NEW local z, compared against pomple's ACTUAL measured
+      // `headYaw` — the same atan2-then-clamp maths pomple.js's own update()
+      // uses (quoted, not imported — this file does not import pomple.js).
+      // Read at `far`/`back`, the two anchors far enough from pomple
+      // (11.5m/8.3m) that `d < ATTENTION_ENTER_R` (5.5m) never fires and
+      // `attention` stays its default 'mcgrot' throughout (pomple region's
+      // own head-turn gate above deliberately uses the two NEAR anchors,
+      // which exercise the OTHER branch, tracking the player).
+      const yawRows = [];
+      for (const id of ['far', 'back']) {
+        const { actualYaw, attention, expectedOld, expectedNew } = await page.evaluate(({ id, oldLocalZ }) => {
+          const d = window.__mcgrotsDebug;
+          d.snapTo(id);
+          d.stepFrames(150);
+          const van = d.scene.getObjectByName('van');
+          const pomple = d.scene.getObjectByName('pomple');
+          const OPENING_CX = 0.35;
+          const MAX_HEAD_YAW = 1.05; // pomple.js's own constant, quoted
+          const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+          const expectedYawFor = (z) => {
+            const target = van.localToWorld(new d.THREE.Vector3(OPENING_CX, 0, z));
+            const dx = target.x - pomple.position.x, dz = target.z - pomple.position.z;
+            const worldYaw = Math.atan2(dx, dz);
+            return Math.max(-MAX_HEAD_YAW, Math.min(MAX_HEAD_YAW, wrapAngle(worldYaw - pomple.rotation.y)));
+          };
+          return {
+            actualYaw: d.pomple.headYaw,
+            attention: d.pomple.attention,
+            expectedOld: expectedYawFor(oldLocalZ),
+            // The NEW local z is whatever the LIVE `mcgrot` object sits at
+            // right now (the shipped position) — read off the scene rather
+            // than a second hardcoded literal, so this can't drift from
+            // mcgrot.js's own constant.
+            expectedNew: expectedYawFor((() => {
+              const m = d.scene.getObjectByName('mcgrot');
+              const local = van.worldToLocal(m.position.clone());
+              return local.z;
+            })()),
+          };
+        }, { id, oldLocalZ: OLD_LOCAL_Z });
+        yawRows.push({ id, actualYaw, attention, expectedOld, expectedNew });
+      }
+      const badAttention = yawRows.filter((v) => v.attention !== 'mcgrot');
+      check('control: far/back keep pomple\'s attention on mcgrot throughout (never close enough to switch to the player)',
+        badAttention.length === 0,
+        yawRows.map((v) => `${v.id} attention=${v.attention}`).join(' / '));
+      const badTrack = yawRows.filter((v) => Math.abs(v.actualYaw - v.expectedNew) > 0.02);
+      check('pomple\'s head yaw agrees with the analytic yaw toward the SHIPPED mcgrot position, at both far anchors',
+        badTrack.length === 0,
+        yawRows.map((v) => `${v.id} actual=${v.actualYaw.toFixed(3)} expectedNew=${v.expectedNew.toFixed(3)}`).join(' / '));
+      const notMoved = yawRows.filter((v) => Math.abs(v.expectedNew - v.expectedOld) < 0.05);
+      check('control: the analytic yaw toward the OLD position genuinely differs from the new one (the check has signal, not just agreement)',
+        notMoved.length === 0,
+        yawRows.map((v) => `${v.id} expectedOld=${v.expectedOld.toFixed(3)} expectedNew=${v.expectedNew.toFixed(3)}`).join(' / '));
+
+      check('console clean after driving the pushback region',
         consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }
   }
