@@ -274,7 +274,16 @@ frame is a picture"). Prove the contrast gate can go red by fault-injecting a
 black material, watch it fail, restore, and commit *before* injecting anything
 (`CLAUDE.md` § Gotchas).
 
-### G1 — The animation bake-off ✅ built 2026-08-10, awaiting judgement
+### G1 — The animation bake-off ✅ built 2026-08-10, JUDGED 2026-08-11
+
+**A1 skinned is the chosen candidate** (Dan, 2026-08-11 — the table and the
+reasoning are in `docs/MCGROTS-VALIDATION.md` § "G1 — the animation bake-off").
+This heading read "awaiting judgement" for a week after the judgement happened;
+corrected by the G7 phase gate, 2026-08-18.
+
+**The winner is still not the shipped default.** `main.js`'s `BODY_KIND`
+defaults to `capsule` — G0's blockout — so every boot that does not pass
+`?body=skinned` renders the player as a featureless lozenge. See § 10 F25.
 
 Dan's instruction: **prototype all three.** Do not shortcut to a favourite.
 
@@ -1174,12 +1183,10 @@ It has no brief yet and no number attached. Its scope should be derived from
 what the phase gate finds rather than assembled from this session's own sense
 of what is untidy — the session that made the mess is the worst judge of it.
 
-Known candidates, recorded so they are not lost, NOT a plan: F24's ground-plane
-conflict (reopened and still live, G7p in flight against it), the audio
-delivery pass deferred at § 11.0.1, `scripts/smoke-mcgrots.mjs` at ~4,400 lines
-and one region per unit, the `style` region's page navigation that it never
-restores, and Pomplé's sign reading as a board beside the dog rather than one
-he holds.
+**Its scope is now derived and sits below as G7.5** (G7 phase gate,
+2026-08-18). The candidates this section listed were the implementing
+sessions' own sense of what was untidy; the gate's list overlaps them but
+leads with something none of them named — § 10 F25.
 
 ---
 
@@ -1288,6 +1295,65 @@ to reconcile. Shipped OFF (`?visit=on`); the full suite is 99/99 with all
 four gates fault-injected and confirmed to go red before being restored.
 Pomplé's three scripted beats are explicitly out of scope (G7h §5;
 `pomple.playBeat?.()` is a guarded no-op today) — briefed separately as G7i.
+
+### G7.5 — The polish pass
+
+**Scope derived by the G7 phase gate, 2026-08-18**, per G7's own instruction
+that the session which made the mess is the worst judge of it. Ordered: 1 and 2
+are worth doing before G8a, 3–5 are not.
+
+**1. Close F25 — the shipped defaults, and the gate gap under them.** The one
+item no implementing session named, because it is invisible from inside a green
+suite. Three parts, in order of what they cost:
+
+- Promote `BODY_KIND` to `skinned`, the G1 winner, the way G7h promoted
+  `LOOK_KIND` to S2 — its own landing, with its own measurement of what moved.
+  Expect goldens and every rect-based check to move; that is the point of a
+  separate commit.
+- One default-boot check per flagged feature (`valance`, `ambience`, `body`,
+  `look`). Small, and the ambience region already contains the shape to copy.
+- Decide what `visit` ships as. It is OFF today, so the plain page runs no
+  visit at all, and G9 cannot ship that. Not a bug — a decision nobody has been
+  asked for yet.
+
+**2. F24, whatever G7p returns.** Live and unresolved: McGrot stands 3.8 cm in
+front of the van's front panel, so the valance hides his legs and his apron
+still hangs over the van's face. G7p is testing whether pushing him back
+clears the panel without dropping his `counter` visible-pixel fraction under
+F22's 20% floor (25.5% today). If those two cannot both hold at this counter
+height, that finding belongs to G8a's geometry, not to another concealment.
+
+**3. The suite's shape, and it is real debt rather than untidiness.**
+`scripts/smoke-mcgrots.mjs` is 4,384 lines with one region appended per unit
+and `countDiffPixels` defined three separate times (lines 1253, 3347, 4138).
+That duplication is not a style point: it is what made git find spurious common
+context inside two workers' blocks and splice two similar-but-different helpers
+into invalid JavaScript (G7j's merge note), and it cost a second manual splice
+at G7o. Splitting into per-region files removes the class. **Do it before the
+next phase that runs two workers concurrently, not as tidying.**
+
+**4. Two live traps, cheap to close, neither currently biting.** The `style`
+region navigates the shared page to `?body=skinned&archetype=rab` and never
+navigates back — harmless today only because every region after it happens to
+navigate first, which is a property no one is maintaining deliberately. And a
+presence check built on `Box3().setFromObject` passes on an invisible object
+(verified twice: `statue.visible = false`, then G7l's sign); the `signs`, `van`
+and `pomple` regions each still carry one.
+
+**5. What the gate deliberately did NOT put in scope.** Pomplé's sign reads as
+a board beside the dog rather than one he holds, and the Taxman exchange reads
+as radio dialogue over a diorama because neither body moves. Both are true and
+both were honestly reported by the units that built them. Both are *character
+performance*, which is G8a's subject — spending polish time on the current
+stand-in geometry buys nothing that survives it, the same reasoning that
+already carries F19 forward. The audio delivery pass (§ 11.0.1) is likewise a
+voice-direction job, not a tidy-up.
+
+**Verification note for whoever runs this.** The suite is 153 checks in ~30s,
+every region passes standalone, and the eighteen standalone counts sum to
+exactly 153 — re-measured by the gate, so there is no order dependency to work
+around today. `AGENTS.md` still advertises "30 checks, ~1.4s warm" and "it is
+1.9 seconds"; both are roughly 20× out and are the orchestrator's to correct.
 
 ### G8a — McGrot and Pomplé, from the comics
 
@@ -1418,6 +1484,13 @@ should stay green and untouched.
   (§ 10 F9). G3a's van region has the technique that works: project the AABB
   into screen space and require luminance variance inside it, against a
   corner-patch control.
+- **A flagged feature needs one check that boots the SHIPPED DEFAULT** — the
+  plain page, no query params — and asserts the flag's live value. Added by the
+  G7 phase gate, 2026-08-18, after two injections came back green on a 153/153
+  suite (§ 10 F25): the valance region proved the mesh works when the gate
+  forces it visible, and the ambience region proved the bed works when the gate
+  passes `?ambience=on`. Neither can see the switch. A forced arm and a shipped
+  arm are two different measurements, and only one of them is the product.
 - **The street is paused.** `src/main.js` and the street modules are not to be
   edited. Any change to a *shared* module must be additive, and the street's
   own `npm run smoke:par` must be run to prove its goldens did not move. That
@@ -1458,6 +1531,59 @@ project exists is that the street was allowed to keep going at 80%.
 ---
 
 ## 10. Known faults — carried, not blocking
+
+### F25 — no gate reads a shipped default; every G7 feature is proved only through a forced arm (G7 phase gate, 2026-08-18)
+
+**Two fault injections, both green, on a 153/153 suite.** Neither is a margin
+problem or a flake; both are a gate measuring a mechanism the shipped build
+never reaches.
+
+1. `van.js`, `valanceMesh.visible = VALANCE_ON` → `= false`, so the valance is
+   never drawn in any boot. `--only=valance` **6/6 passed**. The region never
+   boots `?valance=off` and never reads `VALANCE_ON`; it sets
+   `getObjectByName('van-valance').visible = true` by hand before measuring its
+   "on" arm and `false` before its "off" arm (`scripts/smoke-mcgrots.mjs`
+   ~4224–4231, ~4285–4289). It proves the mesh occludes McGrot's legs when
+   forced visible. It cannot see whether the product ships it visible — which
+   is the entire claim F24's concealment rests on.
+2. `main.js`, `AMBIENCE_ON` default flipped from `params.get('ambience') !==
+   'off'` to `=== 'on'`, so an unflagged boot is silent. `--only=ambience`
+   **11/11 passed**. The region boots `?visit=on&ambience=on` explicitly, so
+   its own first check — "ambience is flagged on for this boot" — passes on the
+   flag it just set itself.
+
+**This is § 8's "gates test the product, not the calculator" one level up.**
+The rule as written catches a check that exercises a helper instead of the
+scene. It does not catch a check that exercises the scene correctly through a
+switch the product does not throw. G7 landed three flag-shaped features
+(`valance` on, `ambience` on, `visit` off) and the suite gained 54 checks; none
+of them reads a default.
+
+Not universal, and the exceptions show it is cheap to fix: `boot`, `signs`,
+`beats`, `audio` and `rota` all boot the plain `/mcgrots.html` and would catch
+a default regression in what they cover.
+
+**The fix is one check per flagged feature, not a rewrite:** boot the plain
+page and assert the flag's live value off the debug API, the same shape the
+ambience region's own precondition check already has — pointed at a default
+boot instead of a flagged one.
+
+**Its worst instance is the player's own body.** `BODY_KIND` defaults to
+`capsule` and the G1 winner (A1 skinned, Dan 2026-08-11) was never promoted to
+it — unlike `LOOK_KIND`, which G7h did flip to the settled S2. So the visit
+region boots `?visit=on` with no `body=`, and the three captures it saves as
+its own "open and look" evidence show a blank white lozenge standing in the
+middle of the frame at `wall` and `far`. Rendered both ways by the gate at
+`far`: `docs/smoke/captures/mcgrots/g0/visit-d-silence-beat-far.png` (shipped
+default) against the same anchor with `--body=skinned`, which puts a coated,
+hatted figure there instead. § 11.0.1's own re-hear command
+(`/mcgrots.html?ambience=on&visit=on`) carries no `body=` either, so the
+documented way to run the visit is the lozenge way.
+
+**Nothing here says Dan judged a lozenge** — no document records which body the
+kill-criterion run used, and that is the gap worth closing before the record
+hardens. What it does say is that the ten-minute visit, booted as this repo
+documents it, does not show the body this project chose.
 
 ### F24 — the van and McGrot were authored to two different ground planes (Dan, 2026-08-17, from a render)
 
