@@ -17,7 +17,7 @@
 
 ```bash
 npm run bundle:mcgrots   # esbuild + stamps the html — run before any smoke
-npm run smoke:mcgrots    # 30 checks, ~1.4s warm. The gate.
+npm run smoke:mcgrots    # 153 checks, ~31s. The gate.
 npm run smoke:mcgrots -- --only=style
 npm run dev:mcgrots      # :5175, then /mcgrots.html?body=skinned&look=aerial
 
@@ -38,7 +38,10 @@ shot of an empty anchor. 600 settles a full walk.
   and inspect.** State the command and its actual output. This is the failure
   mode the whole workflow exists to catch: three milestones landed on summaries
   asserting numbers that were false.
-- Run the gate; do not reason about the blast radius. It is 1.9 seconds.
+- Run the gate; do not reason about the blast radius. It is ~31 seconds, and
+  `--only=<region>` is a second or two. Both figures re-measured by the G7
+  phase gate on 2026-08-18; this line previously advertised 1.9 seconds and a
+  30-check suite, roughly 20× out, for long enough that workers acted on it.
 - A new acceptance gate needs a **named control** that isolates the claimed
   behaviour, must be **fault-injected** to prove it can go red, and must test
   the shipped product rather than a helper calculation. **Commit before
