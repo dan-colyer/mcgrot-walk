@@ -1457,11 +1457,24 @@ composes well. Stand him on the van floor instead and the same counter sits
 0.50 m above his feet — knee height. The counter was authored for a figure on
 the road; the van for one standing inside it.
 
+**DECIDED 2026-08-18: fix 1, the valance. Dan's call.** Built as G7o. The
+reasoning that won it is the one below — it is the only option that leaves
+every authored shot and every existing capture untouched, which matters
+because the counter composition already reads well at `counter` and options 2
+and 3 both move the framing at every anchor.
+
+**It is a concealment, not a correction, and the record should stay honest
+about that.** McGrot still stands at road level inside the van's plan
+footprint; the valance hides the overlap rather than resolving it. If G8a or a
+later unit gives the van an interior the player can see into, this decision
+must be revisited rather than built on — the geometry underneath is still
+wrong.
+
 Three fixes, not equivalent, none measured yet:
 
 1. **Hide the leg zone** — bring the van's lower body or a valance down toward
    the ground. Cheapest, preserves every authored shot and a composition that
-   otherwise reads. Recommended for the PoC.
+   otherwise reads. Recommended for the PoC. **← chosen**
 2. **Commit to a van you stand in** — raise him to 0.62 m and the counter to
    ~1.55 m, with props and price board. Most correct, but moves the framing at
    every anchor and will shift captures.
@@ -2226,24 +2239,39 @@ node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg
 
 ## 11. Still open
 
-0.1 **Nobody has heard any of the new audio, and it is Dan's ear that decides.**
-   Carried from 2026-08-17 at his request — he was on his phone and could not
-   listen. **No worker in the G7e/G7g/G7j/G7k run had audio playback**, so every
-   claim about these clips is a measurement of amplitude, never of quality.
-   What is waiting:
+0.1 **HEARD AND PASSED FOR THE PoC (Dan, 2026-08-18). Refinement deferred, not
+   waived.** His verdict verbatim: *"All seems ok so far audio-wise. Will need
+   refined later but will do for now."*
 
-   - **The eight readings in McGrot's own voice**, `assets/audio/mcgrot/` —
-     these he has heard and approved.
-   - **The twelve complaint lines**, `assets/audio/mcgrot/lines/` — unheard.
-   - **The six Taxman exchange lines**, `assets/audio/cast/` — unheard, and
-     `docs/g7-taxman-scene.md` already flags that the scene reads as radio
-     dialogue over a diorama because neither body moves.
-   - **The ambient bed, its ducking and the gull**, synthesised in
-     `src/mcgrots/ambience.js` — unheard. Its gates prove non-zero output, that
-     the bed ducks, and that it does not damage a reading's own RMS. None of
-     that says whether it sounds like a street.
+   What he auditioned, in this order: the twelve complaint lines
+   (`assets/audio/mcgrot/lines/`), the six Taxman exchange lines
+   (`assets/audio/cast/`) played in **scene order** rather than filename order,
+   the two voices back to back in isolation, and the synthesised bed in the
+   running scene. Playlist: the `audition.sh` pattern — `afplay` in schedule
+   order, with each line's text printed as it plays.
 
-   How: `npm run dev:mcgrots`, then `/mcgrots.html?ambience=on&visit=on`.
+   **What this settles:** McGrot's voice (Algenib) holds up in 1–6s bursts and
+   not only in the long readings he approved on 2026-08-12; the Taxman's voice
+   (Schedar, picked from a description and never auditioned) is distinct enough
+   to keep; the bed and its gull read acceptably on a 54s loop. None of the
+   four groups needs re-rendering to proceed.
+
+   **What this does NOT settle, and must not be read as settling.** He passed
+   the audio as a whole and did not comment on the specific fault
+   `docs/g7-taxman-scene.md` raises — that the exchange reads as radio dialogue
+   over a diorama, because neither body moves. **That is a picture fault, not a
+   sound one**, and a verdict on the audio cannot clear it. It stays open under
+   the per-line head-turn unit, which remains unbriefed and unjustified by his
+   ear either way.
+
+   **"Refined later" is a real debt.** The register work (G5b) was done on the
+   text, never on the delivery; no line has been auditioned against an
+   alternative read of itself. Whoever picks that up should treat it as a
+   voice-direction pass, not a re-generation.
+
+   How, if it needs re-hearing: `npm run dev:mcgrots`, then
+   `/mcgrots.html?ambience=on&visit=on`, and click the title card — WebAudio
+   needs the gesture. The bed cycles every 54s with the gull at 19.8s.
 
 
 
