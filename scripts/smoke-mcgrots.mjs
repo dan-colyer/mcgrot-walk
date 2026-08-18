@@ -2109,6 +2109,33 @@ try {
         purity.a1 === purity.a2 && purity.a1 !== purity.b,
         `t=200 -> cue ${purity.a1} (asked twice), t=400 -> cue ${purity.b}`);
 
+      // --- 1b (G7m): the overlap exists and the schedule is still pure -----
+      // Cue 3 is a walk into 'kerb' (35.4-39.9s); cue 4 is the reading that
+      // now overlaps its tail from 36.9s (earlyStart, visit.js). t=37.5 sits
+      // in that 1.0s overlap: cueAt must resolve to cue 4, not cue 3, and
+      // `elapsed` must count from the EARLY start (0.6s), not the nominal one
+      // (which would read negative). t=36.5, 0.4s EARLIER, is the control —
+      // still inside cue 3's own window and before the authored overlap
+      // boundary, so it must still read cue 3 (walk): the overlap has a real
+      // edge, not "cue 4 is just always active near here."
+      const overlapPurity = await visitPage.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        const inOverlap1 = d.visit.cueAt(37.5);
+        const inOverlap2 = d.visit.cueAt(37.5);
+        const beforeOverlap = d.visit.cueAt(36.5);
+        return {
+          in1: { index: inOverlap1.index, kind: inOverlap1.kind, audio: inOverlap1.audio, elapsed: inOverlap1.elapsed },
+          in2: { index: inOverlap2.index, elapsed: inOverlap2.elapsed },
+          before: { index: beforeOverlap.index, kind: beforeOverlap.kind },
+        };
+      });
+      const overlapOk = overlapPurity.in1.index === 4 && overlapPurity.in1.kind === 'reading'
+        && overlapPurity.in1.audio === '19f35bc7' && Math.abs(overlapPurity.in1.elapsed - 0.6) < 0.05
+        && overlapPurity.in2.index === 4 && Math.abs(overlapPurity.in2.elapsed - overlapPurity.in1.elapsed) < 1e-9
+        && overlapPurity.before.index === 3 && overlapPurity.before.kind === 'walk';
+      check('the overlap exists and the schedule is still pure — t=37.5 (in the overlap) resolves to cue 4 reading with elapsed counted from its early start; t=36.5 (control, 0.4s earlier) still resolves to cue 3 walk',
+        overlapOk, JSON.stringify(overlapPurity));
+
       // --- 3: the player is where the cue says ----------------------------
       // Every reading and complaint cue (17 of 28), each an INDEPENDENT
       // fresh-join test: `rejoin()` resets the "has the visit placed the
@@ -2275,6 +2302,108 @@ try {
       check('...and a silence cue produces no output (control, pinned t=5, cue 0)',
         silentWorst.rms <= 0.005,
         `peak=${silentWorst.peak.toFixed(3)} rms=${silentWorst.rms.toFixed(3)} (must be <=0.005)`);
+
+      // --- 1c (G7m): a mid-reading join hears the middle, not the start ----
+      // Two UNTOUCHED cues so each pin forces a genuine fresh seek (audio.js
+      // only re-seeks on an `info.id` change — reusing an id already playing
+      // on this page would just show real-time drift from its earlier start,
+      // not the join behaviour under test). Cue 6 (03347596, kerb, nominal
+      // 127.9-146.1) for the mid pin; cue 10 (0121c47c, wall, nominal
+      // 162.1-185.0) for the boundary control — neither carries an earlyStart
+      // override, so this is G7h's plain join-mid-file capability, not the
+      // overlap.
+      // `mediaEl.currentTime` starts at 0 before any seek has actually
+      // landed, so "not null" is not a usable readiness signal — 0 is a
+      // valid number. `loadedmetadata` is async on a cold file (audio.js's
+      // own F14 comment), so this is a fixed wait, same idiom as the
+      // silence-tail waits elsewhere in this region, not a poll.
+      const readCurrentTime = async (p) => p.evaluate(() => ({
+        t: window.__mcgrotsDebug.readerAudio.currentTime,
+        id: window.__mcgrotsDebug.readerAudio.playingId,
+      }));
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(136.9); window.__mcgrotsDebug.stepFrames(1); });
+      await new Promise((r) => setTimeout(r, 500));
+      const midPos = await readCurrentTime(visitAudioPage);
+      check('a fresh join mid-reading seeks the element into the file, not to its start (pinned t=136.9, cue 6, 9.0s in)',
+        midPos.id === '03347596' && midPos.t !== null && midPos.t > 5 && midPos.t < 18.2,
+        `playingId=${midPos.id} currentTime=${midPos.t === null ? 'null' : midPos.t.toFixed(2)} (want id 03347596, 5 < t < 18.2)`);
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(162.1); window.__mcgrotsDebug.stepFrames(1); });
+      await new Promise((r) => setTimeout(r, 500));
+      const boundaryPos = await readCurrentTime(visitAudioPage);
+      check('...and a join AT the cue\'s own boundary reads ~zero (control, pinned t=162.1, cue 10)',
+        boundaryPos.id === '0121c47c' && boundaryPos.t !== null && boundaryPos.t < 1.0,
+        `playingId=${boundaryPos.id} currentTime=${boundaryPos.t === null ? 'null' : boundaryPos.t.toFixed(2)} (want id 0121c47c, t < 1.0)`);
+
+      // --- 2b (G7m): the overlap is audible during the walk it overlaps ----
+      // Cue 4 (19f35bc7, kerb) untouched so far on this page — first pin
+      // forces a fresh seek/play, same idiom as above. t=37.5 is inside the
+      // overlap (cue 4's earlyStart is 36.9); t=35.9 is the control, still
+      // inside walk cue 3's own window but before that boundary — two
+      // different pinned moments that must differ, or a frozen/always-on
+      // overlap would pass this trivially.
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(37.5); window.__mcgrotsDebug.stepFrames(1); });
+      const overlapAudible = await waitForAudible(visitAudioPage);
+      const overlapId = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.readerAudio.playingId);
+      check('the overlapping reading produces real audio output while the walk it overlaps is still nominally open (pinned t=37.5, cue 4 via cue 3\'s window)',
+        overlapAudible.rms > 0.005 && overlapId === '19f35bc7',
+        `playingId=${overlapId} peak=${overlapAudible.peak.toFixed(3)} rms=${overlapAudible.rms.toFixed(3)} (must be >0.005)`);
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(35.9); window.__mcgrotsDebug.stepFrames(1); });
+      await new Promise((r) => setTimeout(r, 300)); // let the overlap reading's tail actually stop
+      const preOverlapSamples = [await sampleRMS(visitAudioPage), await sampleRMS(visitAudioPage), await sampleRMS(visitAudioPage)];
+      const preOverlapWorst = preOverlapSamples.reduce((a, b) => (b.rms > a.rms ? b : a));
+      check('...and 0.4s before the overlap starts, still inside the same walk cue, there is nothing to hear (control, pinned t=35.9, cue 3)',
+        preOverlapWorst.rms <= 0.005,
+        `peak=${preOverlapWorst.peak.toFixed(3)} rms=${preOverlapWorst.rms.toFixed(3)} (must be <=0.005)`);
+
+      // --- 3/4 (G7m Part 2): the "Naw." input — swallowed during a reading,
+      // plays during silence, and its cooldown holds -----------------------
+      // Reuses the two pins already established above in this same block
+      // (t=16.7 is cue 1, a reading; t=5 is cue 0, silence) rather than
+      // inventing new ones.
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(16.7); window.__mcgrotsDebug.stepFrames(1); });
+      const readingBaseline = await waitForAudible(visitAudioPage);
+      const playCountBeforeSwallow = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.naw.press(); window.__mcgrotsDebug.stepFrames(1); });
+      // waitForAudible, not a single fixed-delay sample: this is spoken
+      // audio, not tone, and a single snapshot can land on a natural pause
+      // between words — that would misread as damage the swallow never did.
+      // Caught exactly that: a fixed 300ms sample here first read 0.006,
+      // barely over threshold, on a page where the reading's own baseline
+      // moments earlier was 0.105.
+      const readingAfterPress = await waitForAudible(visitAudioPage);
+      const playCountAfterSwallow = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      check('a press during a reading is swallowed — no playback triggered, and the reading\'s own output is unchanged (control, pinned t=16.7, cue 1)',
+        playCountAfterSwallow === playCountBeforeSwallow && readingAfterPress.rms > 0.005,
+        `playCount ${playCountBeforeSwallow} -> ${playCountAfterSwallow}; reading rms baseline=${readingBaseline.rms.toFixed(3)} after-press=${readingAfterPress.rms.toFixed(3)} (must both be >0.005, count must not move)`);
+
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.visit.rejoin(); window.__mcgrotsDebug.rota.setClock(5); window.__mcgrotsDebug.stepFrames(1); });
+      await new Promise((r) => setTimeout(r, 300)); // let the reading's tail actually stop
+      const silenceBaseline = [await sampleRMS(visitAudioPage), await sampleRMS(visitAudioPage)].reduce((a, b) => (b.rms > a.rms ? b : a));
+      const playCountBeforeSilence = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.naw.press(); window.__mcgrotsDebug.stepFrames(1); });
+      const nawAudible = await waitForAudible(visitAudioPage);
+      const playCountAfterFirstPress = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      check('a press during silence plays "Naw." (pinned t=5, cue 0)',
+        nawAudible.rms > 0.005 && playCountAfterFirstPress === playCountBeforeSilence + 1,
+        `silence baseline rms=${silenceBaseline.rms.toFixed(3)}; after press rms=${nawAudible.rms.toFixed(3)}; playCount ${playCountBeforeSilence} -> ${playCountAfterFirstPress}`);
+
+      // Cooldown, same pinned instant (t=5): a second press right away must
+      // not retrigger. Then the clock is moved forward past NAW_COOLDOWN_S
+      // (6s), still inside cue 0's own 13.7s window, and a third press must.
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.naw.press(); window.__mcgrotsDebug.stepFrames(1); });
+      const playCountAfterRepeat = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      check('repeated presses inside the cooldown window produce one playback, not several (same pinned t=5)',
+        playCountAfterRepeat === playCountAfterFirstPress,
+        `playCount stayed at ${playCountAfterRepeat} across a second immediate press (expected ${playCountAfterFirstPress})`);
+
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.rota.setClock(12); window.__mcgrotsDebug.stepFrames(1); });
+      await new Promise((r) => setTimeout(r, 300)); // let the first Naw.'s tail actually stop
+      await visitAudioPage.evaluate(() => { window.__mcgrotsDebug.naw.press(); window.__mcgrotsDebug.stepFrames(1); });
+      const nawAudibleAgain = await waitForAudible(visitAudioPage);
+      const playCountAfterCooldown = await visitAudioPage.evaluate(() => window.__mcgrotsDebug.naw.playCount);
+      check('...but a press spaced beyond the cooldown window produces another (control, pinned t=12, 7s later, same cue 0)',
+        nawAudibleAgain.rms > 0.005 && playCountAfterCooldown === playCountAfterRepeat + 1,
+        `rms=${nawAudibleAgain.rms.toFixed(3)}; playCount ${playCountAfterRepeat} -> ${playCountAfterCooldown}`);
 
       await visitAudioPage.evaluate(() => window.__mcgrotsDebug.rota.clearClock());
       check('console clean on the visit audio page',

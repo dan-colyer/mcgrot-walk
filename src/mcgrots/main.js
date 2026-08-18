@@ -522,6 +522,42 @@ function updateSelfOcclusion() {
   actor.group.visible = !hidden;
 }
 
+// G7m Part 2 — the one input the world takes back. `mcgrot-03` ("Naw.") is a
+// complete line, already rendered (G7g), that nothing in the schedule ever
+// asks for. Routed through the SAME readerAudio channel the visit already
+// owns — no second <audio> element, no second AudioContext, no queue: a
+// press either plays now, through `info` exactly like a scheduled reading
+// would, or it does nothing. `frame()` below folds it into `info` only when
+// the SCHEDULED cue has nothing playing, so a real reading always wins.
+const NAW_ID = 'mcgrot-03';
+// Measured (ffprobe assets/audio/mcgrot/lines/mcgrot-03.mp3): 1.05s. 1.3s
+// gives the file itself a little headroom to actually finish loading and
+// playing before the override lapses, without holding the channel open long
+// enough to plausibly collide with a real cue boundary.
+const NAW_PLAY_S = 1.3;
+// Cooldown: 6s, ~5.7x the clip's own 1.05s. Long enough that mashing the key
+// cannot machine-gun "Naw."s back to back (the failure Part 2's brief names
+// — ten seconds of that and the line has no novelty left); short enough that
+// a player who walks off and comes back, or who is just curious a second
+// time, does not read the input as broken.
+const NAW_COOLDOWN_S = 6;
+let nawPressedAt = -Infinity;      // clock time of the last press that actually started playback
+let nawPlayCount = 0;              // gate-observable: counts triggered plays only, never swallowed presses
+function pressNaw(now) {
+  if (!VISIT_ON) return;
+  const scheduled = cueAt(now);
+  // Swallowed: no queue, no cooldown spent — a press that did nothing costs
+  // the player nothing, so the very next press once the reading ends can
+  // fire immediately.
+  if (scheduled.kind === 'reading' || scheduled.kind === 'complaint') return;
+  if (now - nawPressedAt < NAW_COOLDOWN_S) return; // inside cooldown: swallowed
+  nawPressedAt = now;
+  nawPlayCount++;
+}
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'n' || e.key === 'N') pressNaw(rotaNow());
+});
+
 function frame(dt) {
   clock += dt;
   actor.update(dt, clock);
@@ -579,6 +615,15 @@ function frame(dt) {
     reader.update(dt, now);
     info = whatTheyAreDoing(now);
     readerPos = reader.group ? reader.group.position : null;
+  }
+  // G7m Part 2: only when the schedule itself has nothing playing — a real
+  // cue always wins the channel, which is what keeps a press from ever
+  // interrupting a reading even in the (practically unreachable, given
+  // NAW_PLAY_S is a fraction of the shortest silence window) case where the
+  // schedule crosses into a reading while a press is still within its window.
+  if (VISIT_ON && info === null && now - nawPressedAt < NAW_PLAY_S) {
+    info = { id: NAW_ID, phase: 'reading', elapsed: now - nawPressedAt, dir: audioDirFor('complaint') };
+    readerPos = mcgrot.group.position;
   }
   // G6b.2: no locomotion and no per-frame state (see mcgrot.js's header) —
   // called for parity with every other actor, not because anything here
@@ -881,6 +926,17 @@ const titleCard = createTitleCard({ onStart() { readerAudio.start(); if (AMBIENC
         cycleSeconds: () => visitCycleSeconds(),
         rejoin() { visitJoined = false; },
         state: () => ({ joined: visitJoined, anchor: current?.id ?? null, lastBeatCueIndex }),
+      },
+      // G7m Part 2. `press` drives the SAME `pressNaw` a real keydown calls —
+      // against `rotaNow()`, so it reads whatever clock `rota.setClock` has
+      // pinned, exactly like every other gate in this region. `playCount`
+      // exists because RMS alone cannot tell "played once" from "played
+      // three times" while a cooldown is meant to be suppressing the second
+      // and third — presses that got swallowed never touch it.
+      naw: {
+        press: () => pressNaw(rotaNow()),
+        get playCount() { return nawPlayCount; },
+        get pressedAt() { return nawPressedAt; },
       },
       // G6a. `group` is reached via `scene.getObjectByName('pomple')`, same
       // as every other prop's gate region (see `van`) — no second handle.
