@@ -3512,3 +3512,167 @@ detail lines it reports are not reproducible run to run, and a future check
 tightened against an exact count would inherit the same flake `mcgrot` had
 before it pinned. **Flagging, not fixing** — out of this unit's scope (a
 one-line default flip), and `style` is not a file this unit owns.
+
+## G7m — arriving mid-reading, and one input
+
+Two changes, sharing `visit.js`/`main.js` because the brief did: G7h's
+mid-file seek (`audio.js`'s own capability, unused until now) gets a genuine
+caller, and the player gets one input the world takes back — `mcgrot-03`
+("Naw."), rendered by G7g and unplaced since.
+
+### Part 1 — overlapping a reading into the walk before it
+
+**The obstacle named in the brief was real:** `visit.js`'s cue windows were a
+running sum of `dur`, so cues are strictly sequential by construction — a
+reading cannot start before the walk cue ahead of it ends. Fixed with one new
+field, `earlyStart` (an authored, absolute cycle-second — same units as the
+computed `start`, not a relative offset; got this wrong on the first pass,
+below), present only on the two reading cues that follow a walk cue at the
+SAME anchor: cue 4 (`19f35bc7`, kerb, after cue 3's walk) and cue 14
+(`022bcde2`, kerb, after cue 13's walk). Both start **3.0s** before their
+nominal position — inside the walk's own window (4.5s and 7.1s respectively),
+leaving 1.5s/4.1s of pure walking silence before the voice cuts in, so it
+reads as "arriving into" a reading rather than the walk cue losing its own
+quiet beat.
+
+**Every other cue's `start`/`end` is computed exactly as before** —
+cumulative sum of `dur`, no gaps, cycle length unchanged at 600.6s. Only the
+two overlap cues' left edge moves; `cueAt(t)` resolves the resulting overlap
+by keeping the LAST match in a single forward pass over the cue table
+(`match = c` inside the loop, not `return` on first hit) — an authored
+overlap only ever reaches back into the cue immediately before it, never
+forward, so one pass is enough. For every non-overlap cue `activeStart ===
+start`, so this is provably a no-op there: the loop returns the same single
+match it always did.
+
+**Caught by the suite, not by review:** the first version set `earlyStart:
+3.0` — the overlap AMOUNT, not an absolute time. `cueAt` interpreted that as
+"active from t=3.0s", which is inside nearly the entire cycle for both
+overlap cues, and the full-cycle sweep went from 28 distinct cues to 15,
+jumping straight from cue 0 to cue 14 on the very first step. Fixed to the
+actual absolute values (36.9 and 295.0 — nominal start minus 3.0s).
+
+`audio.js` is unchanged — its `elapsed`-always seek (F14, G4 phase gate) was
+already correct for this; it had simply never been asked to seek to a
+POSITIVE elapsed for a cue whose nominal start hadn't arrived yet. No fault
+was found there and none was expected: this unit's own instruction was to
+read it, not touch it.
+
+### Part 2 — one input, and the answer is "Naw."
+
+`mcgrot-03` (measured: **1.05s**, `ffprobe`) now plays on the `n` key,
+routed through the SAME `readerAudio` channel the visit already owns — no
+second `<audio>` element, no second `AudioContext`, no queue. `main.js`'s
+`frame()` only folds it into `info` when the scheduled cue has nothing
+playing (`info === null`); a real cue always wins the channel by construction
+of that condition, not by a priority check.
+
+- **`NAW_PLAY_S = 1.3`** — the clip's measured 1.05s plus headroom for the
+  cold-load-and-seek latency `audio.js`'s own F14 comment documents, without
+  holding the channel open long enough to plausibly reach a real cue
+  boundary (the shortest silence/walk window in the schedule is several
+  seconds).
+- **`NAW_COOLDOWN_S = 6`** — ~5.7x the clip's own length. Chosen so mashing
+  the key cannot machine-gun "Naw."s (the failure the brief names by name),
+  while a player who walks off and comes back a few seconds later does not
+  read the input as broken. A press swallowed during a reading spends no
+  cooldown — it did nothing, so the next press once the reading ends is not
+  penalised for one that never played.
+- Debug surface: `dbg.naw.press()` drives the SAME `pressNaw(rotaNow())` a
+  real keydown calls, against whatever clock `rota.setClock()` has pinned.
+  `dbg.naw.playCount` exists because RMS alone cannot distinguish "played
+  once" from "played three times" while a cooldown is meant to be
+  suppressing the second and third.
+
+### The gates
+
+9 new checks, all in the existing `visit` region (this unit's own claim
+extended, not a new region) — 13 -> 22. All fault-injected and restored; each
+restore rebuilt (`npm run bundle:mcgrots`) before re-verifying, and the
+bundle hash matched the pre-injection build every time (byte-exact restore).
+
+1. **Overlap purity.** `cueAt(37.5)` (inside cue 4's overlap) resolves to
+   cue 4/reading/`19f35bc7` with `elapsed≈0.6`, twice, identically. *Control:*
+   `cueAt(36.5)`, 0.4s earlier, still resolves to cue 3/walk — the overlap
+   has a real edge, not a permanently-open one. Fault-injected (`activeStart
+   = start`, ignoring `earlyStart`): this check AND the overlap-audible check
+   below both went red (20/22) — the two checks that read `activeStart`,
+   nothing else. Restored, re-verified 22/22.
+
+2. **A mid-reading join reads the element's real playback position**, not
+   just `cueAt`'s own `elapsed` — this is G7h's join-mid-file capability,
+   which nothing had gated directly before (the existing region 3 only ever
+   checked the ANCHOR on a mid-reading join, never the audio element).
+   Two untouched cues so each pin forces a genuine fresh seek (reusing an
+   id already playing on the page would just show real-time drift from its
+   earlier start): cue 6 (`03347596`, no overlap) at t=136.9 (9.0s in) reads
+   `currentTime≈9.5`. *Control:* cue 10 (`0121c47c`) at its own boundary
+   (t=162.1) reads `currentTime≈0.5`. Fault-injected (`cueAt`'s `elapsed`
+   forced to 0): this check and check 1 both went red (20/22) — both read
+   `elapsed` from the same return. Restored, re-verified 22/22.
+   **Test bug found and fixed while writing this gate, not a product bug:**
+   the first version polled `currentTime !== null` as the "seek has landed"
+   signal — but `currentTime` starts at 0, a valid non-null number, so the
+   poll returned immediately, before the real (async, per F14) seek had run.
+   Both the mid pin and the boundary control read exactly 0 as a result; the
+   control happened to pass for the wrong reason. Replaced with a fixed
+   500ms wait, the same idiom the file already uses for "let the tail
+   actually stop" elsewhere, rather than a poll with no valid ready signal.
+
+3. **The overlap is audible during the walk it overlaps.** t=37.5 (in the
+   overlap): `playingId === '19f35bc7'`, RMS 0.119-0.261 across runs (>0.005).
+   *Control:* t=35.9, still inside walk cue 3's own window but 0.4s before
+   the authored edge: RMS 0.000. Same fault injection as check 1 (disabled
+   `earlyStart`) took this red too — see above.
+
+4. **"Naw." is swallowed during a reading, and the reading's own output is
+   unchanged.** t=16.7 (cue 1, reading): `playCount` unchanged after a
+   press, RMS still >0.005 afterward. **Caught a flaky assertion while
+   writing this one:** a single fixed-delay `sampleRMS` after the press
+   first read 0.006 — barely over the 0.005 threshold — against a baseline
+   moments earlier of 0.105. Not a product fault: `2b2110bb` is spoken
+   audio with natural pauses between words, and the single snapshot landed
+   in one. Replaced with `waitForAudible` (the same poll-for-a-loud-moment
+   technique the existing audible check already used for the baseline),
+   which does not misread a natural pause as damage. Fault-injected (removed
+   the `scheduled.kind === 'reading' || 'complaint'` swallow guard): this
+   check went red, and so did checks 5 and 6 below, cascading — the
+   swallowed press's `playCount` no longer stayed at 0, corrupting every
+   downstream check's baseline count (19/22). Root-caused to the single
+   guard, not three separate faults — the expected shape of an upstream
+   fault, same pattern G7h's own gate 1 recorded. Restored, re-verified
+   22/22.
+
+5. **"Naw." plays during silence.** t=5 (cue 0, silence): RMS >0.005 after a
+   press, `playCount` +1. Covered by the same swallow-guard injection above
+   (cascaded red, 19/22).
+
+6. **The cooldown holds.** A second press at the same pinned t=5 leaves
+   `playCount` unchanged. *Control:* a third press at t=12 (7s later, still
+   inside cue 0's 13.7s window) increments it again, and is audible. Fault-
+   injected in ISOLATION this time (only the cooldown check disabled,
+   `now - nawPressedAt < NAW_COOLDOWN_S` short-circuited to `false`, swallow
+   guard left intact): exactly this one check went red (21/22), nothing else
+   moved — a cleanly isolated fault, unlike the swallow-guard injection
+   above. Restored, re-verified 22/22.
+
+`visit` region alone: **22/22 in ~5.3s** (checked standalone per this
+project's own rule — the `style` region's shared-page reuse is why "green
+inside the full suite" is not sufficient proof on its own). Full suite:
+**140/140 in ~28s**, own worktree, isolated from the concurrent `g7l-signs`
+unit sharing this same file.
+
+### Not gated
+
+- **That the overlap FEELS like arriving mid-conversation**, as opposed to
+  merely being technically overlapping audio. § 9's own words apply here too
+  — a felt judgement, not something RMS can certify. Worth listening to
+  directly at the two overlap cues (t≈37-40, t≈295-298).
+- **Whether 3.0s/6s are the RIGHT numbers**, only that they are stated,
+  reasoned, and hold under test. Both are single authored constants
+  (`earlyStart` on two cues; `NAW_COOLDOWN_S`) — cheap to retune.
+- **A third or fourth overlap cue.** The brief asked for one or two; two
+  landed (both walk-into-reading transitions in the table — there are no
+  others of that exact shape). Extending the mechanism to a walk-into-
+  complaint transition, or widening an existing overlap, needs no new code,
+  only a new/changed `earlyStart` value.
