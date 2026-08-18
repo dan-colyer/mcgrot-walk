@@ -283,7 +283,7 @@ corrected by the G7 phase gate, 2026-08-18.
 
 **The winner is still not the shipped default.** `main.js`'s `BODY_KIND`
 defaults to `capsule` — G0's blockout — so every boot that does not pass
-`?body=skinned` renders the player as a featureless lozenge. See § 10 F25.
+`?body=skinned` renders the player as a featureless lozenge. See § 10 F26.
 
 Dan's instruction: **prototype all three.** Do not shortcut to a favourite.
 
@@ -1186,7 +1186,7 @@ of what is untidy — the session that made the mess is the worst judge of it.
 **Its scope is now derived and sits below as G7.5** (G7 phase gate,
 2026-08-18). The candidates this section listed were the implementing
 sessions' own sense of what was untidy; the gate's list overlaps them but
-leads with something none of them named — § 10 F25.
+leads with something none of them named — § 10 F26.
 
 ---
 
@@ -1302,7 +1302,7 @@ Pomplé's three scripted beats are explicitly out of scope (G7h §5;
 that the session which made the mess is the worst judge of it. Ordered: 1 and 2
 are worth doing before G8a, 3–5 are not.
 
-**1. Close F25 — the shipped defaults, and the gate gap under them.** The one
+**1. Close F26 — the shipped defaults, and the gate gap under them.** The one
 item no implementing session named, because it is invisible from inside a green
 suite. Three parts, in order of what they cost:
 
@@ -1487,7 +1487,7 @@ should stay green and untouched.
 - **A flagged feature needs one check that boots the SHIPPED DEFAULT** — the
   plain page, no query params — and asserts the flag's live value. Added by the
   G7 phase gate, 2026-08-18, after two injections came back green on a 153/153
-  suite (§ 10 F25): the valance region proved the mesh works when the gate
+  suite (§ 10 F26): the valance region proved the mesh works when the gate
   forces it visible, and the ambience region proved the bed works when the gate
   passes `?ambience=on`. Neither can see the switch. A forced arm and a shipped
   arm are two different measurements, and only one of them is the product.
@@ -1532,7 +1532,12 @@ project exists is that the street was allowed to keep going at 80%.
 
 ## 10. Known faults — carried, not blocking
 
-### F25 — no gate reads a shipped default; every G7 feature is proved only through a forced arm (G7 phase gate, 2026-08-18)
+### F26 — no gate reads a shipped default; every G7 feature is proved only through a forced arm (G7 phase gate, 2026-08-18)
+
+*Numbered F25 in `.herdr/gate5.md` and in commit `002b5d7`. Renumbered here on
+2026-08-18: F25 was already taken by G7p's proxy fault, recorded an hour
+earlier in `14bc841`. The gate could not have known — it was auditing a range
+whose tip moved under it. The finding is unchanged.*
 
 **Two fault injections, both green, on a 153/153 suite.** Neither is a margin
 problem or a flake; both are a gate measuring a mechanism the shipped build
