@@ -179,6 +179,148 @@ const SETTLE_HEAD_DROP = 0.6;   // rad (~34°) — nose-down pitch, local to the
 const SETTLE_HEAD_RATE = 0.5;   // rad/s — slow, matching the turn's own
                                  // "losing interest" pace
 
+// G7l — the sign (docs/briefs/g7l-pomple-signs.md). Twelve handwritten lines
+// exist under the POMPLE key in `generated/mcgrots-dialogue.json` and were
+// never rendered anywhere; his `directorNotes` there says the device
+// outright: "Pomplé does not speak aloud; render each line as handwritten
+// sign text, with the surrounding performance carried by silence." Copied
+// VERBATIM here rather than fetched at runtime — that file is not this
+// unit's to touch or wire into the build/asset pipeline, and these are
+// twelve short fixed strings, already reviewed. If the dialogue corpus is
+// ever revised, this array is what to re-copy from.
+const SIGN_LINES = [
+  { id: 'pomple-01', text: 'CHUM HIM DOON THE WALK YOURSELF.' },
+  { id: 'pomple-02', text: 'STOP POINTING AT THE FLATS.' },
+  { id: 'pomple-03', text: 'NO LADLE UNTIL SHE HAS A SEAT.' },
+  { id: 'pomple-04', text: 'THE QUEUE REMEMBERS WHO WAS KIND.' },
+  { id: 'pomple-05', text: 'SIT DOWN.' },
+  { id: 'pomple-06', text: 'THE STUDENT WANTED AUTHENTICITY. I GAVE HIM A NAPKIN.' },
+  { id: 'pomple-07', text: 'I HAVE HEARD WORSE FROM BETTER DRESSED ANIMALS.' },
+  { id: 'pomple-08', text: 'PERSEVERE MEANS SOMETHING DIFFERENT WHEN YOU HAVE PAWS.' },
+  { id: 'pomple-09', text: 'A KINDNESS COSTS NOTHING. TRY ONE.' },
+  { id: 'pomple-10', text: 'AWRIGHT. NOW MOVE.' },
+  { id: 'pomple-11', text: 'THE HAT IS NOT A LICENSE.' },
+  { id: 'pomple-12', text: 'THAT IS SHAN, AND YOU KNOW IT.' },
+];
+
+// DETERMINISTIC, NEVER RANDOM (the brief, and roadmap § 6 "the persistent
+// world is the product"): a pure function of the DAY, not of this module's
+// own `t` — `t` restarts at zero every boot, so keying off it would show a
+// different sign to two people reading the same dog at the same real
+// moment, exactly the desync the brief warns against. Matches the project's
+// existing date-keyed convention (`src/day.js`'s `todayKey`, `mcgrotIsIn`).
+// No PRNG: a day index modulo twelve, nothing drawn.
+const DAY_MS = 86400000;
+function pickLineIndex(nowMs) {
+  const days = Math.floor(nowMs / DAY_MS);
+  return ((days % SIGN_LINES.length) + SIGN_LINES.length) % SIGN_LINES.length;
+}
+
+// The board itself — sized, placed and coloured by rendering candidates at
+// `counter` and `kerb` and reading the capture (this file's established
+// method, see Y_SPLIT's header), not derived from a formula: "legible from a
+// pavement" is a judgement a formula cannot make. See the landing commit for
+// the numbers this settled on.
+const SIGN_WIDTH = 0.85;    // m
+const SIGN_HEIGHT = 0.60;   // m
+const SIGN_FORWARD = 0.55;  // m ahead of his base position, along POMPLE_YAW
+const SIGN_SIDE = 0.70;     // m to the side, perpendicular to POMPLE_YAW —
+                             // clears his own on-screen silhouette; see the
+                             // header note where this is applied
+const SIGN_UP = 0.55;       // m off the ground — roughly held at head height
+const SIGN_CANVAS_W = 490;  // matches SIGN_WIDTH:SIGN_HEIGHT (1.4) exactly,
+const SIGN_CANVAS_H = 350;  // so the bake is not stretched onto the plane
+const SIGN_MARGIN = 34;     // px, canvas space
+
+// RAW sRGB hex throughout (CLAUDE.md / actors/texture.js's own note): a
+// THREE.Color would convert these a SECOND time on top of the renderer's own
+// sRGB conversion, and the result silhouettes. Values start from van.js's
+// own `priceBoardCanvas` palette — proven under this exact scene's lighting,
+// not guessed fresh — and are re-picked from a render if that turns out
+// insufficient at this board's smaller size and greater viewing distance.
+const BOARD_BG = '#2f281f';
+const BOARD_BORDER = '#6f6047';
+const BOARD_TEXT = '#e6d7ae';
+
+// Greedy word-wrap against the CURRENT ctx.font, so the caller controls size.
+function wrapSignLines(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? `${cur} ${w}` : w;
+    if (cur && ctx.measureText(test).width > maxWidth) {
+      lines.push(cur);
+      cur = w;
+    } else {
+      cur = test;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// `text === null` bakes the BLANK board: same geometry, same position, same
+// material, no lettering — the gate's named control, isolating the
+// lettering's own contribution from "there is a light-coloured rectangle in
+// shot" (docs/briefs/g7l-pomple-signs.md § The gate).
+//
+// Font size is searched, not fixed: the twelve lines range from "SIT DOWN."
+// to a 9-word sentence, and a fixed size either clips the long ones or
+// leaves the short ones tiny. Starts big and shrinks until the wrapped block
+// fits, floored so a pathological line degrades to small text rather than an
+// infinite loop.
+function makeSignTexture(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = SIGN_CANVAS_W;
+  canvas.height = SIGN_CANVAS_H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = BOARD_BG;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = BOARD_BORDER;
+  ctx.lineWidth = 10;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+  if (text) {
+    const maxWidth = canvas.width - SIGN_MARGIN * 2;
+    const maxHeight = canvas.height - SIGN_MARGIN * 2;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let fontSize = 108;
+    let lines = [text];
+    let lineHeight = fontSize * 1.16;
+    while (fontSize >= 18) {
+      ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+      lines = wrapSignLines(ctx, text, maxWidth);
+      lineHeight = fontSize * 1.16;
+      // BOTH dimensions, not just height: `wrapSignLines` greedily breaks
+      // BETWEEN words, but a single long word ("AUTHENTICITY.") can still be
+      // wider than maxWidth on its own — the height check alone let the loop
+      // stop at a font size where the block was short enough but individual
+      // lines were still clipped off both edges of the board. Measured, not
+      // assumed: at fontSize 60 "AUTHENTICITY." alone measures ~470px against
+      // a 422px maxWidth and the old loop accepted it because 4 lines fit
+      // the height budget.
+      const widest = Math.max(...lines.map((l) => ctx.measureText(l).width));
+      if (lines.length * lineHeight <= maxHeight && widest <= maxWidth) break;
+      fontSize -= 4;
+    }
+    ctx.fillStyle = BOARD_TEXT;
+    const totalHeight = lines.length * lineHeight;
+    let y = canvas.height / 2 - totalHeight / 2 + lineHeight / 2;
+    for (const line of lines) {
+      ctx.fillText(line, canvas.width / 2, y);
+      y += lineHeight;
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.name = text ? `pomple-sign:${text.slice(0, 16)}` : 'pomple-sign:blank';
+  return tex;
+}
+
 const _va = new THREE.Vector3();
 const _vb = new THREE.Vector3();
 
@@ -251,6 +393,45 @@ export function buildPomple(scene, { assets = null } = {}) {
 
   const mcgrotWorld = toWorld(MCGROT_LOCAL[0], MCGROT_LOCAL[1]);
   const mcgrotTarget = new THREE.Vector3(mcgrotWorld.x, 0, mcgrotWorld.z);
+
+  // The sign: a SEPARATE top-level object, not a child of `group`. His
+  // bodyYaw swings by design during notice/settle — up to a full pi reversal
+  // for settle — and a sign parented to the body would swing with it, right
+  // when a beat puts him in motion. Fixed at his REST orientation instead,
+  // and shown only while idle (see update() below), so it is never on
+  // screen mid-swing in the first place. Position/rotation are set ONCE
+  // here, not every frame — there is nothing to track once it never moves.
+  // SIDEWAYS, not just forward. POMPLE_YAW's own forward direction is only
+  // 10.8° off the `counter` anchor's own sightline to him (measured) — a
+  // sign placed straight ahead sits almost exactly BETWEEN him and that
+  // camera, which put the whole board on top of his own on-screen rect at
+  // 0.85m wide. Offset to the side clears his silhouette while staying a
+  // sign propped beside a small stall, not one blocking its own dog.
+  const signFwd = { x: Math.sin(POMPLE_YAW), z: Math.cos(POMPLE_YAW) };
+  const signRight = { x: signFwd.z, z: -signFwd.x };
+  const signGroup = new THREE.Group();
+  signGroup.name = 'pomple-sign';
+  signGroup.position.set(
+    basePos.x + signFwd.x * SIGN_FORWARD + signRight.x * SIGN_SIDE,
+    SIGN_UP,
+    basePos.z + signFwd.z * SIGN_FORWARD + signRight.z * SIGN_SIDE,
+  );
+  signGroup.rotation.y = POMPLE_YAW;
+  signGroup.visible = false;   // until built() and beat === null, see update()
+  scene.add(signGroup);
+
+  const blankSignTexture = makeSignTexture(null);
+  const lineTextures = SIGN_LINES.map((l) => makeSignTexture(l.text));
+  const signMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(SIGN_WIDTH, SIGN_HEIGHT),
+    new THREE.MeshLambertMaterial({ map: lineTextures[0], side: THREE.DoubleSide }),
+  );
+  signMesh.name = 'pomple-sign-board';
+  signGroup.add(signMesh);
+
+  let signIndex = -1;             // which SIGN_LINES entry is currently baked in
+  let signClockOverride = null;   // gate-only pin, mirrors main.js's rotaClockOverride
+  let signBlank = false;          // gate-only: forces the blank control texture
 
   let built = false;
   let bytes = 0;
@@ -413,6 +594,23 @@ export function buildPomple(scene, { assets = null } = {}) {
     group.position.x = basePos.x + posOffset.x;
     group.position.z = basePos.z + posOffset.z;
 
+    // The sign: which line is a pure function of the (pinnable) day — see
+    // SIGN_LINES's header for why, never this module's own `t`. Visible only
+    // at rest: every active beat is its own physical performance (a turn, a
+    // walk, a head-drop) with its own read, and the sign is what fills the
+    // SILENCE BETWEEN them — "386 of the visit's 600 seconds are silence" is
+    // the brief's own framing for why this unit exists at all. Held during
+    // that silence, set down (hidden) for the moments that are about
+    // something else.
+    const wantIndex = pickLineIndex(signClockOverride ?? Date.now());
+    const wantedMap = signBlank ? blankSignTexture : lineTextures[wantIndex];
+    if (signMesh.material.map !== wantedMap) {
+      signMesh.material.map = wantedMap;
+      signMesh.material.needsUpdate = true;
+    }
+    signIndex = wantIndex;
+    signGroup.visible = beat === null;
+
     // The attention state machine — two states, one hysteresis band. Bigger
     // than it needs to be would fight docs/CANON.md's "long stares"; this
     // switches only when the player is decisively near or decisively not.
@@ -465,6 +663,17 @@ export function buildPomple(scene, { assets = null } = {}) {
   // what main.js's `pomple.playBeat?.(name)` actually calls.
   group.userData.playBeat = playBeat;
   group.userData.getBeat = () => beat;
+
+  // G7l's gate needs to pin the sign's clock and force the blank control,
+  // same reasoning and same route as playBeat above: main.js's `pomple`
+  // debug surface is out of this unit's scope, and `pomple-sign` is already
+  // reachable via `scene.getObjectByName`, so these ride on ITS userData
+  // rather than this group's — a clean split matching the two objects.
+  signGroup.userData.setClock = (ms) => { signClockOverride = ms; };
+  signGroup.userData.clearClock = () => { signClockOverride = null; };
+  signGroup.userData.setBlank = (v) => { signBlank = !!v; };
+  signGroup.userData.getIndex = () => signIndex;
+  signGroup.userData.getLineId = () => SIGN_LINES[signIndex]?.id ?? null;
 
   return {
     group,

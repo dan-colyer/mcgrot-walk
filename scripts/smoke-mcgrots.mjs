@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience', 'signs'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -3908,6 +3908,216 @@ try {
 
       await armOn.close();
       await armOff.close();
+    }
+
+    // --------------------------------------------------------------- signs ---
+    // G7l (docs/briefs/g7l-pomple-signs.md). pomple.js bakes a canvas sign
+    // showing one of twelve handwritten lines (generated/mcgrots-dialogue.json's
+    // POMPLE entry) — visible while he is idle (`beat === null`), hidden during
+    // his other beats. THE CLAIM IS THAT THE LETTERING IS VISIBLE, never that a
+    // rectangle merely exists on screen — that is this project's own recorded
+    // failure mode (`statue.visible = false` once passed the statue region 2/2
+    // and the whole suite 38/38 with nothing drawn — AGENTS.md § invariants), and
+    // a sign object with an unreadable texture would pass any `getObjectByName`
+    // check going. So the check below compares the SAME projected rect lettered
+    // vs blank (same geometry, position, material, no text baked) — the blank
+    // board is what isolates the lettering's own contribution from "there is a
+    // light-coloured rectangle in shot".
+    //
+    // ITS OWN PAGE, deliberately (gotcha #1 in this unit's brief): `style`
+    // navigates the shared `page` to `?body=skinned&archetype=rab` and never
+    // navigates back, and `beats` only recovers by re-navigating at its own
+    // start — a region placed after both without doing the same inherits
+    // whichever one last touched the shared page. A fresh page sidesteps the
+    // question entirely, same as `audio`/`taxman`/`ambience` already do.
+    if (wants('signs')) {
+      const signsPage = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      const signsErrors = [];
+      signsPage.on('console', (m) => { if (m.type() === 'error') signsErrors.push(m.text()); });
+      signsPage.on('pageerror', (e) => signsErrors.push(String(e)));
+      await signsPage.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+      await signsPage.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await signsPage.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await signsPage.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+      const rectOf = (name) => signsPage.evaluate((n) => {
+        const d = window.__mcgrotsDebug;
+        const o = d.scene.getObjectByName(n);
+        if (!o) return null;
+        const box = new d.THREE.Box3().setFromObject(o);
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, anyInFront = false;
+        for (const x of [box.min.x, box.max.x]) {
+          for (const y of [box.min.y, box.max.y]) {
+            for (const z of [box.min.z, box.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              if (p.z < 1) anyInFront = true;
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+              y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+          }
+        }
+        const clamp01 = (v) => Math.max(0, Math.min(1, v));
+        return {
+          ux0: clamp01(x0 * 0.5 + 0.5), ux1: clamp01(x1 * 0.5 + 0.5),
+          uy0: clamp01(1 - (y1 * 0.5 + 0.5)), uy1: clamp01(1 - (y0 * 0.5 + 0.5)),
+          anyInFront,
+        };
+      }, name);
+
+      // Same technique as the van/pomple regions' own stddev helper —
+      // duplicated rather than shared, matching how this file already treats
+      // every other region's copy of it.
+      const stddevOf = (buf, x0, x1, y0, y1) => {
+        const png = PNG.sync.read(buf);
+        const px0 = Math.max(0, Math.round(x0 * png.width));
+        const px1 = Math.min(png.width - 1, Math.round(x1 * png.width));
+        const py0 = Math.max(0, Math.round(y0 * png.height));
+        const py1 = Math.min(png.height - 1, Math.round(y1 * png.height));
+        let sum = 0, sumSq = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * png.width + x) * 4;
+            const l = 0.2126 * png.data[o] + 0.7152 * png.data[o + 1] + 0.0722 * png.data[o + 2];
+            sum += l; sumSq += l * l; n++;
+          }
+        }
+        if (!n) return 0;
+        const mean = sum / n;
+        return Math.sqrt(Math.max(0, sumSq / n - mean * mean));
+      };
+
+      // PINNED to day 4 -> `pomple-05` ("SIT DOWN.") throughout the presence
+      // and contrast checks below — one of the two short lines this unit's own
+      // render pass (see .herdr/signs.md) found legible everywhere it is
+      // legible at all, so a check against it is testing the feature's own
+      // best case rather than a line already known to be marginal. An
+      // unpinned clock has cost three separate regions here (the brief names
+      // `mcgrot` and `style`); this one never reads Date.now() unpinned.
+      const PINNED_DAY_MS = 4 * 86400000;
+      await signsPage.evaluate((ms) => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.setClock(ms); }, PINNED_DAY_MS);
+
+      // --- 1: present and non-degenerate at every anchor -----------------
+      const ids = await signsPage.evaluate(() => window.__mcgrotsDebug.anchorIds());
+      const presenceRows = [];
+      for (const id of ids) {
+        await signsPage.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.setMarkersVisible(false);
+          d.snapTo(a);
+          d.stepFrames(2);
+        }, id);
+        const rect = await rectOf('pomple-sign');
+        const buf = await signsPage.screenshot({ type: 'png' });
+        writeFileSync(join(OUT, `signs-${id}.png`), buf);
+        presenceRows.push({ id, rect, buf });
+      }
+      // Measured floor, not guessed: the smallest real footprint across all
+      // five anchors is `far` at 0.160% (see .herdr/signs.md's survey) — 0.05%
+      // clears every real anchor with margin while still catching a truly
+      // degenerate (zero-area or off-screen) projection.
+      const areaOf = (r) => (r ? Math.max(0, r.ux1 - r.ux0) * Math.max(0, r.uy1 - r.uy0) : 0);
+      const areaRows = presenceRows.map((v) => ({ id: v.id, area: areaOf(v.rect) }));
+      const badArea = presenceRows.filter((v) => !v.rect || !v.rect.anyInFront || areaOf(v.rect) < 0.0005);
+      check('the sign is present and non-degenerate in frame at every anchor',
+        badArea.length === 0,
+        areaRows.map((v) => `${v.id} ${(v.area * 100).toFixed(3)}%`).join(' / '));
+
+      // --- 2: the lettering itself, not just a rectangle (control: blank) ---
+      // THE CONTROL, named per the brief: the identical rect, same frame,
+      // texture swapped for the blank board — same geometry, position and
+      // material, no text baked. Measured at all five anchors and reported
+      // per-anchor (not averaged): kerb is the one this unit's own render
+      // pass found illegible by eye despite the plane still being on screen
+      // (an edge-on sliver, ~61° off the sign's own facing direction), and
+      // the brief is explicit that an anchor reading badly is an expected
+      // result to report, not a fault to hide by only checking the anchors
+      // that work.
+      const contrastRows = [];
+      for (const v of presenceRows) {
+        const { id, rect } = v;
+        await signsPage.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.setMarkersVisible(false);
+          d.snapTo(a);
+          d.stepFrames(2);
+        }, id);
+        await signsPage.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.setBlank(false); window.__mcgrotsDebug.stepFrames(1); });
+        const letteredBuf = await signsPage.screenshot({ type: 'png' });
+        await signsPage.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.setBlank(true); window.__mcgrotsDebug.stepFrames(1); });
+        const blankBuf = await signsPage.screenshot({ type: 'png' });
+        await signsPage.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.setBlank(false); });
+        const lettered = rect ? stddevOf(letteredBuf, rect.ux0, rect.ux1, rect.uy0, rect.uy1) : 0;
+        const blank = rect ? stddevOf(blankBuf, rect.ux0, rect.ux1, rect.uy0, rect.uy1) : 0;
+        contrastRows.push({ id, lettered, blank });
+      }
+      // Threshold sized off the WEAKEST real signal, not the strongest: kerb
+      // measured a 7.5-point delta against a blank-vs-blank floor of ~0 (see
+      // .herdr/signs.md) — every other anchor cleared 23. 3 clears kerb with
+      // margin while staying far above blank-vs-blank noise.
+      const badContrast = contrastRows.filter((v) => v.lettered <= v.blank + 3);
+      check('the lettering measurably raises the sign\'s own variance over the blank control, at every anchor (isolates the TEXT, not "a rectangle is in shot")',
+        badContrast.length === 0,
+        contrastRows.map((v) => `${v.id} lettered=${v.lettered.toFixed(1)} blank=${v.blank.toFixed(1)} (Δ${(v.lettered - v.blank).toFixed(1)})`).join(' / '));
+
+      await signsPage.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.clearClock(); });
+
+      // --- 3: determinism — same pinned day, two separate boots ----------
+      // The brief's own requirement: "a pure function of the wall clock or
+      // the day, never a random draw". Checked the way this file already
+      // checks the same shape of claim elsewhere (ambience's `eventAt`,
+      // visit's `cueAt`) — two INDEPENDENT pages agreeing at the same pinned
+      // instant, not two calls against one boot's already-warm state, plus a
+      // different pinned day producing a different line as the control that
+      // rules out a function returning a constant regardless of input.
+      const readLineAt = async (p, ms) => p.evaluate((m) => {
+        const s = window.__mcgrotsDebug.scene.getObjectByName('pomple-sign');
+        s.userData.setClock(m);
+        window.__mcgrotsDebug.stepFrames(1);
+        return s.userData.getLineId();
+      }, ms);
+      const bootB = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+      const bootBErrors = [];
+      bootB.on('console', (m) => { if (m.type() === 'error') bootBErrors.push(m.text()); });
+      bootB.on('pageerror', (e) => bootBErrors.push(String(e)));
+      await bootB.goto(`http://127.0.0.1:${port}/mcgrots.html`, { waitUntil: 'load' });
+      await bootB.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await bootB.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await bootB.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+
+      const dayA1 = await readLineAt(signsPage, PINNED_DAY_MS);
+      const dayA2 = await readLineAt(bootB, PINNED_DAY_MS);
+      const OTHER_DAY_MS = 5 * 86400000;
+      const dayB1 = await readLineAt(signsPage, OTHER_DAY_MS);
+      check('the same pinned day produces the same line across two independent boots',
+        dayA1 === dayA2 && !!dayA1,
+        `boot A: ${dayA1} / boot B: ${dayA2}`);
+      check('...and a different pinned day produces a different line (control)',
+        dayB1 !== dayA1,
+        `day 4: ${dayA1} / day 5: ${dayB1}`);
+      await bootB.close();
+      check('console clean on the determinism boot',
+        bootBErrors.length === 0, bootBErrors.slice(0, 3).join(' | ') || 'no errors');
+
+      // --- 4: held at rest, set down for an active beat -------------------
+      await signsPage.evaluate((ms) => { window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').userData.setClock(ms); }, PINNED_DAY_MS);
+      await signsPage.evaluate((a) => { window.__mcgrotsDebug.snapTo(a); window.__mcgrotsDebug.stepFrames(2); }, 'counter');
+      const restVisible = await signsPage.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').visible);
+      await signsPage.evaluate(() => {
+        window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.playBeat('notice');
+        window.__mcgrotsDebug.stepFrames(2);
+      });
+      const noticeVisible = await signsPage.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').visible);
+      await signsPage.evaluate(() => window.__mcgrotsDebug.stepFrames(600));
+      const afterBeatVisible = await signsPage.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple-sign').visible);
+      const beatAfter = await signsPage.evaluate(() => window.__mcgrotsDebug.scene.getObjectByName('pomple').userData.getBeat());
+      check('the sign is visible at rest and hidden for the duration of an active beat, then reappears once it ends',
+        restVisible === true && noticeVisible === false && afterBeatVisible === true && beatAfter === null,
+        `rest=${restVisible} duringNotice=${noticeVisible} afterBeatEnds=${afterBeatVisible} beat=${beatAfter}`);
+
+      check('console clean after driving the signs region',
+        signsErrors.length === 0, signsErrors.slice(0, 3).join(' | ') || 'no errors');
+
+      await signsPage.close();
     }
   }
 
