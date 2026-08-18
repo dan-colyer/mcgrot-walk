@@ -1312,10 +1312,27 @@ are worth doing before G8a, 3–5 are not.
 item no implementing session named, because it is invisible from inside a green
 suite. Three parts, in order of what they cost:
 
-- Promote `BODY_KIND` to `skinned`, the G1 winner, the way G7h promoted
-  `LOOK_KIND` to S2 — its own landing, with its own measurement of what moved.
-  Expect goldens and every rect-based check to move; that is the point of a
-  separate commit.
+- ~~Promote `BODY_KIND` to `skinned`, the G1 winner, the way G7h promoted
+  `LOOK_KIND` to S2~~ — done, `g7-5b-bodydef` branch (unmerged — see below),
+  measurement in `docs/g7-5b-body-default.md`. Suite stayed 153/153: almost
+  every body-sensitive check already forced `?body=skinned` for its own
+  reasons (F26's own point, one level down), so the default flip only moves
+  the two regions that boot plain (`camera`, `visit`) — and none of their
+  tolerances were tight enough to flip. The captures themselves changed as
+  expected: a coated, hatted, walking figure instead of a cream lozenge, at
+  every anchor that shows the player's body. `counter` is blind to this
+  entirely in both directions — the player's own body never enters that
+  anchor's frame. `BODIES[BODY_KIND] || BODIES.capsule` (main.js:733) was left
+  pointing at `capsule` on purpose: it is a typo guard for capture scripts,
+  not a default, and pointing it at `skinned` would let a bad `?body=` value
+  render the correct-looking figure and hide the mistake. In this worker's own
+  isolated worktree the suite stayed 153/153 green — surprising, and explained
+  above; it is not a claim about what happens against `main`. **Not merged to
+  `main`**: a concurrent worker (G7.5a) owns `scripts/smoke-mcgrots.mjs` and is
+  splitting it while this branch was in flight, so landing this default
+  against the current suite was explicitly out of scope for this unit — that
+  reconciliation is the next unit's job, alongside the default-boot check
+  below.
 - One default-boot check per flagged feature (`valance`, `ambience`, `body`,
   `look`). Small, and the ambience region already contains the shape to copy.
 - Decide what `visit` ships as. It is OFF today, so the plain page runs no
