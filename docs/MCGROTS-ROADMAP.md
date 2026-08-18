@@ -1318,9 +1318,24 @@ suite. Three parts, in order of what they cost:
   separate commit.
 - One default-boot check per flagged feature (`valance`, `ambience`, `body`,
   `look`). Small, and the ambience region already contains the shape to copy.
-- Decide what `visit` ships as. It is OFF today, so the plain page runs no
-  visit at all, and G9 cannot ship that. Not a bug — a decision nobody has been
-  asked for yet.
+- **`visit` ships ON. Decided 2026-08-18** — the gate raised it, Dan said he
+  did not know what the flag was and to go with the orchestrator's
+  recommendation, so this is a recommendation taken rather than a preference
+  of his to preserve.
+
+  `main.js:82` reads `params.get('visit') === 'on'`, so the plain page runs no
+  visit: the van and the cast stand there doing idle behaviour and nothing
+  happens. The visit is not a feature *of* the product, it is the product —
+  the 28-row cue table on a 600.6s cycle is exactly what was judged at G7.
+  Nothing else on the page fills ten minutes, so a default of OFF means the
+  shipped artefact is the one thing G7 did not pass.
+
+  Two things it does not settle, both for whoever lands it. The visit must
+  start from the **title card gesture** the page already requires — WebAudio
+  needs one, and starting a scripted sequence before the player has clicked
+  into it wastes the opening cues. And the cycle is a wall clock, so a player
+  arriving at t=400s joins mid-visit by design (§ 6); that is correct
+  behaviour and must not be "fixed" into a per-session start.
 
 **2. F24, whatever G7p returns.** Live and unresolved: McGrot stands 3.8 cm in
 front of the van's front panel, so the valance hides his legs and his apron
