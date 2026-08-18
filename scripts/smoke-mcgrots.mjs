@@ -3899,6 +3899,9 @@ try {
         };
 
         await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = true; window.__mcgrotsDebug.stepFrames(1); });
+        // Shipped state, for Dan's own eye — numeric coverage proves pixels
+        // changed, not that the van still reads as a van.
+        writeFileSync(join(OUT, `valance-${id}.png`), await page.screenshot({ type: 'png' }));
         const on = await fraction();
         await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = false; window.__mcgrotsDebug.stepFrames(1); });
         const off = await fraction();
