@@ -1,7 +1,14 @@
 # G7m — you arrive in the middle of something, and you can say one thing
 
-**HELD until G7j and G7k land.** This unit owns `src/mcgrots/visit.js` and
-`src/mcgrots/main.js`; `taxman` holds both and `ambience` holds `main.js`.
+**RELEASED 2026-08-18 — G7j and G7k have both landed and merged.** This unit
+owns `src/mcgrots/visit.js` and `src/mcgrots/main.js` outright; no other worker
+holds either. `main` is at `3d6636a`, suite 131/131.
+
+**One change since this brief was written.** G7n moved the `approach` beat off
+the `far` cue and onto the first `counter` cue, so `visit.js`'s cue table now
+carries four `beat:` fields, not three. Read the table as it stands rather than
+as this brief describes it, and do not disturb a `beat:` field — those belong to
+the `beats` region's gates.
 
 **Read `AGENTS.md` first, then `docs/MCGROTS-ROADMAP.md` § 6 including "The
 persistent world is the product", then `src/mcgrots/visit.js` and

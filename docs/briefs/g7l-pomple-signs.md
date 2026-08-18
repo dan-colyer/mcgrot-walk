@@ -1,7 +1,8 @@
 # G7l — Pomplé holds up a sign
 
-**HELD until G7i lands.** This unit owns `src/mcgrots/pomple.js`, which the
-`beats` worker holds until its follow-up merges.
+**RELEASED 2026-08-18 — G7i and G7n have both landed and merged.** This unit
+owns `src/mcgrots/pomple.js` outright; no other worker holds it. `main` is at
+`3d6636a`, suite 131/131.
 
 **Read `AGENTS.md` first, then `docs/MCGROTS-DIALOGUE.md` on Pomplé, then
 `src/mcgrots/pomple.js` end to end including its header.** Your context is
