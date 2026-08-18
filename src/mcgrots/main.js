@@ -48,7 +48,7 @@ const BODIES = {
   skinned: (assets) => makeSkinnedBody({ assets, archetype: BODY_ARCHETYPE }),
 };
 const params = new URLSearchParams(location.search);
-const BODY_KIND = params.get('body') || 'capsule';
+const BODY_KIND = params.get('body') || 'skinned';
 const BODY_ARCHETYPE = params.get('archetype') || 'rab';
 // G2's bake-off levers, the same shape as G1's `?body=`.
 //
