@@ -3676,3 +3676,109 @@ unit sharing this same file.
   others of that exact shape). Extending the mechanism to a walk-into-
   complaint transition, or widening an existing overlap, needs no new code,
   only a new/changed `earlyStart` value.
+
+## G7l — Pomplé's sign
+
+Twelve lines existed under the `POMPLE` key since G5b and nothing rendered
+one. His `directorNotes` had always said he does not speak aloud and that each
+line should be handwritten sign text; the dog and the lines had simply never
+met. A sign held during a silence is also the cheapest beat this project can
+buy — it costs no audio at all, and 386 of the visit's 600 seconds are silence.
+
+Line choice is `Math.floor(Date.now()/86400000) % 12` — day-keyed, no PRNG, so
+two clients looking at the same dog on the same day see the same sign. That is
+roadmap § 6's persistence requirement, not a stylistic choice.
+
+### The gate
+
+Seven checks in the `signs` region, its own block at the end of the file with
+its own fresh page and boot. **7/7 standalone in 1.5-2.0s; full suite 147/147
+in 29.8s** — both re-run by the orchestrator on the merged tree, not carried
+over from the worker's own numbers (which were 7/7 and 138/138 against the
+pre-merge base of 131).
+
+The named control is **a blank sign**: same geometry, same position, same
+material, no text baked. That is what isolates the lettering from "there is a
+light-coloured rectangle in shot", and a sign-present check passes on a blank
+board.
+
+Thresholds were set from a survey, not picked first and defended after. The
+smallest real sign footprint across five anchors is `far` at 0.160%, so the
+presence floor sits at 0.05%. The lettered-vs-blank variance delta measured
+counter Δ27.4, wall Δ29.0, kerb Δ7.5, far Δ27.1, back Δ23.4, so the contrast
+threshold sits at blank+3 — below `kerb`'s weak 7.5 and far above
+blank-vs-blank noise of roughly zero.
+
+### The blind spot, named rather than trusted
+
+**The presence check cannot see `.visible`, and passes on a fully invisible
+sign.** Verified by the orchestrator's own injection, not accepted on the
+worker's description: setting `signGroup.visible = false` permanently gives
+**5/7 with the presence check still GREEN**, while the contrast check and the
+beat-visibility check both correctly go red.
+
+`Box3().setFromObject` reads geometry and world transforms; it does not
+consult visibility. This is the same gap the existing `van` and `pomple`
+regions' own area checks already carry, and it is exactly the failure that
+once let `statue.visible = false` pass its region 2/2 and the whole suite
+38/38 with nothing drawn.
+
+**The region as a whole still satisfies the project invariant, because the
+contrast check is a genuine rendered-frame check and it does go red.** But the
+presence check on its own proves a function ran, not that anything is drawn.
+Do not add a check of that shape and treat it as proof of rendering.
+
+### What the render actually showed, read at native resolution
+
+**A 4x-zoomed contact sheet made every line look fine, which is the trap** —
+zooming exceeds what a player at that camera distance can see. Read at full
+1280x720 instead, at `counter`, after `--frames=300` for a full walk settle:
+
+| Anchor | Result |
+|---|---|
+| `counter`, `wall` | Short lines read clearly |
+| `far` | A two-word line is just barely legible; nothing longer |
+| `back` | Not reliably legible even magnified — small bold caps do not resolve |
+| `kerb` | The board is ~61° off its own facing direction and renders as a bright vertical sliver, unreadable for every line |
+
+**The finding worth more than the feature, for whoever writes the next batch:**
+at this board size and the ~7-8m viewing distance, a sign line survives up to
+roughly **6 words / 3 wrapped lines**. Seven words is borderline. Nine words in
+one sentence does not read at distance regardless of font auto-shrink — the
+shrink loop protects against clipping, not against producing text too small to
+resolve. The brief predicted `pomple-06` and `pomple-08` would fail on length
+and both did.
+
+### Two faults found by rendering, not by the numbers
+
+**The font-shrink loop only checked the wrapped block's HEIGHT.** It never
+checked that the widest line fit the width budget, and `wrapSignLines` breaks
+between words without knowing a single word can already exceed `maxWidth` on
+its own. A 13-character word measured ~470px against a 422px budget and was
+accepted because four wrapped lines fit the height. Fixed by adding a
+`widest <= maxWidth` clause and lowering the size floor from 30 to 18.
+
+**The sign hid the dog it belongs to.** Pomplé's own facing direction is only
+10.8° off the `counter` camera's sightline to him, so anything placed "in
+front of him" sits almost exactly between him and that camera — the render
+showed a sign and no dog at all. Confirmed by projecting both AABBs rather
+than by eye. Fixed with a sideways offset perpendicular to his yaw rather than
+by pushing further forward, leaving a 16px sliver of overlap.
+
+That second one moved a number in the existing `pomple` region, which is
+reported rather than adjusted: content stddev at `counter` was 37.4 before,
+47.5 with the sign directly in front of him, and 40.8 after the sideways fix.
+The check's own threshold is `flatStddev + 5` against a flat of roughly zero,
+so nothing was ever near red — but the number moved, and it would have kept
+moving had the placement stayed forward-only.
+
+### Not gated
+
+- **Whether a player who is not looking for the sign ever notices it.** The
+  gate proves the lettering is legible from a given anchor; it says nothing
+  about attention.
+- **`kerb` is a dead anchor for signs** and no check requires otherwise. If a
+  sign beat is ever wanted there, the board needs its own yaw, and that is new
+  work rather than a threshold change.
+- **The board size and offsets** (0.85 x 0.60m, forward 0.55m, side 0.70m) are
+  measured to work, not proven optimal.
