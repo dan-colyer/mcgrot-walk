@@ -80,6 +80,20 @@ const rand = (() => {
   };
 })();
 
+// G7o — the valance (docs/briefs/g7o-van-valance.md,
+// docs/MCGROTS-ROADMAP.md § 10 F24). McGrot stands at road level inside the
+// van's plan footprint, so his legs occupy the same space as the van's
+// underside; the valance CONCEALS that overlap, it does not resolve it — the
+// ground planes stay wrong underneath. Ships ON. Same lever shape main.js
+// already uses for `VISIT_ON`/`AMBIENCE_ON` (a `?valance=off` query param or
+// `window.__mcgrotsForceValance = false`) rather than the street's
+// `src/flags.js`: that helper is for the street's own modules, and van.js's
+// own header already declines a cross-project import for exactly this
+// reason. Read once, at module load, matching where the other two levers are
+// read in main.js.
+const VALANCE_ON = new URLSearchParams(location.search).get('valance') !== 'off'
+  && window.__mcgrotsForceValance !== false;
+
 // The one call main.js makes. Returns a handle rather than nothing, in the
 // same shape gullet.js's buildGullet() does, so a later unit (or a gate) can
 // reach the pieces without re-querying the scene graph by name.
@@ -204,6 +218,29 @@ function buildBody(group) {
   addMerged(group, trim, SOOT, 'van-trim');
   addMerged(group, wheels, SOOT, 'van-wheels');
   addMerged(group, [awning], MUSTARD, 'van-awning');
+
+  // The valance itself: same 4-face loop as the soot skirt above (front,
+  // back, both ends), lower and taller — from just off the ground up into
+  // the floor slab, filling what the wheels (0.02–0.82) do not. SOOT, not
+  // CREAM: it reads as undercarriage, matching the trim and wheels it sits
+  // beside, rather than as a second body panel.
+  const valanceBottom = 0.02;
+  const valanceTop = CHASSIS_H + 0.02; // laps into the floor slab, no hairline gap
+  const valanceH = valanceTop - valanceBottom;
+  const valanceY = (valanceBottom + valanceTop) * 0.5;
+  const valance = [];
+  for (const face of [1, -1]) {
+    const v = new THREE.BoxGeometry(VAN_LENGTH * 0.998, valanceH, 0.05);
+    v.translate(0, valanceY, face * (VAN_DEPTH * 0.5 + 0.01));
+    valance.push(v);
+  }
+  for (const end of [1, -1]) {
+    const v = new THREE.BoxGeometry(0.05, valanceH, VAN_DEPTH * 0.998);
+    v.translate(end * (VAN_LENGTH * 0.5 + 0.01), valanceY, 0);
+    valance.push(v);
+  }
+  const valanceMesh = addMerged(group, valance, SOOT, 'van-valance');
+  if (valanceMesh) valanceMesh.visible = VALANCE_ON;
 }
 
 function buildCounter(group) {
@@ -366,11 +403,12 @@ function buildGround(scene, vanWorld) {
 // ---------------------------------------------------------------------------
 
 function addMerged(group, geos, hex, name) {
-  if (!geos.length) return;
+  if (!geos.length) return undefined;
   const mesh = new THREE.Mesh(
     mergeGeometries(geos, false),
     new THREE.MeshLambertMaterial({ color: hex, flatShading: true }),
   );
   mesh.name = name;
   group.add(mesh);
+  return mesh;
 }

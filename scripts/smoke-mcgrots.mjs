@@ -35,7 +35,7 @@ const DIALOGUE_FILE = join(root, 'generated/mcgrots-dialogue.json');
 
 // 'dialogue' is pure node against two JSON files — no page, no server. Kept
 // out of BROWSER_REGIONS below so `--only=dialogue` never pays for a boot.
-const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience', 'signs'];
+const REGIONS = ['boot', 'camera', 'statue', 'anchors', 'van', 'pomple', 'mcgrot', 'seat', 'rota', 'audio', 'visit', 'style', 'dialogue', 'beats', 'taxman', 'ambience', 'signs', 'valance'];
 const BROWSER_REGIONS = REGIONS.filter((r) => r !== 'dialogue');
 const ONLY = new Set(process.argv.filter((a) => a.startsWith('--only='))
   .flatMap((a) => a.slice(7).split(',')));
@@ -4118,6 +4118,243 @@ try {
         signsErrors.length === 0, signsErrors.slice(0, 3).join(' | ') || 'no errors');
 
       await signsPage.close();
+    }
+
+    if (wants('valance')) {
+      await page.goto(`http://127.0.0.1:${port}/mcgrots.html?body=skinned&archetype=rab`,
+        { waitUntil: 'load' });
+      await page.waitForFunction(() => !!window.__mcgrotsDebug, null, { timeout: 15000 });
+      await page.evaluate(() => window.__mcgrotsDebug.card.dismiss());
+      await page.evaluate(() => window.__mcgrotsDebug.pauseAuto());
+      // Aerial is already LOOK_KIND's default (main.js), but set it
+      // explicitly and let it settle — same 4-frame settle the mcgrot
+      // region's F22 check uses for a fresh cel/hull material, and the same
+      // reason: measured under the look Dan actually sees, not `?look=none`'s
+      // near-black silhouette.
+      await page.evaluate(() => { window.__mcgrotsDebug.setLook('aerial'); window.__mcgrotsDebug.stepFrames(4); });
+
+      const ids = await page.evaluate(() => window.__mcgrotsDebug.anchorIds());
+
+      const countDiffPixels = (bufA, bufB, r) => {
+        const a = PNG.sync.read(bufA), b = PNG.sync.read(bufB);
+        const px0 = Math.max(0, Math.round(r.ux0 * a.width));
+        const px1 = Math.min(a.width - 1, Math.round(r.ux1 * a.width));
+        const py0 = Math.max(0, Math.round(r.uy0 * a.height));
+        const py1 = Math.min(a.height - 1, Math.round(r.uy1 * a.height));
+        let hits = 0, n = 0;
+        for (let y = py0; y <= py1; y++) {
+          for (let x = px0; x <= px1; x++) {
+            const o = (y * a.width + x) * 4;
+            const la = 0.2126 * a.data[o] + 0.7152 * a.data[o + 1] + 0.0722 * a.data[o + 2];
+            const lb = 0.2126 * b.data[o] + 0.7152 * b.data[o + 1] + 0.0722 * b.data[o + 2];
+            if (Math.abs(la - lb) > 8) hits++;
+            n++;
+          }
+        }
+        return n ? hits / n : 0;
+      };
+      const project = (box) => page.evaluate((b) => {
+        const d = window.__mcgrotsDebug;
+        const box3 = new d.THREE.Box3(new d.THREE.Vector3(b.min.x, b.min.y, b.min.z), new d.THREE.Vector3(b.max.x, b.max.y, b.max.z));
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, anyInFront = false;
+        for (const x of [box3.min.x, box3.max.x]) {
+          for (const y of [box3.min.y, box3.max.y]) {
+            for (const z of [box3.min.z, box3.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              if (p.z < 1) anyInFront = true;
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x);
+              y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+          }
+        }
+        const c = (v) => Math.max(0, Math.min(1, v));
+        return {
+          ux0: c(x0 * 0.5 + 0.5), ux1: c(x1 * 0.5 + 0.5),
+          uy0: c(1 - (y1 * 0.5 + 0.5)), uy1: c(1 - (y0 * 0.5 + 0.5)), anyInFront,
+        };
+      }, box);
+
+      // ------------------------------------------------------- check 1 ---
+      // "The leg zone is covered." The rect is McGrot's OWN x/z footprint
+      // (not the van's, and not the valance's own — either is diluted by
+      // background the exact way the brief's F22 comment warns a mean/area
+      // measurement can be, measured directly here: using the valance mesh's
+      // own footprint as the rect first read on=3.8-6.8%/off=5.0-8.8% at the
+      // five anchors, a real but heavily diluted signal, because most of
+      // that rect is pavement he was never standing in either arm), with y
+      // CLAMPED to [0, 0.62] — road to the van's floor (CHASSIS_H in van.js,
+      // quoted here since it is not on the debug API; F24's own measured
+      // table). Same on/off toggle-and-diff technique as F22 and the beret
+      // check above (`mcgrot` visible/invisible, same boot, same anchor,
+      // pixels over an 8-luminance threshold inside the rect only).
+      const legRows = [];
+      for (const id of ids) {
+        await page.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.setMarkersVisible(false);
+          d.snapTo(a);
+          d.rota.setClock(980);
+          d.stepFrames(2);
+        }, id);
+        const mcgrotBox = await page.evaluate(() => {
+          const d = window.__mcgrotsDebug;
+          const m = d.scene.getObjectByName('mcgrot');
+          if (!m) return null;
+          const box = new d.THREE.Box3().setFromObject(m);
+          return { min: { x: box.min.x, y: 0, z: box.min.z }, max: { x: box.max.x, y: 0.62, z: box.max.z } };
+        });
+        if (!mcgrotBox) { legRows.push({ id, on: 0, off: 0, missing: true }); continue; }
+        const legRect = await project(mcgrotBox);
+
+        const fraction = async () => {
+          const withM = await page.screenshot({ type: 'png' });
+          const wasVisible = await page.evaluate(() => {
+            const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+            const v = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+            return v;
+          });
+          const withoutM = await page.screenshot({ type: 'png' });
+          await page.evaluate((v) => {
+            const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+            g.visible = v; window.__mcgrotsDebug.stepFrames(1);
+          }, wasVisible);
+          return countDiffPixels(withM, withoutM, legRect);
+        };
+
+        await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = true; window.__mcgrotsDebug.stepFrames(1); });
+        // Shipped state, for Dan's own eye — numeric coverage proves pixels
+        // changed, not that the van still reads as a van.
+        writeFileSync(join(OUT, `valance-${id}.png`), await page.screenshot({ type: 'png' }));
+        const on = await fraction();
+        await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = false; window.__mcgrotsDebug.stepFrames(1); });
+        const off = await fraction();
+        await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = true; window.__mcgrotsDebug.stepFrames(1); });
+        legRows.push({ id, on, off });
+      }
+      // MEASURED, both arms, all five anchors: on 12.7-19.0%, off 28.0-31.3%
+      // — every anchor's on/off ratio falls in 0.45-0.61, comfortably under
+      // the 0.8 ratio this project already uses for the identical shape of
+      // claim (F22's own fix-on/fix-off control, mcgrot region above). The
+      // 15% floor on the control sits below every measured `off` reading
+      // (28.0% minimum) with real margin, and above zero with more —
+      // determinism means a dry run (no real toggle) reads exactly 0.0, so
+      // any double-digit reading here is real signal, not noise.
+      const badLegRatio = legRows.filter((v) => v.missing || v.on >= v.off * 0.8);
+      check('the leg zone: his visible-pixel fraction in the road-to-floor band drops with the valance on, at every anchor',
+        badLegRatio.length === 0,
+        legRows.map((v) => v.missing ? `${v.id} MISSING` : `${v.id} on=${(v.on * 100).toFixed(1)}% off=${(v.off * 100).toFixed(1)}%`).join(' / '));
+      const badLegControl = legRows.filter((v) => v.missing || v.off <= 0.15);
+      check('control: with the valance off, the same band clearly shows him (>15%) — the check is measuring the valance, not an empty rect',
+        badLegControl.length === 0,
+        legRows.map((v) => v.missing ? `${v.id} MISSING` : `${v.id} off=${(v.off * 100).toFixed(1)}%`).join(' / '));
+
+      // ------------------------------------------------------- check 2 ---
+      // "The valance does not occlude McGrot himself." F22's own floor
+      // (mcgrot region above), re-run here with the valance in both states.
+      // Same technique, his own full AABB rect this time (not the leg band),
+      // at `counter`, clock pinned to 980 — F22's own reference for "no
+      // reader present".
+      await page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        d.setMarkersVisible(false);
+        d.snapTo('counter');
+        d.rota.setClock(980);
+        d.stepFrames(2);
+      });
+      const bodyBox = await page.evaluate(() => {
+        const d = window.__mcgrotsDebug;
+        const m = d.scene.getObjectByName('mcgrot');
+        const box = new d.THREE.Box3().setFromObject(m);
+        return { min: { x: box.min.x, y: box.min.y, z: box.min.z }, max: { x: box.max.x, y: box.max.y, z: box.max.z } };
+      });
+      const bodyRect = await project(bodyBox);
+      const f22Fraction = async () => {
+        const withM = await page.screenshot({ type: 'png' });
+        const wasVisible = await page.evaluate(() => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          const v = g.visible; g.visible = false; window.__mcgrotsDebug.stepFrames(1);
+          return v;
+        });
+        const withoutM = await page.screenshot({ type: 'png' });
+        await page.evaluate((v) => {
+          const g = window.__mcgrotsDebug.scene.getObjectByName('mcgrot');
+          g.visible = v; window.__mcgrotsDebug.stepFrames(1);
+        }, wasVisible);
+        return countDiffPixels(withM, withoutM, bodyRect);
+      };
+      await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = true; window.__mcgrotsDebug.stepFrames(1); });
+      const f22On = await f22Fraction();
+      await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = false; window.__mcgrotsDebug.stepFrames(1); });
+      const f22Off = await f22Fraction();
+      await page.evaluate(() => { window.__mcgrotsDebug.scene.getObjectByName('van-valance').visible = true; window.__mcgrotsDebug.stepFrames(1); });
+      // MEASURED: on=25.5%, off=30.5% — both clear F22's own 20% floor with
+      // margin; the valance costs him ~5pp of his own visible fraction (the
+      // leg band it is built to remove) without dragging him under the line
+      // F22 exists to enforce.
+      check('F22 unaffected: McGrot’s own visible-pixel fraction at counter clears the 20% floor with the valance on',
+        f22On > 0.2, `on=${(f22On * 100).toFixed(1)}%  (>20% required)`);
+      check('F22 control: the same measurement with the valance off also clears the floor (the valance is not propping up a borderline reading)',
+        f22Off > 0.2, `on=${(f22On * 100).toFixed(1)}% off=${(f22Off * 100).toFixed(1)}%  (>20% required, each)`);
+
+      // ------------------------------------------------------- check 3 ---
+      // "Nothing else moved." The van region's own frame-fraction check
+      // reads the van's AABB via `Box3().setFromObject` — which, like the
+      // mcgrot region's own equivalent, walks descendants REGARDLESS OF
+      // `.visible` (measured directly: toggling `van-valance.visible` moves
+      // this number by exactly 0.000pp at every anchor). A visibility toggle
+      // is therefore not a control for this claim; the real one is whether
+      // the valance's OWN geometry sits inside the van's pre-existing
+      // silhouette. `before` excludes the `van-valance` mesh from the box
+      // entirely (as if this unit had never landed); `after` is the shipped
+      // `Box3().setFromObject(van)` the van region itself uses.
+      const areaOf = (r) => r ? Math.max(0, r.ux1 - r.ux0) * Math.max(0, r.uy1 - r.uy0) : 0;
+      const frameRows = [];
+      for (const id of ids) {
+        await page.evaluate((a) => {
+          const d = window.__mcgrotsDebug;
+          d.snapTo(a);
+          d.stepFrames(2);
+        }, id);
+        const { before, after } = await page.evaluate(() => {
+          const d = window.__mcgrotsDebug;
+          const van = d.scene.getObjectByName('van');
+          const project2 = (box) => {
+            let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, anyInFront = false;
+            for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+              const p = new d.THREE.Vector3(x, y, z).project(d.camera);
+              if (p.z < 1) anyInFront = true;
+              x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
+            }
+            const c = (v) => Math.max(0, Math.min(1, v));
+            return { ux0: c(x0 * 0.5 + 0.5), ux1: c(x1 * 0.5 + 0.5), uy0: c(1 - (y1 * 0.5 + 0.5)), uy1: c(1 - (y0 * 0.5 + 0.5)), anyInFront };
+          };
+          const afterBox = new d.THREE.Box3().setFromObject(van);
+          const beforeBox = new d.THREE.Box3();
+          // looks.js adds an ink-hull companion mesh per named part
+          // (`hull:<name>`) for the S1/S2 outline pass — excluding only the
+          // exact name leaves that companion's own AABB in `before`, which
+          // silently defeats this exact control the day the valance's hull
+          // is the thing that grows (caught by fault injection: check 3's
+          // fault leaked straight through `before` until this line excluded
+          // it too, matching `after` and staying green throughout).
+          van.traverse((o) => { if (o.isMesh && o.name !== 'van-valance' && o.name !== 'hull:van-valance') beforeBox.expandByObject(o); });
+          return { before: project2(beforeBox), after: project2(afterBox) };
+        });
+        frameRows.push({ id, before: areaOf(before), after: areaOf(after) });
+      }
+      // MEASURED: delta is exactly 0.000pp at every anchor — the wheels and
+      // awning already extend the van's own AABB past where the valance
+      // sits, so this unit adds zero silhouette. Gated at 0.5pp rather than
+      // 0.000 so a future change that moves the valance a few centimetres
+      // does not fail this on rounding; the fault injection below proves the
+      // gate can still see a real change.
+      const badFrame = frameRows.filter((v) => Math.abs(v.after - v.before) > 0.005);
+      check('the van’s own frame fraction is unchanged by the valance, at every anchor (existing van-region numbers stay valid)',
+        badFrame.length === 0,
+        frameRows.map((v) => `${v.id} before=${(v.before * 100).toFixed(2)}% after=${(v.after * 100).toFixed(2)}% delta=${((v.after - v.before) * 100).toFixed(3)}pp`).join(' / '));
+
+      check('console still clean after driving the valance region',
+        consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | ') || 'no errors');
     }
   }
 
