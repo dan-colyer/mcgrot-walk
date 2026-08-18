@@ -3782,3 +3782,75 @@ moving had the placement stayed forward-only.
   work rather than a threshold change.
 - **The board size and offsets** (0.85 x 0.60m, forward 0.55m, side 0.70m) are
   measured to work, not proven optimal.
+
+## G7o — the valance (F24)
+
+McGrot's legs passed through the van. **His proportions were never wrong** —
+1.77m, a normal height. The van floor sits at 0.62m and the counter at 1.12m,
+so the counter reads correctly for a figure standing on the road and at knee
+height for one standing in the van. The two were authored to different ground
+planes. Dan chose the valance on 2026-08-18 over raising him into the van or
+dropping the van to a stall, both of which move the framing at every anchor.
+
+**This is a concealment, not a correction.** The valance hides the overlap; the
+ground planes underneath are unchanged. A later unit that opens the van's
+interior to view must revisit this rather than build on it.
+
+Built as a `van-valance` merged mesh in SOOT — the same four-face loop as the
+existing soot skirt, running from y=0.02 up to CHASSIS_H+0.02, filling what
+the wheels (0.02–0.82) leave open. SOOT rather than CREAM so it reads as
+undercarriage beside the trim and wheels rather than as a second body panel.
+Lever: `?valance=off` / `window.__mcgrotsForceValance`, the same shape main.js
+uses for `VISIT_ON`/`AMBIENCE_ON`. **It does not use `src/flags.js`** — that
+module is the street's, and the orchestrator's brief was wrong to suggest it;
+van.js's own header already declines cross-project imports.
+
+### The gate
+
+Six checks in the `valance` region. **6/6 standalone in 1.5-1.7s; full suite
+153/153 in 30.2s** — both re-run by the orchestrator on the merged tree.
+
+The leg-zone rect was measured two ways before one was kept. Using the
+valance's own footprint diluted the signal — on 3.8-6.8% against off 5.0-8.8%,
+because most of that rect is pavement McGrot never stood in. Using **McGrot's
+own x/z footprint with y clamped to [0, 0.62]** separates cleanly: on
+12.7-19.0%, off 28.0-31.4%, ratio below 0.62 at every anchor.
+
+F22 re-run at `counter`: **25.5% with the valance on, 30.5% off**, both clear
+the existing 20% floor. That check exists because occluding McGrot is how this
+fix fails, and its control proves the valance is not propping up a borderline
+reading.
+
+Orchestrator's independent injection: shrinking the valance to a 0.07m stub
+gives **5/6 with the leg-zone check red and its control still green**, which is
+what proves the check measures the valance rather than an empty rect.
+
+### A broken check, found by its own fault injection
+
+The van-frame-fraction check **stayed green under a fault that should have
+failed it**, and the worker reported that rather than moving on. Widening the
+valance panels to three times the van's length read 100% on both sides and
+cancelled out.
+
+Cause: `looks.js` builds a `hull:van-valance` companion mesh for the S1/S2 ink
+outline, and the check's "before" box excluded only the exact name
+`van-valance`. The fault's growth leaked through the "before" side too. Fixed
+to exclude both names; re-injected, it then read before=57.58% after=100.00%,
+delta 42.42pp, and failed correctly.
+
+**This is the argument for fault injection in one example.** The check passed
+its own suite, passed review, and was measuring nothing. Only deliberately
+breaking the thing it claimed to watch exposed it.
+
+Also confirmed directly while designing that check: `Box3().setFromObject`
+ignores `.visible`, so a visibility toggle cannot control a claim of this
+shape — the same blind spot recorded under G7l.
+
+### Not gated
+
+- **That the van still reads as a van.** Judged by eye across all five anchors,
+  valance on and off: the underside reads as continuous dark undercarriage with
+  no leg pixels anywhere, and never as a mudflap. No numeric check can carry
+  that claim.
+- **The geometry underneath.** Nothing here measures the ground-plane conflict
+  itself, only that it is hidden.
