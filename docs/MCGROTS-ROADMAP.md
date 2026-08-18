@@ -1543,6 +1543,50 @@ decided before G8a rebuilds the leads.
 Things that are wrong, deliberately left, with enough detail to pick up cold.
 Distinct from § 11, which is undecided questions rather than broken work.
 
+### F25 — four regions gate on a proxy that was never measuring visibility (found 2026-08-18 by G7p)
+
+**Severity: high, and it is a gate fault rather than a product one.** Found by
+the `pushback` worker while doing something else, which is how the good ones
+are found.
+
+Four regions — `mcgrot`, `beats`, `taxman`, `valance` — share one technique:
+measure what fraction of McGrot's own AABB actually draws, and treat that as a
+proxy for "is he visible". F22 established it with a 20% floor and three more
+regions adopted it.
+
+**It was never measuring visibility. It was measuring whether a standing figure
+is unoccluded**, and it held only while he stood in the open, in a natural band
+of 29-34% of his own box. Put him deliberately behind a counter — which is
+exactly what F24's fix requires — and roughly half his box is hidden on
+purpose, so the number collapses to ~10% and **nine checks across those four
+regions go red at once.**
+
+That is one root cause, not nine bugs. Enumerated by G7p:
+
+| region | checks | reading |
+|---|---|---|
+| `mcgrot` | F22, its "fix disabled" control, the rota-reader follow-up | 10.2% against a 20% floor |
+| `beats` | `approach`, `settle` | idle motion now moves fewer pixels than their fixed margins require |
+| `taxman` | two, at `wall` | 10.0%, same technique, same floor |
+| `valance` | its "F22 unaffected" pair, at `counter` | inherits the drop |
+
+**The geometry fix is correct and is NOT the defect.** G7p measured nine
+candidate positions and found no middle distance — the crossover is a cliff,
+not a slope, and it sits on the wrong side of the 20% floor. At every position
+where F22 still clears 20%, the apron and both fists are still plainly drawn
+below the counter shelf. At the chosen position the sill band drops from
+20.9-24.3% to 0.6-5.0% at every anchor and all five captures read clean, with
+no dim-face problem despite that being the named risk.
+
+**Held unmerged on `g7p-pushback` deliberately**, so `main` stays green and
+nothing false ships. Landing it needs the four regions' technique re-derived
+first — a check on a figure who is *supposed* to be half hidden must measure
+the part that should be visible, not the whole box. **Do not lower the floors
+to fit.** That is the change that would make every one of these checks
+permanently meaningless, and the floors are not the problem.
+
+Belongs to the polish phase Dan asked for on 2026-08-18.
+
 ### F1 — The seated pose is wrong (G1; REOPENED 2026-08-12 by the G3 phase gate, CLOSED 2026-08-12 by G3e)
 
 **Severity: high.** The player sits near the van and listens; this is the
