@@ -39,12 +39,29 @@
 // beat: 'notice' | 'approach' | 'settle' on the three silence windows the
 //   shape budgets for Pomplé — see main.js. 'taxman' on the wall/101.8s row
 //   is G7j's own, read by taxman.js's sceneCueAt(cue.elapsed) — see there.
+// earlyStart: G7m. Explicit, authored seconds-into-the-cycle where this cue's
+//   OWN active window actually begins, overriding the cumulative default —
+//   present only on the two reading cues that overlap the walk cue directly
+//   above them. Everything else about the schedule — `dur`, every other
+//   cue's start/end, the cycle length — is exactly the running-sum-of-
+//   durations it always was; only these two cues' left edge moves earlier,
+//   into the walk's own tail, and only there. See cueAt() below for how the
+//   overlap actually resolves.
 export const CUES = [
   { kind: 'silence', anchor: 'counter', audio: null, dur: 13.7 },
   { kind: 'reading', anchor: 'counter', audio: '2b2110bb', dur: 17.8 },
   { kind: 'complaint', anchor: 'counter', audio: 'mcgrot-10', dur: 3.9 },
   { kind: 'walk', anchor: 'kerb', audio: null, dur: 4.5 },
-  { kind: 'reading', anchor: 'kerb', audio: '19f35bc7', dur: 16.0 },
+  // G7m: `earlyStart` overlaps this reading into the walk cue above it — the
+  // player rounds the corner into a voice already talking rather than
+  // arriving to silence and waiting. An absolute cycle-second, same units as
+  // `start` below, not a relative offset — 36.9 is this cue's nominal start
+  // (39.9, the walk's own cumulative end) minus a 3.0s overlap, chosen so it
+  // lands inside the walk's own 4.5s window with room either side (1.5s of
+  // pure walking silence first, so the overlap still reads as "arriving
+  // into", not "the walk cue never had its own quiet beat"). See cueAt()
+  // below for how it's resolved against the walk cue's own nominal window.
+  { kind: 'reading', anchor: 'kerb', audio: '19f35bc7', dur: 16.0, earlyStart: 36.9 },
   { kind: 'silence', anchor: 'kerb', audio: null, dur: 72.0, beat: 'notice' },
   { kind: 'reading', anchor: 'kerb', audio: '03347596', dur: 18.2 },
   { kind: 'complaint', anchor: 'kerb', audio: 'mcgrot-07', dur: 4.8 },
@@ -59,7 +76,10 @@ export const CUES = [
   { kind: 'silence', anchor: 'wall', audio: null, dur: 101.8, beat: 'taxman' },
   { kind: 'complaint', anchor: 'wall', audio: 'mcgrot-04', dur: 4.1 },
   { kind: 'walk', anchor: 'kerb', audio: null, dur: 7.1 },
-  { kind: 'reading', anchor: 'kerb', audio: '022bcde2', dur: 14.9 },
+  // G7m: the second of the two overlaps this unit adds (see the earlyStart
+  // comment on cue 4 above). Nominal start 298.0 minus the same 3.0s overlap
+  // = 295.0, well inside this walk's own 7.1s window.
+  { kind: 'reading', anchor: 'kerb', audio: '022bcde2', dur: 14.9, earlyStart: 295.0 },
   { kind: 'complaint', anchor: 'kerb', audio: 'mcgrot-08', dur: 5.2 },
   { kind: 'walk', anchor: 'far', audio: null, dur: 6.4 },
   { kind: 'silence', anchor: 'far', audio: null, dur: 84.6 },
@@ -85,7 +105,7 @@ export function audioDirFor(kind) {
   return null;
 }
 
-let cumulative = null; // [{...cue, index, start, end}], one full cycle
+let cumulative = null; // [{...cue, index, start, end, activeStart}], one full cycle
 let cycleLength = 0;   // seconds; start of CUES[0] is 0
 {
   let cursor = 0;
@@ -93,7 +113,14 @@ let cycleLength = 0;   // seconds; start of CUES[0] is 0
     const start = cursor;
     const end = start + cue.dur;
     cursor = end;
-    return { ...cue, index, start, end };
+    // G7m: `start`/`end` stay the plain running sum, exactly as before — every
+    // OTHER cue's boundary (and the cycle length) is computed from these two
+    // fields and is untouched by an overlap on this one. `activeStart` is the
+    // field cueAt() actually resolves against: the authored `earlyStart` when
+    // present, else the same as `start`, so a cue with no override behaves
+    // identically to today.
+    const activeStart = cue.earlyStart ?? start;
+    return { ...cue, index, start, end, activeStart };
   });
   cycleLength = cursor; // 600.7s — see docs/g7-visit-shape.md § 1's own total
 }
@@ -112,9 +139,19 @@ function wrap(t) {
 // with no state on the wire (Dan's ruling, roadmap § 6).
 export function cueAt(now) {
   const t = wrap(now);
+  // G7m: matched against `activeStart`, not `end`'s cumulative counterpart —
+  // for every cue with no `earlyStart` override the two are identical, so
+  // this resolves exactly as it always did. Where cue N+1 overlaps into cue
+  // N's tail, both cues' windows contain `t` for the overlap's own width;
+  // keeping the LAST match rather than returning on the first is what
+  // prefers the more specific (overlapping) cue there. An authored overlap
+  // only ever reaches back one cue, never forward, so a single forward pass
+  // is enough — no second lookahead pass needed.
+  let match = null;
   for (const c of cumulative) {
-    if (t >= c.start && t < c.end) return { ...c, elapsed: t - c.start };
+    if (t >= c.activeStart && t < c.end) match = c;
   }
+  if (match) return { ...match, elapsed: t - match.activeStart };
   // Floating-point edge at the exact top of the cycle (t === cycleLength,
   // which wrap() cannot produce from a finite modulo, but a t computed by
   // summing floats can land a hair short of the last cue's own `end`).
