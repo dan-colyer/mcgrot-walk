@@ -4004,7 +4004,14 @@ try {
           };
           const afterBox = new d.THREE.Box3().setFromObject(van);
           const beforeBox = new d.THREE.Box3();
-          van.traverse((o) => { if (o.isMesh && o.name !== 'van-valance') beforeBox.expandByObject(o); });
+          // looks.js adds an ink-hull companion mesh per named part
+          // (`hull:<name>`) for the S1/S2 outline pass — excluding only the
+          // exact name leaves that companion's own AABB in `before`, which
+          // silently defeats this exact control the day the valance's hull
+          // is the thing that grows (caught by fault injection: check 3's
+          // fault leaked straight through `before` until this line excluded
+          // it too, matching `after` and staying green throughout).
+          van.traverse((o) => { if (o.isMesh && o.name !== 'van-valance' && o.name !== 'hull:van-valance') beforeBox.expandByObject(o); });
           return { before: project2(beforeBox), after: project2(afterBox) };
         });
         frameRows.push({ id, before: areaOf(before), after: areaOf(after) });
