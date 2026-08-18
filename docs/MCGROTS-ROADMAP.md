@@ -1171,6 +1171,12 @@ verdict verbatim: *"I think we can say g7 is done because I've just watched the
 10 mins. For PoC it's ok. We need a phase soon where we holistically tidy up
 and do some polish."*
 
+**He watched it with the skinned body.** Confirmed 2026-08-18 when the phase
+gate found that `BODY_KIND` still ships as `capsule` and asked which one the
+judged run used — see § 10 F26. Shown both frames, his answer was *"ah, i see -
+i saw the figure."* So this verdict is a verdict on the intended protagonist,
+not on G0's blockout, and it does not need re-running.
+
 **Read the bar exactly as met, and no wider.** The criterion below asks whether
 he wants a second run, not whether the thing is good. "For PoC it's ok" clears
 that bar and explicitly does not clear a quality one — the same distinction
@@ -1585,10 +1591,16 @@ hatted figure there instead. § 11.0.1's own re-hear command
 (`/mcgrots.html?ambience=on&visit=on`) carries no `body=` either, so the
 documented way to run the visit is the lozenge way.
 
-**Nothing here says Dan judged a lozenge** — no document records which body the
-kill-criterion run used, and that is the gap worth closing before the record
-hardens. What it does say is that the ten-minute visit, booted as this repo
-documents it, does not show the body this project chose.
+**Nothing here says Dan judged a lozenge**, and it is now settled that he did
+not. Asked directly on 2026-08-18, shown both frames side by side: *"ah, i see
+- i saw the figure."* The kill-criterion run used the skinned body, so the G7
+verdict at § 5 stands exactly as recorded and needs no re-run.
+
+What the finding does still say is that the ten-minute visit, booted as this
+repo documents it, does not show the body this project chose. Dan got the
+figure despite the documentation rather than because of it. The gate's point
+survives its own worst example being disproved: the default is still wrong and
+no check anywhere would notice.
 
 ### F24 — the van and McGrot were authored to two different ground planes (Dan, 2026-08-17, from a render)
 
@@ -2501,8 +2513,14 @@ node scripts/comic-palette.mjs --only=assets/comics/<id>.jpg
    voice-direction pass, not a re-generation.
 
    How, if it needs re-hearing: `npm run dev:mcgrots`, then
-   `/mcgrots.html?ambience=on&visit=on`, and click the title card — WebAudio
-   needs the gesture. The bed cycles every 54s with the gull at 19.8s.
+   `/mcgrots.html?ambience=on&visit=on&body=skinned`, and click the title card
+   — WebAudio needs the gesture. The bed cycles every 54s with the gull at
+   19.8s.
+
+   **`body=skinned` is not optional here and was missing until 2026-08-18.**
+   `BODY_KIND` still defaults to `capsule`, so this command without it puts
+   G0's featureless blockout centre-frame for the whole visit (§ 10 F26).
+   Delete the flag from this line once the default is fixed, not before.
 
 
 
