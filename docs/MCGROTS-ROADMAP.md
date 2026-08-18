@@ -1157,6 +1157,32 @@ copy. Full details, numbers and both fault injections:
 
 ### G7 — Judge against the kill criterion
 
+**PASSED, 2026-08-18. Dan watched the full ten minutes and called it.** His
+verdict verbatim: *"I think we can say g7 is done because I've just watched the
+10 mins. For PoC it's ok. We need a phase soon where we holistically tidy up
+and do some polish."*
+
+**Read the bar exactly as met, and no wider.** The criterion below asks whether
+he wants a second run, not whether the thing is good. "For PoC it's ok" clears
+that bar and explicitly does not clear a quality one — the same distinction
+§ 11.0.1 draws for the audio, which he passed as sound while leaving its
+delivery unrefined. **The project continues; it has not been declared good.**
+
+**He asked for a polish phase, and it is not G8a.** A holistic tidy-up and
+polish pass is now wanted "soon", ahead of or alongside rebuilding the leads.
+It has no brief yet and no number attached. Its scope should be derived from
+what the phase gate finds rather than assembled from this session's own sense
+of what is untidy — the session that made the mess is the worst judge of it.
+
+Known candidates, recorded so they are not lost, NOT a plan: F24's ground-plane
+conflict (reopened and still live, G7p in flight against it), the audio
+delivery pass deferred at § 11.0.1, `scripts/smoke-mcgrots.mjs` at ~4,400 lines
+and one region per unit, the `style` region's page navigation that it never
+restores, and Pomplé's sign reading as a board beside the dog rather than one
+he holds.
+
+---
+
 Stop and apply the bar before spending anything on the real cast. The visit
 should be playable end to end on stand-in bodies with real voices. Dan sits
 through it. If he does not want a second run, the honest outcome is to say so
