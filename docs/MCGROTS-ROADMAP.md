@@ -1457,6 +1457,36 @@ composes well. Stand him on the van floor instead and the same counter sits
 0.50 m above his feet — knee height. The counter was authored for a figure on
 the road; the van for one standing inside it.
 
+**REOPENED 2026-08-18, same day, by Dan reading the capture.** The valance
+landed and works — proved by rendering the `counter` anchor with it on and
+off: trousers and boots are plainly visible with it off and gone with it on,
+and the pixel diff between the two arms is confined to a single band at
+y 425-530. **But he then asked why McGrot's lower body is still in the van,
+and he was reading the picture correctly.**
+
+What is still visible is the APRON, not the legs, and the cause is a second
+fault F24's own measurements never named. Measured from the `counter` camera:
+
+| from camera at (8.12, 2.00, -12.33) | distance |
+|---|---|
+| McGrot's centre | **6.501 m** |
+| the van's solid front panel (below the sill) | **6.539 m** |
+| where a figure standing INSIDE the van would be | 7.734 m |
+
+**He stands 3.8 cm in FRONT of the van's front panel**, not inside it. F24's
+original note said he was "inside the van's plan footprint", which is true of
+the x/z footprint and misleading about depth — he is at its very front edge,
+proud of the body. So every part of him above the valance line (0.64 m)
+renders OVER the van rather than behind it, and his apron hangs below the
+serving sill (1.14 m) where a solid cream panel should be occluding him.
+
+The valance therefore concealed the bottom 0.64 m of a figure standing in
+front of the van. It did what it was asked; the request was aimed one fault
+short. **Undecided — Dan's call**, and the options are the same three as
+before plus one this measurement makes newly cheap: push him back along the
+van's local +z until he is behind the front panel, which needs no geometry
+change but does move the framing at the anchors that see him.
+
 **DECIDED 2026-08-18: fix 1, the valance. Dan's call.** Built as G7o. The
 reasoning that won it is the one below — it is the only option that leaves
 every authored shot and every existing capture untouched, which matters
