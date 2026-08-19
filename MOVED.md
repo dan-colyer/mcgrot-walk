@@ -12,22 +12,34 @@ either game's code. Read its `README.md` first.
 
 ## The path mapping
 
-Source (this repo, `assets/`) on the left, library on the right. Verified
-2026-08-19 by listing both trees — counts differ in places because the
-library's audio and facade directories hold extra processed variants
-alongside the originals, not because anything is missing.
+Source (this repo, `assets/`) on the left, library on the right. The copy is
+exact: verified 2026-08-19 with
+`diff <(find <source> -type f | sort) <(find <library-dir> -type f | sort)`
+on every row below, run against the **main working tree**
+(`/Users/dan/code/personal/mcgrot-walk`) — every diff returned empty. A first
+pass checked this git worktree instead and found large gaps; those were a
+false alarm caused by this worktree, since several of the pipeline's own
+intermediate directories (`raw/`, `rect/`, `bands/`, `qa/`) are gitignored and
+so were never checked out into it. They exist in the main tree, which is what
+the copy was made from.
 
 ```
-assets/audio/*.mp3                    -> sounds/readings/        (136 -> 136)
-assets/audio/cast/                    -> sounds/cast/            (6 -> 6)
-assets/audio/mcgrot/                  -> sounds/mcgrot/          (9 source; library also holds a lines/ subfolder)
-assets/faces/                         -> visual/2d/faces/        (40 -> 40)
-assets/shopfronts/                    -> visual/2d/facades/      (18 source photos; library holds the full 12-stage pipeline output)
-assets/characters/                    -> visual/3d/characters/   (22 -> 23; rigs, segments, glbs)
-assets/cars/                          -> visual/3d/vehicles/     (4 glb -> 4 glb, plus shared Textures/)
+assets/audio/*.mp3                    -> sounds/readings/        (identical file lists)
+assets/audio/cast/                    -> sounds/cast/            (identical file lists, 6 files)
+assets/audio/mcgrot/                  -> sounds/mcgrot/          (identical file lists, 20 files)
+assets/faces/                         -> visual/2d/faces/        (identical file lists, 40 files)
+assets/shopfronts/                    -> visual/2d/facades/      (identical file lists, 706 files)
+assets/characters/                    -> visual/3d/characters/   (identical file lists)
+assets/cars/                          -> visual/3d/vehicles/     (identical file lists)
 assets/comic[123]-*.{jpg,png}         -> visual/2d/comics/named/ (6 -> 6)
 assets/*.json (7 records)             -> data/
 ```
+
+`assets/audio/cast/` and `assets/audio/mcgrot/` become sibling directories of
+`sounds/readings/` rather than nesting inside it — the source's single
+`audio/` folder (readings plus these two subfolders) becomes three separate
+top-level folders under `sounds/`. That is a mapping shape, not a content
+difference.
 
 The 7 JSON records: `businesses.json`, `catalog.json`, `comic-lines.json`,
 `facade-registry.json`, `leith.json`, `manifest.json`, `readings.json`. All
