@@ -1,5 +1,9 @@
 # McGrot Walk
 
+**Parked 2026-08-19.** Both projects here reached a working state and are
+paused, not abandoned — see `docs/STATUS.md`. Durable assets are also now in
+a separate library at `mcgrot-assets`; see `MOVED.md`.
+
 First-person 3D POC: a post-apocalyptic Leith Walk (real OSM geometry) where grotesque
 static NPCs each hold a McGrot comic and read it aloud in Scottish accents (Gemini TTS,
 verbatim including the AI-garbled text).

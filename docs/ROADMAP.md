@@ -3,6 +3,32 @@
 Rewritten 2026-07-23 after the Phase D retrospective. Supersedes the D-line and all
 prior phase plans.
 
+## Parked, 2026-08-19
+
+**The street was already paused before this parking, and paused earlier
+than McGrot's was.** It was stopped in favour of McGrot's, under
+`src/mcgrots/`: "Leith Walk got too big to finish. 995 OSM buildings, a façade
+pipeline, 156 vendors, 1293 lines of atmosphere, a 74-second gate suite. The
+content is good and the world is the cost." (`docs/MCGROTS-ROADMAP.md` § 1).
+`src/` outside `src/mcgrots/` was already not to be edited (`AGENTS.md`)
+before this parking made both projects formally parked.
+
+**This parking does not add new state to the street.** Its own suite,
+`npm run smoke:par`, was last measured at 74s (§ below) and was not re-run
+today — nothing in this repo touching `src/` outside `src/mcgrots/` changed
+as part of parking. Full context for both projects: `docs/STATUS.md`.
+
+**Resume point, if the street restarts:** wherever the roadmap below left it —
+read the milestone table and "What is next"-style sections for the last
+landed unit. The durable content (comics, audio, cast, faces, façades,
+vehicle and character models) is also now in a separate library,
+`/Users/dan/code/personal/mcgrot-assets` — see `MOVED.md` at the repo root.
+
+The rest of this document is the brief as written before parking. It is not
+rewritten; read it as the historical record of what landed and why.
+
+---
+
 ## What McGrot Walk is
 
 A first-person simulation of Leith Walk — real buildings, real shops, real slope —
