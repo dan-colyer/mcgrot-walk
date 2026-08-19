@@ -45,6 +45,38 @@ under `src/mcgrots/`.
 
 ---
 
+## 0. Parked, 2026-08-19
+
+**This project is parked, not abandoned.** Dan's framing: *"building 3d scenes
+that change, expand follow timings and be persistent online. I've bitten off
+more than we can chew - for now."* Full context: `docs/STATUS.md`.
+
+**State at park, re-derived today:** `npm run bundle:mcgrots && npm run
+smoke:mcgrots` → 153/153 in 31.4s. G0–G7 landed; Dan watched the full
+ten-minute visit and called it *"For PoC it's ok."* G7.5, a polish phase, was
+in flight and did not finish.
+
+**§ 10's three faults are still open at park: F24, F25, F26 (F26 half
+closed).** Nothing below in § 10 is closed by this parking. Read § 10 in full
+before assuming anything is settled.
+
+**What G7.5 left behind, unmerged, on `origin`:**
+
+- `g7p-pushback` — F24's measured fix. Deliberately unmerged, behind F25.
+- `g7-5a-suite` — a partial, unverified split of the 4,384-line suite file.
+  No runner wires it up.
+- `g7-5e-signage` — five part-built Pomplé sign variants. Never rendered.
+
+**Resume point:** land `g7-5a-suite`'s split (verified against the original
+file first), re-derive F25's proxy against a figure who is supposed to be
+half-hidden (which lands F24), close the rest of F26 with one default-boot
+check per flagged feature, then G8a as planned below.
+
+The rest of this document is the brief as written before parking. It is not
+rewritten; read it as the historical record of what landed and why.
+
+---
+
 ## 1. Why this exists
 
 Leith Walk got too big to finish. 995 OSM buildings, a façade pipeline, 156
