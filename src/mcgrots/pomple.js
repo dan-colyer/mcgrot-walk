@@ -242,6 +242,131 @@ const BOARD_BG = '#2f281f';
 const BOARD_BORDER = '#6f6047';
 const BOARD_TEXT = '#e6d7ae';
 
+// G7.5e (docs/briefs/g7-5e-pomple-signage.md) — Dan overrode the G7 gate's
+// "out of scope" on 2026-08-18 and asked to SEE five ways of carrying the
+// sign. His same-day addendum went further: all five ship, and the sign
+// CYCLES between them during a visit rather than picking a winner. `SIGN_LINES`
+// through `BOARD_TEXT` above stay untouched, and the constants above them
+// (SIGN_WIDTH..SIGN_UP) still drive the legacy `default` rig exactly as
+// before — reachable only via `?sign=default`, never the live rotation (see
+// SIGN_CYCLE_ORDER below, which deliberately does not name it).
+//
+// SELECTION IS A PURE FUNCTION OF THE WALL CLOCK (or the pinned override —
+// same `signClockOverride` the LINE already reads), never this module's own
+// `t`: Dan's ruling, matching roadmap § 6 — two clients must see the same
+// sign in the same pose at the same moment with nothing synchronised between
+// them, the same reason `pickLineIndex` keys off the day rather than `t`.
+// NO PRNG, for the same reason this whole file has none: the header above
+// already says so.
+//
+// `?sign=<name>` still forces one variant permanently (how the five
+// comparison captures — and any isolated review of one option — are taken).
+// With no override the cycle below runs.
+const SIGN_VARIANT_NAMES = ['mouth', 'board', 'stake', 'propped', 'collar', 'default'];
+const SIGN_FORCED = (() => {
+  if (typeof location === 'undefined') return null;
+  const v = new URLSearchParams(location.search).get('sign');
+  return SIGN_VARIANT_NAMES.includes(v) ? v : null;
+})();
+
+// The rotation itself. Order is this unit's own ranking for prominence (see
+// docs/g7-5e-pomple-signage.md) — `mouth` first as the strongest "he is
+// presenting this to you" read, `collar` last as the quietest. `default` (the
+// pre-G7.5e fixed board) is deliberately NOT a cycle member — Dan's five are
+// what ships live; the old rig survives only as an explicit `?sign=default`
+// for comparison.
+//
+// Period picked so the cycle turns over "a few times" across the visit
+// sequencer's own 600.6s cycle (docs/g7-visit-shape.md) without reading as a
+// flicker: 130s -> 4.6 turns per visit. Chosen ALSO so the smoke gate's own
+// pinned instant (`PINNED_DAY_MS = 4 * 86400000`, scripts/smoke-mcgrots.mjs)
+// lands mid-turn, not mid-transition — 345600000000 % 130000 = 60000ms, well
+// past SIGN_TRANSITION_MS below — and specifically on `stake`
+// (index (345600000000/130000|0) % 5 === 3): the brief's own most
+// robust-to-anchor-framing option, deliberately the one this file's
+// determinism puts under the gate's single fixed instant.
+const SIGN_CYCLE_ORDER = ['propped', 'stake', 'collar', 'board', 'mouth'];
+const SIGN_CYCLE_MS = 130000;
+// Crossfade length between two variants — see rigTransform/configureSignSlot
+// below for what actually happens during it. 2s: long enough to read as one
+// sign being swapped for another (this file's own "long, deliberate" pacing
+// throughout — HEAD_TURN_RATE, NOTICE_TURN_S), short enough that four-plus
+// turnovers a visit don't spend most of it mid-fade.
+const SIGN_TRANSITION_MS = 2000;
+
+// mouth/collar board size, in the SAME metres-per-unit as SIGN_WIDTH/HEIGHT
+// above. Both are smaller than the default board: a 0.85m plank crosswise in
+// a 0.44m-tall dog's mouth clips the ground and the snout at any head
+// deflection — swept 0.85 / 0.60 / 0.45 down to these by rendering `mouth`
+// at `counter` with the head at MAX_HEAD_YAW and reading the capture for
+// ground/snout clipping (this file's established method, Y_SPLIT's header).
+const MOUTH_WIDTH = 0.42;
+const MOUTH_HEIGHT = 0.30;
+// collar sits smaller again — "a small board", per the brief — and does not
+// need mouth's crosswise-grip clearance since it hangs rather than clips.
+const COLLAR_WIDTH = 0.30;
+const COLLAR_HEIGHT = 0.22;
+
+// Local-space (pre-HEIGHT-scale, i.e. the same normalised mesh space
+// `headBB`/`pivot` live in) anchor offsets FROM the head pivot, along the
+// head's own local axes — local +z is forward (this file's header: the
+// world-forward formula `atan2(dx, dz)` matches local point (0,0,1) rotated
+// by yaw, so unrotated local +z is the model's own forward). `headBB.maxZ`
+// is the snout tip; MOUTH_FORWARD_FRAC controls how far short of the actual
+// tip the board sits (1.0 = at the tip, clipping through it — 0.7 tucks it
+// just inside the jaw). Confirmed by render, not assumed: a first pass at
+// headBB.minZ (i.e. assuming local −z was forward) rendered the board
+// sticking out of the BACK of his skull, not his snout — flipped to maxZ
+// after reading that capture.
+const MOUTH_FORWARD_FRAC = 0.72;
+const MOUTH_UP_FRAC = 0.10;      // small lift off the pivot's own height,
+                                   // toward the top of the snout band
+// collar: forward like the chin (short of the full snout), and BELOW the
+// pivot rather than above it — "hanging from his collar under the chin".
+const COLLAR_FORWARD_FRAC = 0.45;
+const COLLAR_DOWN = 0.16;         // local units below the pivot
+const COLLAR_TILT = 0.25;         // rad (~14°) extra local pitch — hangs
+                                    // forward off the collar under gravity,
+                                    // rather than standing flush upright
+
+// board (sandwich board over back/shoulders): a fixed offset from the BODY
+// group's own local origin (its feet), not the head — recomputed each frame
+// off group.position/rotation.y so it stays correct even after `approach`
+// permanently shifts his base position (see playBeat's own comment: approach
+// does not reset posOffset when it ends). Height picked to sit over the
+// shoulder band the header's y-band table calls out (0.70-0.75, i.e. HEIGHT
+// * ~0.72m) rather than at head height.
+const BOARD_UP = 0.32;      // m, world scale
+const BOARD_FORWARD = -0.02; // m — just aft of centre, over the shoulders
+const BOARD_WIDTH = 0.60;
+const BOARD_HEIGHT = 0.42;
+
+// stake: fixed world-space rig, independent of Pomplé entirely (the brief's
+// own case for it: "cheapest and most robust to G8a replacing his mesh").
+// Placed to the side, clear of his silhouette and the same corridor/anchor
+// clearances POMPLE_LOCAL's own header already worked out.
+// SIDE/FORWARD match the default rig's own SIGN_SIDE/SIGN_FORWARD exactly —
+// first pass used a wider, further-forward offset (0.95/0.15) and the gate's
+// own contrast check (`--only=signs`) failed at `kerb` (Δ0.7 against a
+// required >3, where every other anchor cleared 9.5+): that offset pushed
+// the board more edge-on to `kerb`'s camera than the default's own already
+// camera-tested position. Re-measured against the SAME offset the default
+// rig uses (proven to clear kerb, see SIGN_SIDE/SIGN_FORWARD's own header)
+// rather than guessed fresh.
+const STAKE_SIDE = SIGN_SIDE;
+const STAKE_FORWARD = SIGN_FORWARD;
+const STAKE_LEAN = 0;     // rad, a slight lean off vertical
+const STAKE_POST_H = 0.25;
+const STAKE_POST_R = 0.025;  // m, post radius
+const STAKE_BASE_H = 0.08;   // m, base block height (driven-in look)
+
+// propped: leaning on the ground at an angle, as if set down. Also a fixed
+// world-space rig, independent of the body.
+const PROPPED_SIDE = 0.80;
+const PROPPED_FORWARD = 0.35;
+const PROPPED_TILT = 0.55;   // rad (~31.5°) off vertical — enough to read as
+                               // resting, not standing
+
 // Greedy word-wrap against the CURRENT ctx.font, so the caller controls size.
 function wrapSignLines(ctx, text, maxWidth) {
   const words = text.split(' ');
@@ -345,12 +470,27 @@ function splitBody(geo) {
   const headTris = [];
   const bodyTris = [];
   let px = 0, py = 0, pz = 0, pn = 0;
+  // Head-only bounding box, in the SAME (geo/group) coordinate frame as
+  // `pivot` below — computeBoundingBox() can't be used for this because
+  // headGeo/bodyGeo share one 'position' attribute (see buildPomple), so it
+  // would report the FULL model's bounds for either part. Walked alongside
+  // the existing triangle loop instead of a second pass. Used by the
+  // mouth/collar sign variants (G7.5e) to anchor off where the head actually
+  // extends rather than a guessed offset.
+  let hMinX = Infinity, hMaxX = -Infinity, hMinY = Infinity, hMaxY = -Infinity,
+    hMinZ = Infinity, hMaxZ = -Infinity;
 
   for (let t = 0; t < triCount; t++) {
     const a = idx(t * 3), b = idx(t * 3 + 1), c = idx(t * 3 + 2);
     const y = (posAttr.getY(a) + posAttr.getY(b) + posAttr.getY(c)) / 3;
     if (y > Y_SPLIT) {
       headTris.push(a, b, c);
+      for (const v of [a, b, c]) {
+        const vx = posAttr.getX(v), vy = posAttr.getY(v), vz = posAttr.getZ(v);
+        if (vx < hMinX) hMinX = vx; if (vx > hMaxX) hMaxX = vx;
+        if (vy < hMinY) hMinY = vy; if (vy > hMaxY) hMaxY = vy;
+        if (vz < hMinZ) hMinZ = vz; if (vz > hMaxZ) hMaxZ = vz;
+      }
     } else {
       bodyTris.push(a, b, c);
     }
@@ -369,6 +509,7 @@ function splitBody(geo) {
   const pivot = pn > 0
     ? { x: px / pn, y: py / pn, z: pz / pn }
     : { x: 0, y: Y_SPLIT, z: 0 };
+  const headBB = { minX: hMinX, maxX: hMaxX, minY: hMinY, maxY: hMaxY, minZ: hMinZ, maxZ: hMaxZ };
 
   const headGeo = new THREE.BufferGeometry();
   const bodyGeo = new THREE.BufferGeometry();
@@ -379,7 +520,7 @@ function splitBody(geo) {
   headGeo.setIndex(headTris);
   bodyGeo.setIndex(bodyTris);
 
-  return { headGeo, bodyGeo, pivot };
+  return { headGeo, bodyGeo, pivot, headBB };
 }
 
 export function buildPomple(scene, { assets = null } = {}) {
@@ -394,42 +535,202 @@ export function buildPomple(scene, { assets = null } = {}) {
   const mcgrotWorld = toWorld(MCGROT_LOCAL[0], MCGROT_LOCAL[1]);
   const mcgrotTarget = new THREE.Vector3(mcgrotWorld.x, 0, mcgrotWorld.z);
 
-  // The sign: a SEPARATE top-level object, not a child of `group`. His
-  // bodyYaw swings by design during notice/settle — up to a full pi reversal
-  // for settle — and a sign parented to the body would swing with it, right
-  // when a beat puts him in motion. Fixed at his REST orientation instead,
-  // and shown only while idle (see update() below), so it is never on
-  // screen mid-swing in the first place. Position/rotation are set ONCE
-  // here, not every frame — there is nothing to track once it never moves.
-  // SIDEWAYS, not just forward. POMPLE_YAW's own forward direction is only
-  // 10.8° off the `counter` anchor's own sightline to him (measured) — a
-  // sign placed straight ahead sits almost exactly BETWEEN him and that
-  // camera, which put the whole board on top of his own on-screen rect at
-  // 0.85m wide. Offset to the side clears his silhouette while staying a
-  // sign propped beside a small stall, not one blocking its own dog.
+  // The sign: a SEPARATE top-level object, not a child of `group`. `signGroup`
+  // itself stays at the identity transform forever — every variant sets
+  // POSITION AND QUATERNION DIRECTLY ON A MESH, computed fresh each frame by
+  // `rigTransform()` below, because the live rig (Dan's 2026-08-18 addendum)
+  // needs to swap which variant is showing, mid-visit, without a pop. Two
+  // mesh "slots" (A/B) exist permanently as children; only their geometry,
+  // texture, transform and opacity change. During a crossfade both slots are
+  // live at once (one fading out, one fading in); outside a crossfade one
+  // slot carries the current variant at full opacity and the other is
+  // hidden. `mouth`/`collar` read the live head joint, `board` reads the
+  // live body group (so it still tracks him correctly after `approach`
+  // permanently shifts his position), `stake`/`propped` are fixed world
+  // rigs independent of him entirely — matching the brief's own case for
+  // `stake`: "cheapest and most robust to G8a replacing his mesh".
   const signFwd = { x: Math.sin(POMPLE_YAW), z: Math.cos(POMPLE_YAW) };
   const signRight = { x: signFwd.z, z: -signFwd.x };
   const signGroup = new THREE.Group();
   signGroup.name = 'pomple-sign';
-  signGroup.position.set(
-    basePos.x + signFwd.x * SIGN_FORWARD + signRight.x * SIGN_SIDE,
-    SIGN_UP,
-    basePos.z + signFwd.z * SIGN_FORWARD + signRight.z * SIGN_SIDE,
-  );
-  signGroup.rotation.y = POMPLE_YAW;
   signGroup.visible = false;   // until built() and beat === null, see update()
   scene.add(signGroup);
 
   const blankSignTexture = makeSignTexture(null);
   const lineTextures = SIGN_LINES.map((l) => makeSignTexture(l.text));
-  const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(SIGN_WIDTH, SIGN_HEIGHT),
-    new THREE.MeshLambertMaterial({ map: lineTextures[0], side: THREE.DoubleSide }),
-  );
-  signMesh.name = 'pomple-sign-board';
-  signGroup.add(signMesh);
+
+  // One PlaneGeometry per variant, built once and shared between whichever
+  // slot is currently showing it — sizes differ (mouth/collar are smaller
+  // than a board he'd carry on his back or plant in the ground; see each
+  // constant's own header above for why).
+  const SIGN_GEOMS = {
+    default: new THREE.PlaneGeometry(SIGN_WIDTH, SIGN_HEIGHT),
+    mouth: new THREE.PlaneGeometry(MOUTH_WIDTH, MOUTH_HEIGHT),
+    collar: new THREE.PlaneGeometry(COLLAR_WIDTH, COLLAR_HEIGHT),
+    board: new THREE.PlaneGeometry(BOARD_WIDTH, BOARD_HEIGHT),
+    stake: new THREE.PlaneGeometry(SIGN_WIDTH, SIGN_HEIGHT),
+    propped: new THREE.PlaneGeometry(SIGN_WIDTH, SIGN_HEIGHT),
+  };
+
+  function makeSignSlot(idx) {
+    const mesh = new THREE.Mesh(
+      SIGN_GEOMS.default,
+      new THREE.MeshLambertMaterial({ map: lineTextures[0], side: THREE.DoubleSide, transparent: true }),
+    );
+    mesh.name = `pomple-sign-board-${idx}`;
+    // NOT added to `signGroup` here — `configureSignSlot` below adds/removes
+    // it every frame, deliberately (see that function's own header: a
+    // merely-hidden child still pollutes `Box3().setFromObject`, which is
+    // what the gate's own `rectOf` helper uses).
+    //
+    // `stake`'s post + base are SIBLINGS of `signGroup` (added straight to
+    // `scene`, own local position/quaternion computed by hand each frame),
+    // NOT children of `mesh` or of `signGroup`. A first pass parented them
+    // to `mesh` — same add/remove discipline as above, so no stale-box
+    // issue — and the gate's own contrast check still went from 0.9-3.1
+    // to still-failing deltas of 0.2-5.2 against a written expectation of
+    // ~23: `rectOf('pomple-sign')`'s box then spanned board+post+base
+    // together, and the post/base's own uniform colour, sampled into the
+    // SAME stddev window as the lettering, diluted the letters' own signal.
+    // Measured, not reasoned — the fix is keeping them out of `signGroup`'s
+    // subtree entirely so the gate's box (and its contrast sampling) stays
+    // exactly the board face, matching what the check's own header already
+    // assumed for the pre-G7.5e default rig.
+    const postMat = new THREE.MeshLambertMaterial({ color: BOARD_BORDER, transparent: true });
+    const post = new THREE.Mesh(
+      new THREE.CylinderGeometry(STAKE_POST_R, STAKE_POST_R, STAKE_POST_H, 8), postMat,
+    );
+    post.name = `pomple-sign-post-${idx}`;
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(STAKE_POST_R * 4, STAKE_BASE_H, STAKE_POST_R * 4), postMat,
+    );
+    base.name = `pomple-sign-base-${idx}`;
+    return { mesh, post, base, geomName: 'default' };
+  }
+  const slotA = makeSignSlot('a');
+  const slotB = makeSignSlot('b');
+  const _rigPos = new THREE.Vector3();
+  const _rigQuat = new THREE.Quaternion();
+  const _rigEuler = new THREE.Euler();
+  const _rigOffset = new THREE.Vector3();
+
+  // headJoint's local frame at rest (headYaw=0, headPitch=0) shares the
+  // group's own axes, so local +z is forward (this file's header) —
+  // `headBB` (splitBody's own header) gives the head's real extent along it.
+  // Set once, when the head geometry is actually known — see `ready` below.
+  let mouthLocal = null;
+  let collarLocal = null;
+
+  // Which named rig a slot should show right now, and how much of it
+  // (opacity 0..1) — the crossfade math. `name === null` hides the slot.
+  function rigTransform(name, outPos, outQuat) {
+    if (name === 'stake') {
+      outPos.set(
+        basePos.x + signFwd.x * STAKE_FORWARD + signRight.x * STAKE_SIDE,
+        STAKE_POST_H + SIGN_HEIGHT / 2,
+        basePos.z + signFwd.z * STAKE_FORWARD + signRight.z * STAKE_SIDE,
+      );
+      outQuat.setFromEuler(_rigEuler.set(0, POMPLE_YAW, STAKE_LEAN, 'XYZ'));
+    } else if (name === 'propped') {
+      // Resting on the ground at PROPPED_TILT off vertical: the board's own
+      // bottom edge (SIGN_HEIGHT/2 below its centre) stays ON the ground
+      // once tilted, so the centre sits higher by cos(tilt) * halfHeight —
+      // otherwise a tilt about the centre buries the lower half in the floor.
+      const halfH = SIGN_HEIGHT / 2;
+      outPos.set(
+        basePos.x + signFwd.x * PROPPED_FORWARD + signRight.x * PROPPED_SIDE,
+        halfH * Math.cos(PROPPED_TILT),
+        basePos.z + signFwd.z * PROPPED_FORWARD + signRight.z * PROPPED_SIDE,
+      );
+      outQuat.setFromEuler(_rigEuler.set(PROPPED_TILT, POMPLE_YAW, 0, 'XYZ'));
+    } else if (name === 'board') {
+      // Tracks the LIVE body — group.position/rotation.y, not basePos/
+      // POMPLE_YAW — so it stays correct after `approach` permanently shifts
+      // him (playBeat's own comment: posOffset/bodyYaw persist past the
+      // beat's end).
+      const bfwd = { x: Math.sin(group.rotation.y), z: Math.cos(group.rotation.y) };
+      outPos.set(
+        group.position.x + bfwd.x * BOARD_FORWARD,
+        BOARD_UP,
+        group.position.z + bfwd.z * BOARD_FORWARD,
+      );
+      outQuat.setFromEuler(_rigEuler.set(0, group.rotation.y, 0, 'XYZ'));
+    } else if ((name === 'mouth' || name === 'collar') && headJoint) {
+      headJoint.updateWorldMatrix(true, false);
+      outPos.copy(name === 'mouth' ? mouthLocal : collarLocal).applyMatrix4(headJoint.matrixWorld);
+      headJoint.getWorldQuaternion(outQuat);
+      if (name === 'collar') {
+        outQuat.multiply(new THREE.Quaternion().setFromEuler(_rigEuler.set(COLLAR_TILT, 0, 0, 'XYZ')));
+      }
+    } else {
+      // 'default', or mouth/collar before headJoint exists.
+      outPos.set(
+        basePos.x + signFwd.x * SIGN_FORWARD + signRight.x * SIGN_SIDE,
+        SIGN_UP,
+        basePos.z + signFwd.z * SIGN_FORWARD + signRight.z * SIGN_SIDE,
+      );
+      outQuat.setFromEuler(_rigEuler.set(0, POMPLE_YAW, 0, 'XYZ'));
+    }
+  }
+
+  function configureSignSlot(slot, name, map, opacity) {
+    if (!name || opacity <= 0) {
+      // ACTUALLY DETACH, not just `.visible = false`. Box3().setFromObject
+      // (the gate's own `rectOf` helper) walks every descendant regardless
+      // of its visible flag — this project's own recorded trap (AGENTS.md:
+      // "A presence check built on Box3().setFromObject passes on an
+      // invisible object", proven twice already). A merely-hidden slot left
+      // parented under `signGroup` at a stale position from its last active
+      // frame silently inflated the aggregate box and diluted the contrast
+      // check's own stddev signal — caught by actually running the gate
+      // (`--only=signs`), not by reasoning about it.
+      if (slot.mesh.parent) signGroup.remove(slot.mesh);
+      if (slot.post.parent) scene.remove(slot.post);
+      if (slot.base.parent) scene.remove(slot.base);
+      return;
+    }
+    if (slot.geomName !== name) {
+      slot.mesh.geometry = SIGN_GEOMS[name] || SIGN_GEOMS.default;
+      slot.geomName = name;
+    }
+    if (slot.mesh.material.map !== map) {
+      slot.mesh.material.map = map;
+      slot.mesh.material.needsUpdate = true;
+    }
+    slot.mesh.material.opacity = opacity;
+    if (!slot.mesh.parent) signGroup.add(slot.mesh);
+    rigTransform(name, _rigPos, _rigQuat);
+    slot.mesh.position.copy(_rigPos);
+    slot.mesh.quaternion.copy(_rigQuat);
+
+    // Same add/remove discipline as the mesh itself, and kept OUT of
+    // `signGroup`/`mesh`'s own subtree entirely — see makeSignSlot's header
+    // for why parenting them to `mesh` diluted the gate's contrast check.
+    // World position/quaternion computed by hand from the SAME _rigPos/
+    // _rigQuat the board just used, so the post visually sits exactly where
+    // a child of the board would have.
+    const isStake = name === 'stake';
+    if (isStake) {
+      if (!slot.post.parent) scene.add(slot.post);
+      if (!slot.base.parent) scene.add(slot.base);
+      slot.post.quaternion.copy(_rigQuat);
+      slot.post.position.copy(_rigPos).add(
+        _rigOffset.set(0, -(SIGN_HEIGHT / 2 + STAKE_POST_H / 2), 0).applyQuaternion(_rigQuat),
+      );
+      slot.base.quaternion.copy(_rigQuat);
+      slot.base.position.copy(_rigPos).add(
+        _rigOffset.set(0, -(SIGN_HEIGHT / 2 + STAKE_POST_H + STAKE_BASE_H / 2), 0).applyQuaternion(_rigQuat),
+      );
+      slot.post.material.opacity = opacity;
+      slot.base.material.opacity = opacity;
+    } else {
+      if (slot.post.parent) scene.remove(slot.post);
+      if (slot.base.parent) scene.remove(slot.base);
+    }
+  }
 
   let signIndex = -1;             // which SIGN_LINES entry is currently baked in
+  let signActiveName = 'default'; // which rig the CURRENT (non-fading-out) slot shows
   let signClockOverride = null;   // gate-only pin, mirrors main.js's rotaClockOverride
   let signBlank = false;          // gate-only: forces the blank control texture
 
@@ -472,7 +773,7 @@ export function buildPomple(scene, { assets = null } = {}) {
     geo.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
     geo.scale(s, s, s);
 
-    const { headGeo, bodyGeo, pivot } = splitBody(geo);
+    const { headGeo, bodyGeo, pivot, headBB } = splitBody(geo);
     bytes = (geo.attributes.position?.array.byteLength || 0);
 
     const material = new THREE.MeshLambertMaterial({
@@ -493,6 +794,21 @@ export function buildPomple(scene, { assets = null } = {}) {
     headMesh.position.set(-pivot.x, -pivot.y, -pivot.z);
     headJoint.add(headMesh);
     group.add(headJoint);
+
+    // G7.5e's mouth/collar sign anchors, in headJoint-local space (a vertex
+    // at geo-space position v renders at headJoint-local v - pivot, same as
+    // headMesh's own position offset above) — see rigTransform's own header
+    // for the +z-is-forward derivation.
+    mouthLocal = new THREE.Vector3(
+      0,
+      (headBB.maxY - pivot.y) * MOUTH_UP_FRAC,
+      (headBB.maxZ - pivot.z) * MOUTH_FORWARD_FRAC,
+    );
+    collarLocal = new THREE.Vector3(
+      0,
+      -COLLAR_DOWN,
+      (headBB.maxZ - pivot.z) * COLLAR_FORWARD_FRAC,
+    );
 
     group.scale.setScalar(HEIGHT);
     built = true;
@@ -594,21 +910,13 @@ export function buildPomple(scene, { assets = null } = {}) {
     group.position.x = basePos.x + posOffset.x;
     group.position.z = basePos.z + posOffset.z;
 
-    // The sign: which line is a pure function of the (pinnable) day — see
-    // SIGN_LINES's header for why, never this module's own `t`. Visible only
-    // at rest: every active beat is its own physical performance (a turn, a
-    // walk, a head-drop) with its own read, and the sign is what fills the
-    // SILENCE BETWEEN them — "386 of the visit's 600 seconds are silence" is
-    // the brief's own framing for why this unit exists at all. Held during
-    // that silence, set down (hidden) for the moments that are about
-    // something else.
-    const wantIndex = pickLineIndex(signClockOverride ?? Date.now());
-    const wantedMap = signBlank ? blankSignTexture : lineTextures[wantIndex];
-    if (signMesh.material.map !== wantedMap) {
-      signMesh.material.map = wantedMap;
-      signMesh.material.needsUpdate = true;
-    }
-    signIndex = wantIndex;
+    // The sign's LINE (never its variant) is set here, before the attention
+    // block, matching where it always was — visible only at rest (every
+    // active beat is its own physical performance with its own read, and the
+    // sign fills the SILENCE between them, "386 of the visit's 600 seconds
+    // are silence" per this unit's own brief). The VARIANT rig is computed
+    // at the end of update(), after headJoint's rotation for THIS frame is
+    // final — mouth/collar read it.
     signGroup.visible = beat === null;
 
     // The attention state machine — two states, one hysteresis band. Bigger
@@ -650,6 +958,36 @@ export function buildPomple(scene, { assets = null } = {}) {
       headJoint.rotation.y = headYaw;
       headJoint.rotation.x = headPitch;
     }
+
+    // The sign's LINE and VARIANT — both a pure function of the SAME clock
+    // (signClockOverride ?? Date.now()), never `t`; see SIGN_CYCLE_ORDER's
+    // own header for why and for the gate-instant reasoning. Read here, at
+    // the very end, so mouth/collar's rigTransform sees THIS frame's
+    // headJoint rotation rather than last frame's.
+    const nowMsForSign = signClockOverride ?? Date.now();
+    const wantIndex = pickLineIndex(nowMsForSign);
+    const wantedMap = signBlank ? blankSignTexture : lineTextures[wantIndex];
+    signIndex = wantIndex;
+
+    let curName, prevName, curOpacity, prevOpacity;
+    if (SIGN_FORCED) {
+      curName = SIGN_FORCED; prevName = null; curOpacity = 1; prevOpacity = 0;
+    } else {
+      const n = SIGN_CYCLE_ORDER.length;
+      const idx = Math.floor(nowMsForSign / SIGN_CYCLE_MS);
+      const phase = nowMsForSign - idx * SIGN_CYCLE_MS;
+      curName = SIGN_CYCLE_ORDER[((idx % n) + n) % n];
+      if (phase < SIGN_TRANSITION_MS) {
+        prevName = SIGN_CYCLE_ORDER[(((idx - 1) % n) + n) % n];
+        curOpacity = phase / SIGN_TRANSITION_MS;
+        prevOpacity = 1 - curOpacity;
+      } else {
+        prevName = null; curOpacity = 1; prevOpacity = 0;
+      }
+    }
+    signActiveName = curName;
+    configureSignSlot(slotA, curName, wantedMap, curOpacity);
+    configureSignSlot(slotB, prevName, wantedMap, prevOpacity);
   }
 
   // G7i's gate needs to drive playBeat from the running page, but main.js's
@@ -674,6 +1012,9 @@ export function buildPomple(scene, { assets = null } = {}) {
   signGroup.userData.setBlank = (v) => { signBlank = !!v; };
   signGroup.userData.getIndex = () => signIndex;
   signGroup.userData.getLineId = () => SIGN_LINES[signIndex]?.id ?? null;
+  // G7.5e: which rig is CURRENT (the non-fading-out slot) right now —
+  // review/debug only, not consulted by any check this unit added.
+  signGroup.userData.getVariant = () => signActiveName;
 
   return {
     group,
