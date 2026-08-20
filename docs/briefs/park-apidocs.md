@@ -4,7 +4,7 @@ Read `docs/briefs/park-CONTEXT.md` first.
 
 ## What you own
 
-Two files, in the **library** repo (`/Users/dan/code/personal/mcgrot-assets`):
+Two files, in the **library** repo (`/Users/dan/code/personal/mcgrot/mcgrot-assets`):
 
 - `docs/api-usage.md`
 - `docs/comics-and-drive.md`

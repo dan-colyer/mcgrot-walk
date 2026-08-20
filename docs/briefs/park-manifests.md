@@ -4,7 +4,7 @@ Read `docs/briefs/park-CONTEXT.md` first.
 
 ## What you own
 
-In the **library** repo (`/Users/dan/code/personal/mcgrot-assets`):
+In the **library** repo (`/Users/dan/code/personal/mcgrot/mcgrot-assets`):
 
 - everything under `manifests/`
 - `tools/build-manifests.mjs` — the script that generates them

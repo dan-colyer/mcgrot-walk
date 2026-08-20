@@ -5,7 +5,7 @@ Read `docs/briefs/park-CONTEXT.md` first.
 ## What you own
 
 Everything under `docs/pipelines/` in the **library** repo
-(`/Users/dan/code/personal/mcgrot-assets`), and nothing else. Do not touch the
+(`/Users/dan/code/personal/mcgrot/mcgrot-assets`), and nothing else. Do not touch the
 library's `README.md`, `docs/api-usage.md`, or `docs/gotchas-*.md` — other units
 own those.
 

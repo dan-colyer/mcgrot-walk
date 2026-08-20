@@ -8,7 +8,7 @@ brief wins.
 
 Both games in this repo are being **parked**, and their durable value extracted
 into a general-purpose asset library at
-**`/Users/dan/code/personal/mcgrot-assets`** (a separate git repo, already
+**`/Users/dan/code/personal/mcgrot/mcgrot-assets`** (a separate git repo, already
 created, two commits in).
 
 Dan's words: *"building 3d scenes that change, expand follow timings and be

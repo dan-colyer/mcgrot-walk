@@ -6,7 +6,7 @@ was re-run today: `npm run bundle:mcgrots && npm run smoke:mcgrots` still
 passes 153/153.
 
 A general-purpose library now also exists at
-`/Users/dan/code/personal/mcgrot-assets` (a separate git repo), holding this
+`/Users/dan/code/personal/mcgrot/mcgrot-assets` (a separate git repo), holding this
 project's durable assets so a future project can use them without inheriting
 either game's code. Read its `README.md` first.
 
@@ -16,7 +16,7 @@ Source (this repo, `assets/`) on the left, library on the right. The copy is
 exact: verified 2026-08-19 with
 `diff <(find <source> -type f | sort) <(find <library-dir> -type f | sort)`
 on every row below, run against the **main working tree**
-(`/Users/dan/code/personal/mcgrot-walk`) — every diff returned empty. A first
+(`/Users/dan/code/personal/mcgrot/mcgrot-walk`) — every diff returned empty. A first
 pass checked this git worktree instead and found large gaps; those were a
 false alarm caused by this worktree, since several of the pipeline's own
 intermediate directories (`raw/`, `rect/`, `bands/`, `qa/`) are gitignored and
@@ -57,15 +57,15 @@ The library is its own git repo, so the assets can be copied back the other
 way:
 
 ```bash
-cp -r /Users/dan/code/personal/mcgrot-assets/sounds/readings/*.mp3 assets/audio/
-cp -r /Users/dan/code/personal/mcgrot-assets/sounds/cast/ assets/audio/cast/
-cp -r /Users/dan/code/personal/mcgrot-assets/sounds/mcgrot/ assets/audio/mcgrot/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/faces/ assets/faces/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/facades/* assets/shopfronts/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/3d/characters/ assets/characters/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/3d/vehicles/* assets/cars/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/comics/named/* assets/
-cp /Users/dan/code/personal/mcgrot-assets/data/*.json assets/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/sounds/readings/*.mp3 assets/audio/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/sounds/cast/ assets/audio/cast/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/sounds/mcgrot/ assets/audio/mcgrot/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/visual/2d/faces/ assets/faces/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/visual/2d/facades/* assets/shopfronts/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/visual/3d/characters/ assets/characters/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/visual/3d/vehicles/* assets/cars/
+cp -r /Users/dan/code/personal/mcgrot/mcgrot-assets/visual/2d/comics/named/* assets/
+cp /Users/dan/code/personal/mcgrot/mcgrot-assets/data/*.json assets/
 ```
 
 The one thing that would not come back this way: the comic corpus in

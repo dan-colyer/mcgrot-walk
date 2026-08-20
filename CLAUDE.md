@@ -91,7 +91,7 @@ ls ~/.claude/projects/ | grep -i mcgrot     # must show no --herdr-worktrees- en
 ```
 
 The shared-tree workers before the worktree ruling were fine, because
-`/Users/dan/code/personal/mcgrot-walk` matches. **The worktree ruling
+`/Users/dan/code/personal/mcgrot/mcgrot-walk` matches. **The worktree ruling
 introduced the leak**; the fix is to keep worktrees inside the personal root
 rather than to abandon worktrees.
 

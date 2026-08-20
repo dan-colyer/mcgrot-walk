@@ -7,8 +7,8 @@ for.
 
 ## What you are auditing
 
-A new asset library at **`/Users/dan/code/personal/mcgrot-assets`**, extracted
-on 2026-08-19/20 from `/Users/dan/code/personal/mcgrot-walk` when both games in
+A new asset library at **`/Users/dan/code/personal/mcgrot/mcgrot-assets`**, extracted
+on 2026-08-19/20 from `/Users/dan/code/personal/mcgrot/mcgrot-walk` when both games in
 that repo were parked. It has a remote at `dan-colyer/mcgrot-assets`, private.
 
 Six parallel units built it: gotchas, apidocs, pipelines, manifests, tools,

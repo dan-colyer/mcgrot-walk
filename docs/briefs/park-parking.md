@@ -4,7 +4,7 @@ Read `docs/briefs/park-CONTEXT.md` first.
 
 ## Where you work
 
-**This repo**, `/Users/dan/code/personal/mcgrot-walk` — not the library. The
+**This repo**, `/Users/dan/code/personal/mcgrot/mcgrot-walk` — not the library. The
 other five units all work in `mcgrot-assets`, so you cannot collide with them.
 
 ## What you own
@@ -85,7 +85,7 @@ otherwise go looking for damage.
 
 Then:
 
-- **What now also exists** at `/Users/dan/code/personal/mcgrot-assets`, with the
+- **What now also exists** at `/Users/dan/code/personal/mcgrot/mcgrot-assets`, with the
   path mapping. Source on the left, library on the right:
 
   ```

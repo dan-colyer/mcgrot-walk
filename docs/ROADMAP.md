@@ -22,7 +22,7 @@ as part of parking. Full context for both projects: `docs/STATUS.md`.
 read the milestone table and "What is next"-style sections for the last
 landed unit. The durable content (comics, audio, cast, faces, façades,
 vehicle and character models) is also now in a separate library,
-`/Users/dan/code/personal/mcgrot-assets` — see `MOVED.md` at the repo root.
+`/Users/dan/code/personal/mcgrot/mcgrot-assets` — see `MOVED.md` at the repo root.
 
 The rest of this document is the brief as written before parking. It is not
 rewritten; read it as the historical record of what landed and why.

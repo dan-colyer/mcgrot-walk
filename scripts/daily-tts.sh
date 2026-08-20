@@ -18,7 +18,7 @@
 # prints its own running cost estimate into the log either way — read it.
 set -uo pipefail
 
-REPO="/Users/dan/code/personal/mcgrot-walk"
+REPO="/Users/dan/code/personal/mcgrot/mcgrot-walk"
 PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export PATH
 
