@@ -61,14 +61,25 @@ cp -r /Users/dan/code/personal/mcgrot-assets/sounds/readings/*.mp3 assets/audio/
 cp -r /Users/dan/code/personal/mcgrot-assets/sounds/cast/ assets/audio/cast/
 cp -r /Users/dan/code/personal/mcgrot-assets/sounds/mcgrot/ assets/audio/mcgrot/
 cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/faces/ assets/faces/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/facades/originals/* assets/shopfronts/
+cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/facades/* assets/shopfronts/
 cp -r /Users/dan/code/personal/mcgrot-assets/visual/3d/characters/ assets/characters/
-cp -r /Users/dan/code/personal/mcgrot-assets/visual/3d/vehicles/*.glb assets/cars/
+cp -r /Users/dan/code/personal/mcgrot-assets/visual/3d/vehicles/* assets/cars/
 cp -r /Users/dan/code/personal/mcgrot-assets/visual/2d/comics/named/* assets/
 cp /Users/dan/code/personal/mcgrot-assets/data/*.json assets/
 ```
 
-The one thing that would not come back this way: the 419-image comic corpus.
-It never lived in the library — recover it from Google Drive, one direction
-only, via `scripts/mcgrots-drive-pull.mjs` (read its header before running
-it; it is Drive → local only and must never be pointed the other way).
+The one thing that would not come back this way: the comic corpus in
+`assets/comics/`. It never lived in the library — recover it from Google
+Drive, one direction only, via `scripts/mcgrots-drive-pull.mjs` (read its
+header before running it; it is Drive → local only and must never be pointed
+the other way). Point it at `--remote="McGrot/1 - Already in the game"`; the
+default arrivals folder is empty.
+
+**Drive holds all 418 catalogued comics as of 2026-08-20**, and did not before
+that date. An independent audit found 22 catalogued comics existed only here,
+so this recovery route would have returned 396 of 418. They were uploaded on
+Dan's instruction as an additive copy of named files; verified 396 → 418 with
+zero lost. The 419th local image,
+`WhatsApp Image 2026-08-04 at 06.51.18.jpg`, is in no catalogue and is not on
+Drive — it is not part of the corpus and is noted so it is not mistaken later
+for a gap.
